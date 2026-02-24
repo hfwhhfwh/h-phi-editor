@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://bk6vwgye804o1"]
+
+[ext_resource type="Script" uid="uid://qqc6xhmj8saf" path="res://Script/ChartPlayer.cs" id="1_n2rrn"]
+[ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="2_ginqo"]
+[ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="3_5x5lu"]
+[ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="4_qagjh"]
+[ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="5_54d6o"]
+[ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="5_g7mj6"]
+[ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="6_667m6"]
+[ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="6_bwpqn"]
+[ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="7_2y2ei"]
+[ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="7_8kifw"]
+[ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="8_r3ety"]
+
+[node name="ChartPlayer" type="Node" unique_id=2117456343]
+script = ExtResource("1_n2rrn")
+tapTexture = ExtResource("2_ginqo")
+dragTexture = ExtResource("3_5x5lu")
+flickTexture = ExtResource("4_qagjh")
+holdHeadTexture = ExtResource("5_54d6o")
+holdBodyTexture = ExtResource("6_bwpqn")
+holdEndTexture = ExtResource("7_8kifw")
+lineTexture = ExtResource("5_g7mj6")
+tapSound = ExtResource("6_667m6")
+dragSound = ExtResource("7_2y2ei")
+flickSound = ExtResource("8_r3ety")
+zipLoadPath = "user://Snow Desert.zip"
+musicStartPosition = 45.0
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1284033826]
+
+[node name="FPSLabel" type="Label" parent="." unique_id=93534669]
+offset_left = -663.0
+offset_top = -437.0
+offset_right = -623.0
+offset_bottom = -414.0
+theme_override_font_sizes/font_size = 32
+text = "FPS:"
