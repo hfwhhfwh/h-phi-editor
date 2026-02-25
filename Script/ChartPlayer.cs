@@ -150,6 +150,26 @@ public partial class ChartPlayer : Node
         GD.Print("谱面导入成功，总时长: ", chart.Meta?.Duration, "秒");
 
         // 2.加载背景图片
+        Image bgImage = Image.LoadFromFile(Path.Combine(extractPath, chart.Meta.Background));
+        if (bgImage == null)
+        {
+            GD.PrintErr("背景图片导入失败");
+            return;
+        }
+        //TODO 图片模糊效果
+        Image blurred = bgImage;
+        
+        //创建TextureRect节点
+        TextureRect bgNode = new TextureRect
+        {
+            Texture = ImageTexture.CreateFromImage(blurred),
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
+            AnchorLeft = -0.5f, AnchorRight = 0.5f, AnchorTop = -0.5f, AnchorBottom = 0.5f,
+            Modulate = new Color(0.4f, 0.4f, 0.4f, 1f),
+            ZIndex = -999
+        };
+        AddChild(bgNode);
 
         // 3.加载info.txt
 
@@ -384,8 +404,8 @@ public partial class JudgeLineNode : Node2D
         _currentMoveX = InterpolateEvent(layer.MoveXEvents, gameTime, 0);
         _currentMoveY = InterpolateEvent(layer.MoveYEvents, gameTime, 0);
         _currentRotate = InterpolateEvent(layer.RotateEvents, gameTime, 0);
-        _currentAlpha = InterpolateEvent(layer.AlphaEvents, gameTime, 1);
-        _currentSpeed = InterpolateEventSpeed(layer.SpeedEvents, gameTime, 1);
+        _currentAlpha = InterpolateEvent(layer.AlphaEvents, gameTime, 255);
+        _currentSpeed = InterpolateEventSpeed(layer.SpeedEvents, gameTime, 10);
 
         //处理父判定线  father为-1代表没有父线
         if(_data.Father != -1)
@@ -577,9 +597,51 @@ public partial class JudgeLineNode : Node2D
         }
     }
 
+    /// <summary>
+    /// 带有实际值的插值
+    /// </summary>
+    /// <param name="x1"></param>
+    /// <param name="x2"></param>
+    /// <param name="t">[0,1]</param>
+    /// <param name="easingType">RPE中的缓动类型，为0~29整数</param>
+    /// <returns></returns>
     public float InterpolateValue(float x1, float x2, float t, int easingType)
     {
         return x1 + (x2-x1) * Interpolate(t,easingType);
+    }
+
+    /// <summary>
+    /// 经过裁剪的缓动插值
+    /// </summary>
+    /// <param name="t">[0,1]</param>
+    /// <param name="easingType">RPE中的缓动类型，为0~29整数</param>
+    /// <param name="left">左切割，[0,1]</param>
+    /// <param name="right">右切割，[0,1]</param>
+    /// <returns></returns>
+    public float CutInterpolate(float t, int easingType, float left, float right)
+    {
+        float leftX = InterpolateValue(0,1,left,easingType);
+        float rightX = InterpolateValue(0,1,right,easingType);
+        float T = left + (right - left) * t;
+        float TX = InterpolateValue(0,1,T,easingType);
+
+        float result = (TX - leftX) / (rightX - leftX);
+        return result;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="x1">初始值</param>
+    /// <param name="x2">末尾值</param>
+    /// <param name="t">[0,1]</param>
+    /// <param name="easingType">RPE中的缓动类型，为0~29整数</param>
+    /// <param name="left">左切割，[0,1]</param>
+    /// <param name="right">右切割，[0,1]</param>
+    /// <returns></returns>
+    public float CutInterpolateValue(float x1, float x2, float t, int easingType, float left, float right)
+    {
+        return x1 + (x2-x1) * CutInterpolate(t, easingType, left, right);
     }
 
     // 坐标映射
@@ -618,9 +680,11 @@ public partial class JudgeLineNode : Node2D
 
             if (time >= startSec && time <= endSec)
             {
-                // 插值
+                // 插值，需要考虑事件切割
                 float t = (float)((time - startSec) / (endSec - startSec));
-                return InterpolateValue(ev.Start, ev.End, t, ev.EasingType);
+                float leftCut = ev.EasingLeft;
+                float rightCut = ev.EasingRight;
+                return CutInterpolateValue(ev.Start, ev.End, t, ev.EasingType, leftCut, rightCut);
                 
             }
             else if (time < startSec)

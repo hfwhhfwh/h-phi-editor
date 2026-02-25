@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 ChartLoader="*uid://hs6uvyfkqhd0"
 EffectsManager="*uid://bt0xu7q8i6b0m"
 ZipExtractor="*uid://d01nq7b48ibqo"
+ImageBlur="*uid://q6jaa43qjmt8"
 
 [display]
 

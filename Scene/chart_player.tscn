@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="7_2y2ei"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="7_8kifw"]
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="8_r3ety"]
+[ext_resource type="Texture2D" uid="uid://dj8vku32rrsg0" path="res://9091515374590503.jpg" id="13_bwpqn"]
 
 [node name="ChartPlayer" type="Node" unique_id=2117456343]
 script = ExtResource("1_n2rrn")
@@ -25,7 +26,20 @@ tapSound = ExtResource("6_667m6")
 dragSound = ExtResource("7_2y2ei")
 flickSound = ExtResource("8_r3ety")
 zipLoadPath = "user://Snow Desert.zip"
-musicStartPosition = 45.0
+musicStartPosition = 63.0
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1436042826]
+visible = false
+modulate = Color(0.34901962, 0.34901962, 0.34901962, 1)
+z_index = -999
+anchors_preset = -1
+anchor_left = -0.5
+anchor_top = -0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+texture = ExtResource("13_bwpqn")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1284033826]
 
