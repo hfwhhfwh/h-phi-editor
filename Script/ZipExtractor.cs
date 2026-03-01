@@ -138,12 +138,6 @@ public partial class ZipExtractor : Node
     }
 
     
-    /// <summary>
-    /// 打开文件对话框
-    /// </summary>
-    public void ImportChartFile()
-    {
-        
-    }
+    
 
 }

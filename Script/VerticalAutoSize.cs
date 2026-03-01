@@ -19,7 +19,7 @@ public partial class VerticalAutoSize : Button
 		newSize.Y = child.Size.Y;
 		CustomMinimumSize = newSize;
 
-		GD.Print($"{Name} newSize.Y:{newSize.Y}, child.Size.Y:{child.Size.Y}");
+		//GD.Print($"{Name} newSize.Y:{newSize.Y}, child.Size.Y:{child.Size.Y}");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
