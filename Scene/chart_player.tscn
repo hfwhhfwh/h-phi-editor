@@ -26,7 +26,6 @@ tapSound = ExtResource("6_667m6")
 dragSound = ExtResource("7_2y2ei")
 flickSound = ExtResource("8_r3ety")
 zipLoadPath = "user://Snow Desert.zip"
-musicStartPosition = 63.0
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1436042826]
 visible = false

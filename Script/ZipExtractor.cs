@@ -3,6 +3,15 @@ using System.IO; // 用于 Path 类
 
 public partial class ZipExtractor : Node
 {
+    
+
+    public override void _Ready()
+    {
+        base._Ready();
+        
+    }
+
+
     /// <summary>
     /// 将指定路径的ZIP文件解压到与其同名的文件夹中。
     /// </summary>
@@ -126,7 +135,15 @@ public partial class ZipExtractor : Node
 
         zipReader.Close();
         GD.Print("解压完成！");
-
-
     }
+
+    
+    /// <summary>
+    /// 打开文件对话框
+    /// </summary>
+    public void ImportChartFile()
+    {
+        
+    }
+
 }

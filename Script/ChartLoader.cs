@@ -6,15 +6,13 @@ using Newtonsoft.Json;
 
 public partial class ChartLoader : Node
 {
-
-    ZipExtractor zipExtractor;
     
     public bool isExtractZip = false;
 
     public override void _Ready()
     {
         base._Ready();
-        zipExtractor = GetNode<ZipExtractor>("/root/ZipExtractor");
+        
 
         // // 使用带路径的加载方法
         // string loadPath = "res://Chart.json";
@@ -88,7 +86,7 @@ public partial class ChartLoader : Node
     /// 将 Chart 数据保存到指定路径
     /// </summary>
     /// <param name="data">要保存的 Chart 对象</param>
-    /// <param name="path">Godot 资源路径（如 res://Chart2.json）</param>
+    /// <param name="path">保存路径（如 user://Chart2.json）</param>
     public static void SaveChart(Chart data, string path)
     {
         if (data == null)

@@ -166,7 +166,7 @@ public partial class ChartPlayer : Node
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
             AnchorLeft = -0.5f, AnchorRight = 0.5f, AnchorTop = -0.5f, AnchorBottom = 0.5f,
-            Modulate = new Color(0.4f, 0.4f, 0.4f, 1f),
+            Modulate = new Color(0.3f, 0.3f, 0.3f, 1f),
             ZIndex = -999
         };
         AddChild(bgNode);

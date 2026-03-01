@@ -1,0 +1,387 @@
+[gd_scene format=3 uid="uid://bfqi2qheha4ul"]
+
+[ext_resource type="Script" uid="uid://qa3xs6cd7ogw" path="res://Script/StartMenu.cs" id="1_4qtu7"]
+[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_20fd0"]
+[ext_resource type="Script" uid="uid://oi0nad78m6cc" path="res://Script/ChartList.cs" id="3_6k74u"]
+[ext_resource type="PackedScene" uid="uid://byp55t3wek7jr" path="res://Scene/chart_list_item.tscn" id="4_6k74u"]
+[ext_resource type="StyleBox" uid="uid://dx6dd4bb0sw41" path="res://Panel.tres" id="5_jikgm"]
+[ext_resource type="StyleBox" uid="uid://c3x4gv1lx5uwq" path="res://ButtonPressed.tres" id="6_4lvfu"]
+[ext_resource type="Script" uid="uid://bwpad0tt8trob" path="res://Script/CreateChartPanel.cs" id="6_yhpcc"]
+[ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://ButtonHover.tres" id="7_yhpcc"]
+
+[node name="StartMenu" type="Node" unique_id=134390635]
+script = ExtResource("1_4qtu7")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=127864174]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SafeArea" type="MarginContainer" parent="PanelContainer" unique_id=780829857]
+layout_mode = 2
+theme_override_constants/margin_left = 53
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 35
+theme_override_constants/margin_bottom = 26
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea" unique_id=129015142]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Head" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=1634049906]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="Title" type="Label" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=807741570]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "H Phi Editor"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Options" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=734606]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="ImportButton" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/Options" unique_id=1609844934]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "导入谱面"
+
+[node name="NewButton" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/Options" unique_id=115334261]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "新建谱面"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=70983486]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1839500652]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ChartList" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/ScrollContainer" unique_id=1242640935]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3_6k74u")
+
+[node name="Chart" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/ScrollContainer/ChartList" unique_id=450730230 instance=ExtResource("4_6k74u")]
+layout_mode = 2
+
+[node name="Chart2" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/ScrollContainer/ChartList" unique_id=2092967430 instance=ExtResource("4_6k74u")]
+layout_mode = 2
+
+[node name="Chart3" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/ScrollContainer/ChartList" unique_id=1520639331 instance=ExtResource("4_6k74u")]
+layout_mode = 2
+
+[node name="EditOptions" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1741163584]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=515942092]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "打开"
+
+[node name="Button2" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=1582557816]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "编辑信息"
+
+[node name="Button3" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=1348861511]
+modulate = Color(1, 0.39999998, 0.39999998, 1)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "删除"
+
+[node name="CreateChartPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1838436379 node_paths=PackedStringArray("chartList")]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = ExtResource("5_jikgm")
+script = ExtResource("6_yhpcc")
+chartList = NodePath("../VBoxContainer/HBoxContainer/ScrollContainer/ChartList")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/SafeArea/CreateChartPanel" unique_id=362613048]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer" unique_id=1487959988]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2" unique_id=851125434]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1802501212]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "新建谱面"
+horizontal_alignment = 1
+
+[node name="Name" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1143842544]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Name" unique_id=634046105]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "名称"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Name" unique_id=662061159]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文本"
+
+[node name="Music" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1745171553]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=1238629368]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "音乐"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=26836340]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文件路径"
+
+[node name="Botton" type="Button" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=74815796]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "选择
+"
+
+[node name="Pic" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1044208123]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=1568367733]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "曲绘"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=1814388999]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文件路径"
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=272892661]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "选择
+"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1590469894]
+layout_mode = 2
+
+[node name="BPM" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer" unique_id=1823008915]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/BPM" unique_id=1447088838]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "基础BPM"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/BPM" unique_id=534544184]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入数字"
+
+[node name="Composer" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer" unique_id=690696157]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer" unique_id=2038988417]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "作曲家"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer" unique_id=1645914480]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=287266584]
+layout_mode = 2
+
+[node name="Charter" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2" unique_id=1531296844]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter" unique_id=863179849]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "谱师"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter" unique_id=1986236850]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2" unique_id=1872316779]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer" unique_id=1132932971]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "确认"
+
+[node name="Button2" type="Button" parent="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer" unique_id=150560980]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "取消
+"
+
+[node name="DeletePanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1970849949]
+layout_mode = 2
+theme_override_styles/panel = ExtResource("5_jikgm")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/SafeArea/DeletePanel" unique_id=386057014]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea/DeletePanel/MarginContainer" unique_id=1469729694]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer" unique_id=1612663454]
+layout_mode = 2
+size_flags_vertical = 6
+theme_override_font_sizes/font_size = 45
+text = "确定要删除谱面吗？（无法撤回）"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer" unique_id=852187556]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1239107370]
+modulate = Color(1, 0.39999998, 0.39999998, 1)
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "确认"
+
+[node name="Button2" type="Button" parent="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1671721696]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "取消
+"
+
+[connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/Head/Options/NewButton" to="." method="OnCreateButtonPressed"]
+[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Name/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnNameChanged"]
+[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnMusicChanged"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/Botton" to="PanelContainer/SafeArea/CreateChartPanel" method="SelectMusicFile"]
+[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnPicChanged"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="SelectPicFile"]
+[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/BPM/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnBPMChanged"]
+[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnComposerChanged"]
+[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnCharterChanged"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="OnOK"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button2" to="PanelContainer/SafeArea/CreateChartPanel" method="OnCanceled"]
+[connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button" to="PanelContainer/SafeArea/DeletePanel" method="OnOK"]
+[connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button2" to="PanelContainer/SafeArea/DeletePanel" method="OnCanceled"]

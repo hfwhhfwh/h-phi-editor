@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="HPhiEditor"
-run/main_scene="uid://bk6vwgye804o1"
+run/main_scene="uid://bfqi2qheha4ul"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -21,11 +21,10 @@ ChartLoader="*uid://hs6uvyfkqhd0"
 EffectsManager="*uid://bt0xu7q8i6b0m"
 ZipExtractor="*uid://d01nq7b48ibqo"
 ImageBlur="*uid://q6jaa43qjmt8"
+FileDialogManager="*uid://7dks72m4nja7"
 
 [display]
 
-window/size/viewport_width=1350
-window/size/viewport_height=900
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
@@ -40,3 +39,5 @@ project/assembly_name="HPhiEditor"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
