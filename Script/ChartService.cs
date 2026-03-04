@@ -6,63 +6,81 @@ using System.IO;
 
 public partial class ChartService : Node
 {
-    [Export] private ChartRepository _repository;
-    [Export] private FileDialogManager _fileDialog;
+    private ChartRepository chartRepository;
+    private FileDialogManager fileDialogManager;
 
-    // 创建新谱面（返回生成的ChartInfo）
-    public ChartInfo CreateNewChart(ChartInfo data)
+    public override void _Ready()
     {
-        string id = Util.GenerateRandomId();
-        var info = new ChartInfo
+        base._Ready();
+
+        chartRepository = GetNode<ChartRepository>("/root/ChartRepository");
+        fileDialogManager = GetNode<FileDialogManager>("/root/FileDialogManager");
+
+    }
+
+
+    /// <summary>
+    /// 创建新谱面（返回生成的ChartInfo）
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="songPath"></param>
+    /// <param name="picPath"></param>
+    /// <returns></returns>
+    public ChartInfo CreateNewChart(ChartInfo data, string songPath, string picPath)
+    {
+        ChartInfo chartInfo = new ChartInfo
         {
-            Id = id,
+            Id = data.Id,
             Name = data.Name,
             Composer = data.Composer,
             Charter = data.Charter,
+            Level = "0",
             Bpm = data.Bpm,
             Duration = data.Duration,
-            SongFileName = $"{id}.{Path.GetExtension(data.SongPath)}",
-            PictureFileName = $"{id}.{Path.GetExtension(data.PicturePath)}",
-            ChartFileName = $"{id}.json"
+            SongFileName = $"{data.Id}{Path.GetExtension(data.SongPath)}",
+            PictureFileName = $"{data.Id}{Path.GetExtension(data.PicturePath)}",
+            ChartFileName = $"{data.Id}.json"
         };
 
+        //GD.Print($"data.Id:{data.Id}, Path.GetExtension(data.PicturePath):{Path.GetExtension(data.PicturePath)}, PictureFileName:{chartInfo.PictureFileName}");
+
         // 创建目录
-        Util.EnsureDirectoryExists(info.FolderPath);
+        Util.EnsureDirectoryExists(chartInfo.FolderPath);
 
         // 复制音乐和曲绘
-        Util.CopyFile(data.SongPath, info.SongPath);
-        Util.CopyFile(data.PicturePath, info.PicturePath);
+        Util.CopyFile(songPath, chartInfo.SongPath);
+        Util.CopyFile(picPath, chartInfo.PicturePath);
 
         // 生成谱面JSON（从模板复制并修改）
         string templatePath = "res://TemplateChart.json";
-        Util.CopyFile(templatePath, info.ChartPath);
-        var chart = ChartLoader.LoadChart(info.ChartPath);
-        chart.BpmList[0].Bpm = info.Bpm;
+        Util.CopyFile(templatePath, chartInfo.ChartPath);
+        var chart = ChartLoader.LoadChart(chartInfo.ChartPath);
+        chart.BpmList[0].Bpm = chartInfo.Bpm;
         chart.Meta = new Meta
         {
             Background = data.PictureFileName,
             Charter = data.Charter,
             Composer = data.Composer,
             Duration = data.Duration,
-            Id = id,
+            Id = data.Id,
             Illustration = "", // TODO
-            Level = "0", // TODO
+            Level = data.Level,
             Name = data.Name,
             Offset = 0,
             Song = data.SongFileName
         };
-        ChartLoader.SaveChart(chart, info.ChartPath);
+        ChartLoader.SaveChart(chart, chartInfo.ChartPath);
 
         // 保存info.txt
-        _repository.SaveChartInfo(info);
+        chartRepository.SaveChartInfo(chartInfo);
 
-        return info;
+        return chartInfo;
     }
 
     // 删除谱面
     public void DeleteChart(string chartId)
     {
-        _repository.DeleteChart(chartId);
+        chartRepository.DeleteChart(chartId);
     }
 
     // 导入谱面
@@ -70,7 +88,6 @@ public partial class ChartService : Node
 
     public List<ChartInfo> GetAllCharts()
     {
-        //TODO
-        return null;
+        return chartRepository.LoadAllCharts();
     }
 }

@@ -8,9 +8,13 @@
 [ext_resource type="StyleBox" uid="uid://c3x4gv1lx5uwq" path="res://ButtonPressed.tres" id="6_4lvfu"]
 [ext_resource type="Script" uid="uid://bwpad0tt8trob" path="res://Script/CreateChartPanel.cs" id="6_yhpcc"]
 [ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://ButtonHover.tres" id="7_yhpcc"]
+[ext_resource type="Script" uid="uid://blt7qc5min2oe" path="res://Script/DeletePanel.cs" id="9_pff7g"]
 
-[node name="StartMenu" type="Node" unique_id=134390635]
+[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel")]
 script = ExtResource("1_4qtu7")
+_chartList = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/ScrollContainer/ChartList")
+_createPanel = NodePath("PanelContainer/SafeArea/CreateChartPanel")
+_deletePanel = NodePath("PanelContainer/SafeArea/DeletePanel")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=127864174]
 anchors_preset = 15
@@ -124,12 +128,17 @@ theme_override_styles/disabled = ExtResource("1_20fd0")
 theme_override_styles/focus = ExtResource("1_20fd0")
 text = "删除"
 
-[node name="CreateChartPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1838436379 node_paths=PackedStringArray("chartList")]
+[node name="CreateChartPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1838436379 node_paths=PackedStringArray("_nameEdit", "_musicPathEdit", "_picPathEdit", "_bpmEdit", "_composerEdit", "_charterEdit")]
 visible = false
 layout_mode = 2
 theme_override_styles/panel = ExtResource("5_jikgm")
 script = ExtResource("6_yhpcc")
-chartList = NodePath("../VBoxContainer/HBoxContainer/ScrollContainer/ChartList")
+_nameEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/Name/LineEdit")
+_musicPathEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/Music/LineEdit")
+_picPathEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/Pic/LineEdit")
+_bpmEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/BPM/LineEdit")
+_composerEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer/LineEdit")
+_charterEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter/LineEdit")
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer/SafeArea/CreateChartPanel" unique_id=362613048]
 layout_mode = 2
@@ -321,8 +330,10 @@ text = "取消
 "
 
 [node name="DeletePanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1970849949]
+visible = false
 layout_mode = 2
 theme_override_styles/panel = ExtResource("5_jikgm")
+script = ExtResource("9_pff7g")
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer/SafeArea/DeletePanel" unique_id=386057014]
 layout_mode = 2
@@ -373,15 +384,10 @@ text = "取消
 "
 
 [connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/Head/Options/NewButton" to="." method="OnCreateButtonPressed"]
-[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Name/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnNameChanged"]
-[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnMusicChanged"]
-[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/Botton" to="PanelContainer/SafeArea/CreateChartPanel" method="SelectMusicFile"]
-[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnPicChanged"]
-[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="SelectPicFile"]
-[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/BPM/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnBPMChanged"]
-[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnComposerChanged"]
-[connection signal="text_changed" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter/LineEdit" to="PanelContainer/SafeArea/CreateChartPanel" method="OnCharterChanged"]
-[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="OnOK"]
-[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button2" to="PanelContainer/SafeArea/CreateChartPanel" method="OnCanceled"]
+[connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions/Button3" to="." method="OnDeleteButtonPressed"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/Botton" to="PanelContainer/SafeArea/CreateChartPanel" method="OnSelectMusic"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="OnSelectPicture"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="OnConfirm"]
+[connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button2" to="PanelContainer/SafeArea/CreateChartPanel" method="OnCancel"]
 [connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button" to="PanelContainer/SafeArea/DeletePanel" method="OnOK"]
 [connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button2" to="PanelContainer/SafeArea/DeletePanel" method="OnCanceled"]

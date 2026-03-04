@@ -22,6 +22,8 @@ EffectsManager="*uid://bt0xu7q8i6b0m"
 ZipExtractor="*uid://d01nq7b48ibqo"
 ImageBlur="*uid://q6jaa43qjmt8"
 FileDialogManager="*uid://7dks72m4nja7"
+ChartService="*uid://dcb40ki6g4ka8"
+ChartRepository="*uid://dgrw8ly3bw4br"
 
 [display]
 

@@ -4,7 +4,7 @@ using System.IO;
 
 public partial class StartMenu : Node
 {
-    [Export] private ChartService _chartService;
+    private ChartService _chartService;
     [Export] private ChartList _chartList;
     [Export] private CreateChartPanel _createPanel;
     [Export] private DeletePanel _deletePanel;
@@ -13,6 +13,8 @@ public partial class StartMenu : Node
 
     public override void _Ready()
     {
+        _chartService = GetNode<ChartService>("/root/ChartService");
+
         // 连接信号
         _chartList.ChartSelected += OnChartSelected;
         _createPanel.ChartCreated += OnChartCreated;
@@ -40,9 +42,9 @@ public partial class StartMenu : Node
         _createPanel.Visible = true;
     }
 
-    private void OnChartCreated(ChartInfo data)
+    private void OnChartCreated(ChartInfo data, string songPath, string picPath)
     {
-        var newChart = _chartService.CreateNewChart(data);
+        _chartService.CreateNewChart(data, songPath, picPath);
         RefreshChartList();
         _createPanel.Visible = false;
     }

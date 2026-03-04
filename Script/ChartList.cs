@@ -7,11 +7,17 @@ public partial class ChartList : VBoxContainer
 {
 	[Signal] public delegate void ChartSelectedEventHandler(string chartId);
 
-    private PackedScene _itemScene;
+    private PackedScene itemScene;
+
+    private ButtonGroup buttonGroup; // 用于存放谱面选项按钮
 
     public override void _Ready()
     {
-        _itemScene = ResourceLoader.Load<PackedScene>("res://Scene/chart_list_item.tscn");
+        itemScene = ResourceLoader.Load<PackedScene>("res://Scene/chart_list_item.tscn");
+
+        buttonGroup = new ButtonGroup();
+
+        
     }
 
     /// <summary>
@@ -22,17 +28,23 @@ public partial class ChartList : VBoxContainer
     {
         // 清空现有项
         foreach (var child in GetChildren())
+        {
             child.QueueFree();
+        }
 
         // 创建新的按钮项
         foreach (var chart in charts)
         {
-            var item = _itemScene.Instantiate() as Button;
-            item.SetMeta("chart_id", chart.Id);
+            Button itemButton = itemScene.Instantiate() as Button;
+            itemButton.SetMeta("chart_id", chart.Id);
+            itemButton.ToggleMode = true;
+            itemButton.ButtonGroup = buttonGroup;
+            
             // 设置按钮的显示（名称、作曲家、曲绘等）
-            UpdateItemDisplay(item, chart);
-            AddChild(item);
-            item.Pressed += () => OnItemPressed(item);
+            UpdateItemDisplay(itemButton, chart);
+            AddChild(itemButton);
+            itemButton.Toggled += (pressed) => OnButtonToggled(pressed, itemButton);
+            
         }
     }
 
@@ -47,12 +59,21 @@ public partial class ChartList : VBoxContainer
 
 		TextureRect picTexture = item.GetNode<TextureRect>("MarginContainer/HBoxContainer/Icon");
 		Image textureImage = Image.LoadFromFile(chartInfo.PicturePath);
+        if(textureImage == null)
+        {
+            GD.PrintErr($"{this.Name} UpdateItemDisplay() textureImage == null picturePath:{chartInfo.PicturePath}");
+        }
 		picTexture.Texture = ImageTexture.CreateFromImage(textureImage);
     }
 
-    private void OnItemPressed(Button item)
+
+    private void OnButtonToggled(bool pressed, Button button)
     {
-        string chartId = item.GetMeta("chart_id").AsString();
-        EmitSignal(SignalName.ChartSelected, chartId);
+        if (pressed)
+        {
+            string id = button.GetMeta("chart_id").AsString();
+            GD.Print($"选中按钮 ID: {id}");
+            EmitSignal(SignalName.ChartSelected, id);
+        }
     }
 }
