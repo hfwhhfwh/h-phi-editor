@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 public partial class StartMenu : Node
@@ -9,11 +10,14 @@ public partial class StartMenu : Node
     [Export] private CreateChartPanel _createPanel;
     [Export] private DeletePanel _deletePanel;
 
+    private FileDialogManager fileDialogManager;
+
     private string _currentSelectedChartId;
 
     public override void _Ready()
     {
         _chartService = GetNode<ChartService>("/root/ChartService");
+        fileDialogManager = GetNode<FileDialogManager>("/root/FileDialogManager");
 
         // 连接信号
         _chartList.ChartSelected += OnChartSelected;
@@ -28,7 +32,7 @@ public partial class StartMenu : Node
 
     private void RefreshChartList()
     {
-        var charts = _chartService.GetAllCharts(); // 需要实现
+        List<ChartInfo> charts = _chartService.GetAllCharts();
         _chartList.SetCharts(charts);
     }
 
@@ -40,6 +44,19 @@ public partial class StartMenu : Node
     public void OnCreateButtonPressed()
     {
         _createPanel.Visible = true;
+    }
+
+    public void OnImportButtonPressed()
+    {
+        string[] filters = {"*.*;所有文件;"};
+        fileDialogManager.ShowNativeOpenDialog(
+            (path) =>
+            {
+                _chartService.ImportChart(path);
+                RefreshChartList();
+            },
+            filters
+        );
     }
 
     private void OnChartCreated(ChartInfo data, string songPath, string picPath)

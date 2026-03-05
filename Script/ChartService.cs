@@ -83,8 +83,56 @@ public partial class ChartService : Node
         chartRepository.DeleteChart(chartId);
     }
 
-    // 导入谱面
-    //TODO
+    /// <summary>
+    /// 导入谱面
+    /// </summary>
+    /// <param name="path">谱面文件（zip、pez等）的路径</param>
+    public void ImportChart(string path)
+    {
+        //1. 创建临时导入目录
+        string tempId = Util.GenerateRandomId(14);
+        string tempDir = Path.Combine("user://temp_import", tempId);
+        Util.EnsureDirectoryExists(tempDir);
+
+        // 2. 解压 ZIP 到临时目录
+        GD.Print($"开始解压: {path} -> {tempDir}");
+        Util.UnzipFileTo(path, tempDir); // 解压完成会在内部打印
+
+        //3. 寻找info.txt文件，读取其他3个文件的路径
+        string songTempPath, picTempPath, jsonTempPath;
+        string infoTempPath = Path.Combine(tempDir, "info.txt");
+        Dictionary<string, string> infoDic = new Dictionary<string, string>();
+        if (!Godot.FileAccess.FileExists(infoTempPath))
+        {
+            GD.PrintErr("无法找到info.txt文件");
+            return;
+        }
+        infoDic = Util.ReadInfoFile(infoTempPath);
+        jsonTempPath = Path.Combine(tempDir, infoDic["Chart"]);
+        picTempPath = Path.Combine(tempDir, infoDic["Picture"]);
+        songTempPath = Path.Combine(tempDir, infoDic["Song"]);
+        
+
+        //创建导入目录
+        string id = Util.GenerateRandomId(14);
+        string dir = Path.Combine(chartRepository.GetSavesDir(), id);
+        Util.EnsureDirectoryExists(dir);
+
+        //修改id信息
+        infoDic["Chart"] = $"{id}.json";
+        infoDic["Song"] = $"{id}.{songTempPath.GetExtension()}";
+        infoDic["Picture"] = $"{id}.{picTempPath.GetExtension()}";
+        Util.WriteInfoFile(infoTempPath, infoDic);
+
+        //复制文件
+        Util.CopyFile(infoTempPath, Path.Combine(dir, "info.txt"));
+        Util.CopyFile(jsonTempPath, Path.Combine(dir, infoDic["Chart"]));
+        Util.CopyFile(picTempPath, Path.Combine(dir, infoDic["Picture"]));
+        Util.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"]));
+
+        
+
+    }
 
     public List<ChartInfo> GetAllCharts()
     {

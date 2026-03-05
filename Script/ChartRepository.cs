@@ -6,7 +6,7 @@ using System.IO;
 
 public partial class ChartRepository : Node
 {
-    private const string SAVES_DIR = "user://ChartSaves";
+    public const string SAVES_DIR = "user://ChartSaves";
 
     public List<ChartInfo> LoadAllCharts()
     {
@@ -112,6 +112,15 @@ public partial class ChartRepository : Node
 
         // 删除当前空目录
         DirAccess.RemoveAbsolute(path);
+    }
+
+    /// <summary>
+    /// 获取谱面存档的目录路径
+    /// </summary>
+    /// <returns>谱面存档的目录路径</returns>
+    public string GetSavesDir()
+    {
+        return SAVES_DIR;
     }
 
     

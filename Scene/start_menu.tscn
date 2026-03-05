@@ -383,6 +383,7 @@ theme_override_styles/focus = ExtResource("1_20fd0")
 text = "取消
 "
 
+[connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/Head/Options/ImportButton" to="." method="OnImportButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/Head/Options/NewButton" to="." method="OnCreateButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions/Button3" to="." method="OnDeleteButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/Botton" to="PanelContainer/SafeArea/CreateChartPanel" method="OnSelectMusic"]
