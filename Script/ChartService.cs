@@ -133,9 +133,126 @@ public partial class ChartService : Node
         
 
     }
+    
+    /// <summary>
+    /// 设置谱面信息
+    /// </summary>
+    /// <param name="chartId">谱面id</param>
+    /// <param name="chartInfo">谱面信息</param>
+    public void SetChartInfo(string chartId, ChartInfo chartInfo)
+    {
+        chartRepository.SaveChartInfo(chartInfo);
+    }
 
+    /// <summary>
+    /// 修改谱面的曲绘文件
+    /// </summary>
+    /// <param name="chartId">要修改的铺面</param>
+    /// <param name="path">新的曲绘文件的路径</param>
+    public void SetChartPic(string chartId, string path)
+    {
+        if (!DirAccess.DirExistsAbsolute(path))
+        {
+            GD.PrintErr($"[ChartService] 曲绘路径不存在:{path}");
+            return;
+        }
+        //找到谱面路径
+        string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
+        Util.EnsureDirectoryExists(dir);
+
+        //读取info.txt
+        ChartInfo chartInfo = chartRepository.LoadChartInfo(chartId);
+
+        //删除原本的曲绘
+        string picPath = chartInfo.PicturePath;
+        DirAccess.RemoveAbsolute(picPath);
+
+        //复制新的曲绘
+        Util.CopyFile(path, picPath);
+    }
+
+    /// <summary>
+    /// 修改谱面的音频文件
+    /// </summary>
+    /// <param name="chartId">要修改的铺面</param>
+    /// <param name="path">新的音频文件的路径</param>
+    public void SetChartSong(string chartId, string path)
+    {
+        if (!DirAccess.DirExistsAbsolute(path))
+        {
+            GD.PrintErr($"[ChartService] 音乐路径不存在:{path}");
+            return;
+        }
+        //找到谱面路径
+        string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
+        Util.EnsureDirectoryExists(dir);
+
+        //读取info.txt
+        ChartInfo chartInfo = chartRepository.LoadChartInfo(chartId);
+
+        //删除原本的音频
+        string songPath = chartInfo.SongPath;
+        DirAccess.RemoveAbsolute(songPath);
+
+        //复制新的音频
+        Util.CopyFile(path, songPath);
+    }
+
+    /// <summary>
+    /// 获取所有谱面的基本信息
+    /// </summary>
+    /// <returns>所有谱面信息</returns>
     public List<ChartInfo> GetAllCharts()
     {
         return chartRepository.LoadAllCharts();
     }
+
+    /// <summary>
+    /// 获取谱面的基本信息
+    /// </summary>
+    /// <param name="chartId">谱面id</param>
+    /// <returns>谱面信息</returns>
+    public ChartInfo GetChartInfo(string chartId)
+    {
+        ChartInfo info = chartRepository.LoadChartInfo(chartId);
+        if(info == null)
+        {
+            GD.PrintErr($"{this.Name} GetChartInfo(string chartId) chartInfo == null");
+        }
+        return info;
+    }
+
+    public void ExportChart(string chartId)
+    {
+        List<string> filePaths = new List<string>();//用于存储将要打包的文件的路径
+
+        //1. 读取info
+        ChartInfo chartInfo = chartRepository.LoadChartInfo(chartId);
+        string infoPath = chartInfo.InfoFilePath;
+        filePaths.Add(infoPath);
+
+        //2. 找到json谱面文件
+        string jsonPath = chartInfo.ChartPath;
+        filePaths.Add(jsonPath);
+
+        //3. 找到音乐文件
+        string songPath = chartInfo.SongPath;
+        filePaths.Add(songPath);
+
+        //4，找到曲绘文件
+        string picPath = chartInfo.PicturePath;
+        filePaths.Add(picPath);
+
+        //5. 调用原生文件对话框
+        string[] filters = {"*.*;所有文件;"};
+        fileDialogManager.SaveFile(
+            (zipPath) =>
+            {
+                Util.CreateZip(filePaths, zipPath);
+                GD.Print($"[{this.Name}] 成功创建zip文件:{zipPath}");
+            },
+            filters
+        );
+    }
+
 }

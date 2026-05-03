@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://dcefdc3pkxlp7"]
+
+[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_7k27q"]
+
+[node name="EditorScene" type="Node" unique_id=506389422]
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=302158127]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SafeArea" type="MarginContainer" parent="PanelContainer" unique_id=1705167012]
+layout_mode = 2
+theme_override_constants/margin_left = 53
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 35
+theme_override_constants/margin_bottom = 26
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea" unique_id=385956420]
+layout_mode = 2
+
+[node name="Head" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=1776463630]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=893630758]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "···"
+
+[node name="Button2" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=1449821637]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "撤销"
+
+[node name="Button3" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=1466604910]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "重做"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=1705874636]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Panel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=596767182]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1107667210]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2

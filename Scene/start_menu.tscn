@@ -9,12 +9,17 @@
 [ext_resource type="Script" uid="uid://bwpad0tt8trob" path="res://Script/CreateChartPanel.cs" id="6_yhpcc"]
 [ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://ButtonHover.tres" id="7_yhpcc"]
 [ext_resource type="Script" uid="uid://blt7qc5min2oe" path="res://Script/DeletePanel.cs" id="9_pff7g"]
+[ext_resource type="Script" uid="uid://cgsbmr5lt1i1b" path="res://Script/InfoPanel.cs" id="10_l4ger"]
+[ext_resource type="Script" uid="uid://bslsq2gjtb1th" path="res://Script/ExportPanel.cs" id="11_1kda2"]
+[ext_resource type="Texture2D" uid="uid://ejl1hu2xxquy" path="res://icon.svg" id="11_7eatm"]
 
-[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel")]
+[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel")]
 script = ExtResource("1_4qtu7")
 _chartList = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/ScrollContainer/ChartList")
 _createPanel = NodePath("PanelContainer/SafeArea/CreateChartPanel")
 _deletePanel = NodePath("PanelContainer/SafeArea/DeletePanel")
+_infoPanel = NodePath("PanelContainer/SafeArea/InfoPanel")
+_exportPanel = NodePath("PanelContainer/SafeArea/ExportPanel")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=127864174]
 anchors_preset = 15
@@ -97,7 +102,7 @@ layout_mode = 2
 custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
 
-[node name="Button" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=515942092]
+[node name="Open" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=515942092]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_20fd0")
@@ -107,7 +112,7 @@ theme_override_styles/disabled = ExtResource("1_20fd0")
 theme_override_styles/focus = ExtResource("1_20fd0")
 text = "打开"
 
-[node name="Button2" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=1582557816]
+[node name="EditInfo" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=1582557816]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_20fd0")
@@ -117,7 +122,17 @@ theme_override_styles/disabled = ExtResource("1_20fd0")
 theme_override_styles/focus = ExtResource("1_20fd0")
 text = "编辑信息"
 
-[node name="Button3" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=1348861511]
+[node name="Export" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=1531714738]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "导出zip"
+
+[node name="Delete" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions" unique_id=1348861511]
 modulate = Color(1, 0.39999998, 0.39999998, 1)
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
@@ -329,11 +344,12 @@ theme_override_styles/focus = ExtResource("1_20fd0")
 text = "取消
 "
 
-[node name="DeletePanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1970849949]
+[node name="DeletePanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1970849949 node_paths=PackedStringArray("label")]
 visible = false
 layout_mode = 2
 theme_override_styles/panel = ExtResource("5_jikgm")
 script = ExtResource("9_pff7g")
+label = NodePath("MarginContainer/VBoxContainer/Label")
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer/SafeArea/DeletePanel" unique_id=386057014]
 layout_mode = 2
@@ -383,12 +399,368 @@ theme_override_styles/focus = ExtResource("1_20fd0")
 text = "取消
 "
 
+[node name="InfoPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1329137830 node_paths=PackedStringArray("_nameEdit", "_musicPathEdit", "_picPathEdit", "_composerEdit", "_charterEdit")]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = ExtResource("5_jikgm")
+script = ExtResource("10_l4ger")
+_nameEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/Name/LineEdit")
+_musicPathEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/Music/LineEdit")
+_picPathEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/Pic/LineEdit")
+_composerEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer/LineEdit")
+_charterEdit = NodePath("MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter/LineEdit")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/SafeArea/InfoPanel" unique_id=262213911]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer" unique_id=744092376]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2" unique_id=1840200421]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1911726831]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "编辑谱面信息"
+horizontal_alignment = 1
+
+[node name="Name" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=2142252891]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Name" unique_id=1312070722]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "名称"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Name" unique_id=1556980785]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文本"
+
+[node name="Music" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=322900510]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=627020175]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "音乐"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=610611085]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文件路径"
+
+[node name="Botton" type="Button" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=863942115]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "选择
+"
+
+[node name="Pic" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=721048280]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=1682628601]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "曲绘"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=101268724]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文件路径"
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=782016496]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("1_20fd0")
+theme_override_styles/hover = ExtResource("1_20fd0")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "选择
+"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=412891783]
+layout_mode = 2
+
+[node name="Composer" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer" unique_id=1955956715]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer" unique_id=1718006747]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "作曲家"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer" unique_id=431608624]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer" unique_id=256186286]
+layout_mode = 2
+
+[node name="Charter" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2" unique_id=204630075]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter" unique_id=975848715]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "谱师"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter" unique_id=2129729566]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2" unique_id=1942800257]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/HBoxContainer" unique_id=1591187046]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "确认"
+
+[node name="Button2" type="Button" parent="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/HBoxContainer" unique_id=1916036113]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "取消
+"
+
+[node name="ExportPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1800046543 node_paths=PackedStringArray("_nameEdit", "_composerEdit", "_charterEdit", "_picTextureRect")]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = ExtResource("5_jikgm")
+script = ExtResource("11_1kda2")
+_nameEdit = NodePath("MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Name/LineEdit")
+_composerEdit = NodePath("MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer/Composer/LineEdit")
+_charterEdit = NodePath("MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer2/Charter/LineEdit")
+_picTextureRect = NodePath("MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Pic/Picture")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/SafeArea/ExportPanel" unique_id=1502331796]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer" unique_id=1137926190]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2" unique_id=43297850]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer" unique_id=910235668]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer" unique_id=373154531]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "导出谱面为zip"
+horizontal_alignment = 1
+
+[node name="Name" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer" unique_id=2002736810]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Name" unique_id=286374219]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "名称"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Name" unique_id=1821577166]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "谱面名称"
+editable = false
+
+[node name="Music" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer" unique_id=116037776]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Music" unique_id=1485535913]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "音乐"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Music" unique_id=413715071]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "音乐名称"
+editable = false
+
+[node name="Pic" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer" unique_id=110837699]
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Pic" unique_id=1795380742]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "曲绘"
+
+[node name="Picture" type="TextureRect" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/Pic" unique_id=892590080]
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("11_7eatm")
+expand_mode = 2
+stretch_mode = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer" unique_id=1501854539]
+layout_mode = 2
+
+[node name="Composer" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer" unique_id=1109369050]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer/Composer" unique_id=898324746]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "作曲家"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer/Composer" unique_id=940152399]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "作曲家名称"
+editable = false
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer" unique_id=9764504]
+layout_mode = 2
+
+[node name="Charter" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer2" unique_id=204815503]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer2/Charter" unique_id=866150386]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "谱师"
+
+[node name="LineEdit" type="LineEdit" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/ScrollContainer/VBoxContainer/HBoxContainer2/Charter" unique_id=1647121881]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/read_only = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+placeholder_text = "谱师名称"
+editable = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2" unique_id=1762865450]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/HBoxContainer" unique_id=942981393]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "确认"
+
+[node name="Button2" type="Button" parent="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/HBoxContainer" unique_id=334145682]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("1_20fd0")
+theme_override_styles/pressed = ExtResource("6_4lvfu")
+theme_override_styles/hover = ExtResource("7_yhpcc")
+theme_override_styles/disabled = ExtResource("1_20fd0")
+theme_override_styles/focus = ExtResource("1_20fd0")
+text = "取消
+"
+
 [connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/Head/Options/ImportButton" to="." method="OnImportButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/Head/Options/NewButton" to="." method="OnCreateButtonPressed"]
-[connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions/Button3" to="." method="OnDeleteButtonPressed"]
+[connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions/EditInfo" to="." method="OnEditInfoPressed"]
+[connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions/Export" to="." method="OnExportPressed"]
+[connection signal="button_up" from="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/EditOptions/Delete" to="." method="OnDeleteButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/Botton" to="PanelContainer/SafeArea/CreateChartPanel" method="OnSelectMusic"]
 [connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="OnSelectPicture"]
 [connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button" to="PanelContainer/SafeArea/CreateChartPanel" method="OnConfirm"]
 [connection signal="button_up" from="PanelContainer/SafeArea/CreateChartPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button2" to="PanelContainer/SafeArea/CreateChartPanel" method="OnCancel"]
-[connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button" to="PanelContainer/SafeArea/DeletePanel" method="OnOK"]
-[connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button2" to="PanelContainer/SafeArea/DeletePanel" method="OnCanceled"]
+[connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button" to="PanelContainer/SafeArea/DeletePanel" method="OnConfirm"]
+[connection signal="button_up" from="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer/HBoxContainer/Button2" to="PanelContainer/SafeArea/DeletePanel" method="OnCancelled"]
+[connection signal="button_up" from="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Music/Botton" to="PanelContainer/SafeArea/InfoPanel" method="OnSelectMusic"]
+[connection signal="button_up" from="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/VBoxContainer/Pic/Button" to="PanelContainer/SafeArea/InfoPanel" method="OnSelectPicture"]
+[connection signal="button_up" from="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button" to="PanelContainer/SafeArea/InfoPanel" method="OnConfirm"]
+[connection signal="button_up" from="PanelContainer/SafeArea/InfoPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button2" to="PanelContainer/SafeArea/InfoPanel" method="OnCancel"]
+[connection signal="button_up" from="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button" to="PanelContainer/SafeArea/ExportPanel" method="OnConfirm"]
+[connection signal="button_up" from="PanelContainer/SafeArea/ExportPanel/MarginContainer/VBoxContainer2/HBoxContainer/Button2" to="PanelContainer/SafeArea/ExportPanel" method="OnCancel"]

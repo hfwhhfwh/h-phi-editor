@@ -1,4 +1,5 @@
 using Godot;
+using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -69,50 +70,12 @@ public partial class ChartRepository : Node
         if (DirAccess.DirExistsAbsolute(folder))
         {
             // 递归删除文件夹
-            //DeleteDirectoryRecursive(folder);
-            DirAccess.RemoveAbsolute(folder);
+            Util.DeleteDirectoryRecursive(folder);
         }
     }
 
-    private void DeleteDirectoryRecursive(string path)
-    {
-        // 打开目录
-        using var dir = DirAccess.Open(path);
-        if (dir == null)
-        {
-            GD.PrintErr($"无法打开目录: {path}");
-            return;
-        }
+    
 
-        // 遍历目录内容
-        dir.ListDirBegin();  // 开始列出目录
-        string fileName = dir.GetNext();
-        while (!string.IsNullOrEmpty(fileName))
-        {
-            if (fileName == "." || fileName == "..")  // 跳过特殊目录
-            {
-                fileName = dir.GetNext();
-                continue;
-            }
-
-            string fullPath = path + "/" + fileName;
-            if (dir.CurrentIsDir())
-            {
-                // 递归删除子目录
-                DeleteDirectoryRecursive(fullPath);
-            }
-            else
-            {
-                // 删除文件
-                DirAccess.RemoveAbsolute(fullPath);  // 静态方法删除文件
-            }
-            fileName = dir.GetNext();
-        }
-        dir.ListDirEnd();  // 结束列出目录
-
-        // 删除当前空目录
-        DirAccess.RemoveAbsolute(path);
-    }
 
     /// <summary>
     /// 获取谱面存档的目录路径

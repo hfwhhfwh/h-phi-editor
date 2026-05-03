@@ -9,6 +9,8 @@ public partial class StartMenu : Node
     [Export] private ChartList _chartList;
     [Export] private CreateChartPanel _createPanel;
     [Export] private DeletePanel _deletePanel;
+    [Export] private InfoPanel _infoPanel;
+    [Export] private ExportPanel _exportPanel;
 
     private FileDialogManager fileDialogManager;
 
@@ -21,10 +23,18 @@ public partial class StartMenu : Node
 
         // 连接信号
         _chartList.ChartSelected += OnChartSelected;
+
         _createPanel.ChartCreated += OnChartCreated;
         _createPanel.Cancelled += () => _createPanel.Visible = false;
-        //_deletePanel.DeleteConfirmed += OnDeleteConfirmed;
-        //_deletePanel.Cancelled += () => _deletePanel.Visible = false;
+
+        _deletePanel.DeleteConfirmed += OnDeleteConfirmed;
+        _deletePanel.Cancelled += () => _deletePanel.Visible = false;
+
+        _infoPanel.Confirmed += OnInfoEdited;
+        _infoPanel.Cancelled += () => _infoPanel.Visible = false;
+
+        _exportPanel.Confirmed += OnExportConfirmed;
+        _exportPanel.Cancelled += () => _exportPanel.Visible = false;
 
         // 初始化列表
         RefreshChartList();
@@ -66,12 +76,60 @@ public partial class StartMenu : Node
         _createPanel.Visible = false;
     }
 
+    public void OnEditInfoPressed()
+    {
+        if (!string.IsNullOrEmpty(_currentSelectedChartId))
+        {
+            //获取谱面信息ChartInfo
+            ChartInfo chartInfo = _chartService.GetChartInfo(_currentSelectedChartId);
+            if(chartInfo == null)
+            {
+                GD.PrintErr($"{this.Name} OnEditInfoPressed() chartInfo == null");
+                return;
+            }
+            //显示基本信息面板
+            _infoPanel.Visible = true;
+            _infoPanel.SetInfo(chartInfo);
+
+        }
+    }
+
+    private void OnInfoEdited(ChartInfo data, string newSongPath, string newPicPath)
+    {
+        //修改info.txt
+        _chartService.SetChartInfo(_currentSelectedChartId, data);
+
+        //修改曲绘和音乐 为空表示没有修改
+        if(!string.IsNullOrEmpty(newPicPath))
+        {
+            _chartService.SetChartPic(_currentSelectedChartId, newPicPath);
+        }
+        if(!string.IsNullOrEmpty(newSongPath))
+        {
+            _chartService.SetChartSong(_currentSelectedChartId, newSongPath);
+        }
+        
+
+        RefreshChartList();
+        _infoPanel.Visible = false;
+    }
+
     public void OnDeleteButtonPressed()
     {
         if (!string.IsNullOrEmpty(_currentSelectedChartId))
         {
-            //_deletePanel.SetChartId(_currentSelectedChartId);
+            //获取谱面信息ChartInfo
+            ChartInfo chartInfo = _chartService.GetChartInfo(_currentSelectedChartId);
+            if(chartInfo == null)
+            {
+                GD.PrintErr($"{this.Name} OnDeleteButtonPressed() chartInfo == null");
+                return;
+            }
+
+            //显示删除面板
             _deletePanel.Visible = true;
+            _deletePanel.SetInfo(chartInfo);
+            
         }
     }
 
@@ -80,5 +138,32 @@ public partial class StartMenu : Node
         _chartService.DeleteChart(chartId);
         RefreshChartList();
         _deletePanel.Visible = false;
+    }
+
+    public void OnExportPressed()
+    {
+        if (!string.IsNullOrEmpty(_currentSelectedChartId))
+        {
+            //获取谱面信息ChartInfo
+            ChartInfo chartInfo = _chartService.GetChartInfo(_currentSelectedChartId);
+            if(chartInfo == null)
+            {
+                GD.PrintErr($"[{this.Name}] OnExportPressed() chartInfo == null");
+                return;
+            }
+            //显示基本信息面板
+            _exportPanel.Visible = true;
+            _exportPanel.SetInfo(chartInfo);
+
+        }
+    }
+
+    private void OnExportConfirmed(string chartId)
+    {
+        GD.Print($"[{this.Name}] OnExportConfirmed(), chartID:{chartId}");
+
+        _chartService.ExportChart(chartId);
+
+        _exportPanel.Visible = false;
     }
 }

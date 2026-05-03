@@ -22,4 +22,5 @@ public partial class ChartInfo : GodotObject
     public string SongPath => Path.Combine(FolderPath, SongFileName);
     public string PicturePath => Path.Combine(FolderPath, PictureFileName);
     public string ChartPath => Path.Combine(FolderPath, ChartFileName);
+
 }

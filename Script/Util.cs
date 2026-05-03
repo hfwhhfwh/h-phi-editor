@@ -313,6 +313,50 @@ public static class Util
 		}
 	}
 
+	/// <summary>
+	/// 递归删除目录
+	/// </summary>
+	/// <param name="path">要删除的目录</param>
+	public static void DeleteDirectoryRecursive(string path)
+    {
+        // 打开目录
+        using var dir = DirAccess.Open(path);
+        if (dir == null)
+        {
+            GD.PrintErr($"无法打开目录: {path}");
+            return;
+        }
+
+        // 遍历目录内容
+        dir.ListDirBegin();  // 开始列出目录
+        string fileName = dir.GetNext();
+        while (!string.IsNullOrEmpty(fileName))
+        {
+            if (fileName == "." || fileName == "..")  // 跳过特殊目录
+            {
+                fileName = dir.GetNext();
+                continue;
+            }
+
+            string fullPath = path + "/" + fileName;
+            if (dir.CurrentIsDir())
+            {
+                // 递归删除子目录
+                DeleteDirectoryRecursive(fullPath);
+            }
+            else
+            {
+                // 删除文件
+                DirAccess.RemoveAbsolute(fullPath);  // 静态方法删除文件
+            }
+            fileName = dir.GetNext();
+        }
+        dir.ListDirEnd();  // 结束列出目录
+
+        // 删除当前空目录
+        DirAccess.RemoveAbsolute(path);
+    }
+
 	public static float GetMusicDuration(string path)
 	{
 		// 尝试加载指定路径的音频流资源
@@ -330,4 +374,87 @@ public static class Util
 		return (float)audioStream.GetLength();
 	}
 
+	/// <summary>
+    /// 将多个文件打包进一个 ZIP 压缩包。
+    /// </summary>
+    /// <param name="filePaths">需要打包的文件路径列表（支持 user:// 或绝对路径）</param>
+    /// <param name="zipPath">生成的 ZIP 文件的路径</param>
+    /// <returns>如果成功返回 true，否则返回 false。</returns>
+    public static bool CreateZip(List<string> filePaths, string zipPath)
+    {
+        // 使用 using 确保 ZipPacker 正确释放资源
+        using var packer = new ZipPacker();
+
+        // 1. 打开或创建 ZIP 文件
+        // APPEND_CREATE 表示创建一个新的压缩包
+        var err = packer.Open(zipPath, ZipPacker.ZipAppend.Create);
+        if (err != Error.Ok)
+        {
+            GD.PrintErr($"无法创建 ZIP 文件 '{zipPath}'，错误代码: {err}");
+            return false;
+        }
+
+        // 2. 逐个将文件添加到压缩包
+        foreach (var filePath in filePaths)
+        {
+            // 检查源文件是否存在
+            if (!Godot.FileAccess.FileExists(filePath))
+            {
+                GD.PrintErr($"错误：文件未找到，已跳过 '{filePath}'");
+                continue;
+            }
+
+            // 2.1. 读取整个文件内容
+            byte[] fileData;
+            try
+            {
+                fileData = Godot.FileAccess.GetFileAsBytes(filePath);
+            }
+            catch (Exception e)
+            {
+                GD.PrintErr($"读取文件 '{filePath}' 时出错: {e.Message}");
+                continue;
+            }
+
+            // 2.2. 生成在压缩包内的存储路径
+            // 使用文件名作为存储路径，如需保留目录结构可修改此逻辑
+            var targetPath = Path.GetFileName(filePath);
+
+            // 2.3. 开始写入文件
+            // 可在此处指定压缩级别，ZipPacker.CompressionLevel
+            err = packer.StartFile(targetPath);
+            if (err != Error.Ok)
+            {
+                GD.PrintErr($"无法在压缩包中开始写入文件 '{targetPath}'，错误代码: {err}");
+                continue;
+            }
+
+            // 2.4. 写入文件数据
+            err = packer.WriteFile(fileData);
+            if (err != Error.Ok)
+            {
+                GD.PrintErr($"写入文件数据 '{targetPath}' 时出错，错误代码: {err}");
+            }
+
+            // 2.5. 关闭当前文件（必须配对调用）
+            err = packer.CloseFile();
+            if (err != Error.Ok)
+            {
+                GD.PrintErr($"关闭文件 '{targetPath}' 时出错，错误代码: {err}");
+            }
+        }
+
+        // 3. 关闭并最终化 ZIP 文件
+        err = packer.Close();
+        if (err != Error.Ok)
+        {
+            GD.PrintErr($"最终化 ZIP 文件 '{zipPath}' 时出错，错误代码: {err}");
+        	return false;
+        }
+		
+		GD.Print($"成功创建 ZIP 文件: '{zipPath}'");
+        return true;
+
+        
+    }
 }
