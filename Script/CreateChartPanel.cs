@@ -15,6 +15,7 @@ public partial class CreateChartPanel : PanelContainer
 
     // 输入字段
     [Export] private LineEdit _nameEdit, _musicPathEdit, _picPathEdit, _bpmEdit, _composerEdit, _charterEdit;
+    [Export] private TextureRect _picTextureRect;
 
     public override void _Ready()
     {
@@ -49,6 +50,13 @@ public partial class CreateChartPanel : PanelContainer
             (path) =>
             {
                 _picPathEdit.Text = path;
+                //显示曲绘
+                Image textureImage = Image.LoadFromFile(path);
+                if(textureImage == null)
+                {
+                    GD.PrintErr($"[ExportPanel] SetInfo() textureImage == null picturePath:{path}");
+                }
+                _picTextureRect.Texture = ImageTexture.CreateFromImage(textureImage);
             },
             filters
         );

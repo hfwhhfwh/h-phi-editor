@@ -1,4 +1,5 @@
 using Godot;
+using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -165,5 +166,13 @@ public partial class StartMenu : Node
         _chartService.ExportChart(chartId);
 
         _exportPanel.Visible = false;
+    }
+
+    //打开谱面，进入编辑界面
+    public void OnOpenPressed()
+    {
+        var global = GetNode<Global>("/root/Global");
+        global.editingChartId = _currentSelectedChartId;
+        global.GotoScene("res://Scene/editor_scene.tscn");
     }
 }

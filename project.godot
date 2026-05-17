@@ -19,11 +19,13 @@ config/icon="res://icon.svg"
 
 ChartLoader="*uid://hs6uvyfkqhd0"
 EffectsManager="*uid://bt0xu7q8i6b0m"
-ZipExtractor="*uid://d01nq7b48ibqo"
+ZipExtractor="uid://d01nq7b48ibqo"
 ImageBlur="*uid://q6jaa43qjmt8"
 FileDialogManager="*uid://7dks72m4nja7"
 ChartService="*uid://dcb40ki6g4ka8"
 ChartRepository="*uid://dgrw8ly3bw4br"
+InputManager="*uid://sroqxnij5j65"
+Global="*uid://rfaccn3y6mc0"
 
 [display]
 

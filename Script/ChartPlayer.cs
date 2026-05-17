@@ -20,30 +20,22 @@ public partial class ChartPlayer : Node
     public List<JudgeLineNode> judgeLines = new(); // 动态创建的判定线节点
 
     #region 纹理贴图
-    [Export]
-    public Texture2D tapTexture;
-    [Export]
-    public Texture2D dragTexture;
-    [Export]
-    public Texture2D flickTexture;
-    [Export]
-    public Texture2D holdHeadTexture;
-    [Export]
-    public Texture2D holdBodyTexture;
-    [Export]
-    public Texture2D holdEndTexture;
-    [Export]
-    public Texture2D lineTexture;
+    [ExportGroup("纹理贴图")]
+    [Export] public Texture2D tapTexture;
+    [Export] public Texture2D dragTexture;
+    [Export] public Texture2D flickTexture;
+    [Export] public Texture2D holdHeadTexture;
+    [Export] public Texture2D holdBodyTexture;
+    [Export] public Texture2D holdEndTexture;
+    [Export] public Texture2D lineTexture;
 
     #endregion
 
     #region 打击音效
-    [Export]
-    public AudioStream tapSound;
-    [Export]
-    public AudioStream dragSound;
-    [Export]
-    public AudioStream flickSound;
+    [ExportGroup("打击音效")]
+    [Export] public AudioStream tapSound;
+    [Export] public AudioStream dragSound;
+    [Export] public AudioStream flickSound;
     #endregion
 
     private AudioStreamPlayer audioStreamPlayer;

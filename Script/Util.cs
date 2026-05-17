@@ -1,4 +1,5 @@
 using Godot;
+using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -456,5 +457,54 @@ public static class Util
         return true;
 
         
+    }
+
+
+    /// <summary>
+    /// 时间转换：将Beat（int[]）转换为秒
+    /// </summary>
+    /// <param name="beat">当前节拍数</param>
+    /// <param name="BpmList">谱面的所有bpm事件</param>
+    /// <returns></returns>
+    public static float BeatToSeconds(int[] beat, BpmEvent[] BpmList)
+    {
+        if (BpmList == null || BpmList.Length == 0)
+            return 0;
+
+        // 将Beat转为以拍为单位的总拍数： beat[0] + beat[1]/beat[2]
+        float totalBeats = beat[0] + (float)beat[1] / beat[2];
+
+        // 找到当前Beat所在的BPM段并累积时间
+        float elapsedSeconds = 0;
+        float lastBpmBeat = 0; // 上一个BPM事件的总拍数
+        float currentBpm = BpmList[0].Bpm; // 默认第一个BPM
+
+        for (int i = 0; i < BpmList.Length; i++)
+        {
+            var bpmEvent = BpmList[i];
+            float eventBeat = bpmEvent.StartTime[0] + (float)bpmEvent.StartTime[1] / bpmEvent.StartTime[2];
+
+            if (totalBeats >= eventBeat)
+            {
+                // 累加从上一个BPM点到这个BPM点的时间
+                if (i > 0)
+                {
+                    float beatDiff = eventBeat - lastBpmBeat;
+                    elapsedSeconds += beatDiff * 60f / (float)currentBpm;
+                }
+                lastBpmBeat = eventBeat;
+                currentBpm = (float)bpmEvent.Bpm;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        // 加上从最后一个BPM点到目标Beat的时间
+        float remainingBeats = totalBeats - lastBpmBeat;
+        elapsedSeconds += remainingBeats * 60f / currentBpm;
+
+        return elapsedSeconds;
     }
 }

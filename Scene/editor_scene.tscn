@@ -1,8 +1,24 @@
 [gd_scene format=3 uid="uid://dcefdc3pkxlp7"]
 
 [ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_7k27q"]
+[ext_resource type="Script" uid="uid://db0kx1087xbqx" path="res://Script/EditorScene.cs" id="1_hg1x2"]
+[ext_resource type="PackedScene" uid="uid://6ls0iiql2pg" path="res://Scene/virtual_joystick.tscn" id="3_fkvcd"]
+[ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/NoteEditPanel.cs" id="3_gwldl"]
+[ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
+[ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
+[ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
+[ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="8_63sjd"]
+[ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="9_gi1tw"]
+[ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="10_4d80g"]
+[ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="11_khybl"]
+[ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EventEditPanel.cs" id="12_qdb1r"]
 
-[node name="EditorScene" type="Node" unique_id=506389422]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel")]
+script = ExtResource("1_hg1x2")
+slideJoystick = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
+zoomJoystick = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
+noteEditPanel = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/NoteEditPanel")
+eventEditPanel = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/EventEditPanel")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=302158127]
 anchors_preset = 15
@@ -24,8 +40,12 @@ layout_mode = 2
 [node name="Head" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=1776463630]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
+theme_override_constants/separation = 10
 
-[node name="Button" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=893630758]
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=664845459]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=893630758]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_7k27q")
@@ -35,7 +55,7 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "···"
 
-[node name="Button2" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=1449821637]
+[node name="Button2" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1449821637]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_7k27q")
@@ -45,7 +65,7 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "撤销"
 
-[node name="Button3" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=1466604910]
+[node name="Button3" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1466604910]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_7k27q")
@@ -55,15 +75,86 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "重做"
 
+[node name="TabBar" type="TabBar" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=683599118]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button4" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/TabBar" unique_id=126831193]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 55.0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "Tab1"
+
 [node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=1705874636]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Panel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=596767182]
+[node name="VBoxContainerLeft" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=2085138348]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+
+[node name="SlideJoystick" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1523606408 instance=ExtResource("3_fkvcd")]
+custom_minimum_size = Vector2(60, 120)
+layout_mode = 2
+MaxRadius = 40.0
+joystickDir = 2
+
+[node name="ZoomJoystick" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=701843517 instance=ExtResource("3_fkvcd")]
+custom_minimum_size = Vector2(60, 120)
+layout_mode = 2
+MaxRadius = 40.0
+joystickDir = 2
+
+[node name="MainPanel" type="PanelContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1107667210]
+[node name="SplitContainer" type="SplitContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]
+layout_mode = 2
+touch_dragger_enabled = true
+
+[node name="NoteEditPanel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer" unique_id=2038816721]
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3_gwldl")
+horMargin = 20.0
+verLineCount = 21
+verMargin = 40.0
+horColor = Color(1, 0, 0, 0.6862745)
+verColor = Color(0, 1, 0, 0.5882353)
+horSubColor = Color(1, 1, 0, 0.5882353)
+tapTexture = ExtResource("5_57v2d")
+dragTexture = ExtResource("6_qdb1r")
+flickTexture = ExtResource("7_wq0mf")
+holdHeadTexture = ExtResource("8_63sjd")
+holdBodyTexture = ExtResource("9_gi1tw")
+holdEndTexture = ExtResource("10_4d80g")
+lineTexture = ExtResource("11_khybl")
+
+[node name="EventEditPanel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer" unique_id=825080562]
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("12_qdb1r")
+horMargin = 20.0
+verMargin = 40.0
+horColor = Color(1, 0, 0, 0.6862745)
+verColor = Color(0, 1, 0, 0.5882353)
+horSubColor = Color(1, 1, 0, 0.5882353)
+
+[node name="VBoxContainerRight" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1107667210]
 custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+
+[node name="Panel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight" unique_id=1578863463]
 layout_mode = 2
