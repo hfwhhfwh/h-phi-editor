@@ -4,8 +4,7 @@ using System;
 public partial class EffectsManager : Node
 {
     // SpriteFrames 资源
-    [Export]
-    private SpriteFrames hitFrames;
+    [Export] private SpriteFrames hitFrames;
 
     public override void _Ready()
     {

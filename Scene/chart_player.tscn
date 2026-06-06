@@ -13,7 +13,16 @@
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="8_r3ety"]
 [ext_resource type="Texture2D" uid="uid://dj8vku32rrsg0" path="res://9091515374590503.jpg" id="13_bwpqn"]
 
-[node name="ChartPlayer" type="Node" unique_id=2117456343]
+[node name="ChartPlayer" type="Control" unique_id=319689835]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("1_n2rrn")
 tapTexture = ExtResource("2_ginqo")
 dragTexture = ExtResource("3_5x5lu")
@@ -31,21 +40,19 @@ zipLoadPath = "user://Snow Desert.zip"
 visible = false
 modulate = Color(0.34901962, 0.34901962, 0.34901962, 1)
 z_index = -999
-anchors_preset = -1
-anchor_left = -0.5
-anchor_top = -0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 texture = ExtResource("13_bwpqn")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=1284033826]
-
 [node name="FPSLabel" type="Label" parent="." unique_id=93534669]
-offset_left = -663.0
-offset_top = -437.0
-offset_right = -623.0
-offset_bottom = -414.0
+layout_mode = 0
 theme_override_font_sizes/font_size = 32
 text = "FPS:"

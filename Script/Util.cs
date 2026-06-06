@@ -3,6 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 
 public static class Util
@@ -466,7 +467,7 @@ public static class Util
     /// <param name="beat">当前节拍数</param>
     /// <param name="BpmList">谱面的所有bpm事件</param>
     /// <returns></returns>
-    public static float BeatToSeconds(int[] beat, BpmEvent[] BpmList)
+    public static float BeatToSecond(int[] beat, BpmEvent[] BpmList)
     {
         if (BpmList == null || BpmList.Length == 0)
             return 0;
@@ -507,4 +508,146 @@ public static class Util
 
         return elapsedSeconds;
     }
+
+    /// <summary>
+    /// 时间转换：将Beat（int[]）转换为秒
+    /// </summary>
+    /// <param name="beatValue">当前节拍数</param>
+    /// <param name="BpmList">谱面的所有bpm事件</param>
+    /// <returns></returns>
+    public static float BeatToSecond(float beatValue, BpmEvent[] BpmList)
+    {
+        // 找到当前Beat所在的BPM段并累积时间
+        float elapsedSeconds = 0;
+        float lastBpmBeat = 0; // 上一个BPM事件的总拍数
+        float currentBpm = BpmList[0].Bpm; // 默认第一个BPM
+
+        for (int i = 0; i < BpmList.Length; i++)
+        {
+            var bpmEvent = BpmList[i];
+            float eventBeat = bpmEvent.StartTime[0] + (float)bpmEvent.StartTime[1] / bpmEvent.StartTime[2];
+
+            if (beatValue >= eventBeat)
+            {
+                // 累加从上一个BPM点到这个BPM点的时间
+                if (i > 0)
+                {
+                    float beatDiff = eventBeat - lastBpmBeat;
+                    elapsedSeconds += beatDiff * 60f / (float)currentBpm;
+                }
+                lastBpmBeat = eventBeat;
+                currentBpm = (float)bpmEvent.Bpm;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        // 加上从最后一个BPM点到目标Beat的时间
+        float remainingBeats = beatValue - lastBpmBeat;
+        elapsedSeconds += remainingBeats * 60f / currentBpm;
+
+        return elapsedSeconds;
+    }
+
+    /// <summary>
+    /// 时间转换：将秒转换为Beat
+    /// </summary>
+    /// <param name="secondValue">当前秒数</param>
+    /// <param name="BpmList">谱面的所有bpm事件</param>
+    /// <returns>对应的节拍数</returns>
+    public static float SecondToBeat(float secondValue, BpmEvent[] BpmList)
+    {
+        // 处理空列表或无效输入
+        if (BpmList == null || BpmList.Length == 0 || secondValue < 0)
+        {
+            GD.PrintErr($"[Util] SecondToBeat() 输入不合法");
+            return 0f;
+        }
+
+        // 辅助函数：计算事件的绝对节拍（与BeatToSecond中的计算方式一致）
+        float GetEventBeat(BpmEvent e) => e.StartTime[0] + (float)e.StartTime[1] / e.StartTime[2];
+
+        // 累积已处理的时间（秒）
+        float elapsedSeconds = 0f;
+        // 当前BPM段的起始节拍
+        float currentBeat = GetEventBeat(BpmList[0]);
+
+        // 遍历BPM段（除最后一个事件外，每个段由当前事件到下一个事件构成）
+        for (int i = 0; i < BpmList.Length - 1; i++)
+        {
+            BpmEvent curEvent = BpmList[i];
+            BpmEvent nextEvent = BpmList[i + 1];
+
+            float startBeat = GetEventBeat(curEvent);
+            float endBeat = GetEventBeat(nextEvent);
+            float bpm = (float)curEvent.Bpm;
+
+            // 当前段的节拍跨度
+            float beatDiff = endBeat - startBeat;
+            // 当前段的持续时间（秒）
+            float segmentSeconds = beatDiff * 60f / bpm;
+
+            if (secondValue <= elapsedSeconds + segmentSeconds)
+            {
+                // 目标秒数落在当前段内
+                float offsetSeconds = secondValue - elapsedSeconds;
+                float offsetBeats = offsetSeconds * bpm / 60f;
+                return startBeat + offsetBeats;
+            }
+
+            // 否则，累加时间并移动到下一段的起始节拍
+            elapsedSeconds += segmentSeconds;
+            currentBeat = endBeat;
+        }
+
+        // 处理最后一个BPM段（从最后一个事件到无限远）
+        BpmEvent lastEvent = BpmList[BpmList.Length - 1];
+        float lastBeat = GetEventBeat(lastEvent);
+        float lastBpm = (float)lastEvent.Bpm;
+        float remainingSeconds = secondValue - elapsedSeconds;
+        float remainingBeats = remainingSeconds * lastBpm / 60f;
+        return lastBeat + remainingBeats;
+    }
+
+    /// <summary>
+    /// 将谱面坐标映射到Container的坐标
+    /// </summary>
+    /// <param name="pos">谱面坐标</param>
+    /// <param name="containerSize">Container大小</param>
+    /// <returns></returns>
+    public static Vector2 ChartPosToViewportPos(Vector2 pos, Vector2 containerSize)
+    {
+        //获取屏幕大小
+        // Vector2 viewportSize = GetViewport().GetVisibleRect().Size;
+        // //[-675,675] -> [0,X]
+        // float newX = (viewportSize.X/1350f) * pos.X + (viewportSize.X/2f);
+        // //[-450,450] -> [Y,0]
+        // float newY = (-viewportSize.Y / 900f) * pos.Y + (viewportSize.Y/2f);
+        
+        //根据容器大小调整
+        float ratioX = (pos.X + 675f) / 1350f;
+        float newX = ratioX * containerSize.X;
+
+        float ratioY = (pos.Y + 450f) / 900f;
+        float newY = (1 - ratioY) * containerSize.Y;
+
+        return new Vector2(newX,newY);
+    }
+
+    /// <summary>
+    /// 将note在谱面中相对于判定线的坐标映射到Godot中相对于判定线的的坐标
+    /// </summary>
+    /// <param name="pos">note在谱面中相对于判定线的坐标</param>
+    /// <param name="containerSize">Container大小</param>
+    /// <returns>Godot中相对于判定线的的坐标</returns>
+    public static Vector2 ChartPosToLocalPos(Vector2 pos, Vector2 containerSize)
+    {
+        float localY = -pos.Y * (containerSize.Y / 900f);
+        float localX = pos.X * (containerSize.X / 1350f);
+
+        return new Vector2(localX, localY);
+    }
+
 }

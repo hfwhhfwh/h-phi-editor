@@ -13,10 +13,13 @@ public enum NoteType
     Flick=3,
     Hold=2
 }
-public partial class ChartPlayer : Node
+public partial class ChartPlayer : Control
 {
-    private double time = 0;                // 当前游戏时间（秒）
-    private Chart chart;                    // 加载的谱面数据
+    public double time = 0;                // 当前游戏时间（秒）
+    public Chart chart;                    // 加载的谱面数据，由上级设置
+    public Image bgImage;                //背景图片，由上级设置
+    public AudioStream audioStream;       //音乐，由上级设置
+
     public List<JudgeLineNode> judgeLines = new(); // 动态创建的判定线节点
 
     #region 纹理贴图
@@ -36,14 +39,14 @@ public partial class ChartPlayer : Node
     [Export] public AudioStream tapSound;
     [Export] public AudioStream dragSound;
     [Export] public AudioStream flickSound;
+
+    [ExportGroup("")]
     #endregion
 
-    private AudioStreamPlayer audioStreamPlayer;
+    [Export] private SpriteFrames hitFrames; // 打击特效
+
+    public AudioStreamPlayer audioStreamPlayer;
     private int chartOffset;  // 谱面偏移（以毫秒计量）
-    [Export]
-    private string zipLoadPath; // zip格式谱面文件的路径
-    [Export]
-    private float musicStartPosition;
 
     private string extractPath = "user://ChartImport"; // 谱面文件解压目录
 
@@ -52,150 +55,102 @@ public partial class ChartPlayer : Node
 
     private Label fpsLabel;
 
-    // 时间转换：将Beat（int[]）转换为秒
+    //将Beat（int[]）转换为秒
     public float BeatToSeconds(int[] beat)
     {
-        if (chart?.BpmList == null || chart.BpmList.Length == 0)
-            return 0;
-
-        // 将Beat转为以拍为单位的总拍数： beat[0] + beat[1]/beat[2]
-        float totalBeats = beat[0] + (float)beat[1] / beat[2];
-
-        // 找到当前Beat所在的BPM段并累积时间
-        float elapsedSeconds = 0;
-        float lastBpmBeat = 0; // 上一个BPM事件的总拍数
-        float currentBpm = chart.BpmList[0].Bpm; // 默认第一个BPM
-
-        for (int i = 0; i < chart.BpmList.Length; i++)
-        {
-            var bpmEvent = chart.BpmList[i];
-            float eventBeat = bpmEvent.StartTime[0] + (float)bpmEvent.StartTime[1] / bpmEvent.StartTime[2];
-
-            if (totalBeats >= eventBeat)
-            {
-                // 累加从上一个BPM点到这个BPM点的时间
-                if (i > 0)
-                {
-                    float beatDiff = eventBeat - lastBpmBeat;
-                    elapsedSeconds += beatDiff * 60f / (float)currentBpm;
-                }
-                lastBpmBeat = eventBeat;
-                currentBpm = (float)bpmEvent.Bpm;
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        // 加上从最后一个BPM点到目标Beat的时间
-        float remainingBeats = totalBeats - lastBpmBeat;
-        elapsedSeconds += remainingBeats * 60f / currentBpm;
-
-        return elapsedSeconds;
+        return Util.BeatToSecond(beat, chart?.BpmList);
     }
 
     /// <summary>
-    /// 在指定目录下查找第一个 .json 文件（用于定位谱面文件）
+    /// 在指定位置创建一个打击特效
     /// </summary>
-    private string FindFirstJsonFile(string directory)
+    public void CreateHitEffect(Vector2 position)
     {
-        var dir = DirAccess.Open(directory);
-        if (dir == null) return null;
-
-        dir.ListDirBegin();
-        string fileName = dir.GetNext();
-        while (!string.IsNullOrEmpty(fileName))
+        // 创建 AnimatedSprite2D 节点
+        var animatedSprite = new AnimatedSprite2D
         {
-            if (!dir.CurrentIsDir() && fileName.EndsWith(".json"))
+            SpriteFrames = hitFrames,
+            Position = position,
+            Modulate = new Color
             {
-                return Path.Combine(directory, fileName);
+                R8 = 237,
+                G8 = 236,
+                B8 = 176,
+                A8 = 255
             }
-            fileName = dir.GetNext();
-        }
-        return null;
+        };
+
+        // 播放默认动画
+        animatedSprite.Play();
+        
+        // 连接动画结束信号，播放完后自动销毁
+        animatedSprite.AnimationFinished += () => animatedSprite.QueueFree();
+        
+        // 将特效添加到当前场景（或指定的特效容器节点）
+        AddChild(animatedSprite);
     }
+
+    // /// <summary>
+    // /// 在指定目录下查找第一个 .json 文件（用于定位谱面文件）
+    // /// </summary>
+    // private string FindFirstJsonFile(string directory)
+    // {
+    //     var dir = DirAccess.Open(directory);
+    //     if (dir == null) return null;
+
+    //     dir.ListDirBegin();
+    //     string fileName = dir.GetNext();
+    //     while (!string.IsNullOrEmpty(fileName))
+    //     {
+    //         if (!dir.CurrentIsDir() && fileName.EndsWith(".json"))
+    //         {
+    //             return Path.Combine(directory, fileName);
+    //         }
+    //         fileName = dir.GetNext();
+    //     }
+    //     return null;
+    // }
     public override void _Ready()
     {
-        base._Ready();
         effectsManager = GetNode<EffectsManager>("/root/EffectsManager");
         zipExtractor = GetNode<ZipExtractor>("/root/ZipExtractor");
         fpsLabel = GetNode<Label>("FPSLabel");
+    }
 
-        //解压谱面压缩包
-        zipExtractor.UnzipFileTo(zipLoadPath, extractPath);
-
-        // 1.加载谱面（使用之前写好的静态方法）
-        string chartFilePath = FindFirstJsonFile(extractPath);
-        if (chartFilePath == null)
-        {
-            GD.PrintErr("解压目录中未找到 JSON 谱面文件");
-            return;
-        }
-        chart = ChartLoader.LoadChart(chartFilePath);
-
-        if (chart == null)
-        {
-            GD.PrintErr("谱面导入失败");
-            return;
-        }
-        GD.Print("谱面导入成功，总时长: ", chart.Meta?.Duration, "秒");
-
-        // 2.加载背景图片
-        Image bgImage = Image.LoadFromFile(Path.Combine(extractPath, chart.Meta.Background));
-        if (bgImage == null)
-        {
-            GD.PrintErr("背景图片导入失败");
-            return;
-        }
-        //TODO 图片模糊效果
-        Image blurred = bgImage;
-        
-        //创建TextureRect节点
+    public void Initialize()
+    {
+        // 1.加载背景图片
         TextureRect bgNode = new TextureRect
         {
-            Texture = ImageTexture.CreateFromImage(blurred),
+            Texture = ImageTexture.CreateFromImage(bgImage),
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
-            AnchorLeft = -0.5f, AnchorRight = 0.5f, AnchorTop = -0.5f, AnchorBottom = 0.5f,
+            //AnchorLeft = -0.5f, AnchorRight = 0.5f, AnchorTop = -0.5f, AnchorBottom = 0.5f,
             Modulate = new Color(0.3f, 0.3f, 0.3f, 1f),
             ZIndex = -999
         };
+        bgNode.SetAnchorsPreset(LayoutPreset.FullRect);
         AddChild(bgNode);
 
-        // 3.加载info.txt
-
-        // 4. 加载音乐
+        // 2. 加载音乐
         audioStreamPlayer = new AudioStreamPlayer();
-        string songPath = extractPath.TrimEnd('/') + "/" + chart.Meta.Song;
-
-        if (!Godot.FileAccess.FileExists(songPath))
-        {
-            GD.PrintErr($"音乐文件不存在: {songPath}");
-            return;
-        }
-
-        // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
-        audioStreamPlayer.Stream = AudioStreamMP3.LoadFromFile(songPath);
+        audioStreamPlayer.Stream = audioStream;
         if (audioStreamPlayer.Stream == null)
         {
-            GD.PrintErr($"音乐文件加载失败: {songPath}");
+            GD.PrintErr($"[{this.Name}] 音乐文件加载失败");
             return;
         }
 
         AddChild(audioStreamPlayer);
-        GD.Print($"音乐文件加载成功: {songPath}");
         //设置音乐偏移
         chartOffset = (int)chart.Meta.Offset;
-        
 
         // 创建所有判定线节点
         CreateJudgeLines();
-
+        
         //播放音乐
-        audioStreamPlayer.Play(musicStartPosition);
-        GD.Print($"audioStreamPlayer Play({musicStartPosition})");
-
+        //audioStreamPlayer.Play(musicStartPosition);
+        //GD.Print($"audioStreamPlayer Play({musicStartPosition})");
     }
 
     private void CreateJudgeLines()
@@ -336,16 +291,18 @@ public partial class JudgeLineNode : Node2D
                 G8 = 236,
                 B8 = 176,
                 A8 = Mathf.RoundToInt(_currentAlpha)
-            }
+            },
+            TextureFilter = TextureFilterEnum.Nearest
         };
         AddChild(spriteNode);
 
         //添加label节点，用于显示判定线编号
         Label labelNode = new Label();
         labelNode.Text = $"{index}";
-        labelNode.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
+        labelNode.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
         labelNode.HorizontalAlignment = HorizontalAlignment.Center;
-        labelNode.Position = new Vector2(0,-30);
+        labelNode.AddThemeFontSizeOverride("font_size", 24);
+        //labelNode.Position = new Vector2(0,-30);
         AddChild(labelNode);
     }
 
@@ -428,7 +385,7 @@ public partial class JudgeLineNode : Node2D
 
 
         // 应用变换
-        Position = ChartPosToViewportPos(new Vector2(_currentMoveX, _currentMoveY));
+        Position = Util.ChartPosToViewportPos(new Vector2(_currentMoveX, _currentMoveY), _chartPlayer.Size);
         Rotation = Mathf.DegToRad(_currentRotate); // 事件值是角度
 
         //调整颜色和透明度
@@ -635,22 +592,7 @@ public partial class JudgeLineNode : Node2D
     {
         return x1 + (x2-x1) * CutInterpolate(t, easingType, left, right);
     }
-
-    // 坐标映射
-    public Vector2 ChartPosToViewportPos(Vector2 pos)
-    {
-        //获取屏幕大小
-        // Vector2 viewportSize = GetViewport().GetVisibleRect().Size;
-        // //[-675,675] -> [0,X]
-        // float newX = (viewportSize.X/1350f) * pos.X + (viewportSize.X/2f);
-        // //[-450,450] -> [Y,0]
-        // float newY = (-viewportSize.Y / 900f) * pos.Y + (viewportSize.Y/2f);
-
-        float newX = pos.X;
-        float newY = -pos.Y;
-
-        return new Vector2(newX,newY);
-    }
+    
 
     /// <summary>
     /// 通用事件插值（用于float类型的事件，如moveX, alpha等）
@@ -681,6 +623,11 @@ public partial class JudgeLineNode : Node2D
             }
             else if (time < startSec)
             {
+                // if (i == 0)
+                // {
+                //     //GD.PrintErr($"[{this.Name}] InterpolateEvent i==0 \n startSec:{startSec}, endSec:{endSec}, time:{time}");
+                //     return 0;
+                // }
                 // 在当前事件之前，返回上一个事件的结束值
                 return (float)events[i-1].End;
             }
@@ -736,23 +683,6 @@ public partial class NoteNode : Node2D
     private bool _hasPlayedHitSound = false;//用于标记是否已播放过音效
 
     protected Vector2 localChartPos = new Vector2(); // 在铺面坐标系下的本地坐标
-
-
-    // 辅助方法：坐标映射
-    public Vector2 ChartPosToViewportPos(Vector2 pos)
-    {
-        //获取屏幕大小
-        // Vector2 viewportSize = GetViewport().GetVisibleRect().Size;
-        // //[-675,675] -> [0,X]
-        // float newX = (viewportSize.X/1350f) * pos.X + (viewportSize.X/2f);
-        // //[-450,450] -> [Y,0]
-        // float newY = (-viewportSize.Y / 900f) * pos.Y + (viewportSize.Y/2f);
-
-        float newX = pos.X;
-        float newY = -pos.Y;
-
-        return new Vector2(newX,newY);
-    }
     
 
     public void SetData(Note data, JudgeLineNode line, ChartPlayer player, Texture2D texture, AudioStream sound, int index)
@@ -938,14 +868,18 @@ public partial class NoteNode : Node2D
             if (gameTime >= hitTime && !_hasPlayedHitSound)
             {
                 // 播放音效并生成打击特效
-                if (audioStreamPlayer != null && audioStreamPlayer.Stream != null)
+                if (audioStreamPlayer == null || audioStreamPlayer.Stream == null)
                 {
-                    audioStreamPlayer.Play();
-                    // GD.Print($"[{Name}] 播放了音效 gameTime:{gameTime}");
-                    //显示打击特效，此时不能用ChartPosToViewportPos(localChartPos)，应该用世界坐标
-                    Vector2 globalChartPos = localChartPos + new Vector2(fatherLine._currentMoveX, fatherLine._currentMoveY);
-                    _chartPlayer.effectsManager.CreateHitEffect(ChartPosToViewportPos(globalChartPos));
+                    GD.PrintErr($"[{this.Name}] 无法播放打击音效");
                 }
+                
+                audioStreamPlayer.Play();
+                // GD.Print($"[{Name}] 播放了音效 gameTime:{gameTime}");
+                //显示打击特效，此时不能用ChartPosToViewportPos(localChartPos)，应该用世界坐标
+                Vector2 globalChartPos = localChartPos + new Vector2(fatherLine._currentMoveX, fatherLine._currentMoveY);
+                Vector2 hitViewportPos = Util.ChartPosToViewportPos(globalChartPos, _chartPlayer.Size);
+                _chartPlayer.CreateHitEffect(hitViewportPos);
+                
                 _hasPlayedHitSound = true;
             }
             else if (gameTime < hitTime)
@@ -978,7 +912,10 @@ public partial class NoteNode : Node2D
             localChartPos = new Vector2(localChartX,localChartY);
 
             //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-            Vector2 viewportPos = ChartPosToViewportPos(localChartPos);
+            //Vector2 viewportPos = Util.ChartPosToViewportPos(localChartPos, _chartPlayer.Size);
+
+            //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为相对于判定线的坐标系
+            Vector2 viewportPos = Util.ChartPosToLocalPos(localChartPos, _chartPlayer.Size);
             
             //设定位置
             this.Position = viewportPos;
@@ -1046,48 +983,6 @@ public partial class HoldNoteNode : NoteNode
         float endSec = _chartPlayer.BeatToSeconds(_data.EndTime);
 
         //计算end位置，可以视为在endTime的音符
-        // {
-        //     //第一阶段：head到达之前，localPosition保持变不变
-        //     if(gameTime <= startSec)
-        //     {
-        //         // s = vt
-        //         float s = speed * (endSec - startSec);
-        //         endLocalChartPos = new Vector2(0,s);
-        //         _endSprite.Position = ChartPosToViewportPos(new Vector2(0,s));
-        //     }
-        //     //第二阶段：hold正在缩小，localPosition不断减小至y=0
-        //     else if(gameTime > startSec && gameTime < endSec)
-        //     {
-        //         // s = vt
-        //         float s = (float)(speed * (endSec - gameTime));
-        //         endLocalChartPos = new Vector2(0,s);
-        //         _endSprite.Position = ChartPosToViewportPos(new Vector2(0,s));
-
-        //     }
-        //     //第三阶段：hold结束，隐藏自己
-        //     //由于父类设置了隐藏，所以这里不需要进行任何操作
-        // }
-
-        // {
-        //     float localChartX, localChartY;
-        //     localChartX = _data.PositionX; 
-
-        //     //全部位移
-        //     float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
-        //     //note已经移动的位移
-        //     float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
-        //     localChartY = Math.Max(0, allDisplacement - nowDisplacement);
-
-        //     endLocalChartPos = new Vector2(localChartX,localChartY);
-
-        //     //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-        //     Vector2 viewportPos = ChartPosToViewportPos(localChartPos);
-
-        //     //设定位置
-        //     _endSprite.Position = viewportPos;
-
-        // }
-
         {
             //第一阶段：head到达之前，localPosition保持变不变
             if(gameTime <= startSec)
@@ -1095,7 +990,7 @@ public partial class HoldNoteNode : NoteNode
                 float startSpeed = 120f*GetSpeed(fatherLine._data.EventLayers[0].SpeedEvents, startSec); // head落在判定线上时的速度
                 float s = (float)(startSpeed * (endSec - startSec));
                 endLocalChartPos = new Vector2(0,s);
-                _endSprite.Position = ChartPosToViewportPos(endLocalChartPos);
+                _endSprite.Position = Util.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Size);
 
                 
             }
@@ -1112,7 +1007,7 @@ public partial class HoldNoteNode : NoteNode
                 endLocalChartPos = new Vector2(0,localChartY);
 
                 //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-                Vector2 viewportPos = ChartPosToViewportPos(endLocalChartPos);
+                Vector2 viewportPos = Util.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Size);
 
                 //设定位置
                 _endSprite.Position = viewportPos;
@@ -1130,7 +1025,7 @@ public partial class HoldNoteNode : NoteNode
             Vector2 bodyLocalChartPos = endLocalChartPos / 2;
 
             //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-            Vector2 viewportPos = ChartPosToViewportPos(bodyLocalChartPos);
+            Vector2 viewportPos = Util.ChartPosToLocalPos(bodyLocalChartPos, _chartPlayer.Size);
             
             //设定body位置
             _bodySprite.Position = viewportPos;

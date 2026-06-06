@@ -38,10 +38,6 @@ public partial class NoteEditPanel : Panel
 	public float horOffsetSmoothed; // 用于使竖直滚动更平滑
 	public float horSeparationSmoothed; // 用于使竖直缩放更平滑
 
-	//虚拟摇杆，由上级设置
-	public VirtualJoystick slideJoystick;
-	public VirtualJoystick zoomJoystick;
-
 	public Chart editingChart; //正在编辑的铺面，由上级设置
 	private int editingLineId; // 正在编辑的线号
 

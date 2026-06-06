@@ -2,24 +2,22 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bs6cfa5ijqqd7"
-path.s3tc="res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.s3tc.ctex"
-path.etc2="res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.etc2.ctex"
+uid="uid://dwe0fgofaghae"
+path="res://.godot/imported/EventHold.png-bf563605511fd2895a904041c2d63132.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://Sprite/line.png"
-dest_files=["res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.s3tc.ctex", "res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.etc2.ctex"]
+source_file="res://Sprite/EventHold.png"
+dest_files=["res://.godot/imported/EventHold.png-bf563605511fd2895a904041c2d63132.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
-compress/lossy_quality=0.0
+compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
@@ -39,4 +37,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

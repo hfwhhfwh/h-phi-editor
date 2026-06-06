@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://6ls0iiql2pg" path="res://Scene/virtual_joystick.tscn" id="3_fkvcd"]
 [ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/NoteEditPanel.cs" id="3_gwldl"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
+[ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="5_gi1tw"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
 [ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="8_63sjd"]
@@ -12,40 +13,44 @@
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="10_4d80g"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="11_khybl"]
 [ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EventEditPanel.cs" id="12_qdb1r"]
+[ext_resource type="Texture2D" uid="uid://dwe0fgofaghae" path="res://Sprite/EventHold.png" id="13_wq0mf"]
+[ext_resource type="PackedScene" uid="uid://bk6vwgye804o1" path="res://Scene/chart_player.tscn" id="14_63sjd"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel")]
 script = ExtResource("1_hg1x2")
-slideJoystick = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
-zoomJoystick = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
-noteEditPanel = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/NoteEditPanel")
-eventEditPanel = NodePath("PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/EventEditPanel")
+slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
+zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
+noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/NoteEditPanel")
+eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/EventEditPanel")
+chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer")
+editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer")
 
-[node name="PanelContainer" type="PanelContainer" parent="." unique_id=302158127]
+[node name="EditorPanel" type="PanelContainer" parent="." unique_id=302158127]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SafeArea" type="MarginContainer" parent="PanelContainer" unique_id=1705167012]
+[node name="SafeArea" type="MarginContainer" parent="EditorPanel" unique_id=1705167012]
 layout_mode = 2
 theme_override_constants/margin_left = 53
 theme_override_constants/margin_top = 26
 theme_override_constants/margin_right = 35
 theme_override_constants/margin_bottom = 26
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/SafeArea" unique_id=385956420]
+[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea" unique_id=385956420]
 layout_mode = 2
 
-[node name="Head" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=1776463630]
+[node name="Head" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer" unique_id=1776463630]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=664845459]
+[node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Head" unique_id=664845459]
 layout_mode = 2
 
-[node name="Button" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=893630758]
+[node name="Button" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=893630758]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_7k27q")
@@ -55,7 +60,7 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "···"
 
-[node name="Button2" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1449821637]
+[node name="Button2" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1449821637]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_7k27q")
@@ -65,7 +70,7 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "撤销"
 
-[node name="Button3" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1466604910]
+[node name="Button3" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1466604910]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = ExtResource("1_7k27q")
@@ -75,11 +80,11 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "重做"
 
-[node name="TabBar" type="TabBar" parent="PanelContainer/SafeArea/VBoxContainer/Head" unique_id=683599118]
+[node name="TabBar" type="TabBar" parent="EditorPanel/SafeArea/VBoxContainer/Head" unique_id=683599118]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Button4" type="Button" parent="PanelContainer/SafeArea/VBoxContainer/Head/TabBar" unique_id=126831193]
+[node name="Button4" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/TabBar" unique_id=126831193]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
@@ -93,36 +98,67 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "Tab1"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer" unique_id=1705874636]
+[node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer" unique_id=1705874636]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="VBoxContainerLeft" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=2085138348]
+[node name="VBoxContainerLeft" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=2085138348]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 
-[node name="SlideJoystick" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1523606408 instance=ExtResource("3_fkvcd")]
+[node name="SlideJoystick" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1523606408 instance=ExtResource("3_fkvcd")]
 custom_minimum_size = Vector2(60, 120)
 layout_mode = 2
 MaxRadius = 40.0
 joystickDir = 2
 
-[node name="ZoomJoystick" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=701843517 instance=ExtResource("3_fkvcd")]
+[node name="ZoomJoystick" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=701843517 instance=ExtResource("3_fkvcd")]
 custom_minimum_size = Vector2(60, 120)
 layout_mode = 2
 MaxRadius = 40.0
 joystickDir = 2
 
-[node name="MainPanel" type="PanelContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
+[node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SplitContainer" type="SplitContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]
+[node name="ChartPlayer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=319689835 instance=ExtResource("14_63sjd")]
+visible = false
+clip_contents = true
+layout_mode = 2
+hitFrames = ExtResource("5_gi1tw")
+
+[node name="Line" type="Node2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer" unique_id=1761626531]
+visible = false
+position = Vector2(500, 300)
+
+[node name="Sprite2D" type="Sprite2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer/Line" unique_id=1798313127]
+modulate = Color(0.92941177, 0.9254902, 0.6901961, 1)
+texture_filter = 1
+scale = Vector2(1, 25.53)
+texture = ExtResource("11_khybl")
+
+[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer/Line" unique_id=1274027285]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -9.5
+offset_top = -23.0
+offset_right = 9.5
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "99"
+horizontal_alignment = 1
+
+[node name="SplitContainer" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]
 layout_mode = 2
 touch_dragger_enabled = true
 
-[node name="NoteEditPanel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer" unique_id=2038816721]
+[node name="NoteEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer" unique_id=2038816721]
 clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -141,7 +177,7 @@ holdBodyTexture = ExtResource("9_gi1tw")
 holdEndTexture = ExtResource("10_4d80g")
 lineTexture = ExtResource("11_khybl")
 
-[node name="EventEditPanel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer" unique_id=825080562]
+[node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer" unique_id=825080562]
 clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -151,10 +187,53 @@ verMargin = 40.0
 horColor = Color(1, 0, 0, 0.6862745)
 verColor = Color(0, 1, 0, 0.5882353)
 horSubColor = Color(1, 1, 0, 0.5882353)
+eventHoldTexture = ExtResource("13_wq0mf")
 
-[node name="VBoxContainerRight" type="VBoxContainer" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer" unique_id=1107667210]
+[node name="VBoxContainerRight" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1107667210]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 
-[node name="Panel" type="Panel" parent="PanelContainer/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight" unique_id=1578863463]
+[node name="Main" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight" unique_id=1379480145]
 layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight/Main" unique_id=418662244]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight/Main/VBoxContainer" unique_id=745194988]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "线"
+
+[node name="Button2" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight/Main/VBoxContainer" unique_id=1043166350]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "事
+件
+层"
+
+[node name="Button3" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight/Main/VBoxContainer" unique_id=901016877]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "▶"
+
+[connection signal="button_down" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight/Main/VBoxContainer/Button3" to="." method="OnPlayButtonDown"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerRight/Main/VBoxContainer/Button3" to="." method="OnPlayButtonUp"]
