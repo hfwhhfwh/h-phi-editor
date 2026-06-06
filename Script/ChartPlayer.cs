@@ -50,8 +50,9 @@ public partial class ChartPlayer : Control
 
     private string extractPath = "user://ChartImport"; // 谱面文件解压目录
 
-    public EffectsManager effectsManager;
-    public ZipExtractor zipExtractor;
+    // 对象池
+    private List<AnimatedSprite2D> hitEffectPool = new List<AnimatedSprite2D>();
+    private int poolInitSize = 50; // 初始池大小，可根据最大同时击中数调整
 
     private Label fpsLabel;
 
@@ -61,16 +62,22 @@ public partial class ChartPlayer : Control
         return Util.BeatToSecond(beat, chart?.BpmList);
     }
 
-    /// <summary>
-    /// 在指定位置创建一个打击特效
-    /// </summary>
-    public void CreateHitEffect(Vector2 position)
+    private void InitHitEffectPool()
     {
-        // 创建 AnimatedSprite2D 节点
-        var animatedSprite = new AnimatedSprite2D
+        for (int i = 0; i < poolInitSize; i++)
+        {
+            var fx = CreateNewHitEffectInstance();
+            fx.Visible = false;          // 初始不可见，并且从场景树移除
+            hitEffectPool.Add(fx);
+        }
+    }
+
+    // 创建一个全新的特效实例（只做创建和基础设置）
+    private AnimatedSprite2D CreateNewHitEffectInstance()
+    {
+        var fx = new AnimatedSprite2D
         {
             SpriteFrames = hitFrames,
-            Position = position,
             Modulate = new Color
             {
                 R8 = 237,
@@ -79,15 +86,77 @@ public partial class ChartPlayer : Control
                 A8 = 255
             }
         };
+        // 连接信号：播放完后自动回收
+        fx.AnimationFinished += () => OnHitEffectFinished(fx);
+        return fx;
+    }
 
-        // 播放默认动画
-        animatedSprite.Play();
+    private AnimatedSprite2D GetHitEffectFromPool()
+    {
+        AnimatedSprite2D fx;
+        if (hitEffectPool.Count > 0)
+        {
+            // 取最后一个（O(1)）
+            fx = hitEffectPool[hitEffectPool.Count - 1];
+            hitEffectPool.RemoveAt(hitEffectPool.Count - 1);
+        }
+        else
+        {
+            // 池空时动态扩容
+            fx = CreateNewHitEffectInstance();
+        }
+        return fx;
+    }
+
+    private void OnHitEffectFinished(AnimatedSprite2D fx)
+    {
+        // 从场景树移除（如果还在）
+        if (fx.GetParent() != null)
+            RemoveChild(fx);
         
-        // 连接动画结束信号，播放完后自动销毁
-        animatedSprite.AnimationFinished += () => animatedSprite.QueueFree();
+        // 重置状态
+        fx.Visible = false;
+        fx.Position = Vector2.Zero;
+        fx.Stop();            // 停止动画播放
+        fx.Frame = 0;         // 重置到第一帧（视情况需要）
         
-        // 将特效添加到当前场景（或指定的特效容器节点）
-        AddChild(animatedSprite);
+        // 放回池中
+        hitEffectPool.Add(fx);
+    }
+
+    /// <summary>
+    /// 在指定位置创建一个打击特效
+    /// </summary>
+    public void CreateHitEffect(Vector2 position)
+    {
+        // // 创建 AnimatedSprite2D 节点
+        // var animatedSprite = new AnimatedSprite2D
+        // {
+        //     SpriteFrames = hitFrames,
+        //     Position = position,
+        //     Modulate = new Color
+        //     {
+        //         R8 = 237,
+        //         G8 = 236,
+        //         B8 = 176,
+        //         A8 = 255
+        //     }
+        // };
+
+        // // 播放默认动画
+        // animatedSprite.Play();
+        
+        // // 连接动画结束信号，播放完后自动销毁
+        // animatedSprite.AnimationFinished += () => animatedSprite.QueueFree();
+        
+        // // 将特效添加到当前场景（或指定的特效容器节点）
+        // AddChild(animatedSprite);
+
+        var fx = GetHitEffectFromPool();
+        fx.Position = position;
+        fx.Visible = true;
+        AddChild(fx);        // 挂到当前场景
+        fx.Play();           // 播放动画
     }
 
     // /// <summary>
@@ -112,9 +181,10 @@ public partial class ChartPlayer : Control
     // }
     public override void _Ready()
     {
-        effectsManager = GetNode<EffectsManager>("/root/EffectsManager");
-        zipExtractor = GetNode<ZipExtractor>("/root/ZipExtractor");
         fpsLabel = GetNode<Label>("FPSLabel");
+
+        //初始化对象池
+        InitHitEffectPool();
     }
 
     public void Initialize()
@@ -147,11 +217,16 @@ public partial class ChartPlayer : Control
 
         // 创建所有判定线节点
         CreateJudgeLines();
+
+        //计算所有事件时间的秒数
+        Util.RefreshEventSec(chart);
         
         //播放音乐
         //audioStreamPlayer.Play(musicStartPosition);
         //GD.Print($"audioStreamPlayer Play({musicStartPosition})");
     }
+
+    
 
     private void CreateJudgeLines()
     {
@@ -173,7 +248,6 @@ public partial class ChartPlayer : Control
     public override void _Process(double delta)
     {
         if (chart == null) return;
-
 
         // 获取音乐当前播放位置（秒）
         double musicTime = audioStreamPlayer.GetPlaybackPosition();
@@ -609,8 +683,8 @@ public partial class JudgeLineNode : Node2D
         for (int i = 0; i < events.Length; i++)
         {
             LineEvent ev = events[i];
-            float startSec = _chartPlayer.BeatToSeconds(ev.StartTime);
-            float endSec = _chartPlayer.BeatToSeconds(ev.EndTime);
+            float startSec = ev._startSec;
+            float endSec = ev._endSec;
 
             if (time >= startSec && time <= endSec)
             {
@@ -647,8 +721,8 @@ public partial class JudgeLineNode : Node2D
         for (int i = 0; i < events.Length; i++)
         {
             var ev = events[i];
-            float startSec = _chartPlayer.BeatToSeconds(ev.StartTime);
-            float endSec = _chartPlayer.BeatToSeconds(ev.EndTime);
+            float startSec = ev._startSec;
+            float endSec = ev._endSec;
 
             if (targetSec >= startSec && targetSec <= endSec)
             {
@@ -728,8 +802,8 @@ public partial class NoteNode : Node2D
 
             float start = ev.Start;
             float end = ev.End;
-            float startSec = _chartPlayer.BeatToSeconds(ev.StartTime);
-            float endSec = _chartPlayer.BeatToSeconds(ev.EndTime);
+            float startSec = ev._startSec;
+            float endSec = ev._endSec;
 
             // 如果time已经在这个事件之后
             if(time > endSec)
@@ -755,7 +829,7 @@ public partial class NoteNode : Node2D
             //同时也要处理与下一个速度事件之间的部分
             if(i < events.Length - 1) // 如果这不是最后一个事件
             {
-                float nextStartSec = _chartPlayer.BeatToSeconds(events[i+1].StartTime);
+                float nextStartSec = events[i+1]._startSec;
                 //如果time正在这个间隔中
                 if(time >= endSec && time <= nextStartSec)
                 {
@@ -792,8 +866,8 @@ public partial class NoteNode : Node2D
 
             float start = ev.Start;
             float end = ev.End;
-            float startSec = _chartPlayer.BeatToSeconds(ev.StartTime);
-            float endSec = _chartPlayer.BeatToSeconds(ev.EndTime);
+            float startSec = ev._startSec;
+            float endSec = ev._endSec;
 
             // 如果time正在这个事件中
             if(time >= startSec && time <= endSec)
@@ -806,7 +880,7 @@ public partial class NoteNode : Node2D
             //同时也要处理与下一个速度事件之间的部分
             if(i < events.Length - 1) // 如果这不是最后一个事件
             {
-                float nextStartSec = _chartPlayer.BeatToSeconds(events[i+1].StartTime);
+                float nextStartSec = events[i+1]._startSec;
                 //如果time正在这个间隔中
                 if(time >= endSec && time <= nextStartSec)
                 {

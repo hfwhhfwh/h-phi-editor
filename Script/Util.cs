@@ -3,6 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 
@@ -648,6 +649,75 @@ public static class Util
         float localX = pos.X * (containerSize.X / 1350f);
 
         return new Vector2(localX, localY);
+    }
+
+    /// <summary>
+    /// 设置事件的开始时间
+    /// </summary>
+    /// <param name="ev">事件</param>
+    /// <param name="newStartTime">新的开始时间</param>
+    /// <param name="bpmList">BPM事件列表</param>
+    public static void SetStartTime(LineEvent ev, int[] newStartTime, BpmEvent[] bpmList)
+    {
+        ev.StartTime = newStartTime;
+        ev._startSec = Util.BeatToSecond(newStartTime, bpmList);
+    }
+
+    /// <summary>
+    /// 设置事件的结束时间
+    /// </summary>
+    /// <param name="ev">事件</param>
+    /// <param name="newEndTime">新的结束时间</param>
+    /// <param name="bpmList">BPM事件列表</param>
+    public static void SetEndTime(LineEvent ev, int[] newEndTime, BpmEvent[] bpmList)
+    {
+        ev.EndTime = newEndTime;
+        ev._endSec = Util.BeatToSecond(newEndTime, bpmList);
+    }
+
+    /// <summary>
+    /// 根据事件的StartTime和EndTime，重新计算所有事件的StartSec和EndSec
+    /// </summary>
+    public static void RefreshEventSec(Chart chart)
+    {
+        BpmEvent[] bpmList = chart.BpmList;
+
+        foreach(JudgeLine line in chart.JudgeLineList)
+        {
+            foreach(EventLayer layer in line.EventLayers)
+            {
+                //1. MoveXEvent
+                foreach(LineEvent lineEvent in layer.MoveXEvents)
+                {
+                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                }
+                //2. MoveYEvents
+                foreach(LineEvent lineEvent in layer.MoveYEvents)
+                {
+                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                }
+                //3. RotateEvents
+                foreach(LineEvent lineEvent in layer.RotateEvents)
+                {
+                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                }
+                //4. AlphaEvents
+                foreach(LineEvent lineEvent in layer.AlphaEvents)
+                {
+                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                }
+                //5. SpeedEvents
+                foreach(SpeedEvent speedEvent in layer.SpeedEvents)
+                {
+                    speedEvent._startSec = Util.BeatToSecond(speedEvent.StartTime, bpmList);
+                    speedEvent._endSec = Util.BeatToSecond(speedEvent.EndTime, bpmList);
+                }
+            }
+        }
     }
 
 }

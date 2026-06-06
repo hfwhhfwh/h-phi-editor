@@ -534,4 +534,16 @@ namespace QuickType
 
     //     public static readonly TextureConverter Singleton = new TextureConverter();
     // }
+
+    public partial class LineEvent
+    {
+        [JsonIgnore] public float _startSec;
+        [JsonIgnore] public float _endSec;
+    }
+
+    public partial class SpeedEvent
+    {
+        [JsonIgnore] public float _startSec;
+        [JsonIgnore] public float _endSec;
+    }
 }
