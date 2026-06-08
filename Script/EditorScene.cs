@@ -19,6 +19,7 @@ public partial class EditorScene : Node
     [Export] private EventEditPanel eventEditPanel;
     [Export] private ChartPlayer chartPlayer;
     [Export] private Control editPanel;
+    [Export] private RightPanel rightPanel;
 
     private string editingChartId; // 正在编辑的铺面的ID
     private Chart editingChart; // 正在编辑的铺面
@@ -33,7 +34,7 @@ public partial class EditorScene : Node
 	private float horSeparationSmoothed; // 用于使竖直缩放更平滑
 
     private bool isPlaying; // 是否正在播放铺面
-    private float chartTime; // 谱面当前时间
+    private double chartTime; // 谱面当前时间
 
     public float BeatValue
     {
@@ -48,7 +49,7 @@ public partial class EditorScene : Node
         }
     }
 
-    public float ChartTime
+    public double ChartTime
     {
         get
         {
@@ -57,7 +58,7 @@ public partial class EditorScene : Node
         set
         {
             chartTime = value;
-            horBeatOffset = Util.SecondToBeat(chartTime, editingChart.BpmList);
+            horBeatOffset = Util.SecondToBeat((float)chartTime, editingChart.BpmList);
             horOffset = horBeatOffset * horSeparation;
         }
     }
@@ -128,13 +129,20 @@ public partial class EditorScene : Node
 
         //3. 设置音乐
         // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
-        AudioStream audioStream = AudioStreamMP3.LoadFromFile(chartInfo.SongPath);
+        AudioStream audioStream = Util.LoadAudioFromFile(chartInfo.SongPath);
         if (audioStream == null)
         {
             GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
             return;
         }
         chartPlayer.audioStream = audioStream;
+        // AudioStream audioStream = AudioStreamMP3.LoadFromFile(chartInfo.SongPath);
+        // if (audioStream == null)
+        // {
+        //     GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
+        //     return;
+        // }
+        // chartPlayer.audioStream = audioStream;
 
         chartPlayer.Initialize();
         chartPlayer.Visible = false;
@@ -145,6 +153,18 @@ public partial class EditorScene : Node
     public override void _Process(double delta)
     {
         GD.Print($"ChartTime:{ChartTime}, BeatValue:{BeatValue}, horOffset:{horOffset}");
+        
+        if (isPlaying)
+        {
+            //正在播放时，时间轴由音乐决定
+            ChartTime = chartPlayer.chartTime;
+        }
+        else
+        {
+            //否则，时间轴由编辑器面板决定
+            chartPlayer.externalTime = chartTime;
+        }
+
         //处理摇杆垂直滚动
 		if(slideJoystick.Output != Vector2.Zero)
 		{
@@ -191,7 +211,8 @@ public partial class EditorScene : Node
         eventEditPanel.QueueRedraw();
     }
 
-    public void OnPlayButtonDown()
+    
+    public void OnPlayButtonUp()
     {
         if (!isPlaying)
         {
@@ -199,8 +220,14 @@ public partial class EditorScene : Node
             editPanel.Visible = false;
 
             //启动chartplayer的播放
-            chartPlayer.audioStreamPlayer.Play(ChartTime);
+            chartPlayer.audioStreamPlayer.Play((float)ChartTime);
+            chartPlayer.isPlaying = true;
+
+            //更新右侧面板
+            rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Playing);
+
             isPlaying = true;
+            
         }
         else
         {
@@ -208,17 +235,27 @@ public partial class EditorScene : Node
             editPanel.Visible = true;
 
             chartPlayer.audioStreamPlayer.Stop();
+            chartPlayer.isPlaying = false;
+
+            //更新右侧面板
+            rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+
             isPlaying = false;
         }
     }
-    
-    public void OnPlayButtonUp()
-    {
-        // chartPlayer.Visible = false;
-        // editPanel.Visible = true;
 
-        // chartPlayer.audioStreamPlayer.Stop();
-        // isPlaying = false;
+    public void OnStopButtonUp()
+    {
+        chartPlayer.Visible = false;
+        editPanel.Visible = true;
+
+        chartPlayer.audioStreamPlayer.Stop();
+        chartPlayer.isPlaying = false;
+
+        //更新右侧面板
+        rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+
+        isPlaying = false;
     }
 
 }

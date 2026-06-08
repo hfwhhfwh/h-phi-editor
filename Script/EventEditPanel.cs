@@ -104,7 +104,7 @@ public partial class EventEditPanel : Panel
 		LineEvent[] moveYEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].MoveYEvents;
 		LineEvent[] rotateEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].RotateEvents;
 		LineEvent[] alphaEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].AlphaEvents;
-		SpeedEvent[] speedEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].SpeedEvents;
+		LineEvent[] speedEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].SpeedEvents;
 		
 		// 计算事件的总数量
 		int totalEventCount = 0;

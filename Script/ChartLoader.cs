@@ -255,7 +255,7 @@ namespace QuickType
         public LineEvent[] RotateEvents { get; set; }
 
         [JsonProperty("speedEvents", NullValueHandling = NullValueHandling.Ignore)]
-        public SpeedEvent[] SpeedEvents { get; set; }
+        public LineEvent[] SpeedEvents { get; set; }
     }
 
     public partial class LineEvent
@@ -537,13 +537,19 @@ namespace QuickType
 
     public partial class LineEvent
     {
-        [JsonIgnore] public float _startSec;
-        [JsonIgnore] public float _endSec;
+        [JsonIgnore] public float startSec;
+        [JsonIgnore] public float endSec;
     }
 
     public partial class SpeedEvent
     {
-        [JsonIgnore] public float _startSec;
-        [JsonIgnore] public float _endSec;
+        [JsonIgnore] public float startSec;
+        [JsonIgnore] public float endSec;
+    }
+
+    public partial class Note
+    {
+        [JsonIgnore] public float startSec;
+        [JsonIgnore] public float endSec;
     }
 }

@@ -657,10 +657,10 @@ public static class Util
     /// <param name="ev">事件</param>
     /// <param name="newStartTime">新的开始时间</param>
     /// <param name="bpmList">BPM事件列表</param>
-    public static void SetStartTime(LineEvent ev, int[] newStartTime, BpmEvent[] bpmList)
+    public static void SetEventStartTime(LineEvent ev, int[] newStartTime, BpmEvent[] bpmList)
     {
         ev.StartTime = newStartTime;
-        ev._startSec = Util.BeatToSecond(newStartTime, bpmList);
+        ev.startSec = Util.BeatToSecond(newStartTime, bpmList);
     }
 
     /// <summary>
@@ -669,10 +669,46 @@ public static class Util
     /// <param name="ev">事件</param>
     /// <param name="newEndTime">新的结束时间</param>
     /// <param name="bpmList">BPM事件列表</param>
-    public static void SetEndTime(LineEvent ev, int[] newEndTime, BpmEvent[] bpmList)
+    public static void SetEventEndTime(LineEvent ev, int[] newEndTime, BpmEvent[] bpmList)
     {
         ev.EndTime = newEndTime;
-        ev._endSec = Util.BeatToSecond(newEndTime, bpmList);
+        ev.endSec = Util.BeatToSecond(newEndTime, bpmList);
+    }
+
+    public static void SetNoteStartTime(Note note, int[] newStartTime, BpmEvent[] bpmList)
+    {
+        note.StartTime = newStartTime;
+        note.startSec = Util.BeatToSecond(newStartTime, bpmList);
+        //防止StartTime在EndTime后面
+        if(note.startSec > note.endSec)
+        {
+            note.EndTime = note.StartTime;
+            note.endSec = note.startSec;
+        }
+        //如果是tap flick drag, StartTime和EndTime必须相同
+        if(note.Type == 1 || note.Type == 3 || note.Type == 4)
+        {
+            note.EndTime = note.StartTime;
+            note.endSec = note.startSec;
+        }
+    }
+
+    public static void SetNoteEndTime(Note note, int[] newEndTime, BpmEvent[] bpmList)
+    {
+        note.EndTime = newEndTime;
+        note.endSec = Util.BeatToSecond(newEndTime, bpmList);
+        //防止StartTime在EndTime后面
+        if(note.startSec > note.endSec)
+        {
+            note.StartTime = note.EndTime;
+            note.startSec = note.endSec;
+        }
+        //如果是tap flick drag, StartTime和EndTime必须相同
+        if(note.Type == 1 || note.Type == 3 || note.Type == 4)
+        {
+            note.StartTime = note.EndTime;
+            note.startSec = note.endSec;
+        }
     }
 
     /// <summary>
@@ -689,34 +725,104 @@ public static class Util
                 //1. MoveXEvent
                 foreach(LineEvent lineEvent in layer.MoveXEvents)
                 {
-                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
-                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                    lineEvent.startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent.endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
                 }
                 //2. MoveYEvents
                 foreach(LineEvent lineEvent in layer.MoveYEvents)
                 {
-                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
-                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                    lineEvent.startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent.endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
                 }
                 //3. RotateEvents
                 foreach(LineEvent lineEvent in layer.RotateEvents)
                 {
-                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
-                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                    lineEvent.startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent.endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
                 }
                 //4. AlphaEvents
                 foreach(LineEvent lineEvent in layer.AlphaEvents)
                 {
-                    lineEvent._startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
-                    lineEvent._endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                    lineEvent.startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                    lineEvent.endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
                 }
                 //5. SpeedEvents
-                foreach(SpeedEvent speedEvent in layer.SpeedEvents)
+                if(layer.SpeedEvents != null)
                 {
-                    speedEvent._startSec = Util.BeatToSecond(speedEvent.StartTime, bpmList);
-                    speedEvent._endSec = Util.BeatToSecond(speedEvent.EndTime, bpmList);
+                    foreach(LineEvent lineEvent in layer.SpeedEvents)
+                    {
+                        lineEvent.startSec = Util.BeatToSecond(lineEvent.StartTime, bpmList);
+                        lineEvent.endSec = Util.BeatToSecond(lineEvent.EndTime, bpmList);
+                    }
+                }
+                
+            }
+        }
+    }
+
+    public static void RefreshNoteSec(Chart chart)
+    {
+        BpmEvent[] bpmList = chart.BpmList;
+
+        foreach(JudgeLine line in chart.JudgeLineList)
+        {
+            if(line.Notes == null) continue;
+            foreach(Note note in line.Notes)
+            {
+                if(note.Type == 2)
+                {
+                    note.startSec = Util.BeatToSecond(note.StartTime, bpmList);
+                    note.endSec = Util.BeatToSecond(note.EndTime, bpmList);
+                }
+                else
+                {
+                    note.startSec = Util.BeatToSecond(note.StartTime, bpmList);
+                    note.endSec = note.startSec;
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// 根据文件扩展名，动态加载不同格式的音频文件。
+    /// </summary>
+    /// <param name="path">音频文件的路径</param>
+    /// <returns>加载成功的 AudioStream 对象，失败时返回 null</returns>
+    public static AudioStream LoadAudioFromFile(string path)
+    {
+        if (!Godot.FileAccess.FileExists(path))
+        {
+            GD.PrintErr($"[Util] 音频文件不存在: {path}");
+            return null;
+        }
+
+        string extension = Path.GetExtension(path).ToLowerInvariant();
+
+        switch (extension)
+        {
+            case ".mp3":
+                using (var file = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read))
+                {
+                    byte[] data = file.GetBuffer((long)file.GetLength());
+                    var mp3Stream = new AudioStreamMP3 { Data = data };
+                    return mp3Stream;
+                }
+
+            case ".ogg":
+                var oggStream = AudioStreamOggVorbis.LoadFromFile(path);
+                if (oggStream == null)
+                    GD.PrintErr($"[Util] 加载 OGG 文件失败: {path}");
+                return oggStream;
+
+            case ".wav":
+                var wavStream = AudioStreamWav.LoadFromFile(path);
+                if (wavStream == null)
+                    GD.PrintErr($"[Util] 加载 WAV 文件失败: {path}");
+                return wavStream;
+
+            default:
+                GD.PrintErr($"[Util] 不支持的音频格式: {extension}");
+                return null;
         }
     }
 

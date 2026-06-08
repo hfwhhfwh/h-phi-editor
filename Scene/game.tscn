@@ -1,3 +1,65 @@
 [gd_scene format=3 uid="uid://dm0vdskpf7d4m"]
 
+[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_mhtsl"]
+
 [node name="Game" type="Node" unique_id=1522816178]
+
+[node name="Control" type="Panel" parent="." unique_id=1452053100]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 240.0
+offset_top = 103.0
+offset_right = -233.0
+offset_bottom = -84.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Control" unique_id=1312931336]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+scroll_deadzone = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control/ScrollContainer" unique_id=2095580550]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Panel" type="Panel" parent="Control/ScrollContainer/VBoxContainer" unique_id=394180340]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("1_mhtsl")
+
+[node name="Panel2" type="Panel" parent="Control/ScrollContainer/VBoxContainer" unique_id=621368684]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("1_mhtsl")
+
+[node name="Panel3" type="Panel" parent="Control/ScrollContainer/VBoxContainer" unique_id=1733150328]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("1_mhtsl")
+
+[node name="Panel4" type="Panel" parent="Control/ScrollContainer/VBoxContainer" unique_id=291502990]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("1_mhtsl")
+
+[node name="Panel5" type="Panel" parent="Control/ScrollContainer/VBoxContainer" unique_id=1612348568]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("1_mhtsl")
+
+[node name="Panel6" type="Panel" parent="Control/ScrollContainer/VBoxContainer" unique_id=631790360]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("1_mhtsl")
+
+[node name="Panel7" type="Panel" parent="Control/ScrollContainer/VBoxContainer" unique_id=320836138]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("1_mhtsl")

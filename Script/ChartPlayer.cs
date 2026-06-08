@@ -15,7 +15,10 @@ public enum NoteType
 }
 public partial class ChartPlayer : Control
 {
-    public double time = 0;                // 当前游戏时间（秒）
+    public double time = 0;                // 当前游戏时间（秒），由音乐播放控制
+    public double chartTime = 0;           // 当前谱面时间，应用了偏移
+    public double externalTime = 0;         //由外部设置的游戏时间（秒）
+    public bool isPlaying;                //是否正在播放，由上级设置
     public Chart chart;                    // 加载的谱面数据，由上级设置
     public Image bgImage;                //背景图片，由上级设置
     public AudioStream audioStream;       //音乐，由上级设置
@@ -84,7 +87,8 @@ public partial class ChartPlayer : Control
                 G8 = 236,
                 B8 = 176,
                 A8 = 255
-            }
+            },
+            ZIndex = 3
         };
         // 连接信号：播放完后自动回收
         fx.AnimationFinished += () => OnHitEffectFinished(fx);
@@ -220,13 +224,14 @@ public partial class ChartPlayer : Control
 
         //计算所有事件时间的秒数
         Util.RefreshEventSec(chart);
+        //计算所有note时间的秒数
+        Util.RefreshNoteSec(chart);
         
         //播放音乐
         //audioStreamPlayer.Play(musicStartPosition);
         //GD.Print($"audioStreamPlayer Play({musicStartPosition})");
     }
 
-    
 
     private void CreateJudgeLines()
     {
@@ -249,12 +254,20 @@ public partial class ChartPlayer : Control
     {
         if (chart == null) return;
 
-        // 获取音乐当前播放位置（秒）
-        double musicTime = audioStreamPlayer.GetPlaybackPosition();
-        // 应用偏移：谱面逻辑时间 = 音乐时间 - 偏移（偏移为正表示音乐滞后）
-        double chartTime = musicTime - chartOffset / 1000.0;
+        if (isPlaying)
+        {
+            // 获取音乐当前播放位置（秒）
+            double musicTime = audioStreamPlayer.GetPlaybackPosition();
+            // 应用偏移：谱面逻辑时间 = 音乐时间 - 偏移（偏移为正表示音乐滞后）
+            chartTime = musicTime - chartOffset / 1000.0;
 
-        time = musicTime;
+            time = musicTime;
+        }
+        else
+        {
+            chartTime = externalTime;
+        }
+        
 
         // 更新每条判定线及其上的音符
         foreach (var line in judgeLines)
@@ -266,11 +279,11 @@ public partial class ChartPlayer : Control
         fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
 
         // 可选的：谱面播放完毕检测
-        if (time >= chart.Meta?.Duration)
-        {
-            GD.Print("谱面播放结束");
-            // 可以停止处理或循环等
-        }
+        // if (time >= chart.Meta?.Duration)
+        // {
+        //     GD.Print("谱面播放结束");
+        //     // 可以停止处理或循环等
+        // }
     }
 
     // 辅助方法：从谱面根获取BPMList（供JudgeLineNode使用）
@@ -428,7 +441,7 @@ public partial class JudgeLineNode : Node2D
         _currentMoveY = InterpolateEvent(layer.MoveYEvents, gameTime, 0);
         _currentRotate = InterpolateEvent(layer.RotateEvents, gameTime, 0);
         _currentAlpha = InterpolateEvent(layer.AlphaEvents, gameTime, 255);
-        _currentSpeed = InterpolateEventSpeed(layer.SpeedEvents, gameTime, 10);
+        _currentSpeed = InterpolateEvent(layer.SpeedEvents, gameTime, 10);
 
         //处理父判定线  father为-1代表没有父线
         if(_data.Father != -1)
@@ -683,8 +696,8 @@ public partial class JudgeLineNode : Node2D
         for (int i = 0; i < events.Length; i++)
         {
             LineEvent ev = events[i];
-            float startSec = ev._startSec;
-            float endSec = ev._endSec;
+            float startSec = ev.startSec;
+            float endSec = ev.endSec;
 
             if (time >= startSec && time <= endSec)
             {
@@ -721,8 +734,8 @@ public partial class JudgeLineNode : Node2D
         for (int i = 0; i < events.Length; i++)
         {
             var ev = events[i];
-            float startSec = ev._startSec;
-            float endSec = ev._endSec;
+            float startSec = ev.startSec;
+            float endSec = ev.endSec;
 
             if (targetSec >= startSec && targetSec <= endSec)
             {
@@ -780,6 +793,9 @@ public partial class NoteNode : Node2D
         //holdHead和holdEnd的贴图需要设置offset，但不再这里设置，在HoldNoteNode类中设置
         AddChild(_sprite);
 
+        //hold需要显示在其他音符的下面
+        ZIndex = 1;
+
         //添加AudioStreamPlayer节点，用于播放音效
         audioStreamPlayer = new AudioStreamPlayer();
         audioStreamPlayer.Stream = sound;
@@ -792,27 +808,27 @@ public partial class NoteNode : Node2D
     /// <param name="events">速度事件</param>
     /// <param name="time">游戏时间</param>
     /// <returns></returns>
-    protected float IntegralSpeedEvent(SpeedEvent[] events, float time)
+    protected float IntegralSpeedEvent(LineEvent[] events, float time)
     {
         float totalX = 0; // Y轴上的总位移
         //遍历所有速度事件
         for (int i = 0; i < events.Length; i++)
         {
-            SpeedEvent ev = events[i];
+            LineEvent ev = events[i];
 
             float start = ev.Start;
             float end = ev.End;
-            float startSec = ev._startSec;
-            float endSec = ev._endSec;
+            float startSec = ev.startSec;
+            float endSec = ev.endSec;
 
             // 如果time已经在这个事件之后
-            if(time > endSec)
+            if(time >= endSec)
             {
                 totalX += 120f * (start + end) * (endSec - startSec) / 2f;
 
             }
             // 如果time正在这个事件中
-            else if(time >= startSec && time <= endSec)
+            else if(time >= startSec && time < endSec)
             {
                 float a = 120f * (end - start) / (endSec - startSec); // 加速度 a = △v/△t
                 float t = (float)(time - startSec); // 时间
@@ -829,15 +845,15 @@ public partial class NoteNode : Node2D
             //同时也要处理与下一个速度事件之间的部分
             if(i < events.Length - 1) // 如果这不是最后一个事件
             {
-                float nextStartSec = events[i+1]._startSec;
+                float nextStartSec = events[i+1].startSec;
                 //如果time正在这个间隔中
-                if(time >= endSec && time <= nextStartSec)
+                if(time >= endSec && time < nextStartSec)
                 {
                     totalX += 120f * (float)(end * (time - endSec));
                     break;
                 }
                 //如果time在这个间隔之后
-                else if(time > nextStartSec)
+                else if(time >= nextStartSec)
                 {
                     totalX += 120f * (float)(end * (nextStartSec - endSec));
                 }
@@ -857,20 +873,20 @@ public partial class NoteNode : Node2D
     /// <param name="events">速度事件</param>
     /// <param name="time">游戏时间</param>
     /// <returns></returns>
-    protected float GetSpeed(SpeedEvent[] events, float time)
+    protected float GetSpeed(LineEvent[] events, float time)
     {
         //遍历所有速度事件
         for (int i = 0; i < events.Length; i++)
         {
-            SpeedEvent ev = events[i];
+            LineEvent ev = events[i];
 
             float start = ev.Start;
             float end = ev.End;
-            float startSec = ev._startSec;
-            float endSec = ev._endSec;
+            float startSec = ev.startSec;
+            float endSec = ev.endSec;
 
             // 如果time正在这个事件中
-            if(time >= startSec && time <= endSec)
+            if(time >= startSec && time < endSec)
             {
                 float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
                 float t = (float)(time - startSec); // 时间
@@ -880,14 +896,14 @@ public partial class NoteNode : Node2D
             //同时也要处理与下一个速度事件之间的部分
             if(i < events.Length - 1) // 如果这不是最后一个事件
             {
-                float nextStartSec = events[i+1]._startSec;
+                float nextStartSec = events[i+1].startSec;
                 //如果time正在这个间隔中
-                if(time >= endSec && time <= nextStartSec)
+                if(time >= endSec && time < nextStartSec)
                 {
                     return end;
                 }
                 //如果time在这个间隔之后
-                else if(time > nextStartSec)
+                else if(time >= nextStartSec)
                 {
                     continue;//继续到下一个速度事件
                 }
@@ -907,8 +923,8 @@ public partial class NoteNode : Node2D
     {
         if (_data == null) return;
 
-        float noteStartSec = _chartPlayer.BeatToSeconds(_data.StartTime);
-        float noteEndSec = _data.EndTime != null ? _chartPlayer.BeatToSeconds(_data.EndTime) : noteStartSec;
+        float noteStartSec = _data.startSec;
+        float noteEndSec = _data.EndTime != null ? _data.endSec : noteStartSec;
 
         // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
 
@@ -919,6 +935,10 @@ public partial class NoteNode : Node2D
                 if(gameTime >= noteStartSec)
                 {
                     _sprite.Visible = false;
+                }
+                else
+                {
+                    _sprite.Visible = true;
                 }
             }
             float appearSec = noteStartSec - _data.VisibleTime; // 出现时刻
@@ -941,18 +961,26 @@ public partial class NoteNode : Node2D
             float hitTime = noteStartSec; // 头部到达判定线的时间
             if (gameTime >= hitTime && !_hasPlayedHitSound)
             {
-                // 播放音效并生成打击特效
-                if (audioStreamPlayer == null || audioStreamPlayer.Stream == null)
+                if (_chartPlayer.isPlaying) // 只有播放状态下显示特效，编辑器滚动时不显示
                 {
-                    GD.PrintErr($"[{this.Name}] 无法播放打击音效");
+                    // 播放音效并生成打击特效
+                    if (audioStreamPlayer == null || audioStreamPlayer.Stream == null)
+                    {
+                        GD.PrintErr($"[{this.Name}] 无法播放打击音效");
+                    }
+                    audioStreamPlayer.Play();
+
+                    //显示打击特效
+                    //理论上此时note应该在的位置，防止note速度过快导致的误差
+                    Vector2 calculatedLocalChartPos = new Vector2(_data.PositionX, 0);
+                    Vector2 globalChartPos = fatherLine.GetChildGlobalPosition(
+                        new Vector2(fatherLine._currentMoveX, fatherLine._currentMoveY),
+                        calculatedLocalChartPos,
+                        fatherLine._currentRotate
+                    );
+                    Vector2 hitViewportPos = Util.ChartPosToViewportPos(globalChartPos, _chartPlayer.Size);
+                    _chartPlayer.CreateHitEffect(hitViewportPos);
                 }
-                
-                audioStreamPlayer.Play();
-                // GD.Print($"[{Name}] 播放了音效 gameTime:{gameTime}");
-                //显示打击特效，此时不能用ChartPosToViewportPos(localChartPos)，应该用世界坐标
-                Vector2 globalChartPos = localChartPos + new Vector2(fatherLine._currentMoveX, fatherLine._currentMoveY);
-                Vector2 hitViewportPos = Util.ChartPosToViewportPos(globalChartPos, _chartPlayer.Size);
-                _chartPlayer.CreateHitEffect(hitViewportPos);
                 
                 _hasPlayedHitSound = true;
             }
@@ -961,11 +989,6 @@ public partial class NoteNode : Node2D
                 // 时间回退到击中点之前，重置标记，允许再次触发
                 _hasPlayedHitSound = false;
             }
-            //输出日志
-            // if(Name == "Note 0_0")
-            // {
-            //     GD.Print($"[{Name}] hitTime:{hitTime} gameTime:{gameTime} _hasPlayedHitSound:{_hasPlayedHitSound}");
-            // }
         }
 
         //计算note位置
@@ -982,6 +1005,12 @@ public partial class NoteNode : Node2D
             //note已经移动的位移
             float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
             localChartY = Math.Max(0, allDisplacement - nowDisplacement);
+
+            //音符翻转 1表示上面，0表示下面
+            if(_data.Above == 2)
+            {
+                localChartY = -localChartY;
+            }
 
             localChartPos = new Vector2(localChartX,localChartY);
 
@@ -1043,6 +1072,9 @@ public partial class HoldNoteNode : NoteNode
         //holdHead和holdEnd的贴图需要设置offset
         _sprite.Offset = new Vector2(0, _chartPlayer.holdHeadTexture.GetHeight() / 2f);//head
         _endSprite.Offset = new Vector2(0, -_chartPlayer.holdHeadTexture.GetHeight() / 2f);//end
+
+        //hold需要显示在其他音符的下面
+        ZIndex = 0;
     }
 
     public override void UpdateNote(double gameTime, JudgeLineNode fatherLine)
@@ -1065,7 +1097,6 @@ public partial class HoldNoteNode : NoteNode
                 float s = (float)(startSpeed * (endSec - startSec));
                 endLocalChartPos = new Vector2(0,s);
                 _endSprite.Position = Util.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Size);
-
                 
             }
             //第二阶段：hold正在缩小，localPosition不断减小至y=0

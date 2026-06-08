@@ -30,10 +30,15 @@ Global="*uid://rfaccn3y6mc0"
 
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/vsync/vsync_mode=0
 
 [dotnet]
 
 project/assembly_name="HPhiEditor"
+
+[gui]
+
+common/default_scroll_deadzone=5
 
 [physics]
 
