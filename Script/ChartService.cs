@@ -45,15 +45,15 @@ public partial class ChartService : Node
         //GD.Print($"data.Id:{data.Id}, Path.GetExtension(data.PicturePath):{Path.GetExtension(data.PicturePath)}, PictureFileName:{chartInfo.PictureFileName}");
 
         // 创建目录
-        Util.EnsureDirectoryExists(chartInfo.FolderPath);
+        FileUtil.EnsureDirectoryExists(chartInfo.FolderPath);
 
         // 复制音乐和曲绘
-        Util.CopyFile(songPath, chartInfo.SongPath);
-        Util.CopyFile(picPath, chartInfo.PicturePath);
+        FileUtil.CopyFile(songPath, chartInfo.SongPath);
+        FileUtil.CopyFile(picPath, chartInfo.PicturePath);
 
         // 生成谱面JSON（从模板复制并修改）
         string templatePath = "res://TemplateChart.json";
-        Util.CopyFile(templatePath, chartInfo.ChartPath);
+        FileUtil.CopyFile(templatePath, chartInfo.ChartPath);
         var chart = ChartLoader.LoadChart(chartInfo.ChartPath);
         chart.BpmList[0].Bpm = chartInfo.Bpm;
         chart.Meta = new Meta
@@ -92,11 +92,11 @@ public partial class ChartService : Node
         //1. 创建临时导入目录
         string tempId = Util.GenerateRandomId(14);
         string tempDir = Path.Combine("user://temp_import", tempId);
-        Util.EnsureDirectoryExists(tempDir);
+        FileUtil.EnsureDirectoryExists(tempDir);
 
         // 2. 解压 ZIP 到临时目录
         GD.Print($"开始解压: {path} -> {tempDir}");
-        Util.UnzipFileTo(path, tempDir); // 解压完成会在内部打印
+        FileUtil.UnzipFileTo(path, tempDir); // 解压完成会在内部打印
 
         //3. 寻找info.txt文件，读取其他3个文件的路径
         string songTempPath, picTempPath, jsonTempPath;
@@ -107,7 +107,7 @@ public partial class ChartService : Node
             GD.PrintErr("无法找到info.txt文件");
             return;
         }
-        infoDic = Util.ReadInfoFile(infoTempPath);
+        infoDic = FileUtil.ReadInfoFile(infoTempPath);
         jsonTempPath = Path.Combine(tempDir, infoDic["Chart"]);
         picTempPath = Path.Combine(tempDir, infoDic["Picture"]);
         songTempPath = Path.Combine(tempDir, infoDic["Song"]);
@@ -116,19 +116,19 @@ public partial class ChartService : Node
         //创建导入目录
         string id = Util.GenerateRandomId(14);
         string dir = Path.Combine(chartRepository.GetSavesDir(), id);
-        Util.EnsureDirectoryExists(dir);
+        FileUtil.EnsureDirectoryExists(dir);
 
         //修改id信息
         infoDic["Chart"] = $"{id}.json";
         infoDic["Song"] = $"{id}.{songTempPath.GetExtension()}";
         infoDic["Picture"] = $"{id}.{picTempPath.GetExtension()}";
-        Util.WriteInfoFile(infoTempPath, infoDic);
+        FileUtil.WriteInfoFile(infoTempPath, infoDic);
 
         //复制文件
-        Util.CopyFile(infoTempPath, Path.Combine(dir, "info.txt"));
-        Util.CopyFile(jsonTempPath, Path.Combine(dir, infoDic["Chart"]));
-        Util.CopyFile(picTempPath, Path.Combine(dir, infoDic["Picture"]));
-        Util.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"]));
+        FileUtil.CopyFile(infoTempPath, Path.Combine(dir, "info.txt"));
+        FileUtil.CopyFile(jsonTempPath, Path.Combine(dir, infoDic["Chart"]));
+        FileUtil.CopyFile(picTempPath, Path.Combine(dir, infoDic["Picture"]));
+        FileUtil.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"]));
 
         
 
@@ -158,7 +158,7 @@ public partial class ChartService : Node
         }
         //找到谱面路径
         string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
-        Util.EnsureDirectoryExists(dir);
+        FileUtil.EnsureDirectoryExists(dir);
 
         //读取info.txt
         ChartInfo chartInfo = chartRepository.LoadChartInfo(chartId);
@@ -168,7 +168,7 @@ public partial class ChartService : Node
         DirAccess.RemoveAbsolute(picPath);
 
         //复制新的曲绘
-        Util.CopyFile(path, picPath);
+        FileUtil.CopyFile(path, picPath);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public partial class ChartService : Node
         }
         //找到谱面路径
         string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
-        Util.EnsureDirectoryExists(dir);
+        FileUtil.EnsureDirectoryExists(dir);
 
         //读取info.txt
         ChartInfo chartInfo = chartRepository.LoadChartInfo(chartId);
@@ -195,7 +195,7 @@ public partial class ChartService : Node
         DirAccess.RemoveAbsolute(songPath);
 
         //复制新的音频
-        Util.CopyFile(path, songPath);
+        FileUtil.CopyFile(path, songPath);
     }
 
     /// <summary>
@@ -248,7 +248,7 @@ public partial class ChartService : Node
         fileDialogManager.SaveFile(
             (zipPath) =>
             {
-                Util.CreateZip(filePaths, zipPath);
+                FileUtil.CreateZip(filePaths, zipPath);
                 GD.Print($"[{this.Name}] 成功创建zip文件:{zipPath}");
             },
             filters

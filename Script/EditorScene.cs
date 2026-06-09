@@ -45,7 +45,7 @@ public partial class EditorScene : Node
         set
         {
             horBeatOffset = value;
-            chartTime = Util.BeatToSecond(horBeatOffset, editingChart.BpmList);
+            chartTime = TimeUtil.BeatToSecond(horBeatOffset, editingChart.BpmList);
         }
     }
 
@@ -58,7 +58,7 @@ public partial class EditorScene : Node
         set
         {
             chartTime = value;
-            horBeatOffset = Util.SecondToBeat((float)chartTime, editingChart.BpmList);
+            horBeatOffset = TimeUtil.SecondToBeat((float)chartTime, editingChart.BpmList);
             horOffset = horBeatOffset * horSeparation;
         }
     }
@@ -129,7 +129,7 @@ public partial class EditorScene : Node
 
         //3. 设置音乐
         // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
-        AudioStream audioStream = Util.LoadAudioFromFile(chartInfo.SongPath);
+        AudioStream audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath);
         if (audioStream == null)
         {
             GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
@@ -152,7 +152,6 @@ public partial class EditorScene : Node
 
     public override void _Process(double delta)
     {
-        GD.Print($"ChartTime:{ChartTime}, BeatValue:{BeatValue}, horOffset:{horOffset}");
         
         if (isPlaying)
         {
@@ -210,6 +209,13 @@ public partial class EditorScene : Node
         eventEditPanel.horSeparationSmoothed = horSeparationSmoothed;
         eventEditPanel.QueueRedraw();
     }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        //GD.Print($"ChartTime:{ChartTime}, BeatValue:{BeatValue}, horOffset:{horOffset}");
+        
+    }
+
 
     
     public void OnPlayButtonUp()

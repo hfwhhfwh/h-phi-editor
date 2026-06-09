@@ -29,7 +29,7 @@ public partial class ChartRepository : Node
         string infoPath = Path.Combine(folder, "info.txt");
         if (!Godot.FileAccess.FileExists(infoPath)) return null;
 
-        var dict = Util.ReadInfoFile(infoPath);
+        var dict = FileUtil.ReadInfoFile(infoPath);
         return new ChartInfo
         {
             Id = chartId,
@@ -61,7 +61,7 @@ public partial class ChartRepository : Node
             ["Picture"] = info.PictureFileName,
             ["Chart"] = info.ChartFileName
         };
-        Util.WriteInfoFile(info.InfoFilePath, dict);
+        FileUtil.WriteInfoFile(info.InfoFilePath, dict);
     }
 
     public void DeleteChart(string chartId)
@@ -70,7 +70,7 @@ public partial class ChartRepository : Node
         if (DirAccess.DirExistsAbsolute(folder))
         {
             // 递归删除文件夹
-            Util.DeleteDirectoryRecursive(folder);
+            FileUtil.DeleteDirectoryRecursive(folder);
         }
     }
 

@@ -198,46 +198,46 @@ public partial class EventEditPanel : Panel
 	/// <param name="lineEvents">速度事件列表</param>
 	/// <param name="xRatio">这一列事件在面板上的位置比例，0为最左侧，1为左右侧</param>
 	/// <param name="startIndex">使用对象池中索引的起点</param>
-	private void ShowSingleEvent(SpeedEvent[] lineEvents, float xRatio, int startIndex)
-	{
-		for (int i = 0; i < lineEvents.Length; i++)
-		{
-			SpeedEvent lineEvent = lineEvents[i];
-			Node2D eventNode = eventNodePool[startIndex + i];
-			Sprite2D sprite = eventNode.GetNode<Sprite2D>("bodySprite");
-			if (sprite == null)
-			{
-				GD.PrintErr($"[{this.Name}] Event {eventNode.Name} 缺少 Sprite2D 子节点");
-				continue;
-			}
+	// private void ShowSingleEvent(SpeedEvent[] lineEvents, float xRatio, int startIndex)
+	// {
+	// 	for (int i = 0; i < lineEvents.Length; i++)
+	// 	{
+	// 		SpeedEvent lineEvent = lineEvents[i];
+	// 		Node2D eventNode = eventNodePool[startIndex + i];
+	// 		Sprite2D sprite = eventNode.GetNode<Sprite2D>("bodySprite");
+	// 		if (sprite == null)
+	// 		{
+	// 			GD.PrintErr($"[{this.Name}] Event {eventNode.Name} 缺少 Sprite2D 子节点");
+	// 			continue;
+	// 		}
 
-			// 选择对应的纹理
-			sprite.Texture = eventHoldTexture;
+	// 		// 选择对应的纹理
+	// 		sprite.Texture = eventHoldTexture;
 
-			float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
-			float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
-			// 计算位置和缩放
-			{
-				//位置
-				float panelX = verMargin + xRatio * (Size.X - 2 * verMargin);
+	// 		float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
+	// 		float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
+	// 		// 计算位置和缩放
+	// 		{
+	// 			//位置
+	// 			float panelX = verMargin + xRatio * (Size.X - 2 * verMargin);
 
-				float startPanelY = Size.Y/2f + horOffsetSmoothed - startBeatValue * horSeparationSmoothed;
-				float endPanelY = Size.Y/2f + horOffsetSmoothed - endBeatValue * horSeparationSmoothed;
-				float panelY = (startPanelY + endPanelY) / 2f;
+	// 			float startPanelY = Size.Y/2f + horOffsetSmoothed - startBeatValue * horSeparationSmoothed;
+	// 			float endPanelY = Size.Y/2f + horOffsetSmoothed - endBeatValue * horSeparationSmoothed;
+	// 			float panelY = (startPanelY + endPanelY) / 2f;
 
-				eventNode.Position = new Vector2(panelX, panelY);
+	// 			eventNode.Position = new Vector2(panelX, panelY);
 
-				//缩放
-				float sizeY = startPanelY - endPanelY;
-				eventNode.Scale = new Vector2(widthScale, sizeY / eventHoldTexture.GetSize().Y);
-			}
+	// 			//缩放
+	// 			float sizeY = startPanelY - endPanelY;
+	// 			eventNode.Scale = new Vector2(widthScale, sizeY / eventHoldTexture.GetSize().Y);
+	// 		}
 			
 
-			eventNode.Visible = true;
-			eventNode.ZIndex = 10;
+	// 		eventNode.Visible = true;
+	// 		eventNode.ZIndex = 10;
 			
-		}
-	}
+	// 	}
+	// }
 
     public override void _Process(double delta)
     {

@@ -273,5 +273,11 @@ icon = ExtResource("16_4d80g")
 icon_alignment = 1
 expand_icon = true
 
+[node name="Camera2D" type="Camera2D" parent="." unique_id=424155361]
+visible = false
+position = Vector2(576, 324)
+enabled = false
+zoom = Vector2(0.5, 0.5)
+
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonUp"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Playing/VBoxContainer/Stop" to="." method="OnStopButtonUp"]

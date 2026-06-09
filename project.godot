@@ -18,7 +18,6 @@ config/icon="res://icon.svg"
 [autoload]
 
 ChartLoader="*uid://hs6uvyfkqhd0"
-EffectsManager="*uid://bt0xu7q8i6b0m"
 ImageBlur="*uid://q6jaa43qjmt8"
 FileDialogManager="*uid://7dks72m4nja7"
 ChartService="*uid://dcb40ki6g4ka8"

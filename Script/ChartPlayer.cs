@@ -54,79 +54,78 @@ public partial class ChartPlayer : Control
     private string extractPath = "user://ChartImport"; // 谱面文件解压目录
 
     // 对象池
-    private List<AnimatedSprite2D> hitEffectPool = new List<AnimatedSprite2D>();
-    private int poolInitSize = 50; // 初始池大小，可根据最大同时击中数调整
+    private HitEffectPool hitEffectPool;
 
     private Label fpsLabel;
 
     //将Beat（int[]）转换为秒
     public float BeatToSeconds(int[] beat)
     {
-        return Util.BeatToSecond(beat, chart?.BpmList);
+        return TimeUtil.BeatToSecond(beat, chart?.BpmList);
     }
 
-    private void InitHitEffectPool()
-    {
-        for (int i = 0; i < poolInitSize; i++)
-        {
-            var fx = CreateNewHitEffectInstance();
-            fx.Visible = false;          // 初始不可见，并且从场景树移除
-            hitEffectPool.Add(fx);
-        }
-    }
+    // private void InitHitEffectPool()
+    // {
+    //     for (int i = 0; i < poolInitSize; i++)
+    //     {
+    //         var fx = CreateNewHitEffectInstance();
+    //         fx.Visible = false;          // 初始不可见，并且从场景树移除
+    //         hitEffectPool.Add(fx);
+    //     }
+    // }
 
-    // 创建一个全新的特效实例（只做创建和基础设置）
-    private AnimatedSprite2D CreateNewHitEffectInstance()
-    {
-        var fx = new AnimatedSprite2D
-        {
-            SpriteFrames = hitFrames,
-            Modulate = new Color
-            {
-                R8 = 237,
-                G8 = 236,
-                B8 = 176,
-                A8 = 255
-            },
-            ZIndex = 3
-        };
-        // 连接信号：播放完后自动回收
-        fx.AnimationFinished += () => OnHitEffectFinished(fx);
-        return fx;
-    }
+    // // 创建一个全新的特效实例（只做创建和基础设置）
+    // private AnimatedSprite2D CreateNewHitEffectInstance()
+    // {
+    //     var fx = new AnimatedSprite2D
+    //     {
+    //         SpriteFrames = hitFrames,
+    //         Modulate = new Color
+    //         {
+    //             R8 = 237,
+    //             G8 = 236,
+    //             B8 = 176,
+    //             A8 = 255
+    //         },
+    //         ZIndex = 3
+    //     };
+    //     // 连接信号：播放完后自动回收
+    //     fx.AnimationFinished += () => OnHitEffectFinished(fx);
+    //     return fx;
+    // }
 
-    private AnimatedSprite2D GetHitEffectFromPool()
-    {
-        AnimatedSprite2D fx;
-        if (hitEffectPool.Count > 0)
-        {
-            // 取最后一个（O(1)）
-            fx = hitEffectPool[hitEffectPool.Count - 1];
-            hitEffectPool.RemoveAt(hitEffectPool.Count - 1);
-        }
-        else
-        {
-            // 池空时动态扩容
-            fx = CreateNewHitEffectInstance();
-        }
-        return fx;
-    }
+    // private AnimatedSprite2D GetHitEffectFromPool()
+    // {
+    //     AnimatedSprite2D fx;
+    //     if (hitEffectPool.Count > 0)
+    //     {
+    //         // 取最后一个（O(1)）
+    //         fx = hitEffectPool[hitEffectPool.Count - 1];
+    //         hitEffectPool.RemoveAt(hitEffectPool.Count - 1);
+    //     }
+    //     else
+    //     {
+    //         // 池空时动态扩容
+    //         fx = CreateNewHitEffectInstance();
+    //     }
+    //     return fx;
+    // }
 
-    private void OnHitEffectFinished(AnimatedSprite2D fx)
-    {
-        // 从场景树移除（如果还在）
-        if (fx.GetParent() != null)
-            RemoveChild(fx);
+    // private void OnHitEffectFinished(AnimatedSprite2D fx)
+    // {
+    //     // 从场景树移除（如果还在）
+    //     if (fx.GetParent() != null)
+    //         RemoveChild(fx);
         
-        // 重置状态
-        fx.Visible = false;
-        fx.Position = Vector2.Zero;
-        fx.Stop();            // 停止动画播放
-        fx.Frame = 0;         // 重置到第一帧（视情况需要）
+    //     // 重置状态
+    //     fx.Visible = false;
+    //     fx.Position = Vector2.Zero;
+    //     fx.Stop();            // 停止动画播放
+    //     fx.Frame = 0;         // 重置到第一帧（视情况需要）
         
-        // 放回池中
-        hitEffectPool.Add(fx);
-    }
+    //     // 放回池中
+    //     hitEffectPool.Add(fx);
+    // }
 
     /// <summary>
     /// 在指定位置创建一个打击特效
@@ -156,11 +155,7 @@ public partial class ChartPlayer : Control
         // // 将特效添加到当前场景（或指定的特效容器节点）
         // AddChild(animatedSprite);
 
-        var fx = GetHitEffectFromPool();
-        fx.Position = position;
-        fx.Visible = true;
-        AddChild(fx);        // 挂到当前场景
-        fx.Play();           // 播放动画
+        hitEffectPool.Spawn(position);
     }
 
     // /// <summary>
@@ -183,12 +178,15 @@ public partial class ChartPlayer : Control
     //     }
     //     return null;
     // }
+
     public override void _Ready()
     {
         fpsLabel = GetNode<Label>("FPSLabel");
 
         //初始化对象池
-        InitHitEffectPool();
+        // 初始化特效池
+        hitEffectPool = new HitEffectPool(this, hitFrames, initSize: 50);
+        AudioPool.Initialize(this);
     }
 
     public void Initialize()
@@ -222,10 +220,12 @@ public partial class ChartPlayer : Control
         // 创建所有判定线节点
         CreateJudgeLines();
 
-        //计算所有事件时间的秒数
-        Util.RefreshEventSec(chart);
-        //计算所有note时间的秒数
-        Util.RefreshNoteSec(chart);
+        //预计算所有事件时间的秒数
+        ChartDataHelper.RefreshEventSec(chart);
+        //预计算所有note时间的秒数
+        ChartDataHelper.RefreshNoteSec(chart);
+        //预计算所有速度事件的前缀和
+        ChartDataHelper.RefreshAllEventPrefix(chart);
         
         //播放音乐
         //audioStreamPlayer.Play(musicStartPosition);
@@ -290,15 +290,6 @@ public partial class ChartPlayer : Control
     public BpmEvent[] GetBpmList() => chart?.BpmList;
 }
 
-//缓动函数
-public enum EasingFunc
-{
-    Linear,Sine,Quad,Cubic,Quart,Quint,Expo,Circ,Back,Elastic,Bounce
-}
-public enum EasingIO
-{
-    In,Out,IO
-}
 
 /// <summary>
 /// 代表一条判定线的节点
@@ -393,36 +384,6 @@ public partial class JudgeLineNode : Node2D
         AddChild(labelNode);
     }
 
-    /// <summary>
-    /// 从父物体局部坐标转换到全局坐标
-    /// </summary>
-    /// <param name="fatherPos">父物体在世界空间中的位置</param>
-    /// <param name="childLocalPos">子物体在父物体局部坐标系中的位置</param>
-    /// <param name="fatherRotationDegrees">父物体坐标系的旋转角度，单位为度，正值表示逆时针旋转</param>
-    /// <returns></returns>
-    public Vector2 GetChildGlobalPosition(Vector2 fatherPos, Vector2 childLocalPos, float fatherRotationDegrees)
-    {
-        // // 构建父物体的变换矩阵（旋转 + 平移）
-        // Transform2D parentTransform = new Transform2D(Mathf.DegToRad(fatherRotationDegrees), fatherPos);
-
-        // // 将局部坐标转换为全局坐标
-        // return parentTransform * childLocalPos;
-
-        float rad = Mathf.DegToRad(fatherRotationDegrees);
-        float cos = Mathf.Cos(rad);
-        float sin = Mathf.Sin(rad);
-
-        // 顺时针旋转矩阵：
-        // [ cosθ  sinθ ]
-        // [ -sinθ cosθ ]
-        Vector2 rotated = new Vector2(
-            childLocalPos.X * cos + childLocalPos.Y * sin,
-            -childLocalPos.X * sin + childLocalPos.Y * cos
-        );
-
-        // 加上父物体位置
-        return fatherPos + rotated;
-    }
 
     /// <summary>
     /// 根据当前游戏时间更新判定线状态
@@ -453,7 +414,7 @@ public partial class JudgeLineNode : Node2D
             // _currentMoveX += father._currentMoveX;
             // _currentMoveY += father._currentMoveY;
             //这里不能直接将自己的坐标加上父线的坐标，因为父线的旋转会导致子线的位置变化
-            Vector2 currentPos = GetChildGlobalPosition(new Vector2(father._currentMoveX, father._currentMoveY),
+            Vector2 currentPos = PosUtil.GetChildGlobalPosition(new Vector2(father._currentMoveX, father._currentMoveY),
                 new Vector2(_currentMoveX, _currentMoveY),
                 father._currentRotate);
             
@@ -472,7 +433,7 @@ public partial class JudgeLineNode : Node2D
 
 
         // 应用变换
-        Position = Util.ChartPosToViewportPos(new Vector2(_currentMoveX, _currentMoveY), _chartPlayer.Size);
+        Position = PosUtil.ChartPosToViewportPos(new Vector2(_currentMoveX, _currentMoveY), _chartPlayer.Size);
         Rotation = Mathf.DegToRad(_currentRotate); // 事件值是角度
 
         //调整颜色和透明度
@@ -490,195 +451,6 @@ public partial class JudgeLineNode : Node2D
         }
     }
 
-    /// <summary>
-    /// 缓动插值函数
-    /// </summary>
-    /// <param name="t">[0,1]</param>
-    /// <param name="func">缓动函数的函数类型</param>
-    /// <param name="io">缓动函数的缓急类型</param>
-    /// <returns>缓动后的结果</returns>
-    public float Interpolate(float t, EasingFunc func, EasingIO io)
-    {
-        if(io == EasingIO.IO)
-        {
-            //由In和Out拼接而成
-            if(t>=0 && t < 0.5f)
-            {
-                return 0.5f * Interpolate(2f * t, func, EasingIO.In);
-            }
-            else if(t>=0.5 && t <= 1)
-            {
-                return 0.5f + 0.5f * Interpolate(2f*t-1, func, EasingIO.Out);
-            }
-        }
-        else if(io == EasingIO.In)
-        {
-            switch (func)
-            {
-                case EasingFunc.Linear : return t;
-                case EasingFunc.Sine : return (float)(1 - Mathf.Cos(Math.PI * t / 2f));
-                case EasingFunc.Quad : return t*t;
-                case EasingFunc.Cubic : return t*t*t;
-                case EasingFunc.Quart : return (float)Math.Pow(t,4);
-                case EasingFunc.Quint : return (float)Math.Pow(t,5);
-                case EasingFunc.Expo:
-                    if (t == 0) return 0;
-                    return (float)Math.Pow(2, 10 * t - 10);
-                case EasingFunc.Circ: return (float)(1 - Math.Sqrt(1 - t * t));
-                case EasingFunc.Back: return (float)((2.70158f * t - 1.70158f) * t * t);
-                case EasingFunc.Elastic:
-                    if (t == 0) return 0;
-                    if (t == 1) return 1;
-                    const float c4 = 2f * (float)Math.PI / 3f;
-                    return (float)(-Math.Pow(2, 10 * t - 10) * Math.Sin((t * 10 - 10.75) * c4));
-                case EasingFunc.Bounce:
-                    return 1 - Interpolate(1 - t, func, EasingIO.Out); // InBounce = 1 - OutBounce(1-t)
-                default: return t;
-            }
-        }
-        else if(io == EasingIO.Out)
-        {
-            switch (func)
-            {
-                case EasingFunc.Linear: return t;
-                case EasingFunc.Sine: return (float)Math.Sin(Math.PI * t / 2f);
-                case EasingFunc.Quad: return 1 - (1 - t) * (1 - t);
-                case EasingFunc.Cubic: return 1 - (1 - t) * (1 - t) * (1 - t);
-                case EasingFunc.Quart: return 1 - (float)Math.Pow(1 - t, 4);
-                case EasingFunc.Quint: return 1 - (float)Math.Pow(1 - t, 5);
-                case EasingFunc.Expo:
-                    if (Math.Abs(t - 1) < 1e-6) return 1f;
-                    return (float)(1 - Math.Pow(2, -10 * t));
-                case EasingFunc.Circ: return (float)Math.Sqrt(1 - (t - 1) * (t - 1));
-                case EasingFunc.Back:
-                    const float c1 = 1.70158f;
-                    const float c3 = c1 + 1f;
-                    float u = t - 1;
-                    return 1 + c3 * u * u * u + c1 * u * u;
-                case EasingFunc.Elastic:
-                    if (t == 0) return 0;
-                    if (t == 1) return 1;
-                    const float c4_elastic = (2f * (float)Math.PI) / 3f;
-                    return (float)(Math.Pow(2, -10 * t) * Math.Sin((t * 10 - 0.75) * c4_elastic) + 1);
-                case EasingFunc.Bounce:
-                    // 标准 easeOutBounce 分段函数
-                    float n1 = 7.5625f;
-                    float d1 = 2.75f;
-                    if (t < 1f / d1)
-                    {
-                        return n1 * t * t;
-                    }
-                    else if (t < 2f / d1)
-                    {
-                        t -= 1.5f / d1;
-                        return n1 * t * t + 0.75f;
-                    }
-                    else if (t < 2.5f / d1)
-                    {
-                        t -= 2.25f / d1;
-                        return n1 * t * t + 0.9375f;
-                    }
-                    else
-                    {
-                        t -= 2.625f / d1;
-                        return n1 * t * t + 0.984375f;
-                    }
-                default: return t;
-            }
-        }
-        return t; // 理论上不会执行到这里
-    }
-
-    /// <summary>
-    /// 缓动插值函数
-    /// </summary>
-    /// <param name="t">[0,1]</param>
-    /// <param name="easingType">RPE中的缓动类型，为0~29整数</param>
-    /// <returns>缓动后的结果</returns>
-    public float Interpolate(float t, int easingType)
-    {
-        switch (easingType)
-        {
-            case 0: return 0; // Fixed
-            case 1: return Interpolate(t, EasingFunc.Linear, EasingIO.In);   // Linear
-            case 2: return Interpolate(t, EasingFunc.Sine, EasingIO.Out);    // easeOutSine
-            case 3: return Interpolate(t, EasingFunc.Sine, EasingIO.In);     // easeInSine
-            case 4: return Interpolate(t, EasingFunc.Quad, EasingIO.Out);    // easeOutQuad
-            case 5: return Interpolate(t, EasingFunc.Quad, EasingIO.In);     // easeInQuad
-            case 6: return Interpolate(t, EasingFunc.Sine, EasingIO.IO);     // easeInOutSine
-            case 7: return Interpolate(t, EasingFunc.Quad, EasingIO.IO);     // easeInOutQuad
-            case 8: return Interpolate(t, EasingFunc.Cubic, EasingIO.Out);   // easeOutCubic
-            case 9: return Interpolate(t, EasingFunc.Cubic, EasingIO.In);    // easeInCubic
-            case 10: return Interpolate(t, EasingFunc.Quart, EasingIO.Out);  // easeOutQuart
-            case 11: return Interpolate(t, EasingFunc.Quart, EasingIO.In);   // easeInQuart
-            case 12: return Interpolate(t, EasingFunc.Cubic, EasingIO.IO);   // easeInOutCubic (注意：原文写的是Cubic不是Quart)
-            case 13: return Interpolate(t, EasingFunc.Quart, EasingIO.IO);   // easeInOutQuart
-            case 14: return Interpolate(t, EasingFunc.Quint, EasingIO.Out);  // easeOutQuint
-            case 15: return Interpolate(t, EasingFunc.Quint, EasingIO.In);   // easeInQuint
-            case 16: return Interpolate(t, EasingFunc.Expo, EasingIO.Out);   // easeOutExpo
-            case 17: return Interpolate(t, EasingFunc.Expo, EasingIO.In);    // easeInExpo
-            case 18: return Interpolate(t, EasingFunc.Circ, EasingIO.In);    // easeInCirc (注意：Circ的In/Out编号与其他相反)
-            case 19: return Interpolate(t, EasingFunc.Circ, EasingIO.Out);   // easeOutCirc
-            case 20: return Interpolate(t, EasingFunc.Back, EasingIO.Out);   // easeOutBack
-            case 21: return Interpolate(t, EasingFunc.Back, EasingIO.In);    // easeInBack
-            case 22: return Interpolate(t, EasingFunc.Circ, EasingIO.IO);    // easeInOutCirc
-            case 23: return Interpolate(t, EasingFunc.Back, EasingIO.IO);    // easeInOutBack
-            case 24: return Interpolate(t, EasingFunc.Elastic, EasingIO.Out);// easeOutElastic
-            case 25: return Interpolate(t, EasingFunc.Elastic, EasingIO.In); // easeInElastic
-            case 26: return Interpolate(t, EasingFunc.Bounce, EasingIO.Out); // easeOutBounce
-            case 27: return Interpolate(t, EasingFunc.Bounce, EasingIO.In);  // easeInBounce
-            case 28: return Interpolate(t, EasingFunc.Bounce, EasingIO.IO);  // easeInOutBounce
-            case 29: return Interpolate(t, EasingFunc.Elastic, EasingIO.IO); // easeInOutElastic
-            default: return Interpolate(t, EasingFunc.Linear, EasingIO.In);
-        }
-    }
-
-    /// <summary>
-    /// 带有实际值的插值
-    /// </summary>
-    /// <param name="x1"></param>
-    /// <param name="x2"></param>
-    /// <param name="t">[0,1]</param>
-    /// <param name="easingType">RPE中的缓动类型，为0~29整数</param>
-    /// <returns></returns>
-    public float InterpolateValue(float x1, float x2, float t, int easingType)
-    {
-        return x1 + (x2-x1) * Interpolate(t,easingType);
-    }
-
-    /// <summary>
-    /// 经过裁剪的缓动插值
-    /// </summary>
-    /// <param name="t">[0,1]</param>
-    /// <param name="easingType">RPE中的缓动类型，为0~29整数</param>
-    /// <param name="left">左切割，[0,1]</param>
-    /// <param name="right">右切割，[0,1]</param>
-    /// <returns></returns>
-    public float CutInterpolate(float t, int easingType, float left, float right)
-    {
-        float leftX = InterpolateValue(0,1,left,easingType);
-        float rightX = InterpolateValue(0,1,right,easingType);
-        float T = left + (right - left) * t;
-        float TX = InterpolateValue(0,1,T,easingType);
-
-        float result = (TX - leftX) / (rightX - leftX);
-        return result;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="x1">初始值</param>
-    /// <param name="x2">末尾值</param>
-    /// <param name="t">[0,1]</param>
-    /// <param name="easingType">RPE中的缓动类型，为0~29整数</param>
-    /// <param name="left">左切割，[0,1]</param>
-    /// <param name="right">右切割，[0,1]</param>
-    /// <returns></returns>
-    public float CutInterpolateValue(float x1, float x2, float t, int easingType, float left, float right)
-    {
-        return x1 + (x2-x1) * CutInterpolate(t, easingType, left, right);
-    }
     
 
     /// <summary>
@@ -705,7 +477,7 @@ public partial class JudgeLineNode : Node2D
                 float t = (float)((time - startSec) / (endSec - startSec));
                 float leftCut = ev.EasingLeft;
                 float rightCut = ev.EasingRight;
-                return CutInterpolateValue(ev.Start, ev.End, t, ev.EasingType, leftCut, rightCut);
+                return EasingHelper.CutInterpolateValue(ev.Start, ev.End, t, ev.EasingType, leftCut, rightCut);
                 
             }
             else if (time < startSec)
@@ -716,7 +488,9 @@ public partial class JudgeLineNode : Node2D
                 //     return 0;
                 // }
                 // 在当前事件之前，返回上一个事件的结束值
-                return (float)events[i-1].End;
+                if(i == 0) return 0f;
+                else return (float)events[i-1].End;
+                
             }
         }
 
@@ -725,31 +499,33 @@ public partial class JudgeLineNode : Node2D
         return (float)lastEv.End;
     }
 
-    // 速度事件插值（SpeedEvent结构略有不同）
-    private float InterpolateEventSpeed(SpeedEvent[] events, double time, float defaultValue)
-    {
-        if (events == null || events.Length == 0) return defaultValue;
+//     // 速度事件插值（SpeedEvent结构略有不同）
+//     private float InterpolateEventSpeed(SpeedEvent[] events, double time, float defaultValue)
+//     {
+//         if (events == null || events.Length == 0) return defaultValue;
 
-        float targetSec = (float)time;
-        for (int i = 0; i < events.Length; i++)
-        {
-            var ev = events[i];
-            float startSec = ev.startSec;
-            float endSec = ev.endSec;
+//         float targetSec = (float)time;
+//         for (int i = 0; i < events.Length; i++)
+//         {
+//             var ev = events[i];
+//             float startSec = ev.startSec;
+//             float endSec = ev.endSec;
 
-            if (targetSec >= startSec && targetSec <= endSec)
-            {
-                // 速度事件这里按线性处理
-                float t = (targetSec - startSec) / (endSec - startSec);
-                return (float)(ev.Start + (ev.End - ev.Start) * t);
-            }
-            else if (targetSec < startSec)
-            {
-                return (float)ev.Start;
-            }
-        }
-        return (float)events[events.Length - 1].End;
-    }
+//             if (targetSec >= startSec && targetSec <= endSec)
+//             {
+//                 // 速度事件这里按线性处理
+//                 float t = (targetSec - startSec) / (endSec - startSec);
+//                 return (float)(ev.Start + (ev.End - ev.Start) * t);
+//             }
+//             else if (targetSec < startSec)
+//             {
+//                 return (float)ev.Start;
+//             }
+//         }
+//         return (float)events[events.Length - 1].End;
+//     }
+
+    
 }
 
 /// <summary>
@@ -763,7 +539,7 @@ public partial class NoteNode : Node2D
     private Texture2D _texture;
     private AudioStream _sound;
     private int _index;
-    private AudioStreamPlayer audioStreamPlayer; // 在SetData方法中新建
+    //private AudioStreamPlayer audioStreamPlayer; // 在SetData方法中新建
 
     protected Sprite2D _sprite; // 在SetData方法中新建
 
@@ -797,124 +573,21 @@ public partial class NoteNode : Node2D
         ZIndex = 1;
 
         //添加AudioStreamPlayer节点，用于播放音效
-        audioStreamPlayer = new AudioStreamPlayer();
-        audioStreamPlayer.Stream = sound;
-        AddChild(audioStreamPlayer);
+        //audioStreamPlayer = new AudioStreamPlayer();
+        //audioStreamPlayer.Stream = sound;
+        //AddChild(audioStreamPlayer);
     }
 
-    /// <summary>
-    /// 根据速度事件，计算note的位移
-    /// </summary>
-    /// <param name="events">速度事件</param>
-    /// <param name="time">游戏时间</param>
-    /// <returns></returns>
-    protected float IntegralSpeedEvent(LineEvent[] events, float time)
+    
+
+    
+    private void PlayHitSound()
     {
-        float totalX = 0; // Y轴上的总位移
-        //遍历所有速度事件
-        for (int i = 0; i < events.Length; i++)
-        {
-            LineEvent ev = events[i];
-
-            float start = ev.Start;
-            float end = ev.End;
-            float startSec = ev.startSec;
-            float endSec = ev.endSec;
-
-            // 如果time已经在这个事件之后
-            if(time >= endSec)
-            {
-                totalX += 120f * (start + end) * (endSec - startSec) / 2f;
-
-            }
-            // 如果time正在这个事件中
-            else if(time >= startSec && time < endSec)
-            {
-                float a = 120f * (end - start) / (endSec - startSec); // 加速度 a = △v/△t
-                float t = (float)(time - startSec); // 时间
-                float x = (start * 120f) * t + 0.5f * a * t * t; // 位移x = v0t + 0.5at^2
-                totalX += x;
-                break;
-            }
-            //如果time在这个事件之前
-            else
-            {
-                break;
-            }
-            
-            //同时也要处理与下一个速度事件之间的部分
-            if(i < events.Length - 1) // 如果这不是最后一个事件
-            {
-                float nextStartSec = events[i+1].startSec;
-                //如果time正在这个间隔中
-                if(time >= endSec && time < nextStartSec)
-                {
-                    totalX += 120f * (float)(end * (time - endSec));
-                    break;
-                }
-                //如果time在这个间隔之后
-                else if(time >= nextStartSec)
-                {
-                    totalX += 120f * (float)(end * (nextStartSec - endSec));
-                }
-            }
-            else// 如果这是最后一个事件之后的间隔
-            {
-                totalX += 120f * (float)(end * (time - endSec));
-            }
-        }
-        return totalX;
-
+        var player = AudioPool.Get();
+        player.Stream = _sound;
+        player.Play(); // 播放完成后自动回收（通过 Finished 信号）
     }
-
-    /// <summary>
-    /// 获取某一时刻的判定线速度（是谱面文件中写的数值，每个单位代表120px/s）
-    /// </summary>
-    /// <param name="events">速度事件</param>
-    /// <param name="time">游戏时间</param>
-    /// <returns></returns>
-    protected float GetSpeed(LineEvent[] events, float time)
-    {
-        //遍历所有速度事件
-        for (int i = 0; i < events.Length; i++)
-        {
-            LineEvent ev = events[i];
-
-            float start = ev.Start;
-            float end = ev.End;
-            float startSec = ev.startSec;
-            float endSec = ev.endSec;
-
-            // 如果time正在这个事件中
-            if(time >= startSec && time < endSec)
-            {
-                float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
-                float t = (float)(time - startSec); // 时间
-                return start + a * t;
-            }
-            
-            //同时也要处理与下一个速度事件之间的部分
-            if(i < events.Length - 1) // 如果这不是最后一个事件
-            {
-                float nextStartSec = events[i+1].startSec;
-                //如果time正在这个间隔中
-                if(time >= endSec && time < nextStartSec)
-                {
-                    return end;
-                }
-                //如果time在这个间隔之后
-                else if(time >= nextStartSec)
-                {
-                    continue;//继续到下一个速度事件
-                }
-            }
-            else// 如果这是最后一个事件之后的间隔
-            {
-                return end;
-            }
-        }
-        return events[^1].End;//理论上不会执行到这里
-    }
+    
     /// <summary>
     /// 更新音符位置（受判定线位置和速度影响）
     /// 可被HoldNoteNode重写
@@ -964,21 +637,23 @@ public partial class NoteNode : Node2D
                 if (_chartPlayer.isPlaying) // 只有播放状态下显示特效，编辑器滚动时不显示
                 {
                     // 播放音效并生成打击特效
-                    if (audioStreamPlayer == null || audioStreamPlayer.Stream == null)
-                    {
-                        GD.PrintErr($"[{this.Name}] 无法播放打击音效");
-                    }
-                    audioStreamPlayer.Play();
+                    // if (audioStreamPlayer == null || audioStreamPlayer.Stream == null)
+                    // {
+                    //     GD.PrintErr($"[{this.Name}] 无法播放打击音效");
+                    // }
+                    // audioStreamPlayer.Play();
+
+                    PlayHitSound();
 
                     //显示打击特效
                     //理论上此时note应该在的位置，防止note速度过快导致的误差
                     Vector2 calculatedLocalChartPos = new Vector2(_data.PositionX, 0);
-                    Vector2 globalChartPos = fatherLine.GetChildGlobalPosition(
+                    Vector2 globalChartPos = PosUtil.GetChildGlobalPosition(
                         new Vector2(fatherLine._currentMoveX, fatherLine._currentMoveY),
                         calculatedLocalChartPos,
                         fatherLine._currentRotate
                     );
-                    Vector2 hitViewportPos = Util.ChartPosToViewportPos(globalChartPos, _chartPlayer.Size);
+                    Vector2 hitViewportPos = PosUtil.ChartPosToViewportPos(globalChartPos, _chartPlayer.Size);
                     _chartPlayer.CreateHitEffect(hitViewportPos);
                 }
                 
@@ -1001,12 +676,16 @@ public partial class NoteNode : Node2D
             localChartX = _data.PositionX; 
 
             //全部位移
-            float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, noteStartSec);
+            // float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, noteStartSec);
+            float allDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, noteStartSec);
+
             //note已经移动的位移
-            float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+            // float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+            float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+
             localChartY = Math.Max(0, allDisplacement - nowDisplacement);
 
-            //音符翻转 1表示上面，0表示下面
+            //音符翻转 1表示上面，2表示下面
             if(_data.Above == 2)
             {
                 localChartY = -localChartY;
@@ -1018,7 +697,7 @@ public partial class NoteNode : Node2D
             //Vector2 viewportPos = Util.ChartPosToViewportPos(localChartPos, _chartPlayer.Size);
 
             //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为相对于判定线的坐标系
-            Vector2 viewportPos = Util.ChartPosToLocalPos(localChartPos, _chartPlayer.Size);
+            Vector2 viewportPos = PosUtil.ChartPosToLocalPos(localChartPos, _chartPlayer.Size);
             
             //设定位置
             this.Position = viewportPos;
@@ -1093,10 +772,10 @@ public partial class HoldNoteNode : NoteNode
             //第一阶段：head到达之前，localPosition保持变不变
             if(gameTime <= startSec)
             {
-                float startSpeed = 120f*GetSpeed(fatherLine._data.EventLayers[0].SpeedEvents, startSec); // head落在判定线上时的速度
+                float startSpeed = 120f*ChartDataHelper.GetSpeedAtTime(fatherLine._data.EventLayers[0].SpeedEvents, startSec); // head落在判定线上时的速度
                 float s = (float)(startSpeed * (endSec - startSec));
                 endLocalChartPos = new Vector2(0,s);
-                _endSprite.Position = Util.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Size);
+                _endSprite.Position = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Size);
                 
             }
             //第二阶段：hold正在缩小，localPosition不断减小至y=0
@@ -1104,15 +783,20 @@ public partial class HoldNoteNode : NoteNode
             {
                 float localChartY;
                 //全部位移
-                float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
+                //float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
+                float allDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
+
                 //note已经移动的位移
-                float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+                //float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+                float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+
+
                 localChartY = Math.Max(0, allDisplacement - nowDisplacement);
 
                 endLocalChartPos = new Vector2(0,localChartY);
 
                 //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-                Vector2 viewportPos = Util.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Size);
+                Vector2 viewportPos = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Size);
 
                 //设定位置
                 _endSprite.Position = viewportPos;
@@ -1130,7 +814,7 @@ public partial class HoldNoteNode : NoteNode
             Vector2 bodyLocalChartPos = endLocalChartPos / 2;
 
             //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-            Vector2 viewportPos = Util.ChartPosToLocalPos(bodyLocalChartPos, _chartPlayer.Size);
+            Vector2 viewportPos = PosUtil.ChartPosToLocalPos(bodyLocalChartPos, _chartPlayer.Size);
             
             //设定body位置
             _bodySprite.Position = viewportPos;

@@ -291,23 +291,23 @@ namespace QuickType
         public int[] StartTime { get; set; }
     }
 
-    public partial class SpeedEvent
-    {
-        [JsonProperty("end")]
-        public float End { get; set; }
+    // public partial class SpeedEvent
+    // {
+    //     [JsonProperty("end")]
+    //     public float End { get; set; }
 
-        [JsonProperty("endTime")]
-        public int[] EndTime { get; set; }
+    //     [JsonProperty("endTime")]
+    //     public int[] EndTime { get; set; }
 
-        [JsonProperty("linkgroup")]
-        public int Linkgroup { get; set; }
+    //     [JsonProperty("linkgroup")]
+    //     public int Linkgroup { get; set; }
 
-        [JsonProperty("start")]
-        public float Start { get; set; }
+    //     [JsonProperty("start")]
+    //     public float Start { get; set; }
 
-        [JsonProperty("startTime")]
-        public int[] StartTime { get; set; }
-    }
+    //     [JsonProperty("startTime")]
+    //     public int[] StartTime { get; set; }
+    // }
 
     public partial class Extended
     {
@@ -539,12 +539,9 @@ namespace QuickType
     {
         [JsonIgnore] public float startSec;
         [JsonIgnore] public float endSec;
-    }
 
-    public partial class SpeedEvent
-    {
-        [JsonIgnore] public float startSec;
-        [JsonIgnore] public float endSec;
+        // 仅在速度事件中有效，在此事件的StartTime之前的所有位移，前缀和优化
+        [JsonIgnore] public float prefixX; 
     }
 
     public partial class Note
