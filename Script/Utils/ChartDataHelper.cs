@@ -2,6 +2,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 public static class ChartDataHelper
 {
@@ -202,6 +203,122 @@ public static class ChartDataHelper
     }
 
     /// <summary>
+    /// 更新所有note的累积位移
+    /// 调用此方法前必须先调用RefreshEventSec, RefreshEventPrefix, RefreshNoteSec
+    /// </summary>
+    /// <param name="chart">需要更新的铺面</param>
+    public static void RefreshAllNoteAllDisplacement(Chart chart)
+    {
+        BpmEvent[] bpmList = chart.BpmList;
+
+        foreach(JudgeLine line in chart.JudgeLineList)
+        {
+            foreach(Note note in line.Notes)
+            {
+                note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);
+            }
+        }
+
+    }
+
+
+    /// <summary>
+    /// 二分查找最后一个 startSec <= time 的事件
+    /// </summary>
+    /// <param name="events">事件列表</param>
+    /// <param name="time">游戏时间</param>
+    /// <returns>事件的索引，若time小于第一个事件的开始时间，则返回-1</returns>
+    public static int BinarySearchLatestEvent(LineEvent[] events, double time)
+    {
+        if (events == null || events.Length == 0)
+        {
+            throw new Exception("events列表为空");
+        }
+
+        // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
+        int idx = Array.BinarySearch(events, new LineEvent { startSec = (float)time }, 
+            Comparer<LineEvent>.Create((a, b) => a.startSec.CompareTo(b.startSec)));
+        if (idx < 0) idx = ~idx - 1;
+
+        return idx;
+    }
+
+    /// <summary>
+    /// 通用事件插值（如moveX, alpha等）
+    /// </summary>
+    /// <param name="events">事件列表</param>
+    /// <param name="time">游戏运行时间</param>
+    /// <param name="defaultValue">默认值</param>
+    /// <returns>当前时间下的事件值</returns>
+    public static float InterpolateEvent(LineEvent[] events, double time, float defaultValue)
+    {
+        if (events == null || events.Length == 0) return defaultValue;
+
+        // // 找到当前时间所在的事件段
+        // for (int i = 0; i < events.Length; i++)
+        // {
+        //     LineEvent ev = events[i];
+        //     float startSec = ev.startSec;
+        //     float endSec = ev.endSec;
+
+        //     if (time >= startSec && time <= endSec)
+        //     {
+        //         // 插值，需要考虑事件切割
+        //         float t = (float)((time - startSec) / (endSec - startSec));
+        //         float leftCut = ev.EasingLeft;
+        //         float rightCut = ev.EasingRight;
+        //         return EasingHelper.CutInterpolateValue(ev.Start, ev.End, t, ev.EasingType, leftCut, rightCut);
+                
+        //     }
+        //     else if (time < startSec)
+        //     {
+        //         // if (i == 0)
+        //         // {
+        //         //     //GD.PrintErr($"[{this.Name}] InterpolateEvent i==0 \n startSec:{startSec}, endSec:{endSec}, time:{time}");
+        //         //     return 0;
+        //         // }
+        //         // 在当前事件之前，返回上一个事件的结束值
+        //         if(i == 0) return 0f;
+        //         else return (float)events[i-1].End;
+                
+        //     }
+        // }
+
+        // // 在所有事件之后，返回最后一个事件的结束值
+        // var lastEv = events[events.Length - 1];
+        // return (float)lastEv.End;
+
+        // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
+        int idx = BinarySearchLatestEvent(events, time);
+
+        // time 在第一个事件之前（按约定，速度为0）
+        if (idx < 0) return 0f; 
+
+        LineEvent ev = events[idx];
+        float startSec = ev.startSec;
+        float endSec = ev.endSec;
+
+        if (time >= startSec && time <= endSec)
+        {
+            // 插值，需要考虑事件切割
+            float t = (float)((time - startSec) / (endSec - startSec));
+            float leftCut = ev.EasingLeft;
+            float rightCut = ev.EasingRight;
+            return EasingHelper.CutInterpolateValue(ev.Start, ev.End, t, ev.EasingType, leftCut, rightCut);
+            
+        }
+        else if (time > endSec)
+        {
+            return ev.End;
+        }
+        else
+        {
+            GD.PrintErr($"[ChartDataHelper] InterpolateEvent() Error!");
+            return 0f;
+        }
+    }
+
+    /// <summary>
     /// 获取某一时刻的判定线速度（是谱面文件中写的数值，每个单位代表120px/s）
     /// </summary>
     /// <param name="events">速度事件</param>
@@ -209,45 +326,77 @@ public static class ChartDataHelper
     /// <returns></returns>
     public static float GetSpeedAtTime(LineEvent[] events, float time)
     {
-        //遍历所有速度事件
-        for (int i = 0; i < events.Length; i++)
-        {
-            LineEvent ev = events[i];
+        // //遍历所有速度事件
+        // for (int i = 0; i < events.Length; i++)
+        // {
+        //     LineEvent ev = events[i];
 
-            float start = ev.Start;
-            float end = ev.End;
-            float startSec = ev.startSec;
-            float endSec = ev.endSec;
+        //     float start = ev.Start;
+        //     float end = ev.End;
+        //     float startSec = ev.startSec;
+        //     float endSec = ev.endSec;
 
-            // 如果time正在这个事件中
-            if(time >= startSec && time < endSec)
-            {
-                float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
-                float t = (float)(time - startSec); // 时间
-                return start + a * t;
-            }
+        //     // 如果time正在这个事件中
+        //     if(time >= startSec && time < endSec)
+        //     {
+        //         float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
+        //         float t = (float)(time - startSec); // 时间
+        //         return start + a * t;
+        //     }
             
-            //同时也要处理与下一个速度事件之间的部分
-            if(i < events.Length - 1) // 如果这不是最后一个事件
-            {
-                float nextStartSec = events[i+1].startSec;
-                //如果time正在这个间隔中
-                if(time >= endSec && time < nextStartSec)
-                {
-                    return end;
-                }
-                //如果time在这个间隔之后
-                else if(time >= nextStartSec)
-                {
-                    continue;//继续到下一个速度事件
-                }
-            }
-            else// 如果这是最后一个事件之后的间隔
-            {
-                return end;
-            }
+        //     //同时也要处理与下一个速度事件之间的部分
+        //     if(i < events.Length - 1) // 如果这不是最后一个事件
+        //     {
+        //         float nextStartSec = events[i+1].startSec;
+        //         //如果time正在这个间隔中
+        //         if(time >= endSec && time < nextStartSec)
+        //         {
+        //             return end;
+        //         }
+        //         //如果time在这个间隔之后
+        //         else if(time >= nextStartSec)
+        //         {
+        //             continue;//继续到下一个速度事件
+        //         }
+        //     }
+        //     else// 如果这是最后一个事件之后的间隔
+        //     {
+        //         return end;
+        //     }
+        // }
+        // return events[^1].End;//理论上不会执行到这里
+
+        if (events == null || events.Length == 0) return 0f;
+
+        // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
+        int idx = BinarySearchLatestEvent(events, time);
+
+        // time 在第一个事件之前（按约定，速度为0）
+        if (idx < 0) return 0f; 
+
+        LineEvent ev = events[idx];
+        float start = ev.Start;
+        float end = ev.End;
+        float startSec = ev.startSec;
+        float endSec = ev.endSec;
+
+        if (time >= startSec && time <= endSec)
+        {
+            float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
+            float t = (float)(time - startSec); // 时间
+            return start + a * t;
+            
         }
-        return events[^1].End;//理论上不会执行到这里
+        else if (time > endSec)
+        {
+            return ev.End;
+        }
+        else
+        {
+            GD.PrintErr($"[ChartDataHelper] GetSpeedAtTime() Error!");
+            return 0f;
+        }
+
     }
 
     /// <summary>
@@ -320,9 +469,7 @@ public static class ChartDataHelper
         if (events == null || events.Length == 0) return 0f;
 
         // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
-        int idx = Array.BinarySearch(events, new LineEvent { startSec = time }, 
-            Comparer<LineEvent>.Create((a, b) => a.startSec.CompareTo(b.startSec)));
-        if (idx < 0) idx = ~idx - 1;
+        int idx = BinarySearchLatestEvent(events, time);
 
         // time 在第一个事件之前（按约定，速度为0）
         if (idx < 0) return 0f; 

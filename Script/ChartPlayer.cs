@@ -226,6 +226,8 @@ public partial class ChartPlayer : Control
         ChartDataHelper.RefreshNoteSec(chart);
         //预计算所有速度事件的前缀和
         ChartDataHelper.RefreshAllEventPrefix(chart);
+        //预计算所有note的累积位移
+        ChartDataHelper.RefreshAllNoteAllDisplacement(chart);
         
         //播放音乐
         //audioStreamPlayer.Play(musicStartPosition);
@@ -302,6 +304,8 @@ public partial class JudgeLineNode : Node2D
     private List<NoteNode> _noteNodes = new(); // 该线上的音符节点
     public int _index;                       //索引
     Sprite2D spriteNode;                     //sprite2D节点，在SetData函数中创建
+
+    public float nowDisplacement;         // 从0到当前时刻累积的所有位移
 
     
     // 当前帧的事件插值结果
@@ -398,11 +402,11 @@ public partial class JudgeLineNode : Node2D
         EventLayer layer = _data.EventLayers[0];
 
         // 对每种事件类型进行插值
-        _currentMoveX = InterpolateEvent(layer.MoveXEvents, gameTime, 0);
-        _currentMoveY = InterpolateEvent(layer.MoveYEvents, gameTime, 0);
-        _currentRotate = InterpolateEvent(layer.RotateEvents, gameTime, 0);
-        _currentAlpha = InterpolateEvent(layer.AlphaEvents, gameTime, 255);
-        _currentSpeed = InterpolateEvent(layer.SpeedEvents, gameTime, 10);
+        _currentMoveX = ChartDataHelper.InterpolateEvent(layer.MoveXEvents, gameTime, 0);
+        _currentMoveY = ChartDataHelper.InterpolateEvent(layer.MoveYEvents, gameTime, 0);
+        _currentRotate = ChartDataHelper.InterpolateEvent(layer.RotateEvents, gameTime, 0);
+        _currentAlpha = ChartDataHelper.InterpolateEvent(layer.AlphaEvents, gameTime, 255);
+        _currentSpeed = ChartDataHelper.InterpolateEvent(layer.SpeedEvents, gameTime, 10);
 
         //处理父判定线  father为-1代表没有父线
         if(_data.Father != -1)
@@ -414,20 +418,15 @@ public partial class JudgeLineNode : Node2D
             // _currentMoveX += father._currentMoveX;
             // _currentMoveY += father._currentMoveY;
             //这里不能直接将自己的坐标加上父线的坐标，因为父线的旋转会导致子线的位置变化
-            Vector2 currentPos = PosUtil.GetChildGlobalPosition(new Vector2(father._currentMoveX, father._currentMoveY),
+            Vector2 currentPos = PosUtil.GetChildGlobalPosition(
+                new Vector2(father._currentMoveX, father._currentMoveY),
                 new Vector2(_currentMoveX, _currentMoveY),
-                father._currentRotate);
+                father._currentRotate
+            );
             
-            // //输出日志
-            // if(Name == "JudgeLine_1" && father._currentRotate > 0)
-            // {
-            //     GD.Print($"fatherPos:{new Vector2(father._currentMoveX, father._currentMoveY)},localPos:{new Vector2(_currentMoveX, _currentMoveY)}, father._currentRotate:{father._currentRotate}, currentPos:{currentPos}");
-            // }
 
             _currentMoveX = currentPos.X;
             _currentMoveY = currentPos.Y;
-
-            
 
         }
 
@@ -445,6 +444,10 @@ public partial class JudgeLineNode : Node2D
         };
         
         // 更新该线上所有音符（音符位置受判定线速度和位置影响）
+        nowDisplacement = ChartDataHelper.GetDisplacementAtTime(
+            _data.EventLayers[0].SpeedEvents, 
+            (float)gameTime
+        ); // 提前计算累计位移，供note使用（简化计算）
         foreach (var note in _noteNodes)
         {
             note.UpdateNote(gameTime, this);
@@ -453,51 +456,7 @@ public partial class JudgeLineNode : Node2D
 
     
 
-    /// <summary>
-    /// 通用事件插值（用于float类型的事件，如moveX, alpha等）
-    /// </summary>
-    /// <param name="events"></param>
-    /// <param name="time">游戏运行时间</param>
-    /// <param name="defaultValue">默认值</param>
-    /// <returns></returns>
-    private float InterpolateEvent(LineEvent[] events, double time, float defaultValue)
-    {
-        if (events == null || events.Length == 0) return defaultValue;
-
-        // 找到当前时间所在的事件段
-        for (int i = 0; i < events.Length; i++)
-        {
-            LineEvent ev = events[i];
-            float startSec = ev.startSec;
-            float endSec = ev.endSec;
-
-            if (time >= startSec && time <= endSec)
-            {
-                // 插值，需要考虑事件切割
-                float t = (float)((time - startSec) / (endSec - startSec));
-                float leftCut = ev.EasingLeft;
-                float rightCut = ev.EasingRight;
-                return EasingHelper.CutInterpolateValue(ev.Start, ev.End, t, ev.EasingType, leftCut, rightCut);
-                
-            }
-            else if (time < startSec)
-            {
-                // if (i == 0)
-                // {
-                //     //GD.PrintErr($"[{this.Name}] InterpolateEvent i==0 \n startSec:{startSec}, endSec:{endSec}, time:{time}");
-                //     return 0;
-                // }
-                // 在当前事件之前，返回上一个事件的结束值
-                if(i == 0) return 0f;
-                else return (float)events[i-1].End;
-                
-            }
-        }
-
-        // 在所有事件之后，返回最后一个事件的结束值
-        var lastEv = events[events.Length - 1];
-        return (float)lastEv.End;
-    }
+    
 
 //     // 速度事件插值（SpeedEvent结构略有不同）
 //     private float InterpolateEventSpeed(SpeedEvent[] events, double time, float defaultValue)
@@ -599,35 +558,6 @@ public partial class NoteNode : Node2D
         float noteStartSec = _data.startSec;
         float noteEndSec = _data.EndTime != null ? _data.endSec : noteStartSec;
 
-        // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
-
-        //处理显示和隐藏
-        {
-            if(_data.Type == 2) // hold需要特殊处理，当head到达判定线时，隐藏head的贴图
-            {
-                if(gameTime >= noteStartSec)
-                {
-                    _sprite.Visible = false;
-                }
-                else
-                {
-                    _sprite.Visible = true;
-                }
-            }
-            float appearSec = noteStartSec - _data.VisibleTime; // 出现时刻
-            float disappearSec = noteEndSec; // 消失时刻（如果是长按，Hold尾部）
-            if (gameTime < appearSec || gameTime > disappearSec)
-            {
-                // 不在显示区间内，隐藏
-                Visible = false;
-            }
-            else
-            {
-                // 在显示区间内，显示
-                Visible = true;
-            }
-        }
-
         // 音符到达判定线时播放音效，并生成打击特效
         if(_data.IsFake == false) // 假note不需要击打
         {
@@ -666,6 +596,37 @@ public partial class NoteNode : Node2D
             }
         }
 
+        // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
+        //处理显示和隐藏
+        {
+            if(_data.Type == 2) // hold需要特殊处理，当head到达判定线时，隐藏head的贴图
+            {
+                if(gameTime >= noteStartSec)
+                {
+                    _sprite.Visible = false;
+                }
+                else
+                {
+                    _sprite.Visible = true;
+                }
+            }
+            float appearSec = noteStartSec - _data.VisibleTime; // 出现时刻
+            float disappearSec = noteEndSec; // 消失时刻（如果是长按，Hold尾部）
+            if (gameTime < appearSec || gameTime > disappearSec)
+            {
+                // 不在显示区间内，隐藏
+                Visible = false;
+                return; // 不计算位置，优化性能
+            }
+            else
+            {
+                // 在显示区间内，显示
+                Visible = true;
+            }
+        }
+
+        
+
         //计算note位置
         //相对于判定线的Y坐标 = 速度随时间变化的函数的积分
         //简单起见，这里分段计算位移，用到匀变速直线运动的公式
@@ -677,11 +638,13 @@ public partial class NoteNode : Node2D
 
             //全部位移
             // float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, noteStartSec);
-            float allDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, noteStartSec);
+            // float allDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, noteStartSec);
+            float allDisplacement = _data.allDisplacement;
 
             //note已经移动的位移
             // float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
-            float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+            // float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+            float nowDisplacement = fatherLine.nowDisplacement;
 
             localChartY = Math.Max(0, allDisplacement - nowDisplacement);
 
@@ -704,13 +667,6 @@ public partial class NoteNode : Node2D
 
         }
 
-        //输出日志
-        // if(Name == "Note 0_0")
-        // {
-        //     GD.Print($"[{Name}] leftTime:{leftTime} localChartY:{localChartY} localChartX:{localChartX} viewportPos:{viewportPos}");
-        // }
-        
-        
     }
 }
 

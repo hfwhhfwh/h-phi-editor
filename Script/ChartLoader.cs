@@ -548,5 +548,10 @@ namespace QuickType
     {
         [JsonIgnore] public float startSec;
         [JsonIgnore] public float endSec;
+
+        /// <summary>
+        /// note所在时刻累积的所有位移，用于优化性能
+        /// </summary>
+        [JsonIgnore] public float allDisplacement;
     }
 }

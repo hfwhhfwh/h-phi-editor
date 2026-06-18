@@ -165,31 +165,30 @@ clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("3_gwldl")
-horMargin = 20.0
-verLineCount = 21
-verMargin = 40.0
-horColor = Color(1, 0, 0, 0.6862745)
-verColor = Color(0, 1, 0, 0.5882353)
-horSubColor = Color(1, 1, 0, 0.5882353)
 tapTexture = ExtResource("5_57v2d")
 dragTexture = ExtResource("6_qdb1r")
 flickTexture = ExtResource("7_wq0mf")
 holdHeadTexture = ExtResource("8_63sjd")
 holdBodyTexture = ExtResource("9_gi1tw")
 holdEndTexture = ExtResource("10_4d80g")
-lineTexture = ExtResource("11_khybl")
+horMargin = 20.0
+verMargin = 40.0
+verLineCount = 21
+horColor = Color(1, 0, 0, 0.6862745)
+verColor = Color(0, 1, 0, 0.5882353)
+horSubColor = Color(1, 1, 0, 0.5882353)
 
 [node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer" unique_id=825080562]
 clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("12_qdb1r")
+eventHoldTexture = ExtResource("13_wq0mf")
 horMargin = 20.0
 verMargin = 40.0
 horColor = Color(1, 0, 0, 0.6862745)
 verColor = Color(0, 1, 0, 0.5882353)
 horSubColor = Color(1, 1, 0, 0.5882353)
-eventHoldTexture = ExtResource("13_wq0mf")
 
 [node name="RightPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=254800668 node_paths=PackedStringArray("normalPanel", "playingPanel", "tabContainer")]
 custom_minimum_size = Vector2(80, 0)
