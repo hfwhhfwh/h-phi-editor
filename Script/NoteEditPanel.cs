@@ -7,21 +7,13 @@ using System.Diagnostics.CodeAnalysis;
 
 public partial class NoteEditPanel : BaseEditPanel
 {
+	private enum SpriteType
+	{
+		Tap, Drag, Flick, HoldHead, HoldBody, HoldEnd
+	}
+	private readonly SpriteType[] allSpriteTypes = (SpriteType[])Enum.GetValues(typeof(SpriteType));
 
-	// [ExportGroup("网格布局设置")]
-	// [Export] private float horMargin = 50; // 横线的左右留空
-	// [Export] private int verLineCount;
-	// [Export] private float verMargin = 100; // 竖线的左右留空
-	// [Export] private int subBeatCount = 4; // 每个Beat被分割为多少个音符
-
-	// [ExportGroup("网格样式设置")]
-	// //线条参数
-	// [Export] private Color horColor = Colors.Red;
-	// [Export] private float horWidth = 1;
-	// [Export] private Color verColor = Colors.Green;
-	// [Export] private float verWidth = 1;
-	// [Export] private Color horSubColor = Colors.Yellow;
-	// [Export] private float horSubWidth = 1;
+	[Export] public float noteScale = 0.1f;
 
 	[ExportGroup("音符贴图")]
     [Export] public Texture2D tapTexture;
@@ -31,25 +23,55 @@ public partial class NoteEditPanel : BaseEditPanel
     [Export] public Texture2D holdBodyTexture;
     [Export] public Texture2D holdEndTexture;
 
-    //[Export] public Texture2D lineTexture;
-
-	// //字体
-	// Font font = ThemeDB.FallbackFont;
-	
-	// public float horOffsetSmoothed; // 用于使竖直滚动更平滑
-	// public float horSeparationSmoothed; // 用于使竖直缩放更平滑
-
-	// public Chart editingChart; //正在编辑的铺面，由上级设置
-	// private int editingLineId; // 正在编辑的线号
-
-	// // 节点池：存储预先创建好的 Node2D，每个内部含有一个 Sprite2D
-	// private List<Node2D> noteNodePool = new List<Node2D>();
-	// private int poolSize = 0;
-	
+	// ---- Multimesh ---- 索引：1tap 2holdhead 3 flick 4 drag 5 holdbody 6 holdend
+	private Dictionary<SpriteType, MultiMesh> multiMeshes = new();
+	private Dictionary<SpriteType, MultiMeshInstance2D> multiMeshInstances = new();
+	private Dictionary<SpriteType, int> visibleCounts = new();
 
     public override void _Ready()
     {
-		InitializeNodePool(50, CreateNoteNode); // 根据谱面复杂度调整容量 TODO
+		//InitializeNodePool(50, CreateNoteNode); // 根据谱面复杂度调整容量 TODO
+
+		//设置multiMeshInstance
+		foreach(SpriteType type in allSpriteTypes)
+		{
+			Texture2D texture = type switch
+			{
+				SpriteType.Tap => tapTexture,
+				SpriteType.Drag => dragTexture,
+				SpriteType.Flick => flickTexture,
+				SpriteType.HoldHead => holdHeadTexture,
+				SpriteType.HoldBody => holdBodyTexture,
+				SpriteType.HoldEnd => holdEndTexture,
+				_ => tapTexture
+			};
+
+			MultiMesh multiMesh = new MultiMesh();
+			multiMeshes[type] = multiMesh;
+
+			MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
+			multiMeshInstances[type] = multiMeshInstance;
+			multiMeshInstance.Texture = texture;
+
+			//设置Multimesh
+			multiMesh = new MultiMesh
+			{
+				TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
+				InstanceCount = 10000,
+				VisibleInstanceCount = 0
+			};
+			multiMeshInstance.Multimesh = multiMesh;
+			
+			// 根据纹理实际尺寸创建 QuadMesh
+			var quad = new QuadMesh();
+			quad.Size = new Vector2(texture.GetSize().X, -texture.GetSize().Y);   // 保持宽高比，去掉负值
+			multiMeshInstance.Multimesh.Mesh = quad;
+
+			AddChild(multiMeshInstance);
+			multiMeshInstances[type] = multiMeshInstance;
+            multiMeshes[type] = multiMesh;
+		}
+		
     }
 
 	private Node2D CreateNoteNode()
@@ -83,112 +105,116 @@ public partial class NoteEditPanel : BaseEditPanel
 			return;
 		}
 		
-		int visibleNoteCount = 0;
+		//归零可见数量
+		foreach(SpriteType spriteType in allSpriteTypes)
+		{
+			visibleCounts[spriteType] = 0;
+		}
 
 		// 为视口范围内的 note 激活池节点
 		for (int i = 0; i < notes.Length; i++)
 		{
 			Note note = notes[i];
 
-			//1. 计算位置，判断是否需要渲染
-			float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-			float ratio = (note.PositionX - (-675f)) / 1350f;
-			float panelX = verMargin + ratio * (Size.X - 2 * verMargin);
-			float panelY = Size.Y/2f + horOffsetSmoothed - beatValue * horSeparationSmoothed;
-			float endLocalY = 0f;
+            // 计算起始拍数
+            float startBeat = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
+            // 计算面板 X 坐标（谱面坐标 -675~675 映射到面板水平范围）
+            float ratio = (note.PositionX - (-675f)) / 1350f;
+            float panelX = verMargin + ratio * (Size.X - 2 * verMargin);
+            // 起始 Y 坐标（向上为负）
+            float startY = Size.Y / 2f + horOffsetSmoothed - startBeat * horSeparationSmoothed;
 
-			if(note.Type != 2)
-			{
-				//tap flick drag
-				if(panelX < 0f || panelX > Size.X || panelY < 0f || panelY > Size.Y)
-				{
-					continue;
-				}
-			}
-			else
-			{
-				// hold
-				float endBeatValue = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
-				endLocalY = -(endBeatValue - beatValue) * horSeparationSmoothed;
+            // 处理非 Hold 音符（Tap, Drag, Flick）
+            if (note.Type != 2)
+            {
+                // 裁切：超出面板范围则不渲染
+                if (panelX < 0 || panelX > Size.X || startY < 0 || startY > Size.Y)
+                    continue;
 
-				if(panelX < 0f || panelX > Size.X || panelY < 0f || endLocalY > Size.Y)
-				{
-					continue;
-				}
-				
-			}
-			
-			visibleNoteCount++;
-			
-			if(visibleNoteCount > poolSize)
-			{
-				ExpandNodePool(visibleNoteCount - poolSize, CreateNoteNode);
-			}
+                SpriteType type = note.Type switch
+                {
+                    1 => SpriteType.Tap,
+                    3 => SpriteType.Flick,
+                    4 => SpriteType.Drag,
+                    _ => SpriteType.Tap
+                };
 
-			Node2D noteNode = nodePool[visibleNoteCount - 1];
-			
+                // 构建变换：位置 + 固定缩放
+                Transform2D transform = Transform2D.Identity;
+                transform.Origin = new Vector2(panelX, startY);
+                transform.X = new Vector2(noteScale, 0);
+                transform.Y = new Vector2(0, noteScale);
 
-			//2. 渲染note
-			Sprite2D sprite = noteNode.GetNode<Sprite2D>("Sprite2D");
-			if (sprite == null)
-			{
-				GD.PrintErr($"Node {noteNode.Name} 缺少 Sprite2D 子节点");
-				continue;
-			}
+                multiMeshes[type].SetInstanceTransform2D(visibleCounts[type], transform);
+                visibleCounts[type]++;
+            }
+            else // Hold 音符（Type == 2）
+            {
+                // 计算结束拍数和结束 Y 坐标
+                float endBeat = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
+                float endY = Size.Y / 2f + horOffsetSmoothed - endBeat * horSeparationSmoothed;
 
-			// 选择对应的纹理
-			sprite.Texture = note.Type switch
-			{
-				1 => tapTexture,
-				2 => holdHeadTexture,
-				3 => flickTexture,
-				4 => dragTexture,
-				_ => tapTexture
-			};
-			if(note.Type == 2)
-			{
-				sprite.Offset = new Vector2(0, holdHeadTexture.GetHeight() / 2f); // 顶部居中
-			}
+                // 裁切：若头部和尾部都在面板外且不可见，则跳过（但若部分可见仍渲染）
+                if (panelX < 0 || panelX > Size.X || startY < 0f || endY > Size.Y)
+                    continue;
 
-			noteNode.ZIndex = 10;
+                // ---- 1. 渲染 Hold 头部 ----
+                {
+                    Transform2D transform = Transform2D.Identity;
+                    transform.Origin = new Vector2(panelX, startY);
+                    transform.X = new Vector2(noteScale, 0);
+                    transform.Y = new Vector2(0, noteScale);
+                    multiMeshes[SpriteType.HoldHead].SetInstanceTransform2D(
+						visibleCounts[SpriteType.HoldHead],
+						transform
+					);
+                    visibleCounts[SpriteType.HoldHead]++;
+                }
 
-			noteNode.Position = new Vector2(panelX, panelY);
-			noteNode.Visible = true;
+                // ---- 2. 渲染 Hold 身体（拉伸条） ----
+                {
+                    float bodyLength = startY - endY;   // 正数表示向下延伸
+                    
+					float midY = (startY + endY) / 2f;
+					// 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
+					float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
 
-			//特殊处理hold
-			Sprite2D endSprite = noteNode.GetNode<Sprite2D>("endSprite");
-			Sprite2D bodySprite = noteNode.GetNode<Sprite2D>("bodySprite");
-			if(note.Type == 2)
-			{
-				//渲染尾部
-				
-				endSprite.Texture = holdEndTexture;
-				endSprite.Scale = new Vector2(0.1f, 0.1f);
-				endSprite.Position = new Vector2(0, endLocalY);
-				endSprite.Offset = new Vector2(0, -holdHeadTexture.GetHeight() / 2f); // 底部居中
-				endSprite.Visible = true;
+					Transform2D transform = Transform2D.Identity;
+					transform.Origin = new Vector2(panelX, midY);
+					transform.X = new Vector2(noteScale, 0);
+					transform.Y = new Vector2(0, scaleY);
+					multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
+						visibleCounts[SpriteType.HoldBody], transform
+					);
+					visibleCounts[SpriteType.HoldBody]++;
+                    
+                }
 
-				//渲染身体
-				float bodyLocalY = endLocalY / 2f;
-				float sizeY = -endLocalY;
-				
-				bodySprite.Texture = holdBodyTexture;
-				bodySprite.Scale = new Vector2(0.1f, sizeY/1900f);
-				bodySprite.Position = new Vector2(0, bodyLocalY);
-				bodySprite.Visible = true;
-			}
-			else{
-				endSprite.Visible = false;
-				bodySprite.Visible = false;
-			}
-			
-		}
+                // ---- 3. 渲染 Hold 尾部 ----
+                {
+                    Transform2D transform = Transform2D.Identity;
+                    transform.Origin = new Vector2(panelX, endY);
+                    transform.X = new Vector2(noteScale, 0);
+                    transform.Y = new Vector2(0, noteScale);
+                    multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
+						visibleCounts[SpriteType.HoldEnd], transform
+					);
+                    visibleCounts[SpriteType.HoldEnd]++;
+                }
+            }
+        }
 
+        // 更新所有 MultiMesh 的可见实例数量
+        foreach (SpriteType type in allSpriteTypes)
+        {
+            multiMeshes[type].VisibleInstanceCount = visibleCounts[type];
+        }
+		
 		// 剩余的池节点隐藏
-		for (int i = visibleNoteCount; i < poolSize; i++)
-		{
-			nodePool[i].Visible = false; 
-		}
+		// for (int i = visibleNoteCount; i < poolSize; i++)
+		// {
+		// 	nodePool[i].Visible = false; 
+		// }
     }
 
 	// /// <summary>

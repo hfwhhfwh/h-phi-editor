@@ -6,47 +6,40 @@ using System.Linq;
 
 public partial class EventEditPanel : BaseEditPanel
 {
-	// [ExportGroup("网格布局设置")]
-	// [Export] private float horMargin = 50; // 横线的左右留空
-	// private int verLineCount = 5; // 固定为5个轨道，不支持修改
-	// [Export] private float verMargin = 100; // 竖线的左右留空
-	// [Export] private int subBeatCount = 4; // 每个Beat被分割为多少个音符
-	// [Export] private float widthScale = 0.7f; // 宽度缩放
-
-	// [ExportGroup("网格样式设置")]
-	// [Export] private Color horColor = Colors.Red;
-	// [Export] private float horWidth = 1;
-	// [Export] private Color verColor = Colors.Green;
-	// [Export] private float verWidth = 1;
-	// [Export] private Color horSubColor = Colors.Yellow;
-	// [Export] private float horSubWidth = 1;
-
-	// [ExportGroup("纹理贴图")]
-	// [Export] private Texture2D eventHoldTexture;
-
-	// //字体
-	// Font font = ThemeDB.FallbackFont;
-
-	// public float horOffsetSmoothed; // 用于使竖直滚动更平滑
-	// public float horSeparationSmoothed; // 用于使竖直缩放更平滑
-
-	// public Chart editingChart; //正在编辑的铺面，由上级设置
-	// private int editingLineId; // 正在编辑的线号
-
-	// // 节点池：存储预先创建好的 Node2D，每个内部含有一个 Sprite2D
-	// private List<Node2D> eventNodePool = new List<Node2D>();
-	// private int poolSize = 0;
 
 	[ExportGroup("事件特有设置")]
-    [Export] private float widthScale = 0.7f;
+    [Export] private float widthScale = 0.4f;
     [Export] private Texture2D eventHoldTexture;
+
+	// ---- Multimesh ----
+	private MultiMesh multiMesh;
+	private MultiMeshInstance2D multiMeshInstance;
 
     public override void _Ready()
     {
-        //InitializeEventPool(50);
 		// 固定竖线数为5
         verLineCount = 5;
-        InitializeNodePool(50, CreateEventNode);
+        //InitializeNodePool(50, CreateEventNode);
+
+		//设置multiMeshInstance
+		multiMeshInstance = new MultiMeshInstance2D();
+		multiMeshInstance.Texture = eventHoldTexture;
+
+		//设置Multimesh
+		multiMesh = new MultiMesh
+		{
+			TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
+            InstanceCount = 10000,
+            VisibleInstanceCount = 0
+		};
+        multiMeshInstance.Multimesh = multiMesh;
+        
+        // 创建 QuadMesh 并设置尺寸
+        var quad = new QuadMesh();
+		quad.Size = new Vector2(100, -100); // 根据场景调整
+		multiMeshInstance.Multimesh.Mesh = quad;
+
+		AddChild(multiMeshInstance);
     }
 
 	private Node2D CreateEventNode()
@@ -128,32 +121,39 @@ public partial class EventEditPanel : BaseEditPanel
 					continue;
 				}
 
-				visibleCount++;
-			
-				if(visibleCount > poolSize)
-				{
-					ExpandNodePool(visibleCount - poolSize, CreateEventNode);
-				}
+				// if(visibleCount > poolSize)
+				// {
+				// 	ExpandNodePool(visibleCount - poolSize, CreateEventNode);
+				// }
 				
 
-				Node2D eventNode = nodePool[visibleCount - 1];
+				//Node2D eventNode = nodePool[visibleCount - 1];
 
 				// 2. 渲染Event
-				Sprite2D sprite = eventNode.GetNode<Sprite2D>("bodySprite");
-				if (sprite == null)
-				{
-					GD.PrintErr($"[{this.Name}] Event {eventNode.Name} 缺少 Sprite2D 子节点");
-					continue;
-				}
+				// Sprite2D sprite = eventNode.GetNode<Sprite2D>("bodySprite");
+				// if (sprite == null)
+				// {
+				// 	GD.PrintErr($"[{this.Name}] Event {eventNode.Name} 缺少 Sprite2D 子节点");
+				// 	continue;
+				// }
 
-				// 选择对应的纹理
-				sprite.Texture = eventHoldTexture;
+				// // 选择对应的纹理
+				// sprite.Texture = eventHoldTexture;
 
-				eventNode.Position = new Vector2(panelX, panelY);
-				eventNode.Scale = new Vector2(widthScale, sizeY / eventHoldTexture.GetSize().Y);
+				// eventNode.Position = new Vector2(panelX, panelY);
+				// eventNode.Scale = new Vector2(widthScale, sizeY / eventHoldTexture.GetSize().Y);
 
-				eventNode.Visible = true;
-				eventNode.ZIndex = 10;
+				// eventNode.Visible = true;
+				// eventNode.ZIndex = 10;
+
+				//使用MultimeshInstance渲染
+				Transform2D transform = Transform2D.Identity;
+				transform.X = new Vector2(widthScale, 0);
+				transform.Y = new Vector2(0, scaleY);
+				transform.Origin = new Vector2(panelX, panelY);
+				
+				multiMesh.SetInstanceTransform2D(visibleCount, transform);
+				visibleCount++;
 				
 				// // 计算位置和缩放
 				// {
@@ -176,6 +176,8 @@ public partial class EventEditPanel : BaseEditPanel
 				
 			}
 		}
+
+		multiMesh.VisibleInstanceCount = visibleCount;
 
 
 		// int poolStartIndex = 0;
@@ -202,52 +204,52 @@ public partial class EventEditPanel : BaseEditPanel
 		}
     }
 
-    /// <summary>
-	/// 渲染某一条线的某一个事件层的某一种事件
-	/// </summary>
-	/// <param name="lineEvents">事件列表</param>
-	/// <param name="xRatio">这一列事件在面板上的位置比例，0为最左侧，1为左右侧</param>
-	/// <param name="startIndex">使用对象池中索引的起点</param>
-	private void ShowSingleEvent(LineEvent[] lineEvents, float xRatio, int startIndex)
-	{
-		for (int i = 0; i < lineEvents.Length; i++)
-		{
-			LineEvent lineEvent = lineEvents[i];
-			Node2D eventNode = nodePool[startIndex + i];
-			Sprite2D sprite = eventNode.GetNode<Sprite2D>("bodySprite");
-			if (sprite == null)
-			{
-				GD.PrintErr($"[{this.Name}] Event {eventNode.Name} 缺少 Sprite2D 子节点");
-				continue;
-			}
+    // /// <summary>
+	// /// 渲染某一条线的某一个事件层的某一种事件
+	// /// </summary>
+	// /// <param name="lineEvents">事件列表</param>
+	// /// <param name="xRatio">这一列事件在面板上的位置比例，0为最左侧，1为左右侧</param>
+	// /// <param name="startIndex">使用对象池中索引的起点</param>
+	// private void ShowSingleEvent(LineEvent[] lineEvents, float xRatio, int startIndex)
+	// {
+	// 	for (int i = 0; i < lineEvents.Length; i++)
+	// 	{
+	// 		LineEvent lineEvent = lineEvents[i];
+	// 		Node2D eventNode = nodePool[startIndex + i];
+	// 		Sprite2D sprite = eventNode.GetNode<Sprite2D>("bodySprite");
+	// 		if (sprite == null)
+	// 		{
+	// 			GD.PrintErr($"[{this.Name}] Event {eventNode.Name} 缺少 Sprite2D 子节点");
+	// 			continue;
+	// 		}
 
-			// 选择对应的纹理
-			sprite.Texture = eventHoldTexture;
+	// 		// 选择对应的纹理
+	// 		sprite.Texture = eventHoldTexture;
 
-			float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
-			float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
-			// 计算位置和缩放
-			{
-				//位置
-				float panelX = verMargin + xRatio * (Size.X - 2 * verMargin);
+	// 		float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
+	// 		float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
+	// 		// 计算位置和缩放
+	// 		{
+	// 			//位置
+	// 			float panelX = verMargin + xRatio * (Size.X - 2 * verMargin);
 
-				float startPanelY = Size.Y/2f + horOffsetSmoothed - startBeatValue * horSeparationSmoothed;
-				float endPanelY = Size.Y/2f + horOffsetSmoothed - endBeatValue * horSeparationSmoothed;
-				float panelY = (startPanelY + endPanelY) / 2f;
+	// 			float startPanelY = Size.Y/2f + horOffsetSmoothed - startBeatValue * horSeparationSmoothed;
+	// 			float endPanelY = Size.Y/2f + horOffsetSmoothed - endBeatValue * horSeparationSmoothed;
+	// 			float panelY = (startPanelY + endPanelY) / 2f;
 
-				eventNode.Position = new Vector2(panelX, panelY);
+	// 			eventNode.Position = new Vector2(panelX, panelY);
 
-				//缩放
-				float sizeY = startPanelY - endPanelY;
-				eventNode.Scale = new Vector2(widthScale, sizeY / eventHoldTexture.GetSize().Y);
-			}
+	// 			//缩放
+	// 			float sizeY = startPanelY - endPanelY;
+	// 			eventNode.Scale = new Vector2(widthScale, sizeY / eventHoldTexture.GetSize().Y);
+	// 		}
 			
 
-			eventNode.Visible = true;
-			eventNode.ZIndex = 10;
+	// 		eventNode.Visible = true;
+	// 		eventNode.ZIndex = 10;
 			
-		}
-	}
+	// 	}
+	// }
 
 
 	// /// <summary>
