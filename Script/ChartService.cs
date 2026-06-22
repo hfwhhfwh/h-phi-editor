@@ -90,8 +90,10 @@ public partial class ChartService : Node
     public void ImportChart(string path)
     {
         //1. 创建临时导入目录
-        string tempId = Util.GenerateRandomId(14);
-        string tempDir = Path.Combine("user://temp_import", tempId);
+        string id = Util.GenerateRandomId(14);
+        //GD.Print($"id:{id}");
+        string tempDir = Path.Combine("user://temp_import", id);
+        //GD.Print($"tempDir:{tempDir}");
         FileUtil.EnsureDirectoryExists(tempDir);
 
         // 2. 解压 ZIP 到临时目录
@@ -101,6 +103,7 @@ public partial class ChartService : Node
         //3. 寻找info.txt文件，读取其他3个文件的路径
         string songTempPath, picTempPath, jsonTempPath;
         string infoTempPath = Path.Combine(tempDir, "info.txt");
+        //GD.Print($"infoTempPath:{infoTempPath}");
         Dictionary<string, string> infoDic = new Dictionary<string, string>();
         if (!Godot.FileAccess.FileExists(infoTempPath))
         {
@@ -111,14 +114,18 @@ public partial class ChartService : Node
         jsonTempPath = Path.Combine(tempDir, infoDic["Chart"]);
         picTempPath = Path.Combine(tempDir, infoDic["Picture"]);
         songTempPath = Path.Combine(tempDir, infoDic["Song"]);
-        
+
+        // GD.Print($"jsonTempPath:{jsonTempPath}");
+        // GD.Print($"picTempPath:{picTempPath}");
+        // GD.Print($"songTempPath:{songTempPath}");
 
         //创建导入目录
-        string id = Util.GenerateRandomId(14);
         string dir = Path.Combine(chartRepository.GetSavesDir(), id);
+        // GD.Print($"dir:{dir}");
         FileUtil.EnsureDirectoryExists(dir);
 
         //修改id信息
+        infoDic["Path"] = id;
         infoDic["Chart"] = $"{id}.json";
         infoDic["Song"] = $"{id}.{songTempPath.GetExtension()}";
         infoDic["Picture"] = $"{id}.{picTempPath.GetExtension()}";
@@ -130,7 +137,7 @@ public partial class ChartService : Node
         FileUtil.CopyFile(picTempPath, Path.Combine(dir, infoDic["Picture"]));
         FileUtil.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"]));
 
-        
+        GD.Print($"[{this.Name}] 铺面导入成功，id:{id}");
 
     }
     
@@ -151,7 +158,7 @@ public partial class ChartService : Node
     /// <param name="path">新的曲绘文件的路径</param>
     public void SetChartPic(string chartId, string path)
     {
-        if (!DirAccess.DirExistsAbsolute(path))
+        if (!Godot.FileAccess.FileExists(path))
         {
             GD.PrintErr($"[ChartService] 曲绘路径不存在:{path}");
             return;
@@ -178,7 +185,7 @@ public partial class ChartService : Node
     /// <param name="path">新的音频文件的路径</param>
     public void SetChartSong(string chartId, string path)
     {
-        if (!DirAccess.DirExistsAbsolute(path))
+        if (!Godot.FileAccess.FileExists(path))
         {
             GD.PrintErr($"[ChartService] 音乐路径不存在:{path}");
             return;

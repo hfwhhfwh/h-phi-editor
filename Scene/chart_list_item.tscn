@@ -4,7 +4,7 @@
 [ext_resource type="StyleBox" uid="uid://c3x4gv1lx5uwq" path="res://ButtonPressed.tres" id="2_5radm"]
 [ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://ButtonHover.tres" id="3_jo8o8"]
 [ext_resource type="Script" uid="uid://d6abkw6u8rbv" path="res://Script/VerticalAutoSize.cs" id="4_5radm"]
-[ext_resource type="Texture2D" uid="uid://dj8vku32rrsg0" path="res://9091515374590503.jpg" id="4_m57gm"]
+[ext_resource type="Texture2D" uid="uid://ejl1hu2xxquy" path="res://icon.svg" id="5_5radm"]
 
 [node name="Chart" type="Button" unique_id=450730230]
 custom_minimum_size = Vector2(0, 120)
@@ -43,7 +43,7 @@ theme_override_constants/separation = 20
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 0
-texture = ExtResource("4_m57gm")
+texture = ExtResource("5_5radm")
 expand_mode = 1
 stretch_mode = 6
 

@@ -48,18 +48,38 @@ public partial class ChartRepository : Node
 
     public void SaveChartInfo(ChartInfo info)
     {
+        /*
+        #
+        Name: Snow Desert
+        Path: 9091515374590503
+        Song: 9091515374590503.mp3
+        Picture: 9091515374590503.jpg
+        Chart: 9091515374590503.json
+        Level: IN Lv.13
+        Composer: WyvernP
+        Charter: hfwh
+        LastEditTime: 2026_2_21_22_6_36_
+        Length: 142.341
+        EditTime: 50462.879
+        Group: Default
+        */
         var dict = new Dictionary<string, string>
         {
             ["Name"] = info.Name,
-            ["Composer"] = info.Composer,
-            ["Charter"] = info.Charter,
-            ["Level"] = info.Level,
-            ["Bpm"] = info.Bpm.ToString(),
-            ["Offset"] = info.Offset.ToString(),
-            ["Duration"] = info.Duration.ToString(),
+            ["Path"] = info.Id,
             ["Song"] = info.SongFileName,
             ["Picture"] = info.PictureFileName,
-            ["Chart"] = info.ChartFileName
+            ["Chart"] = info.ChartFileName,
+            ["Level"] = info.Level,
+            ["Composer"] = info.Composer,
+            ["Charter"] = info.Charter,
+            //["LastEditTime"] = 
+            ["Length"] = info.Duration.ToString(),
+            //["EditTime"] = 
+            //["Group"] = 
+            ["Bpm"] = info.Bpm.ToString(),
+            ["Offset"] = info.Offset.ToString(),
+            
         };
         FileUtil.WriteInfoFile(info.InfoFilePath, dict);
     }

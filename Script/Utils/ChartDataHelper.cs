@@ -75,8 +75,10 @@ public static class ChartDataHelper
 
         foreach(JudgeLine line in chart.JudgeLineList)
         {
+            if(line.EventLayers == null || line.EventLayers.Length == 0) continue;
             foreach(EventLayer layer in line.EventLayers)
             {
+                if(layer == null) continue;
                 //1. MoveXEvent
                 if(layer.MoveXEvents != null && layer.MoveXEvents.Length > 0)
                 {
@@ -173,6 +175,7 @@ public static class ChartDataHelper
         {
             foreach(EventLayer layer in line.EventLayers)
             {
+                if(layer == null) continue;
                 RefreshEventPrefix(layer.SpeedEvents);
                 
             }
@@ -185,7 +188,7 @@ public static class ChartDataHelper
 
         foreach(JudgeLine line in chart.JudgeLineList)
         {
-            if(line.Notes == null) continue;
+            if(line.Notes == null || line.Notes.Length == 0) continue;
             foreach(Note note in line.Notes)
             {
                 if(note.Type == 2)
@@ -211,8 +214,10 @@ public static class ChartDataHelper
     {
         BpmEvent[] bpmList = chart.BpmList;
 
+        if(chart.JudgeLineList == null || chart.JudgeLineList.Length == 0) return;
         foreach(JudgeLine line in chart.JudgeLineList)
         {
+            if(line.Notes == null || line.Notes.Length == 0) continue;
             foreach(Note note in line.Notes)
             {
                 note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);
@@ -254,44 +259,10 @@ public static class ChartDataHelper
     {
         if (events == null || events.Length == 0) return defaultValue;
 
-        // // 找到当前时间所在的事件段
-        // for (int i = 0; i < events.Length; i++)
-        // {
-        //     LineEvent ev = events[i];
-        //     float startSec = ev.startSec;
-        //     float endSec = ev.endSec;
-
-        //     if (time >= startSec && time <= endSec)
-        //     {
-        //         // 插值，需要考虑事件切割
-        //         float t = (float)((time - startSec) / (endSec - startSec));
-        //         float leftCut = ev.EasingLeft;
-        //         float rightCut = ev.EasingRight;
-        //         return EasingHelper.CutInterpolateValue(ev.Start, ev.End, t, ev.EasingType, leftCut, rightCut);
-                
-        //     }
-        //     else if (time < startSec)
-        //     {
-        //         // if (i == 0)
-        //         // {
-        //         //     //GD.PrintErr($"[{this.Name}] InterpolateEvent i==0 \n startSec:{startSec}, endSec:{endSec}, time:{time}");
-        //         //     return 0;
-        //         // }
-        //         // 在当前事件之前，返回上一个事件的结束值
-        //         if(i == 0) return 0f;
-        //         else return (float)events[i-1].End;
-                
-        //     }
-        // }
-
-        // // 在所有事件之后，返回最后一个事件的结束值
-        // var lastEv = events[events.Length - 1];
-        // return (float)lastEv.End;
-
         // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
         int idx = BinarySearchLatestEvent(events, time);
 
-        // time 在第一个事件之前（按约定，速度为0）
+        // time 在第一个事件之前（按约定，为0）
         if (idx < 0) return 0f; 
 
         LineEvent ev = events[idx];
@@ -313,7 +284,7 @@ public static class ChartDataHelper
         }
         else
         {
-            GD.PrintErr($"[ChartDataHelper] InterpolateEvent() Error!");
+            GD.PrintErr($"[ChartDataHelper] InterpolateEvent() Error! time:{time}");
             return 0f;
         }
     }

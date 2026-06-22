@@ -228,7 +228,7 @@ public static class FileUtil
 		// 检查源文件是否存在
 		if (!Godot.FileAccess.FileExists(sourcePath))
 		{
-			GD.PrintErr($"源文件不存在: {sourcePath}");
+			GD.PrintErr($"[FileUtil] 源文件不存在: {sourcePath}");
 			return false;
 		}
 
@@ -245,7 +245,7 @@ public static class FileUtil
 			using var sourceFile = Godot.FileAccess.Open(sourcePath, Godot.FileAccess.ModeFlags.Read);
 			if (sourceFile == null)
 			{
-				GD.PrintErr($"无法打开源文件: {sourcePath}");
+				GD.PrintErr($"[FileUtil] 无法打开源文件: {sourcePath}");
 				return false;
 			}
 
@@ -253,7 +253,7 @@ public static class FileUtil
 			using var destFile = Godot.FileAccess.Open(destinationPath, Godot.FileAccess.ModeFlags.Write);
 			if (destFile == null)
 			{
-				GD.PrintErr($"无法创建或打开目标文件: {destinationPath}");
+				GD.PrintErr($"[FileUtil] 无法创建或打开目标文件: {destinationPath}");
 				return false;
 			}
 
@@ -271,12 +271,12 @@ public static class FileUtil
 				bytesRemaining -= bytesToRead;
 			}
 
-			GD.Print($"文件复制成功: {sourcePath} -> {destinationPath}");
+			GD.Print($"[FileUtil] 文件复制成功: {sourcePath} -> {destinationPath}");
 			return true;
 		}
 		catch (Exception e)
 		{
-			GD.PrintErr($"复制文件时发生异常: {e.Message}");
+			GD.PrintErr($"[FileUtil] 复制文件时发生异常: {e.Message}");
 			return false;
 		}
 	}

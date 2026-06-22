@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bk6vwgye804o1"]
 
-[ext_resource type="Script" uid="uid://qqc6xhmj8saf" path="res://Script/ChartPlayer.cs" id="1_n2rrn"]
+[ext_resource type="Script" uid="uid://qqc6xhmj8saf" path="res://Script/EditorScene/ChartPlayer.cs" id="1_n2rrn"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="2_ginqo"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="3_5x5lu"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="4_qagjh"]
@@ -11,7 +11,7 @@
 [ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="7_2y2ei"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="7_8kifw"]
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="8_r3ety"]
-[ext_resource type="Texture2D" uid="uid://dj8vku32rrsg0" path="res://9091515374590503.jpg" id="13_bwpqn"]
+[ext_resource type="Texture2D" uid="uid://ejl1hu2xxquy" path="res://icon.svg" id="12_54d6o"]
 
 [node name="ChartPlayer" type="Control" unique_id=319689835]
 custom_minimum_size = Vector2(100, 100)
@@ -34,7 +34,6 @@ lineTexture = ExtResource("5_g7mj6")
 tapSound = ExtResource("6_667m6")
 dragSound = ExtResource("7_2y2ei")
 flickSound = ExtResource("8_r3ety")
-zipLoadPath = "user://Snow Desert.zip"
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1436042826]
 visible = false
@@ -48,7 +47,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-texture = ExtResource("13_bwpqn")
+texture = ExtResource("12_54d6o")
 expand_mode = 1
 stretch_mode = 6
 

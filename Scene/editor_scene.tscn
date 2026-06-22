@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://dcefdc3pkxlp7"]
 
 [ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_7k27q"]
-[ext_resource type="Script" uid="uid://db0kx1087xbqx" path="res://Script/EditorScene.cs" id="1_hg1x2"]
+[ext_resource type="Script" uid="uid://db0kx1087xbqx" path="res://Script/EditorScene/EditorScene.cs" id="1_hg1x2"]
 [ext_resource type="PackedScene" uid="uid://6ls0iiql2pg" path="res://Scene/virtual_joystick.tscn" id="3_fkvcd"]
-[ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/NoteEditPanel.cs" id="3_gwldl"]
+[ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/EditorScene/NoteEditPanel.cs" id="3_gwldl"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
 [ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="5_gi1tw"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
@@ -12,11 +12,11 @@
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="9_gi1tw"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="10_4d80g"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="11_khybl"]
-[ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EventEditPanel.cs" id="12_qdb1r"]
+[ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EditorScene/EventEditPanel.cs" id="12_qdb1r"]
 [ext_resource type="Texture2D" uid="uid://dwe0fgofaghae" path="res://Sprite/EventHold.png" id="13_wq0mf"]
 [ext_resource type="PackedScene" uid="uid://bk6vwgye804o1" path="res://Scene/chart_player.tscn" id="14_63sjd"]
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4d80g"]
-[ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/RightPanel.cs" id="16_khybl"]
+[ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 
 [node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel", "rightPanel")]
 script = ExtResource("1_hg1x2")
@@ -24,7 +24,7 @@ slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxC
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
 noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/NoteEditPanel")
 eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer/EventEditPanel")
-chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer")
+chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
 editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/SplitContainer")
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 
@@ -126,22 +126,26 @@ joystickDir = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ChartPlayer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=319689835 instance=ExtResource("14_63sjd")]
+[node name="ChartPlayerContainer" type="AspectRatioContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1664464024]
+layout_mode = 2
+ratio = 1.5
+
+[node name="ChartPlayer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=319689835 instance=ExtResource("14_63sjd")]
 clip_contents = true
 layout_mode = 2
 hitFrames = ExtResource("5_gi1tw")
 
-[node name="Line" type="Node2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer" unique_id=1761626531]
+[node name="Line" type="Node2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer" unique_id=1761626531]
 visible = false
 position = Vector2(500, 300)
 
-[node name="Sprite2D" type="Sprite2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer/Line" unique_id=1798313127]
+[node name="Sprite2D" type="Sprite2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer/Line" unique_id=1798313127]
 modulate = Color(0.92941177, 0.9254902, 0.6901961, 1)
 texture_filter = 1
 scale = Vector2(1, 25.53)
 texture = ExtResource("11_khybl")
 
-[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayer/Line" unique_id=1274027285]
+[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer/Line" unique_id=1274027285]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
