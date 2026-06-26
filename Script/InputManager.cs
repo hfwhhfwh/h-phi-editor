@@ -22,9 +22,21 @@ public partial class InputManager : Node
     [Signal] public delegate void SlideEventHandler(float deltaY);
     [Signal] public delegate void ZoomEventHandler(float zoomDelta);
 
+    /// <summary>是否启用输入</summary>
+    private bool isEnable = true;
+    /// <summary>是否启用输入</summary>
+    public bool IsEnable
+    {
+        get => isEnable;
+        set{
+            isEnable = value;
+            SetProcessInput(value);
+        }
+    }
+
     public override void _Ready()
     {
-        SetProcessInput(true); // 确保 _Input 会被调用
+        //SetProcessInput(true); // 确保 _Input 会被调用
     }
 
     public override void _Input(InputEvent @event)

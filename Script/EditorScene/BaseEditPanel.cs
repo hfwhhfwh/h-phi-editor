@@ -28,6 +28,11 @@ public abstract partial class BaseEditPanel : Panel
     // ---- 数据 ----
     public Chart editingChart;
     protected int editingLineId;
+	public int EditingLineId
+	{
+		get => editingLineId;
+		set => editingLineId = value;
+	}
 
     // ---- 对象池 ----
     protected List<Node2D> nodePool = new();

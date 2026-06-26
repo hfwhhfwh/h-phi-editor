@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dah2o2n00nifk"]
+
+[ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="1_pwh32"]
+[ext_resource type="Script" uid="uid://ch1jgktudu5kj" path="res://Script/TestSceneScripts/TestSceneChooseLinePanel.cs" id="1_q5e2n"]
+
+[node name="TestSceneChooseLinePanel" type="Node" unique_id=1969081231 node_paths=PackedStringArray("chooseLinePanel")]
+script = ExtResource("1_q5e2n")
+chooseLinePanel = NodePath("ChooseLinePanel")
+
+[node name="ChooseLinePanel" parent="." unique_id=143035431 instance=ExtResource("1_pwh32")]
+custom_minimum_size = Vector2(23.525, 38.58)

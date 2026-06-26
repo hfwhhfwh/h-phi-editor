@@ -1,6 +1,7 @@
 using Godot;
 using QuickType;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 public partial class EditorScene : Node
@@ -21,9 +22,12 @@ public partial class EditorScene : Node
     [Export] private ChartPlayer chartPlayer;
     [Export] private Control editPanel;
     [Export] private RightPanel rightPanel;
+    [Export] private ChooseLinePanel chooseLinePanel;
+    [Export] private Label editingLineLabel;
 
     private string editingChartId; // 正在编辑的铺面的ID
     private Chart editingChart; // 正在编辑的铺面
+    private int editingLineId; // 正在编辑的判定线编号
 
     private InputManager inputManager;
     private ChartService _chartService;
@@ -93,6 +97,7 @@ public partial class EditorScene : Node
         {
             GD.PrintErr($"[{this.Name}] inputManager is null");
         }
+        inputManager.IsEnable = true;
         
         _chartService = GetNode<ChartService>("/root/ChartService");
         if(_chartService == null)
@@ -153,6 +158,11 @@ public partial class EditorScene : Node
 
         chartPlayer.Initialize();
         chartPlayer.Visible = false;
+
+        chooseLinePanel.Visible = false;
+        chooseLinePanel.LineSelected += SetEditingLine;
+
+        editingLineLabel.Text = $"正在编辑:线{1}";
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
     }
@@ -225,7 +235,7 @@ public partial class EditorScene : Node
 
 
     
-    public void OnPlayButtonUp()
+    public void OnPlayButtonClicked()
     {
         if (!isPlaying)
         {
@@ -244,20 +254,11 @@ public partial class EditorScene : Node
         }
         else
         {
-            chartPlayer.Visible = false;
-            editPanel.Visible = true;
-
-            chartPlayer.audioStreamPlayer.Stop();
-            chartPlayer.isPlaying = false;
-
-            //更新右侧面板
-            rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
-
-            isPlaying = false;
+            OnStopButtonClicked();
         }
     }
 
-    public void OnStopButtonUp()
+    public void OnStopButtonClicked()
     {
         chartPlayer.Visible = false;
         editPanel.Visible = true;
@@ -269,6 +270,51 @@ public partial class EditorScene : Node
         rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
 
         isPlaying = false;
+    }
+
+    public void OnChooseLineClicked()
+    {
+        if(chooseLinePanel.Visible == false)
+        {
+            chooseLinePanel.Visible = true;
+            inputManager.IsEnable = false;
+
+            //准备LineInfo数据
+            List<ChooseLinePanel.LineInfo> lineInfos = new();
+            for (int i = 0; i < editingChart.JudgeLineList.Length; i++)
+            {
+                JudgeLine line = editingChart.JudgeLineList[i];
+
+                lineInfos.Add(new ChooseLinePanel.LineInfo
+                {
+                    Id = i+1,
+                    NoteCount = line.NumOfNotes,
+                    //NextEventTime = //TODO
+                });
+            }
+
+            //设置LineInfo数据
+            chooseLinePanel.ShowInfos(lineInfos);
+        }
+        else
+        {
+            chooseLinePanel.Visible = false;
+            inputManager.IsEnable = true;
+        }
+    }
+
+    private void SetEditingLine(int id)
+    {
+        GD.Print($"[{this.Name}] 用户选择了Line:{id}");
+        editingLineId = id-1;
+
+        noteEditPanel.EditingLineId = id-1;
+        eventEditPanel.EditingLineId = id-1;
+
+        editingLineLabel.Text = $"正在编辑:线{id}";
+
+        chooseLinePanel.Visible = false;
+        inputManager.IsEnable = true;
     }
 
 }
