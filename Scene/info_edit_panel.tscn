@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://benf33fckpxs7"]
+
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_g1hfy"]
+[ext_resource type="Script" uid="uid://bknfsbmsops4k" path="res://Script/EditorScene/InfoEditPanel.cs" id="2_r5llj"]
+
+[node name="InfoEditPanel" type="Panel" unique_id=1498111790 node_paths=PackedStringArray("_vBoxContainer", "_nameLabel", "_confirmButton")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_g1hfy")
+script = ExtResource("2_r5llj")
+_vBoxContainer = NodePath("MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer")
+_nameLabel = NodePath("MarginContainer/VBoxContainer/Label")
+_confirmButton = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Button")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=390609696]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1038578527]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1757519546]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme = ExtResource("1_g1hfy")
+text = "正在编辑：{Text}"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=289845949]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=817576232]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Item" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=65276744]
+visible = false
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/Item" unique_id=1923769114]
+layout_mode = 2
+text = "项目名称"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/Item" unique_id=507007940]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1520561425]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1012170717]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "确定"

@@ -19,8 +19,9 @@
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4d80g"]
 [ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
+[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="20_km5t0"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel", "infoEditWindow")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -31,6 +32,7 @@ editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/EditingLineLabel")
+infoEditWindow = NodePath("InfoEditWindow")
 
 [node name="EditorPanel" type="PanelContainer" parent="." unique_id=302158127]
 anchors_preset = 15
@@ -140,6 +142,7 @@ layout_mode = 2
 ratio = 1.5
 
 [node name="ChartPlayer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=319689835 instance=ExtResource("14_63sjd")]
+visible = false
 clip_contents = true
 layout_mode = 2
 hitFrames = ExtResource("5_gi1tw")
@@ -204,6 +207,7 @@ verColor = Color(0, 1, 0, 0.5882353)
 horSubColor = Color(1, 1, 0, 0.5882353)
 
 [node name="ChooseLinePanel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=143035431 instance=ExtResource("16_qrq2u")]
+visible = false
 layout_mode = 2
 
 [node name="RightPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=254800668 node_paths=PackedStringArray("normalPanel", "playingPanel", "tabContainer")]
@@ -280,6 +284,16 @@ visible = false
 position = Vector2(576, 324)
 enabled = false
 zoom = Vector2(0.5, 0.5)
+
+[node name="InfoEditWindow" type="Window" parent="." unique_id=533957038]
+oversampling_override = 1.0
+title = "信息编辑"
+position = Vector2i(0, 36)
+size = Vector2i(442, 584)
+min_size = Vector2i(200, 200)
+theme = ExtResource("3_2bu1g")
+
+[node name="InfoEditPanel" parent="InfoEditWindow" unique_id=1498111790 instance=ExtResource("20_km5t0")]
 
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/ChooseLine" to="." method="OnChooseLineClicked"]

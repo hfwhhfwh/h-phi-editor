@@ -24,6 +24,7 @@ public partial class EditorScene : Node
     [Export] private RightPanel rightPanel;
     [Export] private ChooseLinePanel chooseLinePanel;
     [Export] private Label editingLineLabel;
+    [Export] private Window infoEditWindow;
 
     private string editingChartId; // 正在编辑的铺面的ID
     private Chart editingChart; // 正在编辑的铺面
@@ -163,6 +164,8 @@ public partial class EditorScene : Node
         chooseLinePanel.LineSelected += SetEditingLine;
 
         editingLineLabel.Text = $"正在编辑:线{1}";
+
+        infoEditWindow.CloseRequested += () => infoEditWindow.Hide();
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
     }

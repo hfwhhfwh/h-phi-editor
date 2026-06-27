@@ -31,6 +31,7 @@ public partial class ChooseLinePanel : Panel
 		{
 			//if(child.GetParent() == this && child != null)
 			vBoxContainer.RemoveChild(child);
+			child.QueueFree();
 		}
 		
 		foreach(LineInfo info in infos)

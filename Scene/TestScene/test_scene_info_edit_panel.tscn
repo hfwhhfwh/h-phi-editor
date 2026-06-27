@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://x05vw47x25ju"]
+
+[ext_resource type="Script" uid="uid://v8fkic6pc2yt" path="res://Script/TestSceneScripts/TestSceneInfoEditPanel.cs" id="1_svivb"]
+[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="1_ynkhb"]
+
+[node name="TestSceneInfoEditPanel" type="Node" unique_id=773458774 node_paths=PackedStringArray("infoEditPanel")]
+script = ExtResource("1_svivb")
+infoEditPanel = NodePath("InfoEditPanel")
+
+[node name="InfoEditPanel" parent="." unique_id=1498111790 instance=ExtResource("1_ynkhb")]
