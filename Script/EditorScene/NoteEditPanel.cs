@@ -13,20 +13,31 @@ public partial class NoteEditPanel : BaseEditPanel
 	}
 	private readonly SpriteType[] allSpriteTypes = (SpriteType[])Enum.GetValues(typeof(SpriteType));
 
-	[Export] public float noteScale = 0.1f;
+    private enum SelectMode
+    {
+        Single, // 单选
+        Multi // 多选
+    }
+    private SelectMode selectMode = SelectMode.Multi;
+
+	[Export] private float noteScale = 0.1f;
+    /// <summary> note被选中时的颜色滤镜 </summary>
+    [Export] private Color selectedModulate;
 
 	[ExportGroup("音符贴图")]
-    [Export] public Texture2D tapTexture;
-    [Export] public Texture2D dragTexture;
-    [Export] public Texture2D flickTexture;
-    [Export] public Texture2D holdHeadTexture;
-    [Export] public Texture2D holdBodyTexture;
-    [Export] public Texture2D holdEndTexture;
+    [Export] private Texture2D tapTexture;
+    [Export] private Texture2D dragTexture;
+    [Export] private Texture2D flickTexture;
+    [Export] private Texture2D holdHeadTexture;
+    [Export] private Texture2D holdBodyTexture;
+    [Export] private Texture2D holdEndTexture;
 
 	// ---- Multimesh ---- 
 	private Dictionary<SpriteType, MultiMesh> multiMeshes = new();
 	private Dictionary<SpriteType, MultiMeshInstance2D> multiMeshInstances = new();
 	private Dictionary<SpriteType, int> visibleCounts = new();
+
+    private List<Note> selectedNotes = new();
 
     public override void _Ready()
     {
@@ -46,22 +57,22 @@ public partial class NoteEditPanel : BaseEditPanel
 				_ => tapTexture
 			};
 
-			MultiMesh multiMesh = new MultiMesh();
+            //设置Multimesh
+			MultiMesh multiMesh = new MultiMesh
+			{
+				TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
+				InstanceCount = 0,
+				VisibleInstanceCount = 0,
+                UseColors = true, // 用于提示选中
+			};
+            multiMesh.InstanceCount = 10000;
 			multiMeshes[type] = multiMesh;
 
 			MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
+            multiMeshInstance.Texture = texture;
+            multiMeshInstance.Multimesh = multiMesh;
 			multiMeshInstances[type] = multiMeshInstance;
-			multiMeshInstance.Texture = texture;
 
-			//设置Multimesh
-			multiMesh = new MultiMesh
-			{
-				TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
-				InstanceCount = 10000,
-				VisibleInstanceCount = 0
-			};
-			multiMeshInstance.Multimesh = multiMesh;
-			
 			// 根据纹理实际尺寸创建 QuadMesh
 			var quad = new QuadMesh();
 			quad.Size = new Vector2(texture.GetSize().X, -texture.GetSize().Y);   // 保持宽高比，去掉负值
@@ -141,7 +152,7 @@ public partial class NoteEditPanel : BaseEditPanel
 			visibleCounts[spriteType] = 0;
 		}
 
-		// 为视口范围内的 note 激活池节点
+		// 渲染视口范围内的 note
 		for (int i = 0; i < notes.Length; i++)
 		{
 			Note note = notes[i];
@@ -174,6 +185,14 @@ public partial class NoteEditPanel : BaseEditPanel
                 transform.Y = new Vector2(0, noteScale);
 
                 multiMeshes[type].SetInstanceTransform2D(visibleCounts[type], transform);
+                multiMeshes[type].SetInstanceColor(visibleCounts[type], Colors.White);
+
+                //选中效果
+                if (selectedNotes.Contains(note))
+                {
+                    SelectedRender(multiMeshes[type], visibleCounts[type]);
+                }
+
                 visibleCounts[type]++;
             }
             else // Hold 音符（Type == 2）
@@ -197,6 +216,13 @@ public partial class NoteEditPanel : BaseEditPanel
 						visibleCounts[SpriteType.HoldHead],
 						transform
 					);
+                    multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], Colors.White);
+                    //选中效果
+                    if (selectedNotes.Contains(note))
+                    {
+                        SelectedRender(multiMeshes[SpriteType.HoldHead], visibleCounts[SpriteType.HoldHead]);
+                    }
+                    
                     visibleCounts[SpriteType.HoldHead]++;
                 }
 
@@ -215,6 +241,12 @@ public partial class NoteEditPanel : BaseEditPanel
 					multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
 						visibleCounts[SpriteType.HoldBody], transform
 					);
+                    multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], Colors.White);
+                    //选中效果
+                    if (selectedNotes.Contains(note))
+                    {
+                        SelectedRender(multiMeshes[SpriteType.HoldBody], visibleCounts[SpriteType.HoldBody]);
+                    }
 					visibleCounts[SpriteType.HoldBody]++;
                     
                 }
@@ -228,6 +260,13 @@ public partial class NoteEditPanel : BaseEditPanel
                     multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
 						visibleCounts[SpriteType.HoldEnd], transform
 					);
+                    multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], Colors.White);
+                    //选中效果
+                    if (selectedNotes.Contains(note))
+                    {
+                        SelectedRender(multiMeshes[SpriteType.HoldEnd], visibleCounts[SpriteType.HoldEnd]);
+                    }
+
                     visibleCounts[SpriteType.HoldEnd]++;
                 }
             }
@@ -238,6 +277,11 @@ public partial class NoteEditPanel : BaseEditPanel
         {
             multiMeshes[type].VisibleInstanceCount = visibleCounts[type];
         }
+    }
+
+    private void SelectedRender(MultiMesh multiMesh, int id)
+    {
+        multiMesh.SetInstanceColor(id, selectedModulate);
     }
 
     public override void _GuiInput(InputEvent @event)
@@ -254,8 +298,6 @@ public partial class NoteEditPanel : BaseEditPanel
             HandleTouchInput(@touchEvent);
         }
         
-        //HandleKeyInput(@event);
-        
     }
 
     private void HandleMouseBtnInput(InputEventMouseButton mouseBtn)
@@ -267,6 +309,7 @@ public partial class NoteEditPanel : BaseEditPanel
             {
                 Vector2 pos = mouseBtn.Position;
                 Note note = FildNearestNote(pos);
+                OnNoteTaped(note);
             }
         }
         
@@ -275,6 +318,29 @@ public partial class NoteEditPanel : BaseEditPanel
     private void HandleTouchInput(InputEventScreenTouch touchEvent)
     {
         //TODO
+    }
+
+    public void OnNoteTaped(Note note)
+    {
+        if(selectMode == SelectMode.Single)
+        {
+            selectedNotes = [note];
+        }
+        else if(selectMode == SelectMode.Multi)
+        {
+            if (selectedNotes.Contains(note))
+            {
+                selectedNotes.Remove(note);
+            }
+            else
+            {
+                selectedNotes.Add(note);
+            }
+        }
+        else
+        {
+            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{selectMode}");
+        }
     }
 
     /// <summary>

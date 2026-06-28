@@ -181,6 +181,7 @@ clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("3_gwldl")
+selectedModulate = Color(1, 0.50980395, 0.9764706, 1)
 tapTexture = ExtResource("5_57v2d")
 dragTexture = ExtResource("6_qdb1r")
 flickTexture = ExtResource("7_wq0mf")
