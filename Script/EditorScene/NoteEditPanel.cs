@@ -86,6 +86,36 @@ public partial class NoteEditPanel : BaseEditPanel
     //     return node;
     // }
 
+    /// <summary>
+    /// 获取某个物体在面板上的坐标
+    /// </summary>
+    /// <param name="beatTime">时间（单位为拍数）</param>
+    /// <param name="posX">X坐标，[-675, 675]</param>
+    /// <returns>物体在面板上的坐标</returns>
+    private Vector2 GetPanelPosition(float beatTime, float posX)
+    {
+        // 计算面板 X 坐标（谱面坐标 -675~675 映射到面板水平范围）
+        float ratio = (posX - (-675f)) / 1350f;
+        float panelX = verMargin + ratio * (Size.X - 2 * verMargin);
+        // 起始 Y 坐标（向上为负）
+        float panelY = GetPanelPosY(beatTime);
+
+        return new Vector2(panelX, panelY);
+    }
+
+    /// <summary>
+    /// 获取某个物体在面板上的Y坐标
+    /// </summary>
+    /// <param name="beatTime">时间（单位为拍数）</param>
+    /// <returns>物体在面板上的Y坐标</returns>
+    private float GetPanelPosY(float beatTime)
+    {
+        // 起始 Y 坐标（向上为负）
+        float panelY = Size.Y / 2f + horOffsetSmoothed - beatTime * horSeparationSmoothed;
+
+        return panelY;
+    }
+
 	protected override void UpdateVisuals()
     {
         // 如果没有可用的谱面或判定线，则隐藏所有池节点
@@ -118,11 +148,9 @@ public partial class NoteEditPanel : BaseEditPanel
 
             // 计算起始拍数
             float startBeat = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-            // 计算面板 X 坐标（谱面坐标 -675~675 映射到面板水平范围）
-            float ratio = (note.PositionX - (-675f)) / 1350f;
-            float panelX = verMargin + ratio * (Size.X - 2 * verMargin);
-            // 起始 Y 坐标（向上为负）
-            float startY = Size.Y / 2f + horOffsetSmoothed - startBeat * horSeparationSmoothed;
+            Vector2 panelPos = GetPanelPosition(startBeat, note.PositionX);
+            float panelX = panelPos.X;
+            float startY = panelPos.Y;
 
             // 处理非 Hold 音符（Tap, Drag, Flick）
             if (note.Type != 2)
@@ -152,7 +180,8 @@ public partial class NoteEditPanel : BaseEditPanel
             {
                 // 计算结束拍数和结束 Y 坐标
                 float endBeat = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
-                float endY = Size.Y / 2f + horOffsetSmoothed - endBeat * horSeparationSmoothed;
+                float endY = GetPanelPosY(endBeat);
+                // float endY = Size.Y / 2f + horOffsetSmoothed - endBeat * horSeparationSmoothed;
 
                 // 裁切：若头部和尾部都在面板外且不可见，则跳过（但若部分可见仍渲染）
                 if (panelX < 0 || panelX > Size.X || startY < 0f || endY > Size.Y)
@@ -210,5 +239,104 @@ public partial class NoteEditPanel : BaseEditPanel
             multiMeshes[type].VisibleInstanceCount = visibleCounts[type];
         }
     }
+
+    public override void _GuiInput(InputEvent @event)
+    {
+        base._GuiInput(@event);
+
+        if (@event is InputEventMouseButton mouseBtn)
+        {
+            HandleMouseBtnInput(@mouseBtn);
+        }
+
+        else if(@event is InputEventScreenTouch touchEvent)
+        {
+            HandleTouchInput(@touchEvent);
+        }
+        
+        //HandleKeyInput(@event);
+        
+    }
+
+    private void HandleMouseBtnInput(InputEventMouseButton mouseBtn)
+    {
+        // 鼠标左键点击
+        if (mouseBtn.ButtonIndex == MouseButton.Left)
+        {
+            if (mouseBtn.Pressed)
+            {
+                Vector2 pos = mouseBtn.Position;
+                Note note = FildNearestNote(pos);
+            }
+        }
+        
+    }
+
+    private void HandleTouchInput(InputEventScreenTouch touchEvent)
+    {
+        //TODO
+    }
+
+    /// <summary>
+    /// 找到距离点击位置最近的note，若未找到返回null
+    /// </summary>
+    /// <param name="pos">点击位置</param>
+    /// <returns>距离点击位置最近的note</returns>
+    private Note FildNearestNote(Vector2 pos)
+    {
+        Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
+
+        Note nearestNote = null;
+        float nearestDistSquared = 99999f;
+
+        foreach(Note note in notes)
+        {
+            float distSquared;
+            if(note.Type != 2)
+            {
+                //计算note位置
+                float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
+                Vector2 notePos = GetPanelPosition(beatValue, note.PositionX);
+
+                distSquared = pos.DistanceSquaredTo(notePos);
+            }
+            else // 特殊处理hold
+            {
+                float startBeat = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
+                float endBeat = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
+                Vector2 startPos = GetPanelPosition(startBeat, note.PositionX);
+                Vector2 endPos = GetPanelPosition(endBeat, note.PositionX);
+
+                if(pos.Y < endPos.Y)
+                {
+                    //计算点击位置和结束点（最上方）的距离
+                    distSquared = pos.DistanceSquaredTo(endPos);
+
+                }
+                else if(pos.Y > startPos.Y)
+                {
+                    //计算点击位置和开始点（最下方）的距离
+                    distSquared = pos.DistanceSquaredTo(startPos);
+                }
+                else
+                {
+                    // 点击位置在hold两侧，计算水平距离
+                    distSquared = (float)Math.Pow(pos.X - startPos.X, 2);
+                }
+            }
+
+            if(distSquared < nearestDistSquared)
+            {
+                nearestDistSquared = distSquared;
+                nearestNote = note;
+            }
+        }
+
+        GD.Print($"[{this.Name}] 点击位置:{pos} 最近的note:{Array.IndexOf(notes,nearestNote)}, 距离:{Math.Sqrt(nearestDistSquared)}");
+        return nearestNote;
+
+        
+    }
+
 	
 }
