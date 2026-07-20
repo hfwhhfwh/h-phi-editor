@@ -2,6 +2,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -18,7 +19,7 @@ public partial class NoteEditPanel : BaseEditPanel
         Single, // 单选
         Multi // 多选
     }
-    private SelectMode selectMode = SelectMode.Multi;
+    private SelectMode selectMode = SelectMode.Single;
 
 	[Export] private float noteScale = 0.1f;
     /// <summary> note被选中时的颜色滤镜 </summary>
@@ -38,6 +39,8 @@ public partial class NoteEditPanel : BaseEditPanel
 	private Dictionary<SpriteType, int> visibleCounts = new();
 
     private List<Note> selectedNotes = new();
+
+    [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex);
 
     public override void _Ready()
     {
@@ -308,8 +311,8 @@ public partial class NoteEditPanel : BaseEditPanel
             if (mouseBtn.Pressed)
             {
                 Vector2 pos = mouseBtn.Position;
-                Note note = FildNearestNote(pos);
-                OnNoteTaped(note);
+                int noteIndex = FildNearestNoteIndex(pos);
+                OnNoteTaped(noteIndex);
             }
         }
         
@@ -320,11 +323,15 @@ public partial class NoteEditPanel : BaseEditPanel
         //TODO
     }
 
-    public void OnNoteTaped(Note note)
+    public void OnNoteTaped(int noteIndex)
     {
+        Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
+        Note note = notes[noteIndex];
+        
         if(selectMode == SelectMode.Single)
         {
             selectedNotes = [note];
+            EmitSignal(SignalName.OnNoteSelected, EditingLineId, noteIndex);
         }
         else if(selectMode == SelectMode.Multi)
         {
@@ -352,11 +359,32 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
 
-        Note nearestNote = null;
+        int index = FildNearestNoteIndex(pos);
+
+        if(index == -1)
+        {
+            return null;
+        }
+
+        return notes[index];
+    }
+
+    /// <summary>
+    /// 找到距离点击位置最近的note，若未找到返回-1
+    /// </summary>
+    /// <param name="pos">点击位置</param>
+    /// <returns>距离点击位置最近的note的索引</returns>
+    private int FildNearestNoteIndex(Vector2 pos)
+    {
+        Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
+
+        int nearestNoteIndex = -1;
         float nearestDistSquared = 99999f;
 
-        foreach(Note note in notes)
+        for (int i = 0; i < notes.Length; i++)
         {
+            Note note = notes[i];
+
             float distSquared;
             if(note.Type != 2)
             {
@@ -394,12 +422,12 @@ public partial class NoteEditPanel : BaseEditPanel
             if(distSquared < nearestDistSquared)
             {
                 nearestDistSquared = distSquared;
-                nearestNote = note;
+                nearestNoteIndex = i;
             }
         }
 
-        GD.Print($"[{this.Name}] 点击位置:{pos} 最近的note:{Array.IndexOf(notes,nearestNote)}, 距离:{Math.Sqrt(nearestDistSquared)}");
-        return nearestNote;
+        GD.Print($"[{this.Name}] 点击位置:{pos} 最近的note:{nearestNoteIndex}, 距离:{Math.Sqrt(nearestDistSquared)}");
+        return nearestNoteIndex;
 
         
     }

@@ -138,6 +138,11 @@ namespace QuickType
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
+    public class Beat
+    {
+        public int[] values = new int[3];
+    }
+
     public partial class Chart
     {
         [JsonProperty("BPMList")]

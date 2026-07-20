@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://d0fwusqj7g1he"]
+
+[ext_resource type="Script" uid="uid://e4v4sub235gu" path="res://Script/EditorScene/NoteInfoPanel.cs" id="1_gqs5q"]
+[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="2_7ltuy"]
+
+[node name="NoteInfoPanel" type="Panel" unique_id=1318802048 node_paths=PackedStringArray("infoEditPanel")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gqs5q")
+infoEditPanel = NodePath("InfoEditPanel")
+
+[node name="InfoEditPanel" parent="." unique_id=1498111790 instance=ExtResource("2_7ltuy")]
+layout_mode = 1

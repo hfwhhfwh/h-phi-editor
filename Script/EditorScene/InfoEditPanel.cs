@@ -1,4 +1,5 @@
 using Godot;
+using QuickType;
 using System;
 using System.Collections.Generic;
 
@@ -104,6 +105,10 @@ public partial class InfoEditPanel : Panel
 		{
 			return CreateEnumEditor(key, value);
 		}
+		else if(type == typeof(Beat))
+		{
+			return CreateBeatEditor(key, (Beat)value);
+		}
 		else
 		{
 			// 未知类型回退为字符串输入（调用 ToString）
@@ -123,7 +128,7 @@ public partial class InfoEditPanel : Panel
 		return lineEdit;
 	}
 
-	private Control CreateIntEditor(string key, double initialValue)
+	private Control CreateIntEditor(string key, long initialValue)
     {
         SpinBox spinBox = new SpinBox();
         //spinBox.MinValue = min;
@@ -246,6 +251,41 @@ public partial class InfoEditPanel : Panel
         };
         return optionButton;
     }
+
+	private Control CreateBeatEditor(string key, Beat initialValue)
+	{
+		HBoxContainer hBoxContainer = new();
+
+		//LineEdit[] lineEdits = new LineEdit[3];
+		
+		for(int i = 0; i < 3; i++)
+		{
+			LineEdit lineEdit = new LineEdit();
+			hBoxContainer.AddChild(lineEdit);
+
+			lineEdit.Text = $"{initialValue.values[i]}";
+
+			lineEdit.TextSubmitted += (string newValue) =>
+			{
+				long newInt;
+				try
+				{
+					newInt = Convert.ToInt64(newValue);
+					
+				}
+				catch(Exception e)
+				{
+					GD.PrintErr($"[{this.Name}] 输入整数非法:{e.Message}");
+					//lineEdit.Text = $"{Convert.ToDouble(_data.Properties[key])}";
+					return;
+				}
+				((Beat)_data.Properties[key]).values[i] = (int)newInt;
+				OnValueChanged(key, (Beat)_data.Properties[key]);
+			};
+		}
+
+		return hBoxContainer;
+	}
 
 	public void OnValueChanged(string key, object value)
 	{

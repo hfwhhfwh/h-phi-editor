@@ -24,7 +24,8 @@ public partial class EditorScene : Node
     [Export] private RightPanel rightPanel;
     [Export] private ChooseLinePanel chooseLinePanel;
     [Export] private Label editingLineLabel;
-    [Export] private Window infoEditWindow;
+    //[Export] private Window infoEditWindow;
+    [Export] private NoteInfoPanel noteInfoPanel;
 
     private string editingChartId; // 正在编辑的铺面的ID
     private Chart editingChart; // 正在编辑的铺面
@@ -165,7 +166,14 @@ public partial class EditorScene : Node
 
         editingLineLabel.Text = $"正在编辑:线{1}";
 
-        infoEditWindow.CloseRequested += () => infoEditWindow.Hide();
+        noteEditPanel.OnNoteSelected += OnNoteSelected;
+
+        noteInfoPanel.OnConfirmed += () =>
+        {
+            noteInfoPanel.Visible = false;
+        };
+
+        //infoEditWindow.CloseRequested += () => infoEditWindow.Hide();
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
     }
@@ -318,6 +326,16 @@ public partial class EditorScene : Node
 
         chooseLinePanel.Visible = false;
         inputManager.IsEnable = true;
+    }
+
+    private void OnNoteSelected(int lineId, int noteIndex)
+    {
+        noteInfoPanel.Visible = true;
+
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+
+        noteInfoPanel.ShowInfo(note, lineId, noteIndex);
+
     }
 
 }

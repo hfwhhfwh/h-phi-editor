@@ -20,19 +20,20 @@
 [ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
 [ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="20_km5t0"]
+[ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel", "infoEditWindow")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel", "noteInfoPanel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
-noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/NoteEditPanel")
-eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/EventEditPanel")
+noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Left/NoteEditPanel")
+eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Right/EventEditPanel")
 chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
 editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel")
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/EditingLineLabel")
-infoEditWindow = NodePath("InfoEditWindow")
+noteInfoPanel = NodePath("EditorPanel/SafeArea/NoteInfoPanel")
 
 [node name="EditorPanel" type="PanelContainer" parent="." unique_id=302158127]
 anchors_preset = 15
@@ -176,9 +177,18 @@ horizontal_alignment = 1
 layout_mode = 2
 touch_dragger_enabled = true
 
-[node name="NoteEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=2038816721]
-clip_contents = true
+[node name="Left" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=567924052]
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NoteEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Left" unique_id=2038816721]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 3
 script = ExtResource("3_gwldl")
 selectedModulate = Color(1, 0.50980395, 0.9764706, 1)
@@ -195,9 +205,18 @@ horColor = Color(1, 0, 0, 0.6862745)
 verColor = Color(0, 1, 0, 0.5882353)
 horSubColor = Color(1, 1, 0, 0.5882353)
 
-[node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=825080562]
-clip_contents = true
+[node name="Right" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=890883041]
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Right" unique_id=825080562]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 3
 script = ExtResource("12_qdb1r")
 eventHoldTexture = ExtResource("13_wq0mf")
@@ -280,6 +299,9 @@ icon = ExtResource("16_4d80g")
 icon_alignment = 1
 expand_icon = true
 
+[node name="NoteInfoPanel" parent="EditorPanel/SafeArea" unique_id=1318802048 instance=ExtResource("20_mm2kl")]
+layout_mode = 2
+
 [node name="Camera2D" type="Camera2D" parent="." unique_id=424155361]
 visible = false
 position = Vector2(576, 324)
@@ -295,7 +317,7 @@ visible = false
 min_size = Vector2i(200, 200)
 theme = ExtResource("3_2bu1g")
 
-[node name="InfoEditPanel" parent="InfoEditWindow" unique_id=1498111790 instance=ExtResource("20_km5t0")]
+[node name="InfoEditPanel" parent="InfoEditWindow" unique_id=299002691 instance=ExtResource("20_km5t0")]
 
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/ChooseLine" to="." method="OnChooseLineClicked"]
