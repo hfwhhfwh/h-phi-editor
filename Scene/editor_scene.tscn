@@ -26,6 +26,7 @@
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
+theme = ExtResource("3_2bu1g")
 noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Left/NoteEditPanel")
 eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Right/EventEditPanel")
 chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
@@ -300,6 +301,7 @@ icon_alignment = 1
 expand_icon = true
 
 [node name="NoteInfoPanel" parent="EditorPanel/SafeArea" unique_id=1318802048 instance=ExtResource("20_mm2kl")]
+visible = false
 layout_mode = 2
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=424155361]

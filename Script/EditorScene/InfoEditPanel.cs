@@ -260,6 +260,8 @@ public partial class InfoEditPanel : Panel
 		
 		for(int i = 0; i < 3; i++)
 		{
+			int index = i; // 捕获当前索引
+
 			LineEdit lineEdit = new LineEdit();
 			hBoxContainer.AddChild(lineEdit);
 
@@ -267,6 +269,7 @@ public partial class InfoEditPanel : Panel
 
 			lineEdit.TextSubmitted += (string newValue) =>
 			{
+				//尝试转换为数字
 				long newInt;
 				try
 				{
@@ -276,11 +279,15 @@ public partial class InfoEditPanel : Panel
 				catch(Exception e)
 				{
 					GD.PrintErr($"[{this.Name}] 输入整数非法:{e.Message}");
-					//lineEdit.Text = $"{Convert.ToDouble(_data.Properties[key])}";
+					// 恢复为当前值（从 _data 中取对应索引）
+					Beat currentBeat = (Beat)_data.Properties[key];
+					lineEdit.Text = currentBeat.values[index].ToString();
 					return;
 				}
-				((Beat)_data.Properties[key]).values[i] = (int)newInt;
-				OnValueChanged(key, (Beat)_data.Properties[key]);
+				// 更新 _data 中的 Beat 对象
+				Beat beat = (Beat)_data.Properties[key];
+				beat.values[index] = (int)newInt;
+				OnValueChanged(key, beat);
 			};
 		}
 

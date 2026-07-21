@@ -22,6 +22,8 @@ public partial class NoteEditPanel : BaseEditPanel
     private SelectMode selectMode = SelectMode.Single;
 
 	[Export] private float noteScale = 0.1f;
+    /// <summary>选择note时点击位置与实际位置的最大距离</summary>
+    [Export] private float distanceThreshold = 40f;
     /// <summary> note被选中时的颜色滤镜 </summary>
     [Export] private Color selectedModulate;
 
@@ -293,12 +295,13 @@ public partial class NoteEditPanel : BaseEditPanel
 
         if (@event is InputEventMouseButton mouseBtn)
         {
-            HandleMouseBtnInput(@mouseBtn);
+            HandleMouseBtnInput(mouseBtn);
+            
         }
 
         else if(@event is InputEventScreenTouch touchEvent)
         {
-            HandleTouchInput(@touchEvent);
+            HandleTouchInput(touchEvent);
         }
         
     }
@@ -308,11 +311,10 @@ public partial class NoteEditPanel : BaseEditPanel
         // 鼠标左键点击
         if (mouseBtn.ButtonIndex == MouseButton.Left)
         {
-            if (mouseBtn.Pressed)
+            if (!mouseBtn.Pressed) // 松开触发
             {
                 Vector2 pos = mouseBtn.Position;
-                int noteIndex = FildNearestNoteIndex(pos);
-                OnNoteTaped(noteIndex);
+                OnSingleClick(pos);
             }
         }
         
@@ -320,7 +322,25 @@ public partial class NoteEditPanel : BaseEditPanel
 
     private void HandleTouchInput(InputEventScreenTouch touchEvent)
     {
-        //TODO
+        if (!touchEvent.Pressed) // 松开触发
+        {
+            Vector2 pos = touchEvent.Position;
+            OnSingleClick(pos);
+        }
+    }
+    
+    private void OnSingleClick(Vector2 pos)
+    {
+        int noteIndex = FildNearestNoteIndex(pos);
+        if(noteIndex == -1) // -1代表没有选中
+        {
+            DeselectAll();
+            
+        }
+        else
+        {
+            OnNoteTaped(noteIndex);
+        }
     }
 
     public void OnNoteTaped(int noteIndex)
@@ -426,10 +446,39 @@ public partial class NoteEditPanel : BaseEditPanel
             }
         }
 
-        GD.Print($"[{this.Name}] 点击位置:{pos} 最近的note:{nearestNoteIndex}, 距离:{Math.Sqrt(nearestDistSquared)}");
+        //判断距离是否小于阈值
+        float distance = (float)Math.Sqrt(nearestDistSquared);
+        if(distance > distanceThreshold)
+        {
+            GD.Print($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
+            return -1;
+        }
+
+        GD.Print($"[{this.Name}] 点击位置:{pos} 最近的note:{nearestNoteIndex}, 距离:{distance}");
         return nearestNoteIndex;
 
         
+    }
+
+    public Vector2 GetGlobalPosition(float beatValue, float posX)
+    {
+        Vector2 localPos = GetPanelPosition(beatValue, posX);
+
+        // 1. 获取视口（Viewport）的屏幕变换
+        Transform2D screenTransform = GetViewport().GetScreenTransform();
+
+        // 2. 获取节点自身的全局画布变换
+        Transform2D globalCanvasTransform = GetGlobalTransformWithCanvas();
+
+        // 3. 按顺序相乘：屏幕变换 * 全局画布变换 * 局部坐标
+        Vector2 screenPos = screenTransform * (globalCanvasTransform * localPos);
+
+        return screenPos;
+    }
+
+    public void DeselectAll()
+    {
+        selectedNotes.Clear();
     }
 
 	

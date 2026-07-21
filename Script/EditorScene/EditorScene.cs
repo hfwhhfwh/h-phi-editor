@@ -16,6 +16,9 @@ public partial class EditorScene : Node
 	[Export] private float verJoystickSensitivity = 1000f; // 虚拟摇杆竖直滚动的灵敏度
 	[Export] private float zoomJoystickSensitivity = 1f; // 虚拟摇杆缩放的灵敏度
 
+    [ExportGroup("资源引用")]
+    [Export] private Theme theme;
+
     [ExportGroup("")]
     [Export] private NoteEditPanel noteEditPanel;
     [Export] private EventEditPanel eventEditPanel;
@@ -127,7 +130,7 @@ public partial class EditorScene : Node
         noteEditPanel.editingChart = editingChart;
         eventEditPanel.editingChart = editingChart;
 
-        // ===================初始化谱面播放器
+        // ===================初始化谱面播放器=================
         //1. 设置谱面
         chartPlayer.chart = editingChart;
 
@@ -172,6 +175,9 @@ public partial class EditorScene : Node
         {
             noteInfoPanel.Visible = false;
         };
+
+        //设置弹出菜单
+        PopupMenuHelper.SetTheme(theme);
 
         //infoEditWindow.CloseRequested += () => infoEditWindow.Hide();
 
@@ -330,12 +336,50 @@ public partial class EditorScene : Node
 
     private void OnNoteSelected(int lineId, int noteIndex)
     {
-        noteInfoPanel.Visible = true;
-
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
 
-        noteInfoPanel.ShowInfo(note, lineId, noteIndex);
+        float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
+        Vector2 popupPos = noteEditPanel.GetGlobalPosition(beatValue, note.PositionX)
+            + new Vector2(30,30);
+
+        // 构建菜单项（使用闭包捕获当前音符信息）
+        var items = new List<PopupMenuItem>
+        {
+            new PopupMenuItem { Text = "编辑", Callback = () => OnNoteEdit(lineId, noteIndex) },
+            new PopupMenuItem { Text = "复制", Callback = () => OnNoteCopy(lineId, noteIndex) },
+            new PopupMenuItem { Text = "粘贴", Callback = () => OnNotePaste(lineId, noteIndex) },
+            new PopupMenuItem { IsSeparator = true },
+            new PopupMenuItem { Text = "删除", Callback = () => OnNoteDelete(lineId, noteIndex) }
+        };
+
+        // 弹出菜单
+        PopupMenu popupMenu = PopupMenuHelper.ShowPopupMenu(this, popupPos, items);
+        popupMenu.PopupHide += () =>
+        {
+            noteEditPanel.DeselectAll();
+        };
 
     }
 
+    private void OnNoteEdit(int lineId, int noteIndex)
+    {
+        noteInfoPanel.Visible = true;
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+        noteInfoPanel.ShowInfo(note, lineId, noteIndex);
+    }
+
+    private void OnNoteCopy(int lineId, int noteIndex)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void OnNotePaste(int lineId, int noteIndex)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void OnNoteDelete(int lineId, int noteIndex)
+    {
+        throw new NotImplementedException();
+    }
 }
