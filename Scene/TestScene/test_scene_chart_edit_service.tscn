@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bjrc2axnuubws"]
+
+[ext_resource type="Script" uid="uid://c1bk1vl3jcn1g" path="res://Script/TestSceneScripts/TestSceneChartEditService.cs" id="1_4g6ls"]
+
+[node name="TestSceneChartEditService" type="Node" unique_id=1471981767]
+script = ExtResource("1_4g6ls")

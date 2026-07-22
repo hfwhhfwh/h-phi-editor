@@ -20,24 +20,10 @@ public partial class TestSceneNoteInfoPanel : Node
 
         noteInfoPanel.ShowInfo(note, 0, 123);
 
-        noteInfoPanel.OnStartTimeChanged += (Beat beat) => 
+        noteInfoPanel.OnNotePropertyChanged += 
+        (int lineId, int noteIndex, NotePropertyType type, object value) => 
         {
-            GD.Print($"[{this.Name}] 用户修改了StartTime:[{beat.values[0]},{beat.values[1]},{beat.values[2]}]");
-        };
-
-        noteInfoPanel.OnEndTimeChanged += (Beat beat) => 
-        {
-            GD.Print($"[{this.Name}] 用户修改了EndTime:[{beat.values[0]},{beat.values[1]},{beat.values[2]}]");
-        };
-
-        noteInfoPanel.OnPosXChanged += (float posX) =>
-        {
-            GD.Print($"[{this.Name}] 用户修改了posX:{posX}");
-        };
-
-        noteInfoPanel.OnTypeChanged += (NoteType type) =>
-        {
-            GD.Print($"[{this.Name}] 用户修改了NoteType:{type}");
+            GD.Print($"[{this.Name}] 用户修改了属性{type}:{value}");
         };
     }
 

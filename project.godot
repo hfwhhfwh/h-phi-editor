@@ -24,6 +24,7 @@ ChartService="*uid://dcb40ki6g4ka8"
 ChartRepository="*uid://dgrw8ly3bw4br"
 InputManager="*uid://sroqxnij5j65"
 Global="*uid://rfaccn3y6mc0"
+ChartEditService="*uid://kc3isyumh8h8"
 
 [display]
 

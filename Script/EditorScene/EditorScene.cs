@@ -36,6 +36,7 @@ public partial class EditorScene : Node
 
     private InputManager inputManager;
     private ChartService _chartService;
+    private ChartEditService chartEditService;
 
     [Export] private float horOffset;
 	private float horBeatOffset;
@@ -110,6 +111,12 @@ public partial class EditorScene : Node
             GD.PrintErr($"[{this.Name}] ChartService is null");
         }
 
+        chartEditService = GetNode<ChartEditService>("/root/ChartEditService");
+        if(chartEditService == null)
+        {
+            GD.PrintErr($"[{this.Name}] ChartEditService is null");
+        }
+
 		//绑定事件
 		inputManager.Slide += (float x) =>
         {
@@ -176,10 +183,16 @@ public partial class EditorScene : Node
             noteInfoPanel.Visible = false;
         };
 
+        noteInfoPanel.OnNotePropertyChanged += 
+        (int lineId, int noteIndex, NotePropertyType property, object value) => {
+            chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
+        };
+
         //设置弹出菜单
         PopupMenuHelper.SetTheme(theme);
 
-        //infoEditWindow.CloseRequested += () => infoEditWindow.Hide();
+        //设置ChartEditService
+        chartEditService.EditingChart = editingChart;
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
     }

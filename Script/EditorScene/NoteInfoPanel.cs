@@ -6,12 +6,12 @@ public partial class NoteInfoPanel : Panel
 {
 	[Export] private InfoEditPanel infoEditPanel;
 
+	private int editingLineId;
+	private int editingNoteIndex;
+
 	[Signal] public delegate void OnConfirmedEventHandler();
 
-	public Action<Beat> OnStartTimeChanged;
-	public Action<Beat> OnEndTimeChanged;
-	public Action<NoteType> OnTypeChanged;
-	public Action<float> OnPosXChanged;
+	public Action <int, int, NotePropertyType, object> OnNotePropertyChanged;
 	
 
     public override void _Ready()
@@ -40,6 +40,8 @@ public partial class NoteInfoPanel : Panel
 
 	public void ShowInfo(Note note, int lineId, int noteIndex)
 	{
+		editingLineId = lineId;
+		editingNoteIndex = noteIndex;
         //更新infoEditPanel的显示内容
         InfoEditPanel.Data data = new();
         data.Name = $"音符{noteIndex}";
@@ -74,30 +76,40 @@ public partial class NoteInfoPanel : Panel
 
 	public void OnPropertyChanged(string key, object value)
 	{
-		if(key == "StartTime")
+		NotePropertyType propertyType;
+		object convertedValue;
+
+		switch (key)
 		{
-			Beat beat = (Beat)value;
-			OnStartTimeChanged?.Invoke(beat);
+			case "StartTime":
+				propertyType = NotePropertyType.StartTime;
+				// infoEditPanel 中存储的是 Beat 对象，需提取其 values 数组
+				convertedValue = (Beat)value;
+				break;
+
+			case "EndTime":
+				propertyType = NotePropertyType.EndTime;
+				convertedValue = (Beat)value;
+				break;
+
+			case "Type":
+				propertyType = NotePropertyType.Type;
+				// value 已经是 NoteType 枚举，直接传递
+				convertedValue = value;
+				break;
+
+			case "PositionX":
+				propertyType = NotePropertyType.PosX;
+				convertedValue = Convert.ToSingle(value);
+				break;
+
+			default:
+				GD.PrintErr($"[{this.Name}] 未知的键: {key}");
+				return;
 		}
-		else if(key == "EndTime")
-		{
-			Beat beat = (Beat)value;
-			OnEndTimeChanged?.Invoke(beat);
-		}
-		else if(key == "Type")
-		{
-			NoteType type = (NoteType)value;
-			OnTypeChanged?.Invoke(type);
-		}
-		else if(key == "PositionX")
-		{
-			float posX = Convert.ToSingle(value);
-			OnPosXChanged?.Invoke(posX);
-		}
-		else
-		{
-			GD.PrintErr($"[{this.Name}] 未知的键:{key}");
-		}
+
+		// 触发统一的属性变更事件
+		OnNotePropertyChanged?.Invoke(editingLineId, editingNoteIndex, propertyType, convertedValue);
 	}
 
 }

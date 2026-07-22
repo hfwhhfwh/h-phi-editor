@@ -141,6 +141,12 @@ namespace QuickType
     public class Beat
     {
         public int[] values = new int[3];
+
+        public override string ToString()
+        {
+            return $"[{values[0]},{values[1]},{values[2]}]";
+        }
+
     }
 
     public partial class Chart
