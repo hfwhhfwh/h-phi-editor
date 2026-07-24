@@ -19,7 +19,6 @@
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4d80g"]
 [ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
-[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="20_km5t0"]
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
 
 [node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel", "noteInfoPanel")]
@@ -309,17 +308,6 @@ visible = false
 position = Vector2(576, 324)
 enabled = false
 zoom = Vector2(0.5, 0.5)
-
-[node name="InfoEditWindow" type="Window" parent="." unique_id=533957038]
-oversampling_override = 1.0
-title = "信息编辑"
-position = Vector2i(0, 36)
-size = Vector2i(442, 584)
-visible = false
-min_size = Vector2i(200, 200)
-theme = ExtResource("3_2bu1g")
-
-[node name="InfoEditPanel" parent="InfoEditWindow" unique_id=299002691 instance=ExtResource("20_km5t0")]
 
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/ChooseLine" to="." method="OnChooseLineClicked"]

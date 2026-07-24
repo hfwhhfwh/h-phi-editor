@@ -1,0 +1,46 @@
+using Godot;
+using QuickType;
+using System;
+
+/// <summary>
+/// 谱面播放器抽象基类
+/// </summary>
+public abstract partial class BaseChartPlayer : Node
+{
+    public double Time{ get; set; } = 0;            // 当前游戏时间（秒），由音乐播放控制
+    public double ChartTime{ get; set; } = 0;       // 当前谱面时间，应用了偏移
+    public double ExternalTime { get; set; }        // 由外部设置的游戏时间（秒）
+    public bool IsPlaying{ get; set; }              // 是否正在播放，由上级设置
+    public Chart Chart{ get; set; }                 // 加载的谱面数据，由上级设置
+
+
+    protected int chartOffset;                        // 谱面偏移（以毫秒计量）
+
+    /// <summary>
+    /// 初始化
+    /// </summary>
+    public abstract void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio);
+
+    /// <summary>
+    /// 计算判定线和note的位置
+    /// </summary>
+    public abstract void UpdateLogic();
+
+    /// <summary>
+    /// 渲染所有判定线和note
+    /// </summary>
+    public abstract void Render();
+
+    /// <summary>
+    /// 从指定时间开始播放
+    /// </summary>
+    /// <param name="time">开始播放的时间</param>
+    public abstract void Play(float time);
+
+
+    /// <summary>
+    /// 暂停播放
+    /// </summary>
+    public abstract void Pause();
+
+}

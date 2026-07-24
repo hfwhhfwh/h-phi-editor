@@ -13,7 +13,7 @@ public enum NoteType
     Flick=3,
     Hold=2
 }
-public partial class ChartPlayer : Control
+public partial class ChartPlayer2 : Control
 {
     public double time = 0;                // 当前游戏时间（秒），由音乐播放控制
     public double chartTime = 0;           // 当前谱面时间，应用了偏移
@@ -23,7 +23,7 @@ public partial class ChartPlayer : Control
     public Image bgImage;                //背景图片，由上级设置
     public AudioStream audioStream;       //音乐，由上级设置
 
-    public List<JudgeLineNode> judgeLines = new(); // 动态创建的判定线节点
+    public List<JudgeLineNode2> judgeLines = new(); // 动态创建的判定线节点
 
     #region 纹理贴图
     [ExportGroup("纹理贴图")]
@@ -142,7 +142,7 @@ public partial class ChartPlayer : Control
         foreach (JudgeLine lineData in chart.JudgeLineList)
         {
             // 为每条判定线创建一个节点（你可以将JudgeLineNode做成一个独立的场景，这里简单用Node2D）
-            var lineNode = new JudgeLineNode();
+            var lineNode = new JudgeLineNode2();
             int index = Array.IndexOf(chart.JudgeLineList, lineData);
             lineNode.Name = $"JudgeLine_{index}";
             // 传入数据及对ChartPlayer的引用（用于时间转换等）、贴图、索引
@@ -196,12 +196,12 @@ public partial class ChartPlayer : Control
 /// <summary>
 /// 代表一条判定线的节点
 /// </summary>
-public partial class JudgeLineNode : Node2D
+public partial class JudgeLineNode2 : Node2D
 {
     public JudgeLine _data;                 // 原始数据
-    private ChartPlayer _chartPlayer;         // 用于获取BPM等
+    private ChartPlayer2 _chartPlayer;         // 用于获取BPM等
     private Texture2D _texture;               //贴图
-    private List<NoteNode> _noteNodes = new(); // 该线上的音符节点
+    private List<NoteNode2> _noteNodes = new(); // 该线上的音符节点
     public int _index;                       //索引
     Sprite2D spriteNode;                     //sprite2D节点，在SetData函数中创建
 
@@ -215,7 +215,7 @@ public partial class JudgeLineNode : Node2D
     public float _currentAlpha = 1;
     public float _currentSpeed = 1; // 速度系数
 
-    public void SetData(JudgeLine data, ChartPlayer player, Texture2D texture, int index)
+    public void SetData(JudgeLine data, ChartPlayer2 player, Texture2D texture, int index)
     {
         _data = data;
         _chartPlayer = player;
@@ -230,7 +230,7 @@ public partial class JudgeLineNode : Node2D
             {
                 Note noteData = _data.Notes[i];
 
-                NoteNode noteNode;
+                NoteNode2 noteNode;
                 //选择贴图和音效
                 Texture2D noteTexture;
                 AudioStream noteSound;
@@ -246,14 +246,14 @@ public partial class JudgeLineNode : Node2D
                 // 根据类型创建具体的音符节点
                 if (noteData.Type == 2) // Hold
                 {
-                    var holdNode = new HoldNoteNode();
+                    var holdNode = new HoldNoteNode2();
                     holdNode.SetData(noteData, this, _chartPlayer, noteTexture, noteSound, i);
                     holdNode.InitializeHold(_chartPlayer.holdBodyTexture, _chartPlayer.holdEndTexture);
                     noteNode = holdNode;
                 }
                 else
                 {
-                    noteNode = new NoteNode();
+                    noteNode = new NoteNode2();
                     noteNode.SetData(noteData, this, _chartPlayer, noteTexture, noteSound, i);
                 }
 
@@ -331,7 +331,7 @@ public partial class JudgeLineNode : Node2D
         //处理父判定线  father为-1代表没有父线
         if(_data.Father != -1)
         {
-            JudgeLineNode father = _chartPlayer.judgeLines[_data.Father];
+            JudgeLineNode2 father = _chartPlayer.judgeLines[_data.Father];
             //先更新父线位置
             father.UpdateLine(gameTime);
             // //在将自己的坐标加上父线的坐标
@@ -347,16 +347,6 @@ public partial class JudgeLineNode : Node2D
             _currentMoveX = currentPos.X;
             _currentMoveY = currentPos.Y;
         }
-
-        // if(_index == 97)
-        // {
-        //     float alpha0, alpha1, alpha2;
-        //     alpha0 = ChartDataHelper.InterpolateEvent(_data.EventLayers[0].AlphaEvents, gameTime, -1);
-        //     alpha1 = ChartDataHelper.InterpolateEvent(_data.EventLayers[1].AlphaEvents, gameTime, -1);
-        //     alpha2 = ChartDataHelper.InterpolateEvent(_data.EventLayers[2].AlphaEvents, gameTime, -1);
-        //     GD.Print($"_currentAlpha:{_currentAlpha}, alpha0:{alpha0}, alpha1:{alpha1}, alpha2:{alpha2}");
-        // }
-
 
         // 应用变换
         Position = PosUtil.ChartPosToViewportPos(new Vector2(_currentMoveX, _currentMoveY), _chartPlayer.Size);
@@ -388,11 +378,11 @@ public partial class JudgeLineNode : Node2D
 /// <summary>
 /// 代表一个音符的节点
 /// </summary>
-public partial class NoteNode : Node2D
+public partial class NoteNode2 : Node2D
 {
     protected Note _data;
-    private JudgeLineNode _parentLine;
-    protected ChartPlayer _chartPlayer;
+    private JudgeLineNode2 _parentLine;
+    protected ChartPlayer2 _chartPlayer;
     private Texture2D _texture;
     private AudioStream _sound;
     private int _index;
@@ -405,7 +395,7 @@ public partial class NoteNode : Node2D
     protected Vector2 localChartPos = new Vector2(); // 在铺面坐标系下的本地坐标
     
 
-    public void SetData(Note data, JudgeLineNode line, ChartPlayer player, Texture2D texture, AudioStream sound, int index)
+    public void SetData(Note data, JudgeLineNode2 line, ChartPlayer2 player, Texture2D texture, AudioStream sound, int index)
     {
         _data = data;
         _parentLine = line;
@@ -428,11 +418,6 @@ public partial class NoteNode : Node2D
 
         //hold需要显示在其他音符的下面
         ZIndex = 1;
-
-        //添加AudioStreamPlayer节点，用于播放音效
-        //audioStreamPlayer = new AudioStreamPlayer();
-        //audioStreamPlayer.Stream = sound;
-        //AddChild(audioStreamPlayer);
     }
 
     
@@ -449,7 +434,7 @@ public partial class NoteNode : Node2D
     /// 更新音符位置（受判定线位置和速度影响）
     /// 可被HoldNoteNode重写
     /// </summary>
-    public virtual void UpdateNote(double gameTime, JudgeLineNode fatherLine)
+    public virtual void UpdateNote(double gameTime, JudgeLineNode2 fatherLine)
     {
         if (_data == null) return;
 
@@ -465,12 +450,6 @@ public partial class NoteNode : Node2D
                 if (_chartPlayer.isPlaying) // 只有播放状态下显示特效，编辑器滚动时不显示
                 {
                     // 播放音效并生成打击特效
-                    // if (audioStreamPlayer == null || audioStreamPlayer.Stream == null)
-                    // {
-                    //     GD.PrintErr($"[{this.Name}] 无法播放打击音效");
-                    // }
-                    // audioStreamPlayer.Play();
-
                     PlayHitSound();
 
                     //显示打击特效
@@ -571,7 +550,7 @@ public partial class NoteNode : Node2D
 /// <summary>
 /// 代表一个Hold音符的节点
 /// </summary>
-public partial class HoldNoteNode : NoteNode
+public partial class HoldNoteNode2 : NoteNode2
 {
     private Texture2D _bodyTexture;
     private Texture2D _endTexture;
@@ -610,7 +589,7 @@ public partial class HoldNoteNode : NoteNode
         ZIndex = 0;
     }
 
-    public override void UpdateNote(double gameTime, JudgeLineNode fatherLine)
+    public override void UpdateNote(double gameTime, JudgeLineNode2 fatherLine)
     {
         // 先调用基类更新头部位置和可见性
         base.UpdateNote(gameTime, fatherLine);

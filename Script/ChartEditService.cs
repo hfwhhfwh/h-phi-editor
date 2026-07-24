@@ -35,21 +35,7 @@ public partial class ChartEditService : Node
                 note.Size = Convert.ToSingle(value); 
                 break;
             case NotePropertyType.Type:
-                if(value is int typeInt)
-                {
-                    note.Type = typeInt;
-                }
-                else if(value is NoteType noteType)
-                {
-                    note.Type = value switch
-                    {
-                        NoteType.Tap => 1,
-                        NoteType.Hold => 2,
-                        NoteType.Flick => 3,
-                        NoteType.Drag => 4,
-                        _ => 1,
-                    };
-                }
+                note.Type = Convert.ToInt32(value);
                 break;
             case NotePropertyType.VisibleTime:
                 note.VisibleTime = Convert.ToSingle(value);

@@ -22,12 +22,11 @@ public partial class EditorScene : Node
     [ExportGroup("")]
     [Export] private NoteEditPanel noteEditPanel;
     [Export] private EventEditPanel eventEditPanel;
-    [Export] private ChartPlayer chartPlayer;
+    [Export] private ChartPlayer2 chartPlayer2;
     [Export] private Control editPanel;
     [Export] private RightPanel rightPanel;
     [Export] private ChooseLinePanel chooseLinePanel;
     [Export] private Label editingLineLabel;
-    //[Export] private Window infoEditWindow;
     [Export] private NoteInfoPanel noteInfoPanel;
 
     private string editingChartId; // 正在编辑的铺面的ID
@@ -37,6 +36,7 @@ public partial class EditorScene : Node
     private InputManager inputManager;
     private ChartService _chartService;
     private ChartEditService chartEditService;
+    private ChartPlayer chartPlayer;
 
     [Export] private float horOffset;
 	private float horBeatOffset;
@@ -138,10 +138,7 @@ public partial class EditorScene : Node
         eventEditPanel.editingChart = editingChart;
 
         // ===================初始化谱面播放器=================
-        //1. 设置谱面
-        chartPlayer.chart = editingChart;
-
-        //2. 设置背景图片
+        // 背景图片
         Image bgImage = Image.LoadFromFile(chartInfo.PicturePath);
         if (bgImage == null)
         {
@@ -149,9 +146,9 @@ public partial class EditorScene : Node
             return;
         }
         //TODO 图片模糊效果
-        chartPlayer.bgImage = bgImage;
+        // chartPlayer2.bgImage = bgImage;
 
-        //3. 设置音乐
+        // 音乐
         // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
         AudioStream audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath);
         if (audioStream == null)
@@ -159,7 +156,7 @@ public partial class EditorScene : Node
             GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
             return;
         }
-        chartPlayer.audioStream = audioStream;
+        // chartPlayer2.audioStream = audioStream;
         // AudioStream audioStream = AudioStreamMP3.LoadFromFile(chartInfo.SongPath);
         // if (audioStream == null)
         // {
@@ -168,8 +165,11 @@ public partial class EditorScene : Node
         // }
         // chartPlayer.audioStream = audioStream;
 
-        chartPlayer.Initialize();
-        chartPlayer.Visible = false;
+        // chartPlayer2.Initialize();
+        // chartPlayer2.Visible = false;
+
+        chartPlayer.Initialize(chartPlayer2, editingChart, bgImage, audioStream);
+
 
         chooseLinePanel.Visible = false;
         chooseLinePanel.LineSelected += SetEditingLine;
@@ -203,12 +203,12 @@ public partial class EditorScene : Node
         if (isPlaying)
         {
             //正在播放时，时间轴由音乐决定
-            ChartTime = chartPlayer.chartTime;
+            ChartTime = chartPlayer2.chartTime;
         }
         else
         {
             //否则，时间轴由编辑器面板决定
-            chartPlayer.externalTime = chartTime;
+            chartPlayer2.externalTime = chartTime;
         }
 
         //处理摇杆垂直滚动
@@ -269,12 +269,12 @@ public partial class EditorScene : Node
     {
         if (!isPlaying)
         {
-            chartPlayer.Visible = true;
+            chartPlayer2.Visible = true;
             editPanel.Visible = false;
 
             //启动chartplayer的播放
-            chartPlayer.audioStreamPlayer.Play((float)ChartTime);
-            chartPlayer.isPlaying = true;
+            chartPlayer2.audioStreamPlayer.Play((float)ChartTime);
+            chartPlayer2.isPlaying = true;
 
             //更新右侧面板
             rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Playing);
@@ -290,11 +290,11 @@ public partial class EditorScene : Node
 
     public void OnStopButtonClicked()
     {
-        chartPlayer.Visible = false;
+        chartPlayer2.Visible = false;
         editPanel.Visible = true;
 
-        chartPlayer.audioStreamPlayer.Stop();
-        chartPlayer.isPlaying = false;
+        chartPlayer2.audioStreamPlayer.Stop();
+        chartPlayer2.isPlaying = false;
 
         //更新右侧面板
         rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
