@@ -435,6 +435,13 @@ public static class ChartDataHelper
 
     }
 
+
+    /// <summary>
+    /// 获取指定时刻的总位移
+    /// </summary>
+    /// <param name="events">速度事件列表</param>
+    /// <param name="time">游戏时刻</param>
+    /// <returns>从0时刻到指定时刻的总位移</returns>
     public static float GetDisplacementAtTime(LineEvent[] events, float time)
     {
         if (events == null || events.Length == 0) return 0f;

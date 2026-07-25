@@ -4,13 +4,14 @@ using System;
 
 public partial class TestSceneChartPlayer : Node
 {
-    [Export] private string editingChartId;
+    [Export] private string editingChartId = "05872998100986";
     private Chart editingChart;
     private bool isPlaying = true;
     private double chartTime;
 
     [Export] private Control parent;
     [Export] private BaseChartPlayer chartPlayer;
+    [Export] private Label fpsLabel;
 
     private ChartService chartService;
     public override void _Ready()
@@ -48,7 +49,7 @@ public partial class TestSceneChartPlayer : Node
         chartPlayer.Initialize(parent, editingChart, bgImage, audioStream);
 
         //开始播放
-        chartPlayer.Play((float)chartTime);
+        chartPlayer.Play(0);
     }
 
     public override void _Process(double delta)
@@ -71,6 +72,16 @@ public partial class TestSceneChartPlayer : Node
         chartPlayer.Render();
 
     }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        base._PhysicsProcess(delta);
+
+        fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
+
+        
+    }
+
 
 
 }

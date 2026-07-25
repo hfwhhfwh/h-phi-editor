@@ -40,7 +40,7 @@ public partial class ChartPlayer : BaseChartPlayer
     [Export] private SpriteFrames hitFrames; // 打击特效
 
     /// <summary>note的宽度大小缩放</summary>
-    public float noteWidthScale;
+    public float noteScale;
 
     public AudioStreamPlayer audioStreamPlayer;
 
@@ -96,6 +96,7 @@ public partial class ChartPlayer : BaseChartPlayer
 			MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
             multiMeshInstance.Texture = texture;
             multiMeshInstance.Multimesh = multiMesh;
+            multiMeshInstance.TextureFilter = CanvasItem.TextureFilterEnum.Linear;
 			multiMeshInstances[type] = multiMeshInstance;
 
 			// 根据纹理实际尺寸创建 QuadMesh
@@ -126,6 +127,7 @@ public partial class ChartPlayer : BaseChartPlayer
             MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
             multiMeshInstance.Texture = texture;
             multiMeshInstance.Multimesh = lineMultiMesh;
+            multiMeshInstance.TextureFilter = CanvasItem.TextureFilterEnum.Linear;
 
 			// 根据纹理实际尺寸创建 QuadMesh
 			var quad = new QuadMesh();
@@ -149,7 +151,7 @@ public partial class ChartPlayer : BaseChartPlayer
     public void CreateHitEffect(Vector2 position)
     {
         //hitEffectPool.Spawn(position);
-
+        //TODO
     }
 
     private void SetJudgeLineList()
@@ -162,10 +164,10 @@ public partial class ChartPlayer : BaseChartPlayer
             // 为每条判定线创建一个节点
             var lineNode = new JudgeLineNode();
             int index = Array.IndexOf(Chart.JudgeLineList, lineData);
-            //lineNode.Name = $"JudgeLine_{index}";
+            
             // 传入数据及对ChartPlayer的引用（用于时间转换等）、贴图、索引
             lineNode.SetData(lineData, this, index, judgeLineNodes); 
-            //AddChild(lineNode);
+            
             judgeLineNodes.Add(lineNode);
         }
     }
@@ -188,7 +190,6 @@ public partial class ChartPlayer : BaseChartPlayer
             Texture = ImageTexture.CreateFromImage(bgImage),
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
-            //AnchorLeft = -0.5f, AnchorRight = 0.5f, AnchorTop = -0.5f, AnchorBottom = 0.5f,
             Modulate = new Color(0.3f, 0.3f, 0.3f, 1f),
             ZIndex = -999
         };
@@ -228,8 +229,12 @@ public partial class ChartPlayer : BaseChartPlayer
         //预计算所有note的累积位移
         ChartDataHelper.RefreshAllNoteAllDisplacement(chart);
 
-        //设置note的宽度缩放，
-        noteWidthScale = parent.Size.X * 1.3f / tapTexture.GetWidth();
+        //设置note的宽度缩放
+        Parent.Resized += () =>
+        {
+            noteScale = parent.Size.X * 0.15f / tapTexture.GetWidth();
+            GD.Print($"[{this.Name}] parent.Size.X:{parent.Size.X}, tapTexture.GetWidth():{tapTexture.GetWidth()}, noteScale:{noteScale}");
+        };
 
         // 初始化MultiMesh
         InitMultiMesh();
@@ -266,7 +271,16 @@ public partial class ChartPlayer : BaseChartPlayer
             lineMultiMesh.SetInstanceTransform2D(
                 lineVisibleCount, transform
             );
-            lineMultiMesh.SetInstanceColor(lineVisibleCount, Colors.White);
+
+            //设置透明度
+            Color lineColor = new Color
+            {
+                R8 = 237,
+                G8 = 236,
+                B8 = 176,
+                A8 = Mathf.RoundToInt(alpha),
+            };
+            lineMultiMesh.SetInstanceColor(lineVisibleCount, lineColor);
 
             lineVisibleCount ++;
         }
@@ -284,7 +298,11 @@ public partial class ChartPlayer : BaseChartPlayer
                 // rotate 是角度（度）
                 float rad = Mathf.DegToRad(rotate);
 
-                Transform2D transform = new Transform2D(rad, position);
+                //Transform2D transform = new Transform2D(rad, position);
+                Transform2D transform = Transform2D.Identity
+                    .Scaled(new Vector2(noteScale, noteScale))          // 缩放
+                    .Rotated(rad)           // 旋转
+                    .Translated(position);  // 平移
 
                 //选择SpriteType
                 SpriteType spriteType = type switch
@@ -307,9 +325,14 @@ public partial class ChartPlayer : BaseChartPlayer
                 Vector2 headPos = noteRenderData.HeadPos;
                 Vector2 endPos = noteRenderData.EndPos;
                 float rotate = noteRenderData.Rotate;
+                float rad = Mathf.DegToRad(rotate);
                 // ---- 1. 渲染 Hold 头部 ----
                 {
-                    Transform2D transform = new Transform2D(rotate, headPos);
+                    Transform2D transform = Transform2D.Identity
+                        .Translated(new Vector2(0, holdHeadTexture.GetSize().Y / 2f)) // 让上边对齐
+                        .Scaled(new Vector2(noteScale, noteScale))          // 缩放
+                        .Rotated(rad)           // 旋转
+                        .Translated(headPos);  // 平移
                     
                     multiMeshes[SpriteType.HoldHead].SetInstanceTransform2D(
 						visibleCounts[SpriteType.HoldHead],
@@ -322,13 +345,16 @@ public partial class ChartPlayer : BaseChartPlayer
 
                 // ---- 2. 渲染 Hold 身体（拉伸条） ----
                 {
-                    Vector2 bodyPos = headPos + endPos / 2f;
+                    Vector2 bodyPos = (headPos + endPos) / 2f;
+                    
                     float bodyLength = headPos.DistanceTo(endPos);   // 正数表示向下延伸
                     // 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
 					float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
 
-					Transform2D transform = new Transform2D(rotate, bodyPos);
-					transform.Scaled(new Vector2(1, scaleY));
+					Transform2D transform = Transform2D.Identity
+                        .Scaled(new Vector2(noteScale, scaleY))          // 缩放
+                        .Rotated(rad)           // 旋转
+                        .Translated(bodyPos);  // 平移
 
 					multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
 						visibleCounts[SpriteType.HoldBody], transform
@@ -341,7 +367,11 @@ public partial class ChartPlayer : BaseChartPlayer
 
                 // ---- 3. 渲染 Hold 尾部 ----
                 {
-                    Transform2D transform = new Transform2D(rotate, endPos);
+                    Transform2D transform = Transform2D.Identity
+                        .Translated(new Vector2(0, -holdEndTexture.GetSize().Y / 2f)) // 让下边对齐
+                        .Scaled(new Vector2(noteScale, noteScale))          // 缩放
+                        .Rotated(rad)           // 旋转
+                        .Translated(endPos);  // 平移
                     
                     multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
 						visibleCounts[SpriteType.HoldEnd], transform
@@ -361,6 +391,120 @@ public partial class ChartPlayer : BaseChartPlayer
             multiMeshes[type].VisibleInstanceCount = visibleCounts[type];
         }
         
+    }
+
+    /// <summary>
+    /// 生成渲染数据 坐标系: Parent坐标
+    /// </summary>
+    private void CreateRenderDatas()
+    {
+        // 生成渲染数据 坐标系: Parent坐标
+        judgeLineRenderDatas.Clear();
+        noteRenderDatas.Clear();
+        for(int lineId = 0; lineId < judgeLineNodes.Count; lineId++)
+        {
+            JudgeLineNode judgeLineNode = judgeLineNodes[lineId];
+
+            Vector2 linePos = new Vector2(judgeLineNode.CurrentMoveX, judgeLineNode.CurrentMoveY);//坐标系: 谱面坐标
+
+            //谱面坐标转换为Parent坐标
+            Vector2 lineParentPos = PosUtil.ChartPosToViewportPos(
+                linePos,
+                Parent.Size
+            );
+
+            JudgeLineRenderData lineRenderData = new()
+            {
+                Pos = lineParentPos,
+                Rotate = judgeLineNode.CurrentRotate,
+                Alpha = judgeLineNode.CurrentAlpha
+            };
+            judgeLineRenderDatas.Add(lineRenderData);
+
+
+            for(int noteIndex = 0;noteIndex < judgeLineNode.noteNodes.Count; noteIndex++)
+            {
+                NoteNode noteNode = judgeLineNode.noteNodes[noteIndex];
+
+                if(noteNode.Visible == false) continue;
+
+                if(noteNode is HoldNoteNode holdNoteNode)
+                {
+                    // //计算note的全局坐标
+                    Vector2 headGlobalPos = PosUtil.GetChildGlobalPosition(
+                        linePos,
+                        holdNoteNode.Position,
+                        judgeLineNode.CurrentRotate
+                    );
+
+                    //谱面坐标转换为Parent坐标
+                    Vector2 headParentPos = PosUtil.ChartPosToViewportPos(
+                        headGlobalPos,
+                        Parent.Size
+                    );
+
+                    Vector2 endGlobalPos = PosUtil.GetChildGlobalPosition(
+                        linePos,
+                        holdNoteNode.EndPosition, 
+                        judgeLineNode.CurrentRotate
+                    );
+
+                    //谱面坐标转换为Parent坐标
+                    Vector2 endParentPos = PosUtil.ChartPosToViewportPos(
+                        endGlobalPos,
+                        Parent.Size
+                    );
+
+                    //计算旋转
+                    float noteRotation = judgeLineNode.CurrentRotate;
+
+                    NoteRenderData noteRenderData = new()
+                    {
+                        Type = NoteType.Hold,
+                        HeadPos = headParentPos,
+                        EndPos = endParentPos,
+                        //BodyScale = holdNoteNode.BodyScale,
+                        Rotate = noteRotation,
+                        Alpha = 1f //TODO
+                    };
+
+                    noteRenderDatas.Add(noteRenderData);
+
+                }
+                else // Tap Flick Drag
+                {
+                    Vector2 notePos = noteNode.Position; // 坐标系：谱面坐标，相对于判定线
+
+                    //计算note的全局坐标 坐标系：谱面坐标
+                    Vector2 globalPos = PosUtil.GetChildGlobalPosition(
+                        linePos,
+                        notePos,
+                        judgeLineNode.CurrentRotate
+                    );
+
+                    //谱面坐标转换为Parent坐标
+                    Vector2 noteParentPos = PosUtil.ChartPosToViewportPos(
+                        globalPos,
+                        Parent.Size
+                    );
+
+                    //计算旋转
+                    float noteRotation = judgeLineNode.CurrentRotate;
+
+                    NoteRenderData noteRenderData = new()
+                    {
+                        Type = (NoteType)noteNode.data.Type,
+                        HeadPos = noteParentPos,
+                        EndPos = noteParentPos,
+                        Rotate = noteRotation,
+                        Alpha = 1f //TODO
+                    };
+
+                    noteRenderDatas.Add(noteRenderData);
+                }
+            }
+
+        }
     }
 
     public override void UpdateLogic()
@@ -388,88 +532,8 @@ public partial class ChartPlayer : BaseChartPlayer
             judgeLineNode.UpdateLine(ChartTime);
         }
 
-        // 生成渲染数据
-        judgeLineRenderDatas.Clear();
-        noteRenderDatas.Clear();
-        for(int lineId = 0; lineId < judgeLineNodes.Count; lineId++)
-        {
-            JudgeLineNode judgeLineNode = judgeLineNodes[lineId];
-
-            Vector2 linePos = new Vector2(judgeLineNode.CurrentMoveX, judgeLineNode.CurrentMoveY);
-
-            JudgeLineRenderData lineRenderData = new()
-            {
-                Pos = linePos,
-                Rotate = judgeLineNode.CurrentRotate,
-                Alpha = judgeLineNode.CurrentAlpha
-            };
-            judgeLineRenderDatas.Add(lineRenderData);
-
-
-            for(int noteIndex = 0;noteIndex < judgeLineNode.noteNodes.Count; noteIndex++)
-            {
-                NoteNode noteNode = judgeLineNode.noteNodes[noteIndex];
-
-                
-
-                if(noteNode is HoldNoteNode holdNoteNode)
-                {
-                    //计算note的全局坐标
-                    Vector2 headGlobalPos = PosUtil.GetChildGlobalPosition(
-                        linePos,
-                        holdNoteNode.Position,
-                        judgeLineNode.CurrentRotate
-                    );
-
-                    Vector2 endGlobalPos = PosUtil.GetChildGlobalPosition(
-                        linePos,
-                        holdNoteNode.EndPosition, //TODO，这里不正确
-                        judgeLineNode.CurrentRotate
-                    );
-
-                    //计算旋转
-                    float noteRotation = judgeLineNode.CurrentRotate;
-
-                    NoteRenderData noteRenderData = new()
-                    {
-                        Type = NoteType.Hold,
-                        HeadPos = headGlobalPos,
-                        EndPos = endGlobalPos,
-                        Rotate = noteRotation,
-                        Alpha = 1f //TODO
-                    };
-
-                    noteRenderDatas.Add(noteRenderData);
-
-                }
-                else
-                {
-                    Vector2 notePos = noteNode.Position;
-
-                    //计算note的全局坐标
-                    Vector2 globalPos = PosUtil.GetChildGlobalPosition(
-                        linePos,
-                        notePos,
-                        judgeLineNode.CurrentRotate
-                    );
-
-                    //计算旋转
-                    float noteRotation = judgeLineNode.CurrentRotate;
-
-                    NoteRenderData noteRenderData = new()
-                    {
-                        Type = (NoteType)noteNode.data.Type,
-                        HeadPos = globalPos,
-                        EndPos = globalPos,
-                        Rotate = noteRotation,
-                        Alpha = 1f //TODO
-                    };
-
-                    noteRenderDatas.Add(noteRenderData);
-                }
-            }
-
-        }
+        //生成渲染数据，供Render方法使用
+        CreateRenderDatas();
     }
 
     public override void Play(float time)
@@ -492,10 +556,8 @@ public class JudgeLineNode
 {
     public JudgeLine Data { get; set; }                 // 原始数据
     private ChartPlayer _chartPlayer;         // 用于获取BPM等
-    // private Texture2D _texture;               //贴图
     public List<NoteNode> noteNodes = new(); // 该线上的音符节点
     public int _index;                       //索引
-    // Sprite2D spriteNode;                     //sprite2D节点，在SetData函数中创建
 
     public float nowDisplacement;         // 从0到当前时刻累积的所有位移
 
@@ -513,7 +575,6 @@ public class JudgeLineNode
     {
         Data = data;
         _chartPlayer = player;
-        //_texture = texture;
         _index = index;
         this.judgeLineNodes = judgeLineNodes;
 
@@ -525,24 +586,12 @@ public class JudgeLineNode
                 Note noteData = Data.Notes[i];
 
                 NoteNode noteNode;
-                //选择贴图和音效
-                // Texture2D noteTexture;
-                // AudioStream noteSound;
-                // switch (noteData.Type)
-                // {
-                //     case 1:noteTexture = _chartPlayer.tapTexture;noteSound = _chartPlayer.tapSound;break;
-                //     case 2:noteTexture = _chartPlayer.holdHeadTexture;noteSound = _chartPlayer.tapSound;break;
-                //     case 3:noteTexture = _chartPlayer.flickTexture;noteSound = _chartPlayer.flickSound;break;
-                //     case 4:noteTexture = _chartPlayer.dragTexture;noteSound = _chartPlayer.dragSound;break;
-                //     default:noteTexture = _chartPlayer.tapTexture;noteSound = _chartPlayer.tapSound;break;
-                // }
-                //noteNode.SetData(noteData, this, _chartPlayer, noteTexture, noteSound, i);
+                
                 // 根据类型创建具体的音符节点
                 if (noteData.Type == 2) // Hold
                 {
                     var holdNode = new HoldNoteNode();
                     holdNode.SetData(noteData, this, _chartPlayer, i);
-                    //holdNode.InitializeHold(_chartPlayer.holdBodyTexture, _chartPlayer.holdEndTexture);
                     noteNode = holdNode;
                 }
                 else
@@ -551,35 +600,9 @@ public class JudgeLineNode
                     noteNode.SetData(noteData, this, _chartPlayer, i);
                 }
 
-                //AddChild(noteNode);
                 noteNodes.Add(noteNode);
             }
         }
-
-        //添加sprite2D节点，用于渲染
-        // spriteNode = new Sprite2D
-        // {
-        //     Name = "Sprite2D",
-        //     Texture = texture,
-        //     //颜色和透明度
-        //     Modulate = new Color{
-        //         R8 = 237,
-        //         G8 = 236,
-        //         B8 = 176,
-        //         A8 = Mathf.RoundToInt(_currentAlpha)
-        //     },
-        //     TextureFilter = TextureFilterEnum.Nearest
-        // };
-        // AddChild(spriteNode);
-
-        // //添加label节点，用于显示判定线编号
-        // Label labelNode = new Label();
-        // labelNode.Text = $"{index}";
-        // labelNode.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
-        // labelNode.HorizontalAlignment = HorizontalAlignment.Center;
-        // labelNode.AddThemeFontSizeOverride("font_size", 24);
-        // //labelNode.Position = new Vector2(0,-30);
-        // AddChild(labelNode);
     }
 
 
@@ -590,13 +613,11 @@ public class JudgeLineNode
     {
         if (Data?.EventLayers == null || Data.EventLayers.Length == 0) return;
 
-        
         // 我们需要综合所有事件层，第0层为主层
         {
             EventLayer layer = Data.EventLayers[0];
 
-            // 对每种事件类型进行插值
-            
+            // 对每种事件类型进行插值 坐标系: 谱面坐标[-675,675] [-450,450]
             CurrentMoveX = ChartDataHelper.InterpolateEvent(layer.MoveXEvents, gameTime, 0);
             CurrentMoveY = ChartDataHelper.InterpolateEvent(layer.MoveYEvents, gameTime, 0);
             CurrentRotate = ChartDataHelper.InterpolateEvent(layer.RotateEvents, gameTime, 0);
@@ -611,7 +632,7 @@ public class JudgeLineNode
             if(i > Data.EventLayers.Length - 1) break;
             EventLayer layer = Data.EventLayers[i];
             if(layer == null) continue;
-            // 对每种事件类型进行插值 并叠加
+            // 对每种事件类型进行插值 并叠加 坐标系: 谱面坐标[-675,675] [-450,450]
             CurrentMoveX += ChartDataHelper.InterpolateEvent(layer.MoveXEvents, gameTime, 0);
             CurrentMoveY += ChartDataHelper.InterpolateEvent(layer.MoveYEvents, gameTime, 0);
             CurrentRotate += ChartDataHelper.InterpolateEvent(layer.RotateEvents, gameTime, 0);
@@ -628,39 +649,28 @@ public class JudgeLineNode
             JudgeLineNode father = judgeLineNodes[Data.Father];
             //先更新父线位置
             father.UpdateLine(gameTime);
-            // //在将自己的坐标加上父线的坐标
-            // _currentMoveX += father._currentMoveX;
-            // _currentMoveY += father._currentMoveY;
-            //这里不能直接将自己的坐标加上父线的坐标，因为父线的旋转会导致子线的位置变化
-            Vector2 currentPos = PosUtil.GetChildGlobalPosition(
+            //再将自己的坐标加上父线的坐标
+            // 父线的位置和旋转会影响子线的位置，但不会影响子线的旋转
+            // 这里不能直接将自己的坐标加上父线的坐标，因为父线的旋转会导致子线的位置变化
+            Vector2 currentPos = PosUtil.GetChildGlobalPosition(     // 坐标系: 谱面坐标[-675,675] [-450,450]
                 new Vector2(father.CurrentMoveX, father.CurrentMoveY),
                 new Vector2(CurrentMoveX, CurrentMoveY),
                 father.CurrentRotate
             );
             
-            CurrentMoveX = currentPos.X;
-            CurrentMoveY = currentPos.Y;
+            CurrentMoveX = currentPos.X; // 坐标系: 谱面坐标[-675,675] [-450,450]
+            CurrentMoveY = currentPos.Y; 
         }
 
-        // 应用变换
-        // Position = PosUtil.ChartPosToViewportPos(new Vector2(_currentMoveX, _currentMoveY), _chartPlayer.Size);
-        // Rotation = Mathf.DegToRad(_currentRotate); // 事件值是角度
-
-        //调整颜色和透明度
+        //调整透明度
         CurrentAlpha = Math.Clamp(CurrentAlpha, 0f, 255f);
-        // spriteNode.Modulate = new Color{
-        //     R8 = 237,
-        //     G8 = 236,
-        //     B8 = 176,
-        //     A8 = Mathf.RoundToInt(_currentAlpha)
-        //     //A8 = 255
-        // };
         
         // 更新该线上所有音符（音符位置受判定线速度和位置影响）
         nowDisplacement = ChartDataHelper.GetDisplacementAtTime(
             Data.EventLayers[0].SpeedEvents, 
             (float)gameTime
-        ); // 提前计算累计位移，供note使用（简化计算）
+        ); // 提前计算累计位移，供note使用（简化计算） // 坐标系: 谱面坐标
+
         foreach (var note in noteNodes)
         {
             note.UpdateNote(gameTime, this);
@@ -675,55 +685,26 @@ public class JudgeLineNode
 public class NoteNode
 {
     public Note data;
-    private JudgeLineNode _parentLine;
     protected ChartPlayer _chartPlayer;
-    //private Texture2D _texture;
-    //private AudioStream _sound;
     private int _index;
-    //private AudioStreamPlayer audioStreamPlayer; // 在SetData方法中新建
-
-    //protected Sprite2D _sprite; // 在SetData方法中新建
 
     private bool _hasPlayedHitSound = false;//用于标记是否已播放过音效
 
-    protected Vector2 localChartPos = new Vector2(); // 在铺面坐标系下的本地坐标
+    /// <summary>在铺面坐标系下的本地坐标</summary>
+    protected Vector2 localChartPos = new Vector2(); 
 
     public bool HeadVisible { get; set; }
     public bool Visible { get; set; }
-    public Vector2 Position { get; set; }
+    public Vector2 Position { get; set; } //坐标系: 谱面坐标[-675,675] [-450,450]
     
 
     public void SetData(Note data, JudgeLineNode line, ChartPlayer player, int index)
     {
         this.data = data;
-        _parentLine = line;
         _chartPlayer = player;
-        //_texture = texture;
-        //_sound = sound;
+        
         _index = index;
-
-        //设置节点名称，方便调试
-        //Name = $"Note {_parentLine._index}_{_index}";
-
-        // 添加sprite2D节点，贴图
-        // _sprite = new Sprite2D
-        // {
-        //     Texture = _texture,
-        //     Scale = new Vector2(_chartPlayer.noteWidthScale, _chartPlayer.noteWidthScale)
-        // };
-        // //holdHead和holdEnd的贴图需要设置offset，但不再这里设置，在HoldNoteNode类中设置
-        // AddChild(_sprite);
-
-        // //hold需要显示在其他音符的下面
-        // ZIndex = 1;
     }
-
-    // private void PlayHitSound()
-    // {
-    //     var player = AudioPool.Get();
-    //     player.Stream = _sound;
-    //     player.Play(); // 播放完成后自动回收（通过 Finished 信号）
-    // }
     
     /// <summary>
     /// 更新音符位置（受判定线位置和速度影响）
@@ -797,13 +778,13 @@ public class NoteNode
             }
         }
 
-        //计算note位置
+        //计算note位置     坐标系: 谱面坐标[-675,675] [-450,450]
         //相对于判定线的Y坐标 = 速度随时间变化的函数的积分
         //简单起见，这里分段计算位移，用到匀变速直线运动的公式
         //下落速度由判定线速度和note速度相乘共同决定
         //RPE中每个速度单位表示每秒下降120像素
         {
-            float localChartX, localChartY;
+            float localChartX, localChartY; // 坐标系: 谱面坐标，相对于判定线
             localChartX = data.PositionX; 
 
             //全部位移
@@ -825,16 +806,11 @@ public class NoteNode
             }
 
             localChartPos = new Vector2(localChartX,localChartY);
-
-            //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-            //Vector2 viewportPos = Util.ChartPosToViewportPos(localChartPos, _chartPlayer.Size);
-
-            //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为相对于判定线的坐标系
-            Vector2 viewportPos = PosUtil.ChartPosToLocalPos(localChartPos, _chartPlayer.Parent.Size);
             
             //设定位置
-            Position = viewportPos;
+            Position = localChartPos; // 坐标系: 谱面坐标，相对于判定线
 
+            //GD.Print($"time:{gameTime:F3}, localChartX:{localChartX:F3}, allDisplacement:{allDisplacement:F3}, nowDisplacement:{nowDisplacement:F3}, localChartY:{localChartY:F3}, globalPos:{globalPos:F3}");
         }
 
     }
@@ -850,11 +826,11 @@ public class HoldNoteNode : NoteNode
     //private Sprite2D _bodySprite;
     //private Sprite2D _endSprite;
 
-    public Vector2 EndPosition { get; set; }
-    public Vector2 BodyPosition { get; set; }
+    public Vector2 EndPosition { get; set; } // 坐标系: 谱面坐标[-675,675] [-450,450] 相对于判定线
+    public Vector2 BodyPosition { get; set; } // 坐标系: 谱面坐标[-675,675] [-450,450] 相对于判定线
     public float BodyScale { get; set; }
 
-    private Vector2 endLocalChartPos; //在铺面坐标系下end的本地坐标
+    private Vector2 endLocalChartPos; //在铺面坐标系下end的本地坐标 坐标系: 谱面坐标[-675,675] [-450,450]
 
     // 初始化身体和尾部纹理，创建对应的 Sprite 节点
     // public void InitializeHold(Texture2D bodyTexture, Texture2D endTexture)
@@ -893,69 +869,96 @@ public class HoldNoteNode : NoteNode
 
         //计算下落速度，由判定线速度和note速度共同决定
         //RPE中每个速度单位表示每秒下降120像素
-        float speed = fatherLine.CurrentSpeed * data.Speed * 120;
+        float speed = fatherLine.CurrentSpeed * data.Speed * 120; // 坐标系: 谱面坐标
         float startSec = _chartPlayer.BeatToSeconds(data.StartTime);
         float endSec = _chartPlayer.BeatToSeconds(data.EndTime);
 
         //计算end位置，可以视为在endTime的音符
+        //float holdLength = 0;
         {
             //第一阶段：head到达之前，localPosition保持变不变
-            if(gameTime <= startSec)
-            {
-                float startSpeed = 120f*ChartDataHelper.GetSpeedAtTime(fatherLine.Data.EventLayers[0].SpeedEvents, startSec); // head落在判定线上时的速度
-                float s = (float)(startSpeed * (endSec - startSec));
-                endLocalChartPos = new Vector2(0,s);
-                EndPosition = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Parent.Size);
+            // if(gameTime <= startSec)
+            // {
+            //     float startSpeed = 120f*ChartDataHelper.GetSpeedAtTime(
+            //         fatherLine.Data.EventLayers[0].SpeedEvents, startSec); // head落在判定线上时的速度 坐标系: 谱面坐标
+            //     float s = (float)(startSpeed * (endSec - startSec)); // 坐标系: 谱面坐标
+            //     endLocalChartPos = new Vector2(0,s);
+            //     //EndPosition = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Parent.Size);
+            //     holdLength = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Parent.Size).Y;
                 
-            }
+            // }
             //第二阶段：hold正在缩小，localPosition不断减小至y=0
-            else if(gameTime > startSec && gameTime < endSec)
+            //else if(gameTime > startSec && gameTime < endSec)
+            // if(gameTime < endSec)
             {
                 float localChartY;
-                //全部位移
+                //全部位移 坐标系: 谱面坐标
                 //float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
                 float allDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine.Data.EventLayers[0].SpeedEvents, endSec);
 
-                //note已经移动的位移
+                //note已经移动的位移 坐标系: 谱面坐标
                 //float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
                 float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine.Data.EventLayers[0].SpeedEvents, (float)gameTime);
 
 
-                localChartY = Math.Max(0, allDisplacement - nowDisplacement);
+                localChartY = Math.Max(0f, allDisplacement - nowDisplacement); // 坐标系: 谱面坐标
+                //GD.Print($"localChartY:{localChartY}");
 
-                endLocalChartPos = new Vector2(0,localChartY);
+                endLocalChartPos = new Vector2(data.PositionX, localChartY); // 坐标系: 谱面坐标
+
+                EndPosition = endLocalChartPos;
 
                 //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-                Vector2 viewportPos = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Parent.Size);
+                //Vector2 viewportPos = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Parent.Size);
 
                 //设定位置
-                EndPosition = viewportPos;
+                //EndPosition = viewportPos;
+
+                //holdLength = viewportPos.Y;
 
                 
             }
             //第三阶段：hold结束，隐藏自己
             //由于父类设置了隐藏，所以这里不需要进行任何操作
 
+            // 计算holdEnd的全局坐标 坐标系：谱面坐标
+            //{
+                //计算holdEnd相对于判定线的坐标 坐标系：谱面坐标
+                //Vector2 linePos = localChartPos + new Vector2(0, holdLength);
+
+                //计算holdEnd的全局坐标 坐标系：谱面坐标
+                // Vector2 globalPos = PosUtil.GetChildGlobalPosition(
+                //     new Vector2(fatherLine.CurrentMoveX, fatherLine.CurrentMoveY),
+                //     endLocalChartPos,
+                //     fatherLine.CurrentRotate
+                // );
+                // GD.Print($"globalPos:{globalPos}");
+
+                //EndPosition = globalPos;
+            //}
+            
+
         }
 
         //计算body位置和大小
         {
             // 计算相对位置:head和end的中间
-            Vector2 bodyLocalChartPos = endLocalChartPos / 2;
+            Vector2 bodyPos = (Position + EndPosition) / 2f;
 
             //注意：localChartX和localChartY是谱面坐标系的坐标，需要转换为godot坐标系
-            Vector2 viewportPos = PosUtil.ChartPosToLocalPos(bodyLocalChartPos, _chartPlayer.Parent.Size);
+            //Vector2 viewportPos = PosUtil.ChartPosToLocalPos(bodyLocalChartPos, _chartPlayer.Parent.Size);
             
-            //设定body位置
-            BodyPosition = viewportPos;
+            //设定body位置 
+            BodyPosition = bodyPos; // 坐标系: 谱面坐标[-675,675] [-450,450]
 
             //hold原尺寸为1900，缩放后为sizeY
-            float sizeY = Position.Y - EndPosition.Y;
+            // float sizeY = EndPosition.Y - Position.Y;
             //_bodySprite.Scale = new Vector2(_chartPlayer.noteWidthScale, sizeY/1900f);
-            BodyScale = sizeY / 1900f;
+
+            // GD.Print($"time:{gameTime:F4}, bodyPos:{bodyPos}, sizeY:{sizeY}");
         }
 
-        
+        //GD.Print($"time:{gameTime:F3}, HeadPosition:{Position}, EndPosition:{EndPosition}, BodyScale:{BodyScale}");
     }
 }
 
@@ -971,6 +974,7 @@ public class NoteRenderData
 {
     public Vector2 HeadPos { get; set; }
     public Vector2 EndPos { get; set; }
+    // public float BodyScale { get; set; }
     public NoteType Type { get; set; }
     public float Rotate { get; set; }
     public float Alpha { get; set; }
