@@ -1,6 +1,7 @@
 using Godot;
 using QuickType;
 using System;
+using System.Collections.Generic;
 
 public partial class TestSceneChartPlayer : Node
 {
@@ -11,6 +12,7 @@ public partial class TestSceneChartPlayer : Node
 
     [Export] private Control parent;
     [Export] private BaseChartPlayer chartPlayer;
+    [Export] private BaseChartRenderer chartRenderer;
     [Export] private Label fpsLabel;
 
     private ChartService chartService;
@@ -47,9 +49,10 @@ public partial class TestSceneChartPlayer : Node
         }
 
         chartPlayer.Initialize(parent, editingChart, bgImage, audioStream);
+        chartRenderer.Initialize(parent);
 
         //开始播放
-        chartPlayer.Play(0);
+        chartPlayer.Play(120);
     }
 
     public override void _Process(double delta)
@@ -69,7 +72,10 @@ public partial class TestSceneChartPlayer : Node
 
         chartPlayer.UpdateLogic();
 
-        chartPlayer.Render();
+        List<JudgeLineRenderData> judgeLineRenderDatas = chartPlayer.GetLineRenderDatas();
+        List<NoteRenderData> noteRenderDatas = chartPlayer.GetNoteRenderDatas();
+
+        chartRenderer.Render(judgeLineRenderDatas, noteRenderDatas);
 
     }
 

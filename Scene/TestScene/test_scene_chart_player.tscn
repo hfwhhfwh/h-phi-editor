@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="4_0afa5"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="5_co7vy"]
 [ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="6_72dv0"]
+[ext_resource type="Script" uid="uid://bctcbmd05picq" path="res://Script/ChartRenderer.cs" id="7_0afa5"]
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="7_cpdec"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="8_kdxuc"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="9_we87k"]
@@ -14,11 +15,12 @@
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="12_1s25h"]
 [ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="13_rcxxs"]
 
-[node name="TestSceneChartPlayer" type="Node" unique_id=382699011 node_paths=PackedStringArray("parent", "chartPlayer", "fpsLabel")]
+[node name="TestSceneChartPlayer" type="Node" unique_id=382699011 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "fpsLabel")]
 script = ExtResource("1_xjihi")
 editingChartId = "45201552814680"
 parent = NodePath("Control/ChartPlayerContainer/ControlParent")
 chartPlayer = NodePath("Control/ChartPlayerContainer/ChartPlayerNode")
+chartRenderer = NodePath("Control/ChartPlayerContainer/ChartRendererNode")
 fpsLabel = NodePath("Control/ChartPlayerContainer/ControlParent/FPSLabel")
 
 [node name="Control" type="Control" parent="." unique_id=506293966]
@@ -51,6 +53,13 @@ theme_override_font_sizes/font_size = 20
 
 [node name="ChartPlayerNode" type="Node" parent="Control/ChartPlayerContainer" unique_id=1395296297]
 script = ExtResource("2_qst1g")
+tapSound = ExtResource("10_nyovq")
+dragSound = ExtResource("11_c35ja")
+flickSound = ExtResource("12_1s25h")
+hitFrames = ExtResource("13_rcxxs")
+
+[node name="ChartRendererNode" type="Node" parent="Control/ChartPlayerContainer" unique_id=25889007 node_paths=PackedStringArray("Parent")]
+script = ExtResource("7_0afa5")
 tapTexture = ExtResource("3_sjclp")
 dragTexture = ExtResource("4_0afa5")
 flickTexture = ExtResource("5_co7vy")
@@ -58,7 +67,4 @@ holdHeadTexture = ExtResource("6_72dv0")
 holdBodyTexture = ExtResource("7_cpdec")
 holdEndTexture = ExtResource("8_kdxuc")
 lineTexture = ExtResource("9_we87k")
-tapSound = ExtResource("10_nyovq")
-dragSound = ExtResource("11_c35ja")
-flickSound = ExtResource("12_1s25h")
-hitFrames = ExtResource("13_rcxxs")
+Parent = NodePath("../ControlParent")

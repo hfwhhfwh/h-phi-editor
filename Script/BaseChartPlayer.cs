@@ -1,6 +1,7 @@
 using Godot;
 using QuickType;
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// 谱面播放器抽象基类
@@ -16,6 +17,9 @@ public abstract partial class BaseChartPlayer : Node
 
     protected int chartOffset;                        // 谱面偏移（以毫秒计量）
 
+    public abstract List<JudgeLineRenderData> GetLineRenderDatas();
+    public abstract List<NoteRenderData> GetNoteRenderDatas();
+
     /// <summary>
     /// 初始化
     /// </summary>
@@ -25,11 +29,6 @@ public abstract partial class BaseChartPlayer : Node
     /// 计算判定线和note的位置
     /// </summary>
     public abstract void UpdateLogic();
-
-    /// <summary>
-    /// 渲染所有判定线和note
-    /// </summary>
-    public abstract void Render();
 
     /// <summary>
     /// 从指定时间开始播放

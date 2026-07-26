@@ -8,20 +8,24 @@
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
 [ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="5_gi1tw"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
+[ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="7_75obp"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
 [ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="8_63sjd"]
+[ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="8_p0vr8"]
+[ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="9_5asy7"]
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="9_gi1tw"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="10_4d80g"]
+[ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="10_605qm"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="11_khybl"]
 [ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EditorScene/EventEditPanel.cs" id="12_qdb1r"]
+[ext_resource type="Script" uid="uid://bctcbmd05picq" path="res://Script/ChartRenderer.cs" id="12_roijs"]
 [ext_resource type="Texture2D" uid="uid://dwe0fgofaghae" path="res://Sprite/EventHold.png" id="13_wq0mf"]
-[ext_resource type="PackedScene" uid="uid://bk6vwgye804o1" path="res://Scene/chart_player.tscn" id="14_63sjd"]
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4d80g"]
 [ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel", "noteInfoPanel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel", "noteInfoPanel", "fpsLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -29,11 +33,14 @@ theme = ExtResource("3_2bu1g")
 noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Left/NoteEditPanel")
 eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Right/EventEditPanel")
 chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
+chartRenderer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartRenderer")
+chartPlayParent = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/Parent")
 editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel")
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/EditingLineLabel")
 noteInfoPanel = NodePath("EditorPanel/SafeArea/NoteInfoPanel")
+fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/FPSLabel")
 
 [node name="EditorPanel" type="PanelContainer" parent="." unique_id=302158127]
 anchors_preset = 15
@@ -95,7 +102,13 @@ layout_mode = 2
 theme = ExtResource("3_2bu1g")
 text = "正在编辑：线123"
 
+[node name="FPSLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=569815193]
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+text = "FPS: xxx"
+
 [node name="TabBar" type="TabBar" parent="EditorPanel/SafeArea/VBoxContainer/Head" unique_id=683599118]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -142,36 +155,27 @@ size_flags_horizontal = 3
 layout_mode = 2
 ratio = 1.5
 
-[node name="ChartPlayer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=319689835 instance=ExtResource("14_63sjd")]
+[node name="Parent" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1661683536]
 visible = false
 clip_contents = true
 layout_mode = 2
+
+[node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854]
+script = ExtResource("7_75obp")
+tapSound = ExtResource("8_p0vr8")
+dragSound = ExtResource("9_5asy7")
+flickSound = ExtResource("10_605qm")
 hitFrames = ExtResource("5_gi1tw")
 
-[node name="Line" type="Node2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer" unique_id=1761626531]
-visible = false
-position = Vector2(500, 300)
-
-[node name="Sprite2D" type="Sprite2D" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer/Line" unique_id=1798313127]
-modulate = Color(0.92941177, 0.9254902, 0.6901961, 1)
-texture_filter = 1
-scale = Vector2(1, 25.53)
-texture = ExtResource("11_khybl")
-
-[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer/Line" unique_id=1274027285]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -9.5
-offset_top = -23.0
-offset_right = 9.5
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_font_sizes/font_size = 24
-text = "99"
-horizontal_alignment = 1
+[node name="ChartRenderer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1497791091]
+script = ExtResource("12_roijs")
+tapTexture = ExtResource("5_57v2d")
+dragTexture = ExtResource("6_qdb1r")
+flickTexture = ExtResource("7_wq0mf")
+holdHeadTexture = ExtResource("8_63sjd")
+holdBodyTexture = ExtResource("9_gi1tw")
+holdEndTexture = ExtResource("10_4d80g")
+lineTexture = ExtResource("11_khybl")
 
 [node name="EditPanel" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]
 layout_mode = 2

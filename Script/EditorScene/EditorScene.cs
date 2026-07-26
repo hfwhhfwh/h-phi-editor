@@ -22,12 +22,16 @@ public partial class EditorScene : Node
     [ExportGroup("")]
     [Export] private NoteEditPanel noteEditPanel;
     [Export] private EventEditPanel eventEditPanel;
-    [Export] private ChartPlayer2 chartPlayer2;
+    [Export] private BaseChartPlayer chartPlayer;
+    [Export] private BaseChartRenderer chartRenderer;
+    [Export] private Control chartPlayParent;
     [Export] private Control editPanel;
     [Export] private RightPanel rightPanel;
     [Export] private ChooseLinePanel chooseLinePanel;
     [Export] private Label editingLineLabel;
     [Export] private NoteInfoPanel noteInfoPanel;
+
+    [Export] private Label fpsLabel;
 
     private string editingChartId; // 正在编辑的铺面的ID
     private Chart editingChart; // 正在编辑的铺面
@@ -36,7 +40,6 @@ public partial class EditorScene : Node
     private InputManager inputManager;
     private ChartService _chartService;
     private ChartEditService chartEditService;
-    private ChartPlayer chartPlayer;
 
     [Export] private float horOffset;
 	private float horBeatOffset;
@@ -168,8 +171,10 @@ public partial class EditorScene : Node
         // chartPlayer2.Initialize();
         // chartPlayer2.Visible = false;
 
-        chartPlayer.Initialize(chartPlayer2, editingChart, bgImage, audioStream);
+        chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream);
+        chartRenderer.Initialize(chartPlayParent);
 
+        chartPlayParent.ClipContents = true;
 
         chooseLinePanel.Visible = false;
         chooseLinePanel.LineSelected += SetEditingLine;
@@ -203,13 +208,20 @@ public partial class EditorScene : Node
         if (isPlaying)
         {
             //正在播放时，时间轴由音乐决定
-            ChartTime = chartPlayer2.chartTime;
+            ChartTime = chartPlayer.ChartTime;
         }
         else
         {
             //否则，时间轴由编辑器面板决定
-            chartPlayer2.externalTime = chartTime;
+            chartPlayer.ExternalTime = chartTime;
         }
+        chartPlayer.UpdateLogic();
+
+        List<JudgeLineRenderData> judgeLineRenderDatas = chartPlayer.GetLineRenderDatas();
+        List<NoteRenderData> noteRenderDatas = chartPlayer.GetNoteRenderDatas();
+
+        chartRenderer.Render(judgeLineRenderDatas, noteRenderDatas);
+        
 
         //处理摇杆垂直滚动
 		if(slideJoystick.Output != Vector2.Zero)
@@ -260,7 +272,7 @@ public partial class EditorScene : Node
     public override void _PhysicsProcess(double delta)
     {
         //GD.Print($"ChartTime:{ChartTime}, BeatValue:{BeatValue}, horOffset:{horOffset}");
-        
+        fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
     }
 
 
@@ -269,12 +281,12 @@ public partial class EditorScene : Node
     {
         if (!isPlaying)
         {
-            chartPlayer2.Visible = true;
+            chartPlayParent.Visible = true;
             editPanel.Visible = false;
 
             //启动chartplayer的播放
-            chartPlayer2.audioStreamPlayer.Play((float)ChartTime);
-            chartPlayer2.isPlaying = true;
+            chartPlayer.Play((float)ChartTime);
+            chartPlayer.IsPlaying = true;
 
             //更新右侧面板
             rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Playing);
@@ -290,11 +302,11 @@ public partial class EditorScene : Node
 
     public void OnStopButtonClicked()
     {
-        chartPlayer2.Visible = false;
+        chartPlayParent.Visible = false;
         editPanel.Visible = true;
 
-        chartPlayer2.audioStreamPlayer.Stop();
-        chartPlayer2.isPlaying = false;
+        chartPlayer.Pause();
+        chartPlayer.IsPlaying = false;
 
         //更新右侧面板
         rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
