@@ -17,7 +17,7 @@
 
 [node name="TestSceneChartPlayer" type="Node" unique_id=382699011 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "fpsLabel")]
 script = ExtResource("1_xjihi")
-editingChartId = "45201552814680"
+editingChartId = "84379621245532"
 parent = NodePath("Control/ChartPlayerContainer/ControlParent")
 chartPlayer = NodePath("Control/ChartPlayerContainer/ChartPlayerNode")
 chartRenderer = NodePath("Control/ChartPlayerContainer/ChartRendererNode")
@@ -58,7 +58,7 @@ dragSound = ExtResource("11_c35ja")
 flickSound = ExtResource("12_1s25h")
 hitFrames = ExtResource("13_rcxxs")
 
-[node name="ChartRendererNode" type="Node" parent="Control/ChartPlayerContainer" unique_id=25889007 node_paths=PackedStringArray("Parent")]
+[node name="ChartRendererNode" type="Node" parent="Control/ChartPlayerContainer" unique_id=25889007]
 script = ExtResource("7_0afa5")
 tapTexture = ExtResource("3_sjclp")
 dragTexture = ExtResource("4_0afa5")
@@ -67,4 +67,3 @@ holdHeadTexture = ExtResource("6_72dv0")
 holdBodyTexture = ExtResource("7_cpdec")
 holdEndTexture = ExtResource("8_kdxuc")
 lineTexture = ExtResource("9_we87k")
-Parent = NodePath("../ControlParent")

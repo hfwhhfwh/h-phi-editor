@@ -202,9 +202,9 @@ public partial class ChartPlayer : BaseChartPlayer
                         Type = NoteType.Hold,
                         HeadPos = headParentPos,
                         EndPos = endParentPos,
-                        //BodyScale = holdNoteNode.BodyScale,
                         Rotate = noteRotation,
-                        Alpha = 1f //TODO
+                        Alpha = 1f, //TODO
+                        HeadVisible = noteNode.HeadVisible
                     };
 
                     noteRenderDatas.Add(noteRenderData);
@@ -712,9 +712,11 @@ public class JudgeLineRenderData
 public class NoteRenderData
 {
     public Vector2 HeadPos { get; set; }
-    public Vector2 EndPos { get; set; }
-    // public float BodyScale { get; set; }
     public NoteType Type { get; set; }
     public float Rotate { get; set; }
     public float Alpha { get; set; }
+
+    //仅限Hold的属性
+    public Vector2 EndPos { get; set; }
+    public bool HeadVisible { get; set; }
 }

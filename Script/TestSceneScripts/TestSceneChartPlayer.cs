@@ -52,7 +52,7 @@ public partial class TestSceneChartPlayer : Node
         chartRenderer.Initialize(parent);
 
         //开始播放
-        chartPlayer.Play(120);
+        chartPlayer.Play(30);
     }
 
     public override void _Process(double delta)

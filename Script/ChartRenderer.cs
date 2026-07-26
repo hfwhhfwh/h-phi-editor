@@ -55,10 +55,42 @@ public partial class ChartRenderer : BaseChartRenderer
     /// </summary>
     private void InitMultiMesh()
     {
+        //设置line的multimesh
+        {
+            Texture2D texture = lineTexture;
+
+            //设置Multimesh
+			lineMultiMesh = new MultiMesh
+			{
+				TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
+				InstanceCount = 0,
+				VisibleInstanceCount = 0,
+                UseColors = true, // 用于提示选中
+			};
+            lineMultiMesh.InstanceCount = 10000;
+
+            //设置MultimeshInstance
+            MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
+            multiMeshInstance.Texture = texture;
+            multiMeshInstance.Multimesh = lineMultiMesh;
+            multiMeshInstance.TextureFilter = CanvasItem.TextureFilterEnum.Linear;
+
+			// 根据纹理实际尺寸创建 QuadMesh
+			var quad = new QuadMesh();
+			quad.Size = new Vector2(texture.GetSize().X, -texture.GetSize().Y);   // 保持宽高比，去掉负值
+			multiMeshInstance.Multimesh.Mesh = quad;
+
+			Parent.AddChild(multiMeshInstance);
+
+        }
+
         //设置note的multiMeshInstance
-		foreach(SpriteType type in allSpriteTypes)
+        //倒序遍历，先添加hold，再添加其他note，确保hold渲染在其他note下面
+        for (int i = allSpriteTypes.Length - 1; i >= 0; i--)
 		{
-			Texture2D texture = type switch
+            SpriteType type = allSpriteTypes[i];
+
+            Texture2D texture = type switch
 			{
 				SpriteType.Tap => tapTexture,
 				SpriteType.Drag => dragTexture,
@@ -96,34 +128,6 @@ public partial class ChartRenderer : BaseChartRenderer
             multiMeshes[type] = multiMesh;
 		}
 
-        //设置line的multimesh
-        {
-            Texture2D texture = lineTexture;
-
-            //设置Multimesh
-			lineMultiMesh = new MultiMesh
-			{
-				TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
-				InstanceCount = 0,
-				VisibleInstanceCount = 0,
-                UseColors = true, // 用于提示选中
-			};
-            lineMultiMesh.InstanceCount = 10000;
-
-            //设置MultimeshInstance
-            MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
-            multiMeshInstance.Texture = texture;
-            multiMeshInstance.Multimesh = lineMultiMesh;
-            multiMeshInstance.TextureFilter = CanvasItem.TextureFilterEnum.Linear;
-
-			// 根据纹理实际尺寸创建 QuadMesh
-			var quad = new QuadMesh();
-			quad.Size = new Vector2(texture.GetSize().X, -texture.GetSize().Y);   // 保持宽高比，去掉负值
-			multiMeshInstance.Multimesh.Mesh = quad;
-
-			Parent.AddChild(multiMeshInstance);
-
-        }
     }
 
     public override void Render(List<JudgeLineRenderData> lineRenderDatas, List<NoteRenderData> noteRenderDatas)
@@ -208,7 +212,7 @@ public partial class ChartRenderer : BaseChartRenderer
                 float rotate = noteRenderData.Rotate;
                 float rad = Mathf.DegToRad(rotate);
                 // ---- 1. 渲染 Hold 头部 ----
-                {
+                if(noteRenderData.HeadVisible){
                     Transform2D transform = Transform2D.Identity
                         .Translated(new Vector2(0, holdHeadTexture.GetSize().Y / 2f)) // 让上边对齐
                         .Scaled(new Vector2(noteScale, noteScale))          // 缩放
