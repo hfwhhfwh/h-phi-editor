@@ -51,8 +51,8 @@ public partial class ChartEditService : Node
 
     public void DeleteNote(int lineId, int noteIndex)
     {
-        // List<Note> notes = EditingChart.JudgeLineList[lineId].Notes;
-        // notes.RemoveAt(noteIndex);
+        List<Note> notes = EditingChart.JudgeLineList[lineId].Notes;
+        notes.RemoveAt(noteIndex);
     }
 }
 

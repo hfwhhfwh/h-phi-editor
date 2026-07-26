@@ -144,7 +144,7 @@ public partial class NoteEditPanel : BaseEditPanel
 			return;
 		}
 
-		Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
+		List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
 		if(notes == null)
 		{
 			HideAllNodes();
@@ -158,7 +158,7 @@ public partial class NoteEditPanel : BaseEditPanel
 		}
 
 		// 渲染视口范围内的 note
-		for (int i = 0; i < notes.Length; i++)
+		for (int i = 0; i < notes.Count; i++)
 		{
 			Note note = notes[i];
 
@@ -345,7 +345,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
     public void OnNoteTaped(int noteIndex)
     {
-        Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
+        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
         Note note = notes[noteIndex];
         
         if(selectMode == SelectMode.Single)
@@ -377,7 +377,7 @@ public partial class NoteEditPanel : BaseEditPanel
     /// <returns>距离点击位置最近的note</returns>
     private Note FildNearestNote(Vector2 pos)
     {
-        Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
+        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
 
         int index = FildNearestNoteIndex(pos);
 
@@ -396,12 +396,12 @@ public partial class NoteEditPanel : BaseEditPanel
     /// <returns>距离点击位置最近的note的索引</returns>
     private int FildNearestNoteIndex(Vector2 pos)
     {
-        Note[] notes = editingChart.JudgeLineList[editingLineId].Notes;
+        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
 
         int nearestNoteIndex = -1;
         float nearestDistSquared = 99999f;
 
-        for (int i = 0; i < notes.Length; i++)
+        for (int i = 0; i < notes.Count; i++)
         {
             Note note = notes[i];
 

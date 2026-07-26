@@ -329,7 +329,7 @@ public partial class EditorScene : Node
 
                 lineInfos.Add(new ChooseLinePanel.LineInfo
                 {
-                    Id = i+1,
+                    Id = i, // 判定线的编号从0开始
                     NoteCount = line.NumOfNotes,
                     //NextEventTime = //TODO
                 });
@@ -405,6 +405,6 @@ public partial class EditorScene : Node
 
     private void OnNoteDelete(int lineId, int noteIndex)
     {
-        throw new NotImplementedException();
+        chartEditService.DeleteNote(lineId, noteIndex);
     }
 }

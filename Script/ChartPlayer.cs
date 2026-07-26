@@ -21,12 +21,13 @@ public partial class ChartPlayer : BaseChartPlayer
     [ExportGroup("")]
     #endregion
 
-    [Export] private SpriteFrames hitFrames; // 打击特效
-
     public AudioStreamPlayer audioStreamPlayer;
 
-    public bool RenderDisabled { get; set; } //是否禁用渲染
     // public bool LogicDisabled { get; set; } // 是否禁用位置计算
+
+    private HitEffectPool hitEffectPool;
+    [Export] private SpriteFrames hitFrames; // 打击特效
+    private AudioPool audioPool;
 
     private List<JudgeLineNode> judgeLineNodes = new();
 
@@ -37,8 +38,6 @@ public partial class ChartPlayer : BaseChartPlayer
     public override List<NoteRenderData> GetNoteRenderDatas() => noteRenderDatas;
 
     public Control Parent { get; set; } // 所有JudgeLine和Note都将渲染到Parent中
-
-
     
 
     //将Beat（int[]）转换为秒
@@ -47,14 +46,6 @@ public partial class ChartPlayer : BaseChartPlayer
         return TimeUtil.BeatToSecond(beat, Chart?.BpmList);
     }
 
-    /// <summary>
-    /// 在指定位置创建一个打击特效
-    /// </summary>
-    public void CreateHitEffect(Vector2 position)
-    {
-        //hitEffectPool.Spawn(position);
-        //TODO
-    }
 
     private void SetJudgeLineList()
     {
@@ -72,6 +63,31 @@ public partial class ChartPlayer : BaseChartPlayer
             
             judgeLineNodes.Add(lineNode);
         }
+    }
+
+    /// <summary>
+    /// 在指定位置创建一个打击特效
+    /// </summary>
+    public void CreateHitEffect(Vector2 parentPos)
+    {
+        hitEffectPool.Spawn(parentPos);
+    }
+
+    public void PlayHitSound(NoteType noteType)
+    {
+        //选择对应的音效
+        AudioStream audioStream = noteType switch
+        {
+            NoteType.Tap => tapSound,
+            NoteType.Hold => tapSound,
+            NoteType.Flick => flickSound,
+            NoteType.Drag => dragSound,
+            _ => tapSound
+        };
+
+        var player = audioPool.Get();
+        player.Stream = audioStream;
+        player.Play(); // 播放完成后自动回收（通过 Finished 信号）
     }
 
     public override void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio)
@@ -122,6 +138,14 @@ public partial class ChartPlayer : BaseChartPlayer
 
         Parent = parent;
 
+        //设置打击特效
+        hitEffectPool = new HitEffectPool(parent, hitFrames, 50);
+        parent.AddChild(hitEffectPool);
+
+        //设置打击音效
+        audioPool = new AudioPool(parent);
+        parent.AddChild(audioPool);
+
         //预计算所有事件时间的秒数
         ChartDataHelper.RefreshEventSec(chart);
         //预计算所有note时间的秒数
@@ -130,6 +154,9 @@ public partial class ChartPlayer : BaseChartPlayer
         ChartDataHelper.RefreshAllEventPrefix(chart);
         //预计算所有note的累积位移
         ChartDataHelper.RefreshAllNoteAllDisplacement(chart);
+
+        // 初始化所有判定线节点
+        SetJudgeLineList();
     }
 
     /// <summary>
@@ -265,7 +292,7 @@ public partial class ChartPlayer : BaseChartPlayer
         }
 
         // 更新每条判定线及其上的音符
-        SetJudgeLineList();
+        //SetJudgeLineList();
         foreach (JudgeLineNode judgeLineNode in judgeLineNodes)
         {
             judgeLineNode.UpdateLine(ChartTime);
@@ -320,7 +347,7 @@ public class JudgeLineNode
         // 创建该线上的所有音符节点
         if (Data.Notes != null)
         {
-            for (int i = 0; i < Data.Notes.Length; i++)
+            for (int i = 0; i < Data.Notes.Count; i++)
             {
                 Note noteData = Data.Notes[i];
 
@@ -338,6 +365,13 @@ public class JudgeLineNode
                     noteNode = new NoteNode();
                     noteNode.SetData(noteData, this, _chartPlayer, i);
                 }
+
+                // 用于生成打击特效
+                noteNode.onNoteHited += (Vector2 parentPos) => { // 坐标系：parent坐标
+                    _chartPlayer.onNoteHited?.Invoke(parentPos); 
+                    _chartPlayer.CreateHitEffect(parentPos);
+                    _chartPlayer.PlayHitSound((NoteType)noteData.Type); // NoteType枚举类型与谱面文件的数字对应，可以强转
+                };
 
                 noteNodes.Add(noteNode);
             }
@@ -435,14 +469,20 @@ public class NoteNode
     public bool HeadVisible { get; set; }
     public bool Visible { get; set; }
     public Vector2 Position { get; set; } //坐标系: 谱面坐标[-675,675] [-450,450]
+
+    /// <summary>
+    /// 当note落到判定线上时触发，参数是点击的位置(坐标系：parent坐标)
+    /// </summary>
+    public Action<Vector2> onNoteHited; 
     
 
     public void SetData(Note data, JudgeLineNode line, ChartPlayer player, int index)
     {
         this.data = data;
         _chartPlayer = player;
-        
         _index = index;
+
+        
     }
     
     /// <summary>
@@ -456,37 +496,43 @@ public class NoteNode
         float noteStartSec = data.startSec;
         float noteEndSec = data.EndTime != null ? data.endSec : noteStartSec;
 
-        // // 音符到达判定线时播放音效，并生成打击特效
-        // if(_data.IsFake == false) // 假note不需要击打
-        // {
-        //     float hitTime = noteStartSec; // 头部到达判定线的时间
-        //     if (gameTime >= hitTime && !_hasPlayedHitSound)
-        //     {
-        //         if (_chartPlayer.IsPlaying) // 只有播放状态下显示特效，编辑器滚动时不显示
-        //         {
-        //             // 播放音效并生成打击特效
-        //             // PlayHitSound();
+        // 音符到达判定线时播放音效，并生成打击特效
+        if(data.IsFake == false) // 假note不需要击打
+        {
+            float hitTime = noteStartSec; // 头部到达判定线的时间
+            if (gameTime >= hitTime && !_hasPlayedHitSound)
+            {
+                if (_chartPlayer.IsPlaying) // 只有播放状态下显示特效，编辑器滚动时不显示
+                {
+                    // 播放音效并生成打击特效
+                    //PlayHitSound();
 
-        //             //显示打击特效
-        //             //理论上此时note应该在的位置，防止note速度过快导致的误差
-        //             Vector2 calculatedLocalChartPos = new Vector2(_data.PositionX, 0);
-        //             Vector2 globalChartPos = PosUtil.GetChildGlobalPosition(
-        //                 new Vector2(fatherLine._currentMoveX, fatherLine._currentMoveY),
-        //                 calculatedLocalChartPos,
-        //                 fatherLine._currentRotate
-        //             );
-        //             Vector2 hitViewportPos = PosUtil.ChartPosToViewportPos(globalChartPos, _chartPlayer.Size);
-        //             _chartPlayer.CreateHitEffect(hitViewportPos);
-        //         }
+                    //显示打击特效
+                    //理论上此时note应该在的位置，防止note速度过快导致的误差
+                    Vector2 calculatedLocalChartPos = new Vector2(data.PositionX, 0); 
+                    Vector2 globalChartPos = PosUtil.GetChildGlobalPosition(
+                        new Vector2(fatherLine.CurrentMoveX, fatherLine.CurrentMoveY),
+                        calculatedLocalChartPos,
+                        fatherLine.CurrentRotate
+                    );
+
+                    Vector2 parentPos = PosUtil.ChartPosToViewportPos(
+                        globalChartPos,
+                        _chartPlayer.Parent.Size
+                    );
+
+                    onNoteHited?.Invoke(parentPos);
+                    //_chartPlayer.CreateHitEffect(globalChartPos); // 坐标系：谱面坐标
+                }
                 
-        //         _hasPlayedHitSound = true;
-        //     }
-        //     else if (gameTime < hitTime)
-        //     {
-        //         // 时间回退到击中点之前，重置标记，允许再次触发
-        //         _hasPlayedHitSound = false;
-        //     }
-        // }
+                _hasPlayedHitSound = true;
+            }
+            else if (gameTime < hitTime)
+            {
+                // 时间回退到击中点之前，重置标记，允许再次触发
+                _hasPlayedHitSound = false;
+            }
+        }
 
         // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
         //处理显示和隐藏

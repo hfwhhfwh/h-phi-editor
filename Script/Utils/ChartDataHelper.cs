@@ -188,7 +188,7 @@ public static class ChartDataHelper
 
         foreach(JudgeLine line in chart.JudgeLineList)
         {
-            if(line.Notes == null || line.Notes.Length == 0) continue;
+            if(line.Notes == null || line.Notes.Count == 0) continue;
             foreach(Note note in line.Notes)
             {
                 if(note.Type == 2)
@@ -217,7 +217,7 @@ public static class ChartDataHelper
         if(chart.JudgeLineList == null || chart.JudgeLineList.Length == 0) return;
         foreach(JudgeLine line in chart.JudgeLineList)
         {
-            if(line.Notes == null || line.Notes.Length == 0) continue;
+            if(line.Notes == null || line.Notes.Count == 0) continue;
             foreach(Note note in line.Notes)
             {
                 note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);

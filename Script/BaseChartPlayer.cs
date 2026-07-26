@@ -21,6 +21,11 @@ public abstract partial class BaseChartPlayer : Node
     public abstract List<NoteRenderData> GetNoteRenderDatas();
 
     /// <summary>
+    /// 当有note打击时触发，参数是打击位置（坐标系：parent坐标）
+    /// </summary>
+    public Action<Vector2> onNoteHited;
+
+    /// <summary>
     /// 初始化
     /// </summary>
     public abstract void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio);

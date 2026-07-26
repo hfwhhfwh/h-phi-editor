@@ -2,19 +2,29 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public static class AudioPool
+public partial class AudioPool : Node
 {
-    private static Stack<AudioStreamPlayer> _pool = new();
-    private static Node _parent;
+    private Stack<AudioStreamPlayer> _pool = new();
+    private Node _parent;
 
-    public static void Initialize(Node parent)
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="parent">生成的AudioStreamPlayer的父节点</param>
+    public AudioPool(Node parent)
     {
         _parent = parent;
+
         // 预创建几个
         for (int i = 0; i < 10; i++) CreateNew();
     }
 
-    private static void CreateNew()
+    // public void Initialize(Node parent)
+    // {
+        
+    // }
+
+    private void CreateNew()
     {
         var player = new AudioStreamPlayer();
         player.Finished += () => Recycle(player);
@@ -22,13 +32,13 @@ public static class AudioPool
         _pool.Push(player);
     }
 
-    public static AudioStreamPlayer Get()
+    public AudioStreamPlayer Get()
     {
         if (_pool.Count == 0) CreateNew();
         return _pool.Pop();
     }
 
-    public static void Recycle(AudioStreamPlayer player)
+    public void Recycle(AudioStreamPlayer player)
     {
         player.Stop();
         player.Stream = null;

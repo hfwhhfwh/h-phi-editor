@@ -218,7 +218,7 @@ namespace QuickType
         public bool IsGif { get; set; }
 
         [JsonProperty("notes", NullValueHandling = NullValueHandling.Ignore)]
-        public Note[] Notes { get; set; }
+        public List<Note> Notes { get; set; }
 
         [JsonProperty("numOfNotes")]
         public int NumOfNotes { get; set; }

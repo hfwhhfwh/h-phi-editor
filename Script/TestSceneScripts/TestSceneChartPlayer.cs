@@ -14,6 +14,7 @@ public partial class TestSceneChartPlayer : Node
     [Export] private BaseChartPlayer chartPlayer;
     [Export] private BaseChartRenderer chartRenderer;
     [Export] private Label fpsLabel;
+    
 
     private ChartService chartService;
     public override void _Ready()
@@ -52,7 +53,7 @@ public partial class TestSceneChartPlayer : Node
         chartRenderer.Initialize(parent);
 
         //开始播放
-        chartPlayer.Play(30);
+        chartPlayer.Play(0);
     }
 
     public override void _Process(double delta)
