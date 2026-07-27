@@ -31,6 +31,10 @@ public partial class EditorScene : Node
     [Export] private Label editingLineLabel;
     [Export] private NoteInfoPanel noteInfoPanel;
 
+    [Export] private MenuButton fileMenuButtion;
+    [Export] private MenuButton editMenuButtion;
+    [Export] private MenuButton helpMenuButtion;
+
     [Export] private Label fpsLabel;
 
     private string editingChartId; // 正在编辑的铺面的ID
@@ -179,7 +183,7 @@ public partial class EditorScene : Node
         chooseLinePanel.Visible = false;
         chooseLinePanel.LineSelected += SetEditingLine;
 
-        editingLineLabel.Text = $"正在编辑:线{1}";
+        editingLineLabel.Text = $"正在编辑:线{0}";
 
         noteEditPanel.OnNoteSelected += OnNoteSelected;
 
@@ -198,6 +202,33 @@ public partial class EditorScene : Node
 
         //设置ChartEditService
         chartEditService.EditingChart = editingChart;
+
+        //设置顶部菜单栏
+        {
+            // 构建菜单项
+            var items = new List<PopupMenuItem>
+            {
+                new PopupMenuItem { Text = "保存", Callback = SaveChart},
+                new PopupMenuItem { Text = "另存为", Callback = null},
+                new PopupMenuItem { IsSeparator = true},
+                new PopupMenuItem { Text = "保存并退出", Callback = SaveAndQuit},
+                new PopupMenuItem { Text = "仅退出", Callback = Quit},
+            };
+            PopupMenuHelper.SetMenuButton(fileMenuButtion, items);
+        }
+        {
+            // 构建菜单项
+            var items = new List<PopupMenuItem>
+            {
+                new PopupMenuItem { Text = "复制", Callback = null},
+                new PopupMenuItem { Text = "粘贴", Callback = null},
+                new PopupMenuItem { Text = "剪切", Callback = null},
+                new PopupMenuItem { IsSeparator = true},
+                new PopupMenuItem { Text = "偏好设置", Callback = null},
+            };
+            PopupMenuHelper.SetMenuButton(editMenuButtion, items);
+        }
+        
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
     }
@@ -406,5 +437,23 @@ public partial class EditorScene : Node
     private void OnNoteDelete(int lineId, int noteIndex)
     {
         chartEditService.DeleteNote(lineId, noteIndex);
+    }
+
+    private void SaveChart()
+    {
+        _chartService.SaveChart(editingChartId, editingChart);
+    }
+
+    private void Quit()
+    {
+        var global = GetNode<Global>("/root/Global");
+        global.editingChartId = "";
+        global.GotoScene("res://Scene/start_menu.tscn");
+    }
+
+    private void SaveAndQuit()
+    {
+        SaveChart();
+        Quit();
     }
 }

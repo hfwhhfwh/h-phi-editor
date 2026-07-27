@@ -262,4 +262,14 @@ public partial class ChartService : Node
         );
     }
 
+    public void SaveChart(string chartId, Chart chart)
+    {
+        ChartInfo chartInfo = GetChartInfo(chartId);
+
+        string chartPath = chartInfo.ChartPath;
+
+        ChartLoader.SaveChart(chart, chartPath);
+
+        GD.Print($"[{this.Name}] 谱面保存成功！谱面id:{chartId}");
+    }
 }

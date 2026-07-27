@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public partial class ChartEditService : Node
 {
-    public Chart EditingChart{get; set;}
+    public Chart EditingChart{ get; set; }
 
     public void SetNoteProperty(int lineId, int noteIndex, NotePropertyType property, object value)
     {
@@ -46,13 +46,20 @@ public partial class ChartEditService : Node
             default:
                 throw new ArgumentException($"未知的属性类型: {property}");
         }
+
         GD.Print($"[{this.Name}] 修改note(line{lineId}_{noteIndex})属性 {property} : {value}");
+        
+        ChartEventBus.NotifyDataChanged();  // 广播
     }
 
     public void DeleteNote(int lineId, int noteIndex)
     {
         List<Note> notes = EditingChart.JudgeLineList[lineId].Notes;
         notes.RemoveAt(noteIndex);
+
+        GD.Print($"[{this.Name}] 删除note(line{lineId}_{noteIndex})");
+
+        ChartEventBus.NotifyDataChanged();  // 广播
     }
 }
 

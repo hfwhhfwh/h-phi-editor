@@ -58,4 +58,33 @@ public static class PopupMenuHelper
 
         return menu;
     }
+
+    public static void SetMenuButton(MenuButton menuButton, List<PopupMenuItem> items)
+    {
+        PopupMenu popupMenu = menuButton.GetPopup();
+
+        popupMenu.Clear();
+
+        // 构建菜单项
+        foreach (var item in items)
+        {
+            if (item.IsSeparator)
+                popupMenu.AddSeparator();
+            else
+                popupMenu.AddItem(item.Text);
+        }
+
+        // 绑定点击事件
+        popupMenu.IdPressed += (id) =>
+        {
+            int index = (int)id;
+            // 确保索引有效且不是分隔符（分隔符没有回调）
+            if (index >= 0 && index < items.Count && items[index]?.Callback != null)
+            {
+                items[index].Callback.Invoke();
+            }
+            // 菜单自动隐藏，不能需要移除节点
+        };
+        
+    }
 }

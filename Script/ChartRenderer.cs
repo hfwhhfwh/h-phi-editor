@@ -182,10 +182,11 @@ public partial class ChartRenderer : BaseChartRenderer
                 float alpha = noteRenderData.Alpha; // [0, 255]
                 // rotate 是角度（度）
                 float rad = Mathf.DegToRad(rotate);
+                float sizeX = noteRenderData.SizeX;
 
                 //Transform2D transform = new Transform2D(rad, position);
                 Transform2D transform = Transform2D.Identity
-                    .Scaled(new Vector2(noteScale, noteScale))          // 缩放
+                    .Scaled(new Vector2(noteScale * sizeX, noteScale))          // 缩放
                     .Rotated(rad)           // 旋转
                     .Translated(position);  // 平移
 
@@ -201,7 +202,16 @@ public partial class ChartRenderer : BaseChartRenderer
                 multiMeshes[spriteType].SetInstanceTransform2D(
                     visibleCounts[spriteType], transform
                 );
-                multiMeshes[spriteType].SetInstanceColor(visibleCounts[spriteType], Colors.White);
+
+                //设置颜色和透明度
+                Color color = new Color
+                {
+                    R8 = 255,
+                    G8 = 255,
+                    B8 = 255,
+                    A8 = Mathf.FloorToInt(alpha)
+                };
+                multiMeshes[spriteType].SetInstanceColor(visibleCounts[spriteType], color);
 
                 visibleCounts[spriteType] ++;
             }
@@ -211,11 +221,14 @@ public partial class ChartRenderer : BaseChartRenderer
                 Vector2 endPos = noteRenderData.EndPos;
                 float rotate = noteRenderData.Rotate;
                 float rad = Mathf.DegToRad(rotate);
+                float alpha = noteRenderData.Alpha; // [0, 255]
+                float sizeX = noteRenderData.SizeX;
+
                 // ---- 1. 渲染 Hold 头部 ----
                 if(noteRenderData.HeadVisible){
                     Transform2D transform = Transform2D.Identity
                         .Translated(new Vector2(0, holdHeadTexture.GetSize().Y / 2f)) // 让上边对齐
-                        .Scaled(new Vector2(noteScale, noteScale))          // 缩放
+                        .Scaled(new Vector2(noteScale * sizeX, noteScale))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(headPos);  // 平移
                     
@@ -223,7 +236,16 @@ public partial class ChartRenderer : BaseChartRenderer
 						visibleCounts[SpriteType.HoldHead],
 						transform
 					);
-                    multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], Colors.White);
+
+                    //设置颜色和透明度
+                    Color color = new Color
+                    {
+                        R8 = 255,
+                        G8 = 255,
+                        B8 = 255,
+                        A8 = Mathf.FloorToInt(alpha)
+                    };
+                    multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], color);
                     
                     visibleCounts[SpriteType.HoldHead]++;
                 }
@@ -237,14 +259,23 @@ public partial class ChartRenderer : BaseChartRenderer
 					float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
 
 					Transform2D transform = Transform2D.Identity
-                        .Scaled(new Vector2(noteScale, scaleY))          // 缩放
+                        .Scaled(new Vector2(noteScale * sizeX, scaleY))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(bodyPos);  // 平移
 
 					multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
 						visibleCounts[SpriteType.HoldBody], transform
 					);
-                    multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], Colors.White);
+
+                    //设置颜色和透明度
+                    Color color = new Color
+                    {
+                        R8 = 255,
+                        G8 = 255,
+                        B8 = 255,
+                        A8 = Mathf.FloorToInt(alpha)
+                    };
+                    multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], color);
 
 					visibleCounts[SpriteType.HoldBody]++;
                     
@@ -254,14 +285,23 @@ public partial class ChartRenderer : BaseChartRenderer
                 {
                     Transform2D transform = Transform2D.Identity
                         .Translated(new Vector2(0, -holdEndTexture.GetSize().Y / 2f)) // 让下边对齐
-                        .Scaled(new Vector2(noteScale, noteScale))          // 缩放
+                        .Scaled(new Vector2(noteScale * sizeX, noteScale))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(endPos);  // 平移
                     
                     multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
 						visibleCounts[SpriteType.HoldEnd], transform
 					);
-                    multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], Colors.White);
+
+                    //设置颜色和透明度
+                    Color color = new Color
+                    {
+                        R8 = 255,
+                        G8 = 255,
+                        B8 = 255,
+                        A8 = Mathf.FloorToInt(alpha)
+                    };
+                    multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], color);
 
                     visibleCounts[SpriteType.HoldEnd]++;
                 }

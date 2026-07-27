@@ -2,12 +2,13 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 
 public partial class ChartPlayer : BaseChartPlayer
 {
     
-
+    public ObservableCollection<Note> notes;
 
     public Image BgImage { get; set; }                //背景图片，由上级设置
     public AudioStream MusicAudio { get; set; }       //音乐，由上级设置
@@ -38,6 +39,8 @@ public partial class ChartPlayer : BaseChartPlayer
     public override List<NoteRenderData> GetNoteRenderDatas() => noteRenderDatas;
 
     public Control Parent { get; set; } // 所有JudgeLine和Note都将渲染到Parent中
+
+    private bool needRebuildLines = false;
     
 
     //将Beat（int[]）转换为秒
@@ -73,6 +76,10 @@ public partial class ChartPlayer : BaseChartPlayer
         hitEffectPool.Spawn(parentPos);
     }
 
+    /// <summary>
+    /// 播放打击音效
+    /// </summary>
+    /// <param name="noteType">note的类型</param>
     public void PlayHitSound(NoteType noteType)
     {
         //选择对应的音效
@@ -146,6 +153,9 @@ public partial class ChartPlayer : BaseChartPlayer
         audioPool = new AudioPool(parent);
         parent.AddChild(audioPool);
 
+        //监听谱面数据变化
+        ChartEventBus.OnChartDataChanged += OnChartDataChanged;
+
         //预计算所有事件时间的秒数
         ChartDataHelper.RefreshEventSec(chart);
         //预计算所有note时间的秒数
@@ -157,6 +167,34 @@ public partial class ChartPlayer : BaseChartPlayer
 
         // 初始化所有判定线节点
         SetJudgeLineList();
+    }
+
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+
+        //取消订阅事件，防止内存泄漏
+        ChartEventBus.OnChartDataChanged -= OnChartDataChanged;
+    }
+
+    public override void _Process(double delta)
+    {
+        base._Process(delta);
+
+        // 处理谱面数据更新
+        if (needRebuildLines)
+        {
+            SetJudgeLineList();
+            needRebuildLines = false;
+        }
+    }
+
+
+
+    private void OnChartDataChanged()
+    {
+        // 标记需要重新生成判定线节点，在每帧更新时处理
+        needRebuildLines = true;
     }
 
     /// <summary>
@@ -230,8 +268,9 @@ public partial class ChartPlayer : BaseChartPlayer
                         HeadPos = headParentPos,
                         EndPos = endParentPos,
                         Rotate = noteRotation,
-                        Alpha = 1f, //TODO
-                        HeadVisible = noteNode.HeadVisible
+                        Alpha = noteNode.Alpha,
+                        HeadVisible = noteNode.HeadVisible,
+                        SizeX = noteNode.SizeX,
                     };
 
                     noteRenderDatas.Add(noteRenderData);
@@ -263,7 +302,8 @@ public partial class ChartPlayer : BaseChartPlayer
                         HeadPos = noteParentPos,
                         EndPos = noteParentPos,
                         Rotate = noteRotation,
-                        Alpha = 1f //TODO
+                        Alpha = noteNode.Alpha,
+                        SizeX = noteNode.SizeX,
                     };
 
                     noteRenderDatas.Add(noteRenderData);
@@ -471,6 +511,18 @@ public class NoteNode
     public Vector2 Position { get; set; } //坐标系: 谱面坐标[-675,675] [-450,450]
 
     /// <summary>
+    /// note透明度 [0,255]
+    /// </summary>
+    /// <value></value>
+    public float Alpha { get; set; } = 255; // 
+
+    /// <summary>
+    /// note的横向大小缩放 [0,1]
+    /// </summary>
+    /// <value></value>
+    public float SizeX { get; set; } = 1;
+
+    /// <summary>
     /// 当note落到判定线上时触发，参数是点击的位置(坐标系：parent坐标)
     /// </summary>
     public Action<Vector2> onNoteHited; 
@@ -597,6 +649,12 @@ public class NoteNode
 
             //GD.Print($"time:{gameTime:F3}, localChartX:{localChartX:F3}, allDisplacement:{allDisplacement:F3}, nowDisplacement:{nowDisplacement:F3}, localChartY:{localChartY:F3}, globalPos:{globalPos:F3}");
         }
+
+        //设置透明度
+        Alpha = data.Alpha;
+
+        //设置大小缩放
+        SizeX = data.Size;
 
     }
 }
@@ -761,6 +819,7 @@ public class NoteRenderData
     public NoteType Type { get; set; }
     public float Rotate { get; set; }
     public float Alpha { get; set; }
+    public float SizeX { get; set; }
 
     //仅限Hold的属性
     public Vector2 EndPos { get; set; }
