@@ -209,7 +209,7 @@ public partial class EditorScene : Node
             var items = new List<PopupMenuItem>
             {
                 new PopupMenuItem { Text = "保存", Callback = SaveChart},
-                new PopupMenuItem { Text = "另存为", Callback = null},
+                //new PopupMenuItem { Text = "另存为", Callback = null},
                 new PopupMenuItem { IsSeparator = true},
                 new PopupMenuItem { Text = "保存并退出", Callback = SaveAndQuit},
                 new PopupMenuItem { Text = "仅退出", Callback = Quit},
@@ -362,7 +362,7 @@ public partial class EditorScene : Node
                 {
                     Id = i, // 判定线的编号从0开始
                     NoteCount = line.NumOfNotes,
-                    //NextEventTime = //TODO
+                    //NextEventTime = //TODO 在ChooseLinePanel显示下一个事件的时间
                 });
             }
 

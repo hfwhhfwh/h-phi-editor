@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
+//FIXME 手机端不能正确滑动
 public partial class ChooseLinePanel : Panel
 {
 	public class LineInfo
