@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://6ls0iiql2pg"]
 
-[ext_resource type="Script" uid="uid://d385t2oi6gyyv" path="res://Script/VirtualJoystick.cs" id="1_qcm1o"]
+[ext_resource type="Script" uid="uid://d385t2oi6gyyv" path="res://Script/UI/VirtualJoystick.cs" id="1_qcm1o"]
 [ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="2_qt1ih"]
 [ext_resource type="StyleBox" uid="uid://c3x4gv1lx5uwq" path="res://ButtonPressed.tres" id="3_37rii"]
 [ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://ButtonHover.tres" id="4_krcsu"]
