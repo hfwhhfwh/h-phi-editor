@@ -26,24 +26,11 @@ public static class PopupMenuHelper
         parent.AddChild(menu); // 添加到场景树
         menu.Theme = theme; // 设置样式
 
-        // 构建菜单项
-        foreach (var item in items)
-        {
-            if (item.IsSeparator)
-                menu.AddSeparator();
-            else
-                menu.AddItem(item.Text);
-        }
+        SetPopupMenu(menu, items);
 
-        // 绑定点击事件
+        // 手动绑定点击事件
         menu.IdPressed += (id) =>
         {
-            int index = (int)id;
-            // 确保索引有效且不是分隔符（分隔符没有回调）
-            if (index >= 0 && index < items.Count && items[index]?.Callback != null)
-            {
-                items[index].Callback.Invoke();
-            }
             // 菜单自动隐藏，但我们需要移除并释放节点
             menu.QueueFree();
         };
@@ -51,8 +38,8 @@ public static class PopupMenuHelper
         // 处理菜单关闭（点击外部）时也要清理
         menu.PopupHide += () => {
             menu.QueueFree();
-            
         };
+        
         // 弹出菜单
         menu.Popup(new Rect2I((int)position.X, (int)position.Y, 0, 0));
 
@@ -63,6 +50,18 @@ public static class PopupMenuHelper
     {
         PopupMenu popupMenu = menuButton.GetPopup();
 
+        SetPopupMenu(popupMenu, items);
+        
+    }
+
+    /// <summary>
+    /// 设置PopupMenu的选项列表
+    /// 注意：此方法不会调用PopupMenu的QueueFree()
+    /// </summary>
+    /// <param name="popupMenu">弹出菜单</param>
+    /// <param name="items">需要显示的菜单项</param>
+    public static void SetPopupMenu(PopupMenu popupMenu, List<PopupMenuItem> items)
+    {
         popupMenu.Clear();
 
         // 构建菜单项
@@ -70,21 +69,41 @@ public static class PopupMenuHelper
         {
             if (item.IsSeparator)
                 popupMenu.AddSeparator();
+            else if (item.Checkable)
+            {
+                popupMenu.AddCheckItem(item.Text);
+            }
             else
                 popupMenu.AddItem(item.Text);
         }
 
-        // 绑定点击事件
+        // TODO 为避免重复绑定，先断开旧连接（如果你复用同一个 PopupMenu）
+        // popupMenu.IdPressed -= YourHandler;   // 建议用成员变量保存handler再移除
+        // 这里简单演示直接绑定（每次调用会新增，可能累积，可根据实际情况管理）
         popupMenu.IdPressed += (id) =>
         {
             int index = (int)id;
-            // 确保索引有效且不是分隔符（分隔符没有回调）
-            if (index >= 0 && index < items.Count && items[index]?.Callback != null)
+            if (index < 0 || index >= items.Count)
+                return;
+
+            var item = items[index];
+            if (item == null)
+                return;
+
+            // 如果是检查项，调用 Toggled 并传入当前状态
+            if (item.Checkable)
             {
-                items[index].Callback.Invoke();
+                bool currentState = popupMenu.IsItemChecked(index);
+                popupMenu.SetItemChecked(index, !currentState);
+                item.Toggled?.Invoke(!currentState);
+
+                //GD.Print($"index:{index}, currentState:{currentState}");
             }
-            // 菜单自动隐藏，不能需要移除节点
+            else // 如果是普通按钮，调用无参数的回调
+            {
+                item.Callback?.Invoke();
+            }
         };
-        
+
     }
 }

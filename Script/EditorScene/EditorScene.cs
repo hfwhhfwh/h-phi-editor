@@ -4,6 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+/// <summary>
+/// 基本操做模式
+/// </summary>
+public enum EditMode
+{
+    Normal,
+    PlacingNote, // 放置note模式
+}
 public partial class EditorScene : Node
 {
     [ExportGroup("虚拟摇杆引用")]
@@ -80,6 +88,8 @@ public partial class EditorScene : Node
             horOffset = horBeatOffset * horSeparation;
         }
     }
+
+    public EditMode editMode = EditMode.Normal;
 
     /// <summary>
 	/// 用于缩放
@@ -163,17 +173,6 @@ public partial class EditorScene : Node
             GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
             return;
         }
-        // chartPlayer2.audioStream = audioStream;
-        // AudioStream audioStream = AudioStreamMP3.LoadFromFile(chartInfo.SongPath);
-        // if (audioStream == null)
-        // {
-        //     GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
-        //     return;
-        // }
-        // chartPlayer.audioStream = audioStream;
-
-        // chartPlayer2.Initialize();
-        // chartPlayer2.Visible = false;
 
         chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream);
         chartRenderer.Initialize(chartPlayParent);
@@ -204,6 +203,7 @@ public partial class EditorScene : Node
         chartEditService.EditingChart = editingChart;
 
         //设置顶部菜单栏
+        //设置“文件”选项
         {
             // 构建菜单项
             var items = new List<PopupMenuItem>
@@ -216,6 +216,7 @@ public partial class EditorScene : Node
             };
             PopupMenuHelper.SetMenuButton(fileMenuButtion, items);
         }
+        //设置“编辑”选项
         {
             // 构建菜单项
             var items = new List<PopupMenuItem>
@@ -224,7 +225,15 @@ public partial class EditorScene : Node
                 new PopupMenuItem { Text = "粘贴", Callback = null},
                 new PopupMenuItem { Text = "剪切", Callback = null},
                 new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "放置Note", Callback = null, Checkable = true, Checked = false},
+                new PopupMenuItem { Text = "放置Note", Checkable = true, 
+                    Toggled = (bool isChecked) =>
+                    {
+                        GD.Print($"放置Note 被设置为:{isChecked}");
+                        // 切换编辑模式
+                        if(isChecked) editMode = EditMode.PlacingNote;
+                        else editMode = EditMode.Normal;
+                    }
+                },
                 new PopupMenuItem { IsSeparator = true},
                 new PopupMenuItem { Text = "偏好设置", Callback = null},
             };
@@ -381,10 +390,10 @@ public partial class EditorScene : Node
     private void SetEditingLine(int id)
     {
         GD.Print($"[{this.Name}] 用户选择了Line:{id}");
-        editingLineId = id-1;
+        editingLineId = id;
 
-        noteEditPanel.EditingLineId = id-1;
-        eventEditPanel.EditingLineId = id-1;
+        noteEditPanel.EditingLineId = id;
+        eventEditPanel.EditingLineId = id;
 
         editingLineLabel.Text = $"正在编辑:线{id}";
 
