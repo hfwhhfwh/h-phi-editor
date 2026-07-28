@@ -224,6 +224,8 @@ public partial class EditorScene : Node
                 new PopupMenuItem { Text = "粘贴", Callback = null},
                 new PopupMenuItem { Text = "剪切", Callback = null},
                 new PopupMenuItem { IsSeparator = true},
+                new PopupMenuItem { Text = "放置Note", Callback = null, Checkable = true, Checked = false},
+                new PopupMenuItem { IsSeparator = true},
                 new PopupMenuItem { Text = "偏好设置", Callback = null},
             };
             PopupMenuHelper.SetMenuButton(editMenuButtion, items);

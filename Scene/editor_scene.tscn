@@ -106,6 +106,9 @@ theme_override_styles/hover = ExtResource("1_7k27q")
 theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "编辑"
+item_count = 1
+popup/item_0/checkable = 1
+popup/item_0/id = 0
 
 [node name="UndoButton" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1449821637]
 layout_mode = 2
