@@ -4,14 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-/// <summary>
-/// 基本操做模式
-/// </summary>
-public enum EditMode
-{
-    Normal,
-    PlacingNote, // 放置note模式
-}
+
 public partial class EditorScene : Node
 {
     [ExportGroup("虚拟摇杆引用")]
@@ -36,14 +29,15 @@ public partial class EditorScene : Node
     [Export] private Control editPanel;
     [Export] private RightPanel rightPanel;
     [Export] private ChooseLinePanel chooseLinePanel;
-    [Export] private Label editingLineLabel;
     [Export] private NoteInfoPanel noteInfoPanel;
-
+    [Export] private NoteChooser noteChooser;
     [Export] private MenuButton fileMenuButtion;
     [Export] private MenuButton editMenuButtion;
     [Export] private MenuButton helpMenuButtion;
 
+    [Export] private Label editingLineLabel;
     [Export] private Label fpsLabel;
+    [Export] private Label editModeLabel;
 
     private string editingChartId; // 正在编辑的铺面的ID
     private Chart editingChart; // 正在编辑的铺面
@@ -89,7 +83,7 @@ public partial class EditorScene : Node
         }
     }
 
-    public EditMode editMode = EditMode.Normal;
+    
 
     /// <summary>
 	/// 用于缩放
@@ -225,20 +219,43 @@ public partial class EditorScene : Node
                 new PopupMenuItem { Text = "粘贴", Callback = null},
                 new PopupMenuItem { Text = "剪切", Callback = null},
                 new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "放置Note", Checkable = true, 
-                    Toggled = (bool isChecked) =>
-                    {
-                        GD.Print($"放置Note 被设置为:{isChecked}");
-                        // 切换编辑模式
-                        if(isChecked) editMode = EditMode.PlacingNote;
-                        else editMode = EditMode.Normal;
-                    }
-                },
-                new PopupMenuItem { IsSeparator = true},
+                // new PopupMenuItem { Text = "放置Note", Checkable = true, 
+                //     Toggled = (bool isChecked) =>
+                //     {
+                //         GD.Print($"放置Note 被设置为:{isChecked}");
+                //         // 切换编辑模式
+                //         if(isChecked) editMode = EditMode.PlacingNote;
+                //         else editMode = EditMode.Normal;
+                //     }
+                // },
+                // new PopupMenuItem { IsSeparator = true},
                 new PopupMenuItem { Text = "偏好设置", Callback = null},
             };
             PopupMenuHelper.SetMenuButton(editMenuButtion, items);
         }
+
+        //设置NoteChooser
+        noteChooser.OnNoteChoosed += OnNoteChooserChoosed;
+        noteChooser.OnDeselected += () =>
+        {
+            EditModeManager.SetEditMode(EditModeEnum.Normal);
+            // GD.Print($"[{this.Name}] 用户取消选择了note");
+        };
+
+        //设置EditModeManager 初始状态默认为常规模式
+        EditModeManager.SetEditMode(EditModeEnum.Normal);
+
+        //设置editModeLabel
+        editModeLabel.Text = "编辑模式：常规模式";
+        EditModeManager.OnEditModeChanged += (EditModeEnum editMode) =>
+        {
+            editModeLabel.Text = editMode switch
+            {
+                EditModeEnum.Normal => "编辑模式：常规模式",
+                EditModeEnum.PlacingNote => "编辑模式：放置音符",
+                _ => "编辑模式：未知",
+            };
+        };
         
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
@@ -257,6 +274,7 @@ public partial class EditorScene : Node
             //否则，时间轴由编辑器面板决定
             chartPlayer.ExternalTime = chartTime;
         }
+        
         chartPlayer.UpdateLogic();
 
         List<JudgeLineRenderData> judgeLineRenderDatas = chartPlayer.GetLineRenderDatas();
@@ -466,5 +484,10 @@ public partial class EditorScene : Node
     {
         SaveChart();
         Quit();
+    }
+
+    private void OnNoteChooserChoosed(NoteType noteType)
+    {
+        EditModeManager.SetEditMode(EditModeEnum.PlacingNote);
     }
 }

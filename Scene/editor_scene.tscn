@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/EditorScene/NoteEditPanel.cs" id="3_gwldl"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
 [ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="5_gi1tw"]
+[ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="6_p0vr8"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
 [ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="7_75obp"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
@@ -26,7 +27,7 @@
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "editingLineLabel", "noteInfoPanel", "fileMenuButtion", "editMenuButtion", "helpMenuButtion", "fpsLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "helpMenuButtion", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -39,12 +40,14 @@ chartPlayParent = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/Mai
 editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel")
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
-editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/EditingLineLabel")
 noteInfoPanel = NodePath("EditorPanel/SafeArea/NoteInfoPanel")
+noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/NoteChooser")
 fileMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/FileButton")
 editMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/EditButton")
 helpMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/HelpButton")
-fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/FPSLabel")
+editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
+fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/FPSLabel")
+editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
 
 [node name="EditorPanel" type="PanelContainer" parent="." unique_id=302158127]
 anchors_preset = 15
@@ -143,15 +146,18 @@ theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "帮助"
 
-[node name="EditingLineLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1946199678]
+[node name="Labels" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1506452743]
+layout_mode = 2
+
+[node name="EditingLineLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels" unique_id=1946199678]
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 text = "正在编辑：线123"
 
-[node name="FPSLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=569815193]
+[node name="EditModeLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels" unique_id=1102036026]
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
-text = "FPS: xxx"
+text = "编辑模式：XXXX"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer" unique_id=1705874636]
 custom_minimum_size = Vector2(0, 70)
@@ -174,40 +180,8 @@ layout_mode = 2
 MaxRadius = 40.0
 joystickDir = 2
 
-[node name="NoteChooser" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1244487298]
+[node name="NoteChooser" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1507138121 instance=ExtResource("6_p0vr8")]
 layout_mode = 2
-
-[node name="Button" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/NoteChooser" unique_id=505159066]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme = ExtResource("3_2bu1g")
-icon = ExtResource("5_57v2d")
-icon_alignment = 1
-expand_icon = true
-
-[node name="Button2" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/NoteChooser" unique_id=1376000714]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme = ExtResource("3_2bu1g")
-icon = ExtResource("6_qdb1r")
-icon_alignment = 1
-expand_icon = true
-
-[node name="Button3" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/NoteChooser" unique_id=238057689]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme = ExtResource("3_2bu1g")
-icon = ExtResource("7_wq0mf")
-icon_alignment = 1
-expand_icon = true
-
-[node name="Button4" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/NoteChooser" unique_id=769423649]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme = ExtResource("3_2bu1g")
-icon = ExtResource("9_gi1tw")
-icon_alignment = 1
-expand_icon = true
 
 [node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
 layout_mode = 2
@@ -364,6 +338,17 @@ theme_override_styles/focus = ExtResource("1_7k27q")
 icon = ExtResource("16_4d80g")
 icon_alignment = 1
 expand_icon = true
+
+[node name="FPSLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel" unique_id=2096550141]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_vertical = 8
+theme = ExtResource("3_2bu1g")
+theme_override_font_sizes/font_size = 20
+text = "FPS: xxx"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 1
 
 [node name="NoteInfoPanel" parent="EditorPanel/SafeArea" unique_id=1318802048 instance=ExtResource("20_mm2kl")]
 visible = false

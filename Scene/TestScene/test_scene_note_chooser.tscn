@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://bd5xy4fv3hshd"]
+
+[ext_resource type="Script" uid="uid://bn6a5cyldsddf" path="res://Script/TestSceneScripts/TestSceneNoteChooser.cs" id="1_qtf3c"]
+[ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="2_gvhed"]
+
+[node name="TestSceneNoteChooser" type="Node" unique_id=525036720 node_paths=PackedStringArray("noteChooser")]
+script = ExtResource("1_qtf3c")
+noteChooser = NodePath("NoteChooser")
+
+[node name="NoteChooser" parent="." unique_id=1507138121 instance=ExtResource("2_gvhed")]
+offset_left = 211.0
+offset_top = 127.0
+offset_right = 373.0
+offset_bottom = 518.0

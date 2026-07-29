@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://cpw4wh57xojh6"]
+
+[ext_resource type="Script" uid="uid://hhdgmf4cn0bp" path="res://Script/EditorScene/NoteChooser.cs" id="1_o178c"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="2_leg7f"]
+[ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="3_5enpp"]
+[ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="4_6iklk"]
+[ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="5_j6fmh"]
+[ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="6_djjuu"]
+
+[node name="NoteChooser" type="VBoxContainer" unique_id=1507138121 node_paths=PackedStringArray("tapButton", "dragButton", "flickButton", "holdButton")]
+offset_right = 295.0
+offset_bottom = 340.0
+script = ExtResource("1_o178c")
+tapButton = NodePath("Button")
+dragButton = NodePath("Button2")
+flickButton = NodePath("Button3")
+holdButton = NodePath("Button4")
+
+[node name="Button" type="Button" parent="." unique_id=277347817]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme = ExtResource("2_leg7f")
+toggle_mode = true
+icon = ExtResource("3_5enpp")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Button2" type="Button" parent="." unique_id=975550191]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme = ExtResource("2_leg7f")
+toggle_mode = true
+icon = ExtResource("4_6iklk")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Button3" type="Button" parent="." unique_id=352439549]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme = ExtResource("2_leg7f")
+toggle_mode = true
+icon = ExtResource("5_j6fmh")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Button4" type="Button" parent="." unique_id=624209801]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme = ExtResource("2_leg7f")
+toggle_mode = true
+icon = ExtResource("6_djjuu")
+icon_alignment = 1
+expand_icon = true

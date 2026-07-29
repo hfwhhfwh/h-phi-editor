@@ -46,7 +46,6 @@ public partial class NoteEditPanel : BaseEditPanel
 
     public override void _Ready()
     {
-		//InitializeNodePool(50, CreateNoteNode);
 
 		//设置multiMeshInstance
 		foreach(SpriteType type in allSpriteTypes)
@@ -89,18 +88,6 @@ public partial class NoteEditPanel : BaseEditPanel
 		}
 		
     }
-
-	// private Node2D CreateNoteNode()
-    // {
-    //     var node = new Node2D();
-    //     var sprite = new Sprite2D { Name = "Sprite2D", Scale = new Vector2(0.1f, 0.1f) };
-    //     var body = new Sprite2D { Name = "bodySprite", Scale = new Vector2(0.1f, 0.1f) };
-    //     var end = new Sprite2D { Name = "endSprite", Scale = new Vector2(0.1f, 0.1f) };
-    //     node.AddChild(sprite);
-    //     node.AddChild(body);
-    //     node.AddChild(end);
-    //     return node;
-    // }
 
     /// <summary>
     /// 获取某个物体在面板上的坐标
@@ -296,12 +283,19 @@ public partial class NoteEditPanel : BaseEditPanel
         if (@event is InputEventMouseButton mouseBtn)
         {
             HandleMouseBtnInput(mouseBtn);
-            
+        }
+        else if(@event is InputEventMouseMotion mouseMotion)
+        {
+            HandleMouseMotionInput(mouseMotion);
         }
 
         else if(@event is InputEventScreenTouch touchEvent)
         {
             HandleTouchInput(touchEvent);
+        }
+        else if(@event is InputEventScreenDrag screenDrag)
+        {
+            HandleScreenDragInput(screenDrag);
         }
         
     }
@@ -311,25 +305,47 @@ public partial class NoteEditPanel : BaseEditPanel
         // 鼠标左键点击
         if (mouseBtn.ButtonIndex == MouseButton.Left)
         {
-            if (!mouseBtn.Pressed) // 松开触发
+            Vector2 pos = mouseBtn.Position;
+            if (mouseBtn.Pressed) // 按下
             {
-                Vector2 pos = mouseBtn.Position;
-                OnSingleClick(pos);
+                OnButtonDown(pos);
+            }
+            if (!mouseBtn.Pressed) // 松开
+            {
+                OnButtonUp(pos);
             }
         }
+    }
+
+    private void HandleMouseMotionInput(InputEventMouseMotion mouseMotion)
+    {
         
     }
 
     private void HandleTouchInput(InputEventScreenTouch touchEvent)
     {
-        if (!touchEvent.Pressed) // 松开触发
+        Vector2 pos = touchEvent.Position;
+        if (touchEvent.Pressed) // 松开
         {
-            Vector2 pos = touchEvent.Position;
-            OnSingleClick(pos);
+            OnButtonDown(pos);
+        }
+        if (!touchEvent.Pressed) // 松开
+        {
+            OnButtonUp(pos);
         }
     }
+
+    private void HandleScreenDragInput(InputEventScreenDrag screenDrag)
+    {
+        
+    }
     
-    private void OnSingleClick(Vector2 pos)
+    private void OnButtonDown(Vector2 pos)
+    {
+        
+    }
+
+    private void OnButtonUp(Vector2 pos)
     {
         int noteIndex = FildNearestNoteIndex(pos);
         if(noteIndex == -1) // -1代表没有选中
@@ -341,6 +357,11 @@ public partial class NoteEditPanel : BaseEditPanel
         {
             OnNoteTaped(noteIndex);
         }
+    }
+
+    private void OnMotionInput(Vector2 relative, Vector2 velocity)
+    {
+        
     }
 
     public void OnNoteTaped(int noteIndex)
