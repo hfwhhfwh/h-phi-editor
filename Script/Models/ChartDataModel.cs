@@ -23,6 +23,27 @@ namespace QuickType
             return $"[{values[0]},{values[1]},{values[2]}]";
         }
 
+        public int this[int index]
+        {
+            get
+            {
+                return values[index];
+            }
+            set
+            {
+                values[index] = value;
+            }
+        }
+
+        public Beat(){}
+
+        public Beat(int a, int b, int c)
+        {
+            this.values[0] = a;
+            this.values[1] = b;
+            this.values[2] = c;
+        }
+
     }
 
     public partial class Chart
@@ -208,7 +229,7 @@ namespace QuickType
     public partial class Note
     {
         [JsonProperty("above")]
-        public int Above { get; set; }
+        public int Above { get; set; } // 音符翻转 1表示上面，2表示下面
 
         [JsonProperty("alpha")]
         public float Alpha { get; set; }

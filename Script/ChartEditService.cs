@@ -61,6 +61,35 @@ public partial class ChartEditService : Node
 
         ChartEventBus.NotifyDataChanged();  // 广播
     }
+
+    /// <summary>
+    /// 添加一个note
+    /// </summary>
+    /// <param name="noteType">note的类型（枚举）</param>
+    /// <param name="startBeat">起始拍</param>
+    /// <param name="endBeat">结束拍（若非Hold，可以与起始拍相同，也可不设置）</param>
+    /// <param name="posX">note的谱面X坐标</param>
+    public void AddNote(int lineId, NoteType noteType, Beat startBeat, Beat endBeat, float posX)
+    {
+        Note note = new Note
+        {
+            Above = 1,
+            Alpha = 1f,
+            IsFake = false,
+            Size = 1f,
+            Speed = 1f,
+            VisibleTime = 99999f,
+            YOffset = 0f,
+
+            Type = (int) noteType,
+            StartTime = startBeat.values,
+            EndTime = endBeat.values,
+            PositionX = posX,
+        };
+
+        EditingChart.JudgeLineList[lineId].Notes.Add(note); // TODO 添加音符时可以考虑直接插入到合适的位置
+        
+    }
 }
 
 /// <summary>

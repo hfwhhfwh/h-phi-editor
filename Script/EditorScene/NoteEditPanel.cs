@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
+
 public partial class NoteEditPanel : BaseEditPanel
 {
 	private enum SpriteType
@@ -43,10 +44,14 @@ public partial class NoteEditPanel : BaseEditPanel
     private List<Note> selectedNotes = new();
 
     [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex);
+    public event Action<NoteType, Beat, Beat, float> NoteAddRequested;
+
+    private InputController _inputController;
+
+    public NoteType PlacingNote { get; set; } // 正在放置的note
 
     public override void _Ready()
     {
-
 		//设置multiMeshInstance
 		foreach(SpriteType type in allSpriteTypes)
 		{
@@ -86,6 +91,12 @@ public partial class NoteEditPanel : BaseEditPanel
 			multiMeshInstances[type] = multiMeshInstance;
             multiMeshes[type] = multiMesh;
 		}
+
+        // 设置inputController
+        _inputController = new InputController();
+        _inputController.PointerDown += OnButtonDown;
+        _inputController.PointerUp += OnButtonUp;
+        _inputController.PointerDrag += OnMotionInput;
 		
     }
 
@@ -98,8 +109,7 @@ public partial class NoteEditPanel : BaseEditPanel
     private Vector2 GetPanelPosition(float beatTime, float posX)
     {
         // 计算面板 X 坐标（谱面坐标 -675~675 映射到面板水平范围）
-        float ratio = (posX - (-675f)) / 1350f;
-        float panelX = verMargin + ratio * (Size.X - 2 * verMargin);
+        float panelX = GetPanelPosX(posX);
         // 起始 Y 坐标（向上为负）
         float panelY = GetPanelPosY(beatTime);
 
@@ -117,6 +127,45 @@ public partial class NoteEditPanel : BaseEditPanel
         float panelY = Size.Y / 2f + horOffsetSmoothed - beatTime * horSeparationSmoothed;
 
         return panelY;
+    }
+
+    /// <summary>
+    /// 将谱面X坐标转换为Control坐标系下的X坐标
+    /// </summary>
+    /// <param name="chartPosX">铺面坐标系下的X坐标</param>
+    /// <returns>物体在Control坐标系下的X坐标</returns>
+    private float GetPanelPosX(float chartPosX)
+    {
+        // 计算面板 X 坐标（谱面坐标 -675~675 映射到面板水平范围）
+        float ratio = (chartPosX - (-675f)) / 1350f;
+        float panelX = verMargin + ratio * (Size.X - 2 * verMargin);
+
+        return panelX;
+    }
+
+    /// <summary>
+    /// 将Control坐标系下的X坐标转换为谱面X坐标
+    /// </summary>
+    /// <param name="localX">Control坐标系下的X坐标</param>
+    /// <returns>谱面坐标系下的X坐标</returns>
+    private float GetChartPosX(float localX)
+    {
+        float ratio = (localX - verMargin) / (Size.X - 2 * verMargin);
+        float chartPosX = -675f + ratio * 1350f;
+        return chartPosX;
+    }
+
+    /// <summary>
+    /// 将Control坐标系下的Y坐标转换为BeatValue
+    /// </summary>
+    /// <param name="localY">Control坐标系下的Y坐标</param>
+    /// <returns>BeatValue</returns>
+    private float GetBeatValue(float localY)
+    {
+        // panelY = Size.Y / 2f + horOffsetSmoothed - beatTime * horSeparationSmoothed;
+        float beatValue = (Size.Y / 2f + horOffsetSmoothed - localY) / horSeparationSmoothed;
+
+        return beatValue;
     }
 
 	protected override void UpdateVisuals()
@@ -280,86 +329,72 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         base._GuiInput(@event);
 
-        if (@event is InputEventMouseButton mouseBtn)
+        // 只处理左键和触摸，其余事件（滚轮、中键）忽略
+        bool handled = false;
+        if (@event is InputEventMouseButton mouseBtn && mouseBtn.ButtonIndex == MouseButton.Left)
         {
-            HandleMouseBtnInput(mouseBtn);
+            _inputController.ProcessEvent(@event);
+            handled = true;
         }
-        else if(@event is InputEventMouseMotion mouseMotion)
+        else if (@event is InputEventMouseMotion mouseMotion && Input.IsMouseButtonPressed(MouseButton.Left))
         {
-            HandleMouseMotionInput(mouseMotion);
+            _inputController.ProcessEvent(@event);
+            handled = true;
+        }
+        else if (@event is InputEventScreenTouch touch)
+        {
+            _inputController.ProcessEvent(@event);
+            handled = true;
+        }
+        else if (@event is InputEventScreenDrag drag)
+        {
+            _inputController.ProcessEvent(@event);
+            handled = true;
         }
 
-        else if(@event is InputEventScreenTouch touchEvent)
-        {
-            HandleTouchInput(touchEvent);
-        }
-        else if(@event is InputEventScreenDrag screenDrag)
-        {
-            HandleScreenDragInput(screenDrag);
-        }
-        
-    }
-
-    private void HandleMouseBtnInput(InputEventMouseButton mouseBtn)
-    {
-        // 鼠标左键点击
-        if (mouseBtn.ButtonIndex == MouseButton.Left)
-        {
-            Vector2 pos = mouseBtn.Position;
-            if (mouseBtn.Pressed) // 按下
-            {
-                OnButtonDown(pos);
-            }
-            if (!mouseBtn.Pressed) // 松开
-            {
-                OnButtonUp(pos);
-            }
-        }
-    }
-
-    private void HandleMouseMotionInput(InputEventMouseMotion mouseMotion)
-    {
-        
-    }
-
-    private void HandleTouchInput(InputEventScreenTouch touchEvent)
-    {
-        Vector2 pos = touchEvent.Position;
-        if (touchEvent.Pressed) // 松开
-        {
-            OnButtonDown(pos);
-        }
-        if (!touchEvent.Pressed) // 松开
-        {
-            OnButtonUp(pos);
-        }
-    }
-
-    private void HandleScreenDragInput(InputEventScreenDrag screenDrag)
-    {
+        if (handled) AcceptEvent(); // 标记事件已处理，阻止向上冒泡
         
     }
     
     private void OnButtonDown(Vector2 pos)
     {
-        
+        if(EditModeManager.EditMode == EditModeEnum.PlacingNote)
+        {
+            if(PlacingNote != NoteType.Hold)
+            {
+                // 放置普通note
+                float chartX = GetChartPosX(pos.X);
+                float snappedChartX = SnapChartXToGrid(chartX);
+                float beatValue = GetBeatValue(pos.Y);
+                Beat snappedBeat = SnapBeatValueToGrid(beatValue);
+
+                NoteAddRequested?.Invoke(
+                    PlacingNote,
+                    snappedBeat,
+                    snappedBeat,
+                    snappedChartX
+                );
+            }
+        }
     }
 
     private void OnButtonUp(Vector2 pos)
     {
-        int noteIndex = FildNearestNoteIndex(pos);
-        if(noteIndex == -1) // -1代表没有选中
+        if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-            DeselectAll();
-            
-        }
-        else
-        {
-            OnNoteTaped(noteIndex);
+            int noteIndex = FildNearestNoteIndex(pos);
+            if(noteIndex == -1) // -1代表没有选中
+            {
+                DeselectAll();
+            }
+            else
+            {
+                OnNoteTaped(noteIndex);
+            }
         }
     }
 
-    private void OnMotionInput(Vector2 relative, Vector2 velocity)
+    private void OnMotionInput(Vector2 position, Vector2 relative)
     {
         
     }
@@ -502,5 +537,43 @@ public partial class NoteEditPanel : BaseEditPanel
         selectedNotes.Clear();
     }
 
-	
+
+    // /// <summary>
+    // /// 将制定位置吸附到最近的网格点
+    // /// </summary>
+    // /// <param name="pos">指定位置(坐标系：Control本地坐标)</param>
+    // /// <returns>Vector2，X是posX（铺面坐标系），Y时beatValue</returns>
+	// private Vector2 SnapToGrid(Vector2 pos)
+    // {
+    //     //转换X坐标
+    //     float chartX = GetChartPosX(pos.X);
+    //     float snappedX = SnapChartXToGrid(chartX);
+
+    //     // 转换Y坐标
+    //     float beatValue = GetBeatValue(pos.Y);
+    //     Beat snappedBeat = SnapBeatValueToGrid(beatValue);
+        
+    //     return new Vector2(snappedX, snappedBeat);
+    // }
+
+    private float SnapChartXToGrid(float chartX)
+    {
+        float ratioX = (chartX - (-675)) / 1350;
+        float snappedratioX = Mathf.Round(ratioX * (verLineCount - 1)) / (verLineCount - 1);
+        float snappedX = -675 + snappedratioX * 1350;
+
+        return snappedX;
+    }
+
+    private Beat SnapBeatValueToGrid(float beatValue)
+    {
+        // float snappedBeatValue = Mathf.Round(beatValue * subBeatCount) / subBeatCount;
+
+        int a = Mathf.FloorToInt(beatValue);
+        int b = Mathf.RoundToInt(beatValue * subBeatCount) % subBeatCount;
+        int c = subBeatCount;
+
+        return new Beat(a, b, c);
+    }
+
 }

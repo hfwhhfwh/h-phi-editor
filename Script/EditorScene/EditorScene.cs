@@ -178,17 +178,16 @@ public partial class EditorScene : Node
 
         editingLineLabel.Text = $"正在编辑:线{0}";
 
+        //设置NoteEditPanel
         noteEditPanel.OnNoteSelected += OnNoteSelected;
+        noteEditPanel.NoteAddRequested += AddNote;
 
         noteInfoPanel.OnConfirmed += () =>
         {
             noteInfoPanel.Visible = false;
         };
 
-        noteInfoPanel.OnNotePropertyChanged += 
-        (int lineId, int noteIndex, NotePropertyType property, object value) => {
-            chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
-        };
+        noteInfoPanel.OnNotePropertyChanged += SetNoteProperty;
 
         //设置弹出菜单
         PopupMenuHelper.SetTheme(theme);
@@ -236,26 +235,14 @@ public partial class EditorScene : Node
 
         //设置NoteChooser
         noteChooser.OnNoteChoosed += OnNoteChooserChoosed;
-        noteChooser.OnDeselected += () =>
-        {
-            EditModeManager.SetEditMode(EditModeEnum.Normal);
-            // GD.Print($"[{this.Name}] 用户取消选择了note");
-        };
+        noteChooser.OnDeselected += OnNoteChooserDeselected;
 
         //设置EditModeManager 初始状态默认为常规模式
         EditModeManager.SetEditMode(EditModeEnum.Normal);
 
         //设置editModeLabel
         editModeLabel.Text = "编辑模式：常规模式";
-        EditModeManager.OnEditModeChanged += (EditModeEnum editMode) =>
-        {
-            editModeLabel.Text = editMode switch
-            {
-                EditModeEnum.Normal => "编辑模式：常规模式",
-                EditModeEnum.PlacingNote => "编辑模式：放置音符",
-                _ => "编辑模式：未知",
-            };
-        };
+        EditModeManager.OnEditModeChanged += OnEditModeChanged;
         
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
@@ -335,8 +322,19 @@ public partial class EditorScene : Node
         fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
     }
 
+    public override void _ExitTree()
+    {
+        base._ExitTree();
 
-    
+        //取消订阅事件
+        noteEditPanel.NoteAddRequested -= AddNote;
+        noteInfoPanel.OnNotePropertyChanged -= SetNoteProperty;
+        noteChooser.OnNoteChoosed -= OnNoteChooserChoosed;
+        noteChooser.OnDeselected -= OnNoteChooserDeselected;
+        EditModeManager.OnEditModeChanged -= OnEditModeChanged;
+    }
+
+
     public void OnPlayButtonClicked()
     {
         if (!isPlaying)
@@ -419,6 +417,11 @@ public partial class EditorScene : Node
         inputManager.IsEnable = true;
     }
 
+    private void SetNoteProperty(int lineId, int noteIndex, NotePropertyType property, object value)
+    {
+        chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
+    }
+
     private void OnNoteSelected(int lineId, int noteIndex)
     {
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
@@ -444,6 +447,22 @@ public partial class EditorScene : Node
             noteEditPanel.DeselectAll();
         };
 
+    }
+
+    private void OnNoteChooserDeselected()
+    {
+        EditModeManager.SetEditMode(EditModeEnum.Normal);
+        // GD.Print($"[{this.Name}] 用户取消选择了note");
+    }
+
+    private void OnEditModeChanged(EditModeEnum editMode)
+    {
+        editModeLabel.Text = editMode switch
+        {
+            EditModeEnum.Normal => "编辑模式：常规模式",
+            EditModeEnum.PlacingNote => "编辑模式：放置音符",
+            _ => "编辑模式：未知",
+        };
     }
 
     private void OnNoteEdit(int lineId, int noteIndex)
@@ -489,5 +508,12 @@ public partial class EditorScene : Node
     private void OnNoteChooserChoosed(NoteType noteType)
     {
         EditModeManager.SetEditMode(EditModeEnum.PlacingNote);
+        noteEditPanel.PlacingNote = noteType;
     }
+
+    private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
+    {
+        chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
+    }
+
 }
