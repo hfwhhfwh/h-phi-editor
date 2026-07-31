@@ -9,17 +9,35 @@ public partial class TestSceneNoteChooser : Node
     {
         base._Ready();
 
-        noteChooser.OnNoteChoosed += OnNoteChoosed;
-        noteChooser.OnDeselected += () =>
-        {
-            GD.Print($"用户取消选择了note");
-        };
+        noteChooser.NoteChoosed += OnNoteChoosed;
+        noteChooser.Deselected += OnDeselected;
+        noteChooser.DeleteButtonChoosed += OnDeleteButtonChoosed;
 
     }
+
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+
+        noteChooser.NoteChoosed -= OnNoteChoosed;
+        noteChooser.Deselected -= OnDeselected;
+        noteChooser.DeleteButtonChoosed -= OnDeleteButtonChoosed;
+    }
+
 
     private void OnNoteChoosed(NoteType noteType)
     {
         GD.Print($"用户选择了note:{noteType}");
+    }
+
+    private void OnDeselected()
+    {
+        GD.Print($"用户取消选择");
+    }
+
+    private void OnDeleteButtonChoosed()
+    {
+        GD.Print($"用户选择了删除模式");
     }
 
 }

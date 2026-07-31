@@ -159,7 +159,7 @@ public partial class ChartPlayer : BaseChartPlayer
         //预计算所有事件时间的秒数
         ChartDataHelper.RefreshEventSec(chart);
         //预计算所有note时间的秒数
-        ChartDataHelper.RefreshNoteSec(chart);
+        ChartDataHelper.RefreshAllNoteSec(chart);
         //预计算所有速度事件的前缀和
         ChartDataHelper.RefreshAllEventPrefix(chart);
         //预计算所有note的累积位移

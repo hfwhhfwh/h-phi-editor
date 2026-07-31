@@ -9,6 +9,7 @@ public enum EditModeEnum
 {
     Normal,
     PlacingNote, // 放置note模式
+    Delete, // 快速删除note模式
 }
 
 public static class EditModeManager
@@ -22,5 +23,7 @@ public static class EditModeManager
         EditMode = editMode;
 
         OnEditModeChanged?.Invoke(editMode);
+
+        GD.Print($"[EditModeManager] 切换到编辑模式:{editMode}");
     }
 }

@@ -41,7 +41,7 @@ editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
 noteInfoPanel = NodePath("EditorPanel/SafeArea/NoteInfoPanel")
-noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/NoteChooser")
+noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/NoteChooser")
 fileMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/FileButton")
 editMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/EditButton")
 helpMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/HelpButton")
@@ -180,9 +180,6 @@ layout_mode = 2
 MaxRadius = 40.0
 joystickDir = 2
 
-[node name="NoteChooser" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1507138121 instance=ExtResource("6_p0vr8")]
-layout_mode = 2
-
 [node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -232,6 +229,8 @@ grow_vertical = 2
 size_flags_horizontal = 3
 script = ExtResource("3_gwldl")
 selectedModulate = Color(1, 0.50980395, 0.9764706, 1)
+deleteHighlightModulate = Color(1, 0.4666667, 0, 1)
+boxColor = Color(1, 0, 0, 0.47058824)
 tapTexture = ExtResource("5_57v2d")
 dragTexture = ExtResource("6_qdb1r")
 flickTexture = ExtResource("7_wq0mf")
@@ -302,6 +301,8 @@ theme_override_styles/hover = ExtResource("1_7k27q")
 theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "▶"
+icon_alignment = 1
+expand_icon = true
 
 [node name="ChooseLine" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=745194988]
 layout_mode = 2
@@ -313,6 +314,9 @@ theme_override_styles/hover = ExtResource("1_7k27q")
 theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
 text = "线"
+
+[node name="NoteChooser" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=1507138121 instance=ExtResource("6_p0vr8")]
+layout_mode = 2
 
 [node name="Playing" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer" unique_id=1799361546]
 visible = false

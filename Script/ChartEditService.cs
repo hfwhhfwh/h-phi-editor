@@ -74,21 +74,32 @@ public partial class ChartEditService : Node
         Note note = new Note
         {
             Above = 1,
-            Alpha = 1f,
+            Alpha = 255,
             IsFake = false,
             Size = 1f,
             Speed = 1f,
-            VisibleTime = 99999f,
+            VisibleTime = 999999f,
             YOffset = 0f,
 
             Type = (int) noteType,
-            StartTime = startBeat.values,
-            EndTime = endBeat.values,
+            // StartTime = startBeat.values,
+            // EndTime = endBeat.values,
             PositionX = posX,
         };
 
-        EditingChart.JudgeLineList[lineId].Notes.Add(note); // TODO 添加音符时可以考虑直接插入到合适的位置
-        
+        // 调用ChratDataHelper设置note的时间，自动生成StartSec和EndSec
+        ChartDataHelper.SetNoteStartTime(note, startBeat.values, EditingChart.BpmList);
+        ChartDataHelper.SetNoteEndTime(note, endBeat.values, EditingChart.BpmList);
+
+        note.allDisplacement = ChartDataHelper.GetDisplacementAtTime(
+            EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents,
+            note.startSec
+        );
+
+        List<Note> notes = EditingChart.JudgeLineList[lineId].Notes;
+        notes.Add(note); // TODO 添加音符时可以考虑直接插入到合适的位置
+
+        GD.Print($"[{this.Name}] 成功添加note:{lineId}_{notes.IndexOf(note)}");
     }
 }
 

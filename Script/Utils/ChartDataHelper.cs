@@ -182,7 +182,7 @@ public static class ChartDataHelper
         }
     }
 
-    public static void RefreshNoteSec(Chart chart)
+    public static void RefreshAllNoteSec(Chart chart)
     {
         BpmEvent[] bpmList = chart.BpmList;
 
@@ -204,6 +204,8 @@ public static class ChartDataHelper
             }
         }
     }
+
+    // public static void RefreshNoteSec
 
     /// <summary>
     /// 更新所有note的累积位移

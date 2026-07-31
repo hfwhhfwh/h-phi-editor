@@ -234,8 +234,9 @@ public partial class EditorScene : Node
         }
 
         //设置NoteChooser
-        noteChooser.OnNoteChoosed += OnNoteChooserChoosed;
-        noteChooser.OnDeselected += OnNoteChooserDeselected;
+        noteChooser.NoteChoosed += OnNoteChooserNoteChoosed;
+        noteChooser.Deselected += OnNoteChooserDeselected;
+        noteChooser.DeleteButtonChoosed += OnNoteChooserDeleteChoosed;
 
         //设置EditModeManager 初始状态默认为常规模式
         EditModeManager.SetEditMode(EditModeEnum.Normal);
@@ -328,9 +329,13 @@ public partial class EditorScene : Node
 
         //取消订阅事件
         noteEditPanel.NoteAddRequested -= AddNote;
+
         noteInfoPanel.OnNotePropertyChanged -= SetNoteProperty;
-        noteChooser.OnNoteChoosed -= OnNoteChooserChoosed;
-        noteChooser.OnDeselected -= OnNoteChooserDeselected;
+
+        noteChooser.NoteChoosed -= OnNoteChooserNoteChoosed;
+        noteChooser.Deselected -= OnNoteChooserDeselected;
+        noteChooser.DeleteButtonChoosed -= OnNoteChooserDeleteChoosed;
+        
         EditModeManager.OnEditModeChanged -= OnEditModeChanged;
     }
 
@@ -461,6 +466,7 @@ public partial class EditorScene : Node
         {
             EditModeEnum.Normal => "编辑模式：常规模式",
             EditModeEnum.PlacingNote => "编辑模式：放置音符",
+            EditModeEnum.Delete => "编辑模式：删除音符",
             _ => "编辑模式：未知",
         };
     }
@@ -505,15 +511,22 @@ public partial class EditorScene : Node
         Quit();
     }
 
-    private void OnNoteChooserChoosed(NoteType noteType)
+    private void OnNoteChooserNoteChoosed(NoteType noteType)
     {
         EditModeManager.SetEditMode(EditModeEnum.PlacingNote);
         noteEditPanel.PlacingNote = noteType;
     }
 
+    private void OnNoteChooserDeleteChoosed()
+    {
+        EditModeManager.SetEditMode(EditModeEnum.Delete);
+    }
+
     private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
     {
         chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
+        //通知谱面数据产生了变化
+        ChartEventBus.NotifyDataChanged();
     }
 
 }
