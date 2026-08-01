@@ -48,7 +48,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
     [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex);
     public event Action<NoteType, Beat, Beat, float> NoteAddRequested;
-    public event Action<int, List<int> > NoteDeleteRequested;
+    public event Action<int, List<Note> > NoteDeleteRequested;
 
     private InputController _inputController;
     private BoxSelectController _boxSelectController;
@@ -741,16 +741,18 @@ public partial class NoteEditPanel : BaseEditPanel
         {
             //检测范围内的note
             Rect2 rect = TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
+            List<int> notesToDeleteIndex = GetNotesInRect(rect);
 
-            List<int> deletingNotes = GetNotesInRect(rect);
-
-            //GD.Print($"将要删除note:{deletingNotes}");
+            //转换为List<Note>数据格式
+            List<Note> notesToDelete = new();
+            List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+            foreach(int index in notesToDeleteIndex) notesToDelete.Add(notes[index]);
 
             //触发事件，请求删除note
-            NoteDeleteRequested?.Invoke(EditingLineId, deletingNotes);
+            NoteDeleteRequested?.Invoke(EditingLineId, notesToDelete);
 
             //清除高亮显示
-            notesToDelete.Clear();
+            this.notesToDelete.Clear();
 
         }
     }

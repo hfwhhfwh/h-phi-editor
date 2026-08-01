@@ -181,6 +181,7 @@ public partial class EditorScene : Node
         //设置NoteEditPanel
         noteEditPanel.OnNoteSelected += OnNoteSelected;
         noteEditPanel.NoteAddRequested += AddNote;
+        noteEditPanel.NoteDeleteRequested += OnNotesDelete;
 
         noteInfoPanel.OnConfirmed += () =>
         {
@@ -329,6 +330,7 @@ public partial class EditorScene : Node
 
         //取消订阅事件
         noteEditPanel.NoteAddRequested -= AddNote;
+        noteEditPanel.NoteDeleteRequested -= OnNotesDelete;
 
         noteInfoPanel.OnNotePropertyChanged -= SetNoteProperty;
 
@@ -451,7 +453,6 @@ public partial class EditorScene : Node
         {
             noteEditPanel.DeselectAll();
         };
-
     }
 
     private void OnNoteChooserDeselected()
@@ -490,7 +491,13 @@ public partial class EditorScene : Node
 
     private void OnNoteDelete(int lineId, int noteIndex)
     {
-        chartEditService.DeleteNote(lineId, noteIndex);
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+        chartEditService.DeleteNote(lineId, note);
+    }
+
+    private void OnNotesDelete(int lineId, List<Note> notes)
+    {
+        chartEditService.DeleteNotes(lineId, notes);
     }
 
     private void SaveChart()

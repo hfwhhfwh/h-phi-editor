@@ -52,12 +52,17 @@ public partial class ChartEditService : Node
         ChartEventBus.NotifyDataChanged();  // 广播
     }
 
-    public void DeleteNote(int lineId, int noteIndex)
-    {
-        List<Note> notes = EditingChart.JudgeLineList[lineId].Notes;
-        notes.RemoveAt(noteIndex);
 
-        GD.Print($"[{this.Name}] 删除note(line{lineId}_{noteIndex})");
+    /// <summary>
+    /// 删除一个note（如果要一次删除多个note，可直接调用DeleteNotes）
+    /// </summary>
+    /// <param name="lineId">判定线编号</param>
+    /// <param name="note">note在列表中的索引</param>
+    public void DeleteNote(int lineId, Note note)
+    {
+        DeleteNoteWithoutSignal(lineId, note);
+
+        GD.Print($"[{this.Name}] 删除note(line{lineId}_{note})");
 
         ChartEventBus.NotifyDataChanged();  // 广播
     }
@@ -100,6 +105,35 @@ public partial class ChartEditService : Node
         notes.Add(note); // TODO 添加音符时可以考虑直接插入到合适的位置
 
         GD.Print($"[{this.Name}] 成功添加note:{lineId}_{notes.IndexOf(note)}");
+    }
+
+    /// <summary>
+    /// 删除一个note，且不发出谱面数据修改的信号
+    /// </summary>
+    /// <param name="lineId">判定线编号</param>
+    /// <param name="note">note在列表中的索引</param>
+    private void DeleteNoteWithoutSignal(int lineId, Note note)
+    {
+        List<Note> notes = EditingChart.JudgeLineList[lineId].Notes;
+        notes.Remove(note);
+    }
+
+    /// <summary>
+    /// 一次删除多个note
+    /// </summary>
+    /// <param name="lineId">判定线编号</param>
+    /// <param name="notes">所有需要删除的Note</param>
+    public void DeleteNotes(int lineId, List<Note> notes)
+    {
+        foreach(Note note in notes)
+        {
+            DeleteNoteWithoutSignal(lineId, note);
+        }
+
+        //发出信号
+        ChartEventBus.NotifyDataChanged();
+
+        GD.Print($"[{this.Name}] 删除note:{Util.ListToString(notes)}");
     }
 }
 
