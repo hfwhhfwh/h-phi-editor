@@ -28,6 +28,7 @@ public partial class NoteEditPanel : BaseEditPanel
     /// <summary> note被选中时的颜色滤镜 </summary>
     [Export] private Color selectedModulate;
     [Export] private Color deleteHighlightModulate;
+    [Export] private Color toAddModulate;
     [Export] private Color boxColor;
 
 	[ExportGroup("音符贴图")]
@@ -52,6 +53,8 @@ public partial class NoteEditPanel : BaseEditPanel
 
     private InputController _inputController;
     private BoxSelectController _boxSelectController;
+    private CoordinateComponent _coordComponent;
+    private DragPlaceComponent _dragPlaceComponent;
 
     /// <summary>
     /// 框选矩形框的起始坐标 坐标系：Control坐标
@@ -116,88 +119,35 @@ public partial class NoteEditPanel : BaseEditPanel
         _boxSelectController = new BoxSelectController();
         _boxSelectController.BoxUpdated += OnBoxUpdated;
         _boxSelectController.BoxEnded += OnBoxEnded;
+
+        // 设置_coordinateConverter
+        _coordComponent = new CoordinateComponent();
+
+        //设置_dragPlaceComponent
+        _dragPlaceComponent = new DragPlaceComponent();
+
     }
 
     public override void _ExitTree()
     {
         base._ExitTree();
 
+        // 设置inputController
         _inputController.PointerDown -= OnButtonDown;
         _inputController.PointerUp -= OnButtonUp;
         _inputController.PointerDrag -= OnMotionInput;
+        _inputController = null;
 
+        // 设置_boxSelectController
         _boxSelectController.BoxUpdated -= OnBoxUpdated;
         _boxSelectController.BoxEnded -= OnBoxEnded;
+        _boxSelectController = null;
+
+        // 设置_coordinateConverter
+        _coordComponent = null;
     }
 
 
-    /// <summary>
-    /// 获取某个物体在面板上的坐标
-    /// </summary>
-    /// <param name="posX">X坐标，[-675, 675]</param>
-    /// <param name="beatTime">时间（单位为拍数）</param>
-    /// <returns>物体在面板上的坐标</returns>
-    private Vector2 GetPanelPosition(float posX, float beatTime)
-    {
-        // 计算面板 X 坐标（谱面坐标 -675~675 映射到面板水平范围）
-        float panelX = GetPanelPosX(posX);
-        // 起始 Y 坐标（向上为负）
-        float panelY = GetPanelPosY(beatTime);
-
-        return new Vector2(panelX, panelY);
-    }
-
-    /// <summary>
-    /// 获取某个物体在面板上的Y坐标
-    /// </summary>
-    /// <param name="beatTime">时间（单位为拍数）</param>
-    /// <returns>物体在面板上的Y坐标</returns>
-    private float GetPanelPosY(float beatTime)
-    {
-        // 起始 Y 坐标（向上为负）
-        float panelY = Size.Y / 2f + horOffsetSmoothed - beatTime * horSeparationSmoothed;
-
-        return panelY;
-    }
-
-    /// <summary>
-    /// 将谱面X坐标转换为Control坐标系下的X坐标
-    /// </summary>
-    /// <param name="chartPosX">铺面坐标系下的X坐标</param>
-    /// <returns>物体在Control坐标系下的X坐标</returns>
-    private float GetPanelPosX(float chartPosX)
-    {
-        // 计算面板 X 坐标（谱面坐标 -675~675 映射到面板水平范围）
-        float ratio = (chartPosX - (-675f)) / 1350f;
-        float panelX = verMargin + ratio * (Size.X - 2 * verMargin);
-
-        return panelX;
-    }
-
-    /// <summary>
-    /// 将Control坐标系下的X坐标转换为谱面X坐标
-    /// </summary>
-    /// <param name="localX">Control坐标系下的X坐标</param>
-    /// <returns>谱面坐标系下的X坐标</returns>
-    private float GetChartPosX(float localX)
-    {
-        float ratio = (localX - verMargin) / (Size.X - 2 * verMargin);
-        float chartPosX = -675f + ratio * 1350f;
-        return chartPosX;
-    }
-
-    /// <summary>
-    /// 将Control坐标系下的Y坐标转换为BeatValue
-    /// </summary>
-    /// <param name="localY">Control坐标系下的Y坐标</param>
-    /// <returns>BeatValue</returns>
-    private float GetBeatValue(float localY)
-    {
-        // panelY = Size.Y / 2f + horOffsetSmoothed - beatTime * horSeparationSmoothed;
-        float beatValue = (Size.Y / 2f + horOffsetSmoothed - localY) / horSeparationSmoothed;
-
-        return beatValue;
-    }
 
 	protected override void UpdateVisuals()
     {
@@ -217,6 +167,15 @@ public partial class NoteEditPanel : BaseEditPanel
 			HideAllNodes();
 			return;
 		}
+
+        //同步_coordinateConverter
+        _coordComponent.horMargin = horMargin;
+        _coordComponent.verMargin = verMargin;
+        _coordComponent.subBeatCount = subBeatCount;
+        _coordComponent.verLineCount = verLineCount;
+        _coordComponent.horOffsetSmoothed = horOffsetSmoothed;
+        _coordComponent.horSeparationSmoothed = horSeparationSmoothed;
+        _coordComponent.parentSize = Size;
 		
 		//归零可见数量
 		foreach(SpriteType spriteType in allSpriteTypes)
@@ -229,141 +188,39 @@ public partial class NoteEditPanel : BaseEditPanel
 		{
 			Note note = notes[i];
 
-            // 计算起始拍数
-            float startBeat = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-            Vector2 panelPos = GetPanelPosition(note.PositionX, startBeat);
-            float panelX = panelPos.X;
-            float startY = panelPos.Y;
-
-            // 处理非 Hold 音符（Tap, Drag, Flick）
-            if (note.Type != 2)
+            //选中效果
+            Action<MultiMesh, int> renderEffect = null;
+            if (selectedNotes.Contains(note))
             {
-                // 裁切：超出面板范围则不渲染
-                if (panelX < 0 || panelX > Size.X || startY < 0 || startY > Size.Y)
-                    continue;
-
-                SpriteType type = note.Type switch
-                {
-                    1 => SpriteType.Tap,
-                    3 => SpriteType.Flick,
-                    4 => SpriteType.Drag,
-                    _ => SpriteType.Tap
-                };
-
-                // 构建变换：位置 + 固定缩放
-                Transform2D transform = Transform2D.Identity;
-                transform.Origin = new Vector2(panelX, startY);
-                transform.X = new Vector2(noteScale, 0);
-                transform.Y = new Vector2(0, noteScale);
-
-                multiMeshes[type].SetInstanceTransform2D(visibleCounts[type], transform);
-                multiMeshes[type].SetInstanceColor(visibleCounts[type], Colors.White);
-
-                //选中效果
-                if (selectedNotes.Contains(note))
-                {
-                    SelectedRender(multiMeshes[type], visibleCounts[type]);
-                }
-                //即将删除的高亮效果
-                if (notesToDelete.Contains(note))
-                {
-                    AboutToDeleteRender(multiMeshes[type], visibleCounts[type]);
-                }
-
-                visibleCounts[type]++;
+                renderEffect = SelectedRender;
             }
-            else // Hold 音符（Type == 2）
+            //即将删除的高亮效果
+            if (notesToDelete.Contains(note))
             {
-                // 计算结束拍数和结束 Y 坐标
-                float endBeat = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
-                float endY = GetPanelPosY(endBeat);
-                // float endY = Size.Y / 2f + horOffsetSmoothed - endBeat * horSeparationSmoothed;
-
-                // 裁切：若头部和尾部都在面板外且不可见，则跳过（但若部分可见仍渲染）
-                if (panelX < 0 || panelX > Size.X || startY < 0f || endY > Size.Y)
-                    continue;
-
-                // ---- 1. 渲染 Hold 头部 ----
-                {
-                    Transform2D transform = Transform2D.Identity;
-                    transform.Origin = new Vector2(panelX, startY);
-                    transform.X = new Vector2(noteScale, 0);
-                    transform.Y = new Vector2(0, noteScale);
-                    multiMeshes[SpriteType.HoldHead].SetInstanceTransform2D(
-						visibleCounts[SpriteType.HoldHead],
-						transform
-					);
-                    multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], Colors.White);
-                    //选中效果
-                    if (selectedNotes.Contains(note))
-                    {
-                        SelectedRender(multiMeshes[SpriteType.HoldHead], visibleCounts[SpriteType.HoldHead]);
-                    }
-                    //即将删除的高亮效果
-                    if (notesToDelete.Contains(note))
-                    {
-                        AboutToDeleteRender(multiMeshes[SpriteType.HoldHead], visibleCounts[SpriteType.HoldHead]);
-                    }
-                    
-                    visibleCounts[SpriteType.HoldHead]++;
-                }
-
-                // ---- 2. 渲染 Hold 身体（拉伸条） ----
-                {
-                    float bodyLength = startY - endY;   // 正数表示向下延伸
-                    
-					float midY = (startY + endY) / 2f;
-					// 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
-					float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
-
-					Transform2D transform = Transform2D.Identity;
-					transform.Origin = new Vector2(panelX, midY);
-					transform.X = new Vector2(noteScale, 0);
-					transform.Y = new Vector2(0, scaleY);
-					multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
-						visibleCounts[SpriteType.HoldBody], transform
-					);
-                    multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], Colors.White);
-                    //选中效果
-                    if (selectedNotes.Contains(note))
-                    {
-                        SelectedRender(multiMeshes[SpriteType.HoldBody], visibleCounts[SpriteType.HoldBody]);
-                    }
-                    //即将删除的高亮效果
-                    if (notesToDelete.Contains(note))
-                    {
-                        AboutToDeleteRender(multiMeshes[SpriteType.HoldBody], visibleCounts[SpriteType.HoldBody]);
-                    }
-
-					visibleCounts[SpriteType.HoldBody]++;
-                    
-                }
-
-                // ---- 3. 渲染 Hold 尾部 ----
-                {
-                    Transform2D transform = Transform2D.Identity;
-                    transform.Origin = new Vector2(panelX, endY);
-                    transform.X = new Vector2(noteScale, 0);
-                    transform.Y = new Vector2(0, noteScale);
-                    multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
-						visibleCounts[SpriteType.HoldEnd], transform
-					);
-                    multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], Colors.White);
-                    //选中效果
-                    if (selectedNotes.Contains(note))
-                    {
-                        SelectedRender(multiMeshes[SpriteType.HoldEnd], visibleCounts[SpriteType.HoldEnd]);
-                    }
-
-                    //即将删除的高亮效果
-                    if (notesToDelete.Contains(note))
-                    {
-                        AboutToDeleteRender(multiMeshes[SpriteType.HoldEnd], visibleCounts[SpriteType.HoldEnd]);
-                    }
-
-                    visibleCounts[SpriteType.HoldEnd]++;
-                }
+                renderEffect = AboutToDeleteRender;
             }
+
+            // 渲染note
+            MultiMeshRenderNote(
+                noteType: (NoteType)note.Type,
+                startBeat: new Beat(note.StartTime),
+                endBeat: new Beat(note.EndTime),
+                chartPosX: note.PositionX,
+                renderEffect: renderEffect
+            );
+
+        }
+
+        // 额外绘制即将创建的Hold
+        if(_dragPlaceComponent.IsDragging){
+            float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (verLineCount - 1));
+            MultiMeshRenderNote(
+                noteType: NoteType.Hold,
+                startBeat: _dragPlaceComponent.startBeat,
+                endBeat: _dragPlaceComponent.endBeat,
+                chartPosX: chartPosX,
+                renderEffect: NoteToAddRender
+            );
         }
 
         // 更新所有 MultiMesh 的可见实例数量
@@ -372,6 +229,121 @@ public partial class NoteEditPanel : BaseEditPanel
             multiMeshes[type].VisibleInstanceCount = visibleCounts[type];
         }
 
+    }
+
+    private void MultiMeshRenderNote(NoteType noteType, Beat startBeat, Beat endBeat, float chartPosX, Action<MultiMesh, int> renderEffect)
+    {
+        if(noteType == NoteType.Hold)
+        {
+            MultiMeshRenderHold(startBeat, endBeat, chartPosX, renderEffect);
+            return;
+        }
+        
+        // 计算起始拍数
+        float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
+        Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
+        float panelX = panelPos.X;
+        float startY = panelPos.Y;
+
+        // 裁切：超出面板范围则不渲染
+        if (panelX < 0 || panelX > Size.X || startY < 0 || startY > Size.Y) return;
+
+        SpriteType type = noteType switch
+        {
+            NoteType.Tap => SpriteType.Tap,
+            NoteType.Flick => SpriteType.Flick,
+            NoteType.Drag => SpriteType.Drag,
+            _ => SpriteType.Tap
+        };
+
+        // 构建变换：位置 + 固定缩放
+        Transform2D transform = Transform2D.Identity;
+        transform.Origin = new Vector2(panelX, startY);
+        transform.X = new Vector2(noteScale, 0);
+        transform.Y = new Vector2(0, noteScale);
+
+        multiMeshes[type].SetInstanceTransform2D(visibleCounts[type], transform);
+        multiMeshes[type].SetInstanceColor(visibleCounts[type], Colors.White);
+
+        // 渲染效果
+        renderEffect?.Invoke(multiMeshes[type], visibleCounts[type]);
+
+        visibleCounts[type]++;
+    }
+
+    private void MultiMeshRenderHold(Beat startBeat, Beat endBeat, float chartPosX, Action<MultiMesh, int> renderEffect)
+    {
+        // 计算起始拍数
+        float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
+        Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
+        float panelX = panelPos.X;
+        float startY = panelPos.Y;
+
+        // 计算结束拍数和结束 Y 坐标
+        float endBeatValue = endBeat[0] + endBeat[1] * 1f / endBeat[2];
+        float endY = _coordComponent.GetPanelPosY(endBeatValue);
+
+        // 裁切：若头部和尾部都在面板外且不可见，则跳过（但若部分可见仍渲染）
+        if (panelX < 0 || panelX > Size.X || startY < 0f || endY > Size.Y) return;
+
+        // ---- 1. 渲染 Hold 头部 ----
+        {
+            Transform2D transform = Transform2D.Identity;
+            transform.Origin = new Vector2(panelX, startY);
+            transform.X = new Vector2(noteScale, 0);
+            transform.Y = new Vector2(0, noteScale);
+            multiMeshes[SpriteType.HoldHead].SetInstanceTransform2D(
+                visibleCounts[SpriteType.HoldHead],
+                transform
+            );
+            multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], Colors.White);
+            
+            // 渲染效果
+            renderEffect?.Invoke(multiMeshes[SpriteType.HoldHead], visibleCounts[SpriteType.HoldEnd]);
+            
+            visibleCounts[SpriteType.HoldHead]++;
+        }
+
+        // ---- 2. 渲染 Hold 身体（拉伸条） ----
+        {
+            float bodyLength = startY - endY;   // 正数表示向下延伸
+            
+            float midY = (startY + endY) / 2f;
+            // 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
+            float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
+
+            Transform2D transform = Transform2D.Identity;
+            transform.Origin = new Vector2(panelX, midY);
+            transform.X = new Vector2(noteScale, 0);
+            transform.Y = new Vector2(0, scaleY);
+            multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
+                visibleCounts[SpriteType.HoldBody], transform
+            );
+            multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], Colors.White);
+            
+            // 渲染效果
+            renderEffect?.Invoke(multiMeshes[SpriteType.HoldBody], visibleCounts[SpriteType.HoldBody]);
+
+            visibleCounts[SpriteType.HoldBody]++;
+            
+        }
+
+        // ---- 3. 渲染 Hold 尾部 ----
+        {
+            Transform2D transform = Transform2D.Identity;
+            transform.Origin = new Vector2(panelX, endY);
+            transform.X = new Vector2(noteScale, 0);
+            transform.Y = new Vector2(0, noteScale);
+            multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
+                visibleCounts[SpriteType.HoldEnd], transform
+            );
+            multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], Colors.White);
+            
+            // 渲染效果
+            renderEffect?.Invoke(multiMeshes[SpriteType.HoldEnd], visibleCounts[SpriteType.HoldEnd]);
+
+            visibleCounts[SpriteType.HoldEnd]++;
+        }
     }
 
     public override void _Draw()
@@ -408,6 +380,11 @@ public partial class NoteEditPanel : BaseEditPanel
     private void AboutToDeleteRender(MultiMesh multiMesh, int id)
     {
         multiMesh.SetInstanceColor(id, deleteHighlightModulate);
+    }
+
+    private void NoteToAddRender(MultiMesh multiMesh, int id)
+    {
+        multiMesh.SetInstanceColor(id, toAddModulate);
     }
 
     public override void _GuiInput(InputEvent @event)
@@ -449,13 +426,13 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         else if(EditModeManager.EditMode == EditModeEnum.PlacingNote)
         {
-            if(PlacingNote != NoteType.Hold)
+            if(PlacingNote != NoteType.Hold) // 放置普通note
             {
-                // 放置普通note
-                float chartX = GetChartPosX(pos.X);
-                float snappedChartX = SnapChartXToGrid(chartX);
-                float beatValue = GetBeatValue(pos.Y);
-                Beat snappedBeat = SnapBeatValueToGrid(beatValue);
+                float chartX = _coordComponent.GetChartPosX(pos.X);
+                float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
+
+                float beatValue = _coordComponent.GetBeatValue(pos.Y);
+                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
 
                 NoteAddRequested?.Invoke(
                     PlacingNote,
@@ -464,12 +441,22 @@ public partial class NoteEditPanel : BaseEditPanel
                     snappedChartX
                 );
             }
+            else // 放置Hold
+            {
+                float chartX = _coordComponent.GetChartPosX(pos.X);
+                int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+
+                float beatValue = _coordComponent.GetBeatValue(pos.Y);
+                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+                _dragPlaceComponent.StartDrag(verLineIndex, snappedBeat);
+            }
         }
         else if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
             Vector2 dataPos = new Vector2(
-                GetChartPosX(pos.X),
-                GetBeatValue(pos.Y)
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
             );
             _boxSelectController.StartDrag(dataPos);
         }
@@ -491,13 +478,22 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         else if(EditModeManager.EditMode == EditModeEnum.PlacingNote)
         {
-            
+            if (PlacingNote == NoteType.Hold)
+            {
+                float chartX = _coordComponent.GetChartPosX(pos.X);
+                int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+
+                float beatValue = _coordComponent.GetBeatValue(pos.Y);
+                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+                _dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
+            }
         }
         else if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
             Vector2 dataPos = new Vector2(
-                GetChartPosX(pos.X),
-                GetBeatValue(pos.Y)
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
             );
             _boxSelectController.EndDrag(dataPos);
         }
@@ -511,13 +507,22 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         else if(EditModeManager.EditMode == EditModeEnum.PlacingNote)
         {
-            
+            if (PlacingNote == NoteType.Hold)
+            {
+                float chartX = _coordComponent.GetChartPosX(position.X);
+                int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+
+                float beatValue = _coordComponent.GetBeatValue(position.Y);
+                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+                _dragPlaceComponent.Move(verLineIndex, snappedBeat);
+            }
         }
         else if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
             Vector2 dataPos = new Vector2(
-                GetChartPosX(position.X),
-                GetBeatValue(position.Y)
+                _coordComponent.GetChartPosX(position.X),
+                _coordComponent.GetBeatValue(position.Y)
             );
             _boxSelectController.Move(dataPos);
         }
@@ -590,7 +595,7 @@ public partial class NoteEditPanel : BaseEditPanel
             {
                 //计算note位置
                 float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-                Vector2 notePos = GetPanelPosition(note.PositionX, beatValue);
+                Vector2 notePos = _coordComponent.GetPanelPosition(note.PositionX, beatValue);
 
                 distSquared = pos.DistanceSquaredTo(notePos);
             }
@@ -598,8 +603,8 @@ public partial class NoteEditPanel : BaseEditPanel
             {
                 float startBeat = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
                 float endBeat = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
-                Vector2 startPos = GetPanelPosition(note.PositionX, startBeat);
-                Vector2 endPos = GetPanelPosition(note.PositionX, endBeat);
+                Vector2 startPos = _coordComponent.GetPanelPosition(note.PositionX, startBeat);
+                Vector2 endPos = _coordComponent.GetPanelPosition(note.PositionX, endBeat);
 
                 if(pos.Y < endPos.Y)
                 {
@@ -642,7 +647,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
     public Vector2 GetGlobalPosition(float beatValue, float posX)
     {
-        Vector2 localPos = GetPanelPosition(posX, beatValue);
+        Vector2 localPos = _coordComponent.GetPanelPosition(posX, beatValue);
 
         // 1. 获取视口（Viewport）的屏幕变换
         Transform2D screenTransform = GetViewport().GetScreenTransform();
@@ -662,62 +667,15 @@ public partial class NoteEditPanel : BaseEditPanel
     }
 
 
-    // /// <summary>
-    // /// 将制定位置吸附到最近的网格点
-    // /// </summary>
-    // /// <param name="pos">指定位置(坐标系：Control本地坐标)</param>
-    // /// <returns>Vector2，X是posX（铺面坐标系），Y时beatValue</returns>
-	// private Vector2 SnapToGrid(Vector2 pos)
-    // {
-    //     //转换X坐标
-    //     float chartX = GetChartPosX(pos.X);
-    //     float snappedX = SnapChartXToGrid(chartX);
-
-    //     // 转换Y坐标
-    //     float beatValue = GetBeatValue(pos.Y);
-    //     Beat snappedBeat = SnapBeatValueToGrid(beatValue);
-        
-    //     return new Vector2(snappedX, snappedBeat);
-    // }
-
-    private float SnapChartXToGrid(float chartX)
-    {
-        float ratioX = (chartX - (-675)) / 1350;
-        float snappedratioX = Mathf.Round(ratioX * (verLineCount - 1)) / (verLineCount - 1);
-        float snappedX = -675 + snappedratioX * 1350;
-
-        return snappedX;
-    }
-
-    private Beat SnapBeatValueToGrid(float beatValue)
-    {
-        // float snappedBeatValue = Mathf.Round(beatValue * subBeatCount) / subBeatCount;
-
-        int a = Mathf.FloorToInt(beatValue);
-        if(Mathf.Ceil(beatValue) - beatValue < 1f / subBeatCount / 2)
-        {
-            a = Mathf.CeilToInt(beatValue);
-        }
-        else
-        {
-            a = Mathf.FloorToInt(beatValue);
-        }
-        
-        int b = Mathf.RoundToInt(beatValue * subBeatCount) % subBeatCount;
-        int c = subBeatCount;
-
-        return new Beat(a, b, c);
-    }
-
     private void OnBoxUpdated(Vector2 startDataPos, Vector2 endDataPos)
     {
-        boxStartPos = GetPanelPosition(startDataPos.X, startDataPos.Y);
-        boxEndPos = GetPanelPosition(endDataPos.X, endDataPos.Y);
+        boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
+        boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
         if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
             //检测范围内的note
-            Rect2 rect = TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
+            Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
 
             List<int> notesIndex = GetNotesInRect(rect);
 
@@ -734,13 +692,13 @@ public partial class NoteEditPanel : BaseEditPanel
 
     private void OnBoxEnded(Vector2 startDataPos, Vector2 endDataPos)
     {
-        boxStartPos = GetPanelPosition(startDataPos.X, startDataPos.Y);
-        boxEndPos = GetPanelPosition(endDataPos.X, endDataPos.Y);
+        boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
+        boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
         if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
             //检测范围内的note
-            Rect2 rect = TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
+            Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
             List<int> notesToDeleteIndex = GetNotesInRect(rect);
 
             //转换为List<Note>数据格式
@@ -758,40 +716,6 @@ public partial class NoteEditPanel : BaseEditPanel
     }
 
     /// <summary>
-    /// 判断note是否在一个矩形框内（坐标系：(ChartPosX, BeatValue)）
-    /// </summary>
-    /// <param name="note">note的原始数据（坐标系：(ChartPosX, BeatValue)）</param>
-    /// <param name="rect">矩形框（坐标系：(ChartPosX, BeatValue)）</param>
-    /// <returns>判断结果bool</returns>
-    private bool IsNoteInRect(Note note, Rect2 rect)
-    {
-        if(note.Type != 2)
-        {
-            float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-            Vector2 noteDataPos = new Vector2(note.PositionX, beatValue);
-            return rect.HasPoint(noteDataPos);
-        }
-        else
-        {
-            float startBeatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-            float endBeatValue = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
-            float posX = note.PositionX;
-            
-            // TODO Hold的框选可以选择多种模式，包括部分包含、完全包含、头部选中
-            // 这里暂时用部分包含
-            
-            // 1. X 在矩形范围内
-            bool xInRange = posX >= rect.Position.X && posX <= rect.End.X;
-            // 2. Y 轴有重叠（矩形与 Hold 区间相交）
-            bool yOverlap = !(rect.Position.Y > endBeatValue || rect.End.Y < startBeatValue);
-
-            // GD.Print($"xInRange:{xInRange}, yOverlap:{yOverlap}");
-
-            return xInRange && yOverlap;
-        }
-    }
-    
-    /// <summary>
     /// 获得矩形内的所有note（坐标系：(ChartPosX, BeatValue)）
     /// </summary>
     /// <param name="rect">矩形（坐标系：(ChartPosX, BeatValue)）</param>
@@ -799,37 +723,9 @@ public partial class NoteEditPanel : BaseEditPanel
     private List<int> GetNotesInRect(Rect2 rect)
     {
         List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
-        List<int> notesInRect = new();
-        for (int i = 0; i < notes.Count; i++)
-        {
-            Note note = notes[i];
-            if (IsNoteInRect(note, rect))
-            {
-                notesInRect.Add(i);
-            }
-        }
-
-        return notesInRect;
+        return RectUtil.GetNotesInRect(notes, rect);
     }
 
-    /// <summary>
-    /// 根据两个点获得Rect2，这两个点的相对位置关系随意
-    /// </summary>
-    /// <param name="pos1"></param>
-    /// <param name="pos2"></param>
-    /// <returns></returns>
-    private Rect2 TwoPointsToRect(Vector2 pos1, Vector2 pos2)
-    {
-        Vector2 pos = new Vector2(
-            Mathf.Min(pos1.X, pos2.X),
-            Mathf.Min(pos1.Y, pos2.Y)
-        );
-        Vector2 size = new Vector2(
-            Mathf.Abs(pos1.X - pos2.X),
-            Mathf.Abs(pos1.Y - pos2.Y)
-        );
-
-        return new Rect2(pos, size); 
-    }
+    
 
 }

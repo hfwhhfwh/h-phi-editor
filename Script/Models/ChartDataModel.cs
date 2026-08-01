@@ -36,6 +36,18 @@ namespace QuickType
         }
 
         public Beat(){}
+        
+        public Beat(int[] values)
+        {
+            if(values.Length != 3)
+            {
+                throw new Exception("Beat的元素个数不为3");
+            }
+            else
+            {
+                this.values = values;
+            }
+        }
 
         public Beat(int a, int b, int c)
         {
