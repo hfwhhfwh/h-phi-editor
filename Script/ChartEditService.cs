@@ -7,40 +7,40 @@ public partial class ChartEditService : Node
 {
     public Chart EditingChart{ get; set; }
 
-    public void SetNoteProperty(int lineId, int noteIndex, NotePropertyType property, object value)
+    public void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
         Note note = EditingChart.JudgeLineList[lineId].Notes[noteIndex];
 
         switch (property)
         {
-            case NotePropertyType.Above:
+            case NotePropertyEnum.Above:
                 note.Above = (int)value;
                 break;
-            case NotePropertyType.Alpha:
+            case NotePropertyEnum.Alpha:
                 note.Alpha = Convert.ToSingle(value);
                 break;
-            case NotePropertyType.StartTime:
+            case NotePropertyEnum.StartTime:
                 note.StartTime = ((Beat)value).values;
                 break;
-            case NotePropertyType.EndTime:
+            case NotePropertyEnum.EndTime:
                 note.EndTime = ((Beat)value).values;
                 break;
-            case NotePropertyType.IsFake:
+            case NotePropertyEnum.IsFake:
                 note.IsFake = (bool)value;
                 break;
-            case NotePropertyType.PosX:
+            case NotePropertyEnum.PosX:
                 note.PositionX = Convert.ToSingle(value);
                 break;
-            case NotePropertyType.Size:
+            case NotePropertyEnum.Size:
                 note.Size = Convert.ToSingle(value); 
                 break;
-            case NotePropertyType.Type:
+            case NotePropertyEnum.Type:
                 note.Type = Convert.ToInt32(value);
                 break;
-            case NotePropertyType.VisibleTime:
+            case NotePropertyEnum.VisibleTime:
                 note.VisibleTime = Convert.ToSingle(value);
                 break;
-            case NotePropertyType.YOffset:
+            case NotePropertyEnum.YOffset:
                 note.YOffset = Convert.ToSingle(value);
                 break;
             default:
@@ -190,7 +190,7 @@ public partial class ChartEditService : Node
             GD.PrintErr($"[{this.Name}] DeleteLine 索引越界:{lineId}");
             return;
         }
-        
+
         judgeLines.RemoveAt(lineId);
     }
 
@@ -234,7 +234,7 @@ public partial class ChartEditService : Node
 /// <summary>
 /// note的属性类型(枚举)
 /// </summary>
-public enum NotePropertyType
+public enum NotePropertyEnum
 {
     Above,
     Alpha,

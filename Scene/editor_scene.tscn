@@ -231,7 +231,6 @@ script = ExtResource("3_gwldl")
 selectedModulate = Color(1, 0.50980395, 0.9764706, 1)
 deleteHighlightModulate = Color(1, 0.4666667, 0, 1)
 toAddModulate = Color(1, 1, 1, 0.5882353)
-boxColor = Color(1, 0, 0, 0.47058824)
 tapTexture = ExtResource("5_57v2d")
 dragTexture = ExtResource("6_qdb1r")
 flickTexture = ExtResource("7_wq0mf")
@@ -244,6 +243,7 @@ verLineCount = 21
 horColor = Color(1, 0, 0, 0.6862745)
 verColor = Color(0, 1, 0, 0.5882353)
 horSubColor = Color(1, 1, 0, 0.5882353)
+boxColor = Color(1, 0, 0, 0.47058824)
 
 [node name="Right" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=890883041]
 layout_mode = 2

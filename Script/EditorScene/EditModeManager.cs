@@ -8,8 +8,8 @@ using System;
 public enum EditModeEnum
 {
     Normal,
-    PlacingNote, // 放置note模式
-    Delete, // 快速删除note模式
+    Place, // 放置note或事件模式
+    Delete, // 快速删除note或事件模式
 }
 
 public static class EditModeManager

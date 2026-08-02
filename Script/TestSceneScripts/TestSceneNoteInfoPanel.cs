@@ -21,7 +21,7 @@ public partial class TestSceneNoteInfoPanel : Node
         noteInfoPanel.ShowInfo(note, 0, 123);
 
         noteInfoPanel.OnNotePropertyChanged += 
-        (int lineId, int noteIndex, NotePropertyType type, object value) => 
+        (int lineId, int noteIndex, NotePropertyEnum type, object value) => 
         {
             GD.Print($"[{this.Name}] 用户修改了属性{type}:{value}");
         };

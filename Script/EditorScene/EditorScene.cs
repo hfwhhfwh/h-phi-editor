@@ -332,17 +332,7 @@ public partial class EditorScene : Node
     {
         base._ExitTree();
 
-        //取消订阅事件
-        noteEditPanel.NoteAddRequested -= AddNote;
-        noteEditPanel.NoteDeleteRequested -= OnNotesDelete;
-
-        noteInfoPanel.OnNotePropertyChanged -= SetNoteProperty;
-
-        noteChooser.NoteChoosed -= OnNoteChooserNoteChoosed;
-        noteChooser.Deselected -= OnNoteChooserDeselected;
-        noteChooser.DeleteButtonChoosed -= OnNoteChooserDeleteChoosed;
         
-        EditModeManager.OnEditModeChanged -= OnEditModeChanged;
     }
 
 
@@ -433,7 +423,7 @@ public partial class EditorScene : Node
         inputManager.IsEnable = true;
     }
 
-    private void SetNoteProperty(int lineId, int noteIndex, NotePropertyType property, object value)
+    private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
         chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
     }
@@ -475,7 +465,7 @@ public partial class EditorScene : Node
         editModeLabel.Text = editMode switch
         {
             EditModeEnum.Normal => "编辑模式：常规模式",
-            EditModeEnum.PlacingNote => "编辑模式：放置音符",
+            EditModeEnum.Place => "编辑模式：放置音符",
             EditModeEnum.Delete => "编辑模式：删除音符",
             _ => "编辑模式：未知",
         };
@@ -529,7 +519,7 @@ public partial class EditorScene : Node
 
     private void OnNoteChooserNoteChoosed(NoteType noteType)
     {
-        EditModeManager.SetEditMode(EditModeEnum.PlacingNote);
+        EditModeManager.SetEditMode(EditModeEnum.Place);
         noteEditPanel.PlacingNote = noteType;
     }
 

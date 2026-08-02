@@ -11,7 +11,7 @@ public partial class NoteInfoPanel : Panel
 
 	[Signal] public delegate void OnConfirmedEventHandler();
 
-	public Action <int, int, NotePropertyType, object> OnNotePropertyChanged;
+	public Action <int, int, NotePropertyEnum, object> OnNotePropertyChanged;
 	
 
     public override void _Ready()
@@ -76,30 +76,30 @@ public partial class NoteInfoPanel : Panel
 
 	public void OnPropertyChanged(string key, object value)
 	{
-		NotePropertyType propertyType;
+		NotePropertyEnum propertyType;
 		object convertedValue;
 
 		switch (key)
 		{
 			case "StartTime":
-				propertyType = NotePropertyType.StartTime;
+				propertyType = NotePropertyEnum.StartTime;
 				// infoEditPanel 中存储的是 Beat 对象，需提取其 values 数组
 				convertedValue = (Beat)value;
 				break;
 
 			case "EndTime":
-				propertyType = NotePropertyType.EndTime;
+				propertyType = NotePropertyEnum.EndTime;
 				convertedValue = (Beat)value;
 				break;
 
 			case "Type":
-				propertyType = NotePropertyType.Type;
+				propertyType = NotePropertyEnum.Type;
 				// value 已经是 NoteType 枚举，直接传递
 				convertedValue = value;
 				break;
 
 			case "PositionX":
-				propertyType = NotePropertyType.PosX;
+				propertyType = NotePropertyEnum.PosX;
 				convertedValue = Convert.ToSingle(value);
 				break;
 

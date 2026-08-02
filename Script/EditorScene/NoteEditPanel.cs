@@ -15,21 +15,15 @@ public partial class NoteEditPanel : BaseEditPanel
 	}
 	private readonly SpriteType[] allSpriteTypes = (SpriteType[])Enum.GetValues(typeof(SpriteType));
 
-    private enum SelectMode
-    {
-        Single, // 单选
-        Multi // 多选
-    }
-    private SelectMode selectMode = SelectMode.Single;
+    
 
 	[Export] private float noteScale = 0.1f;
-    /// <summary>选择note时点击位置与实际位置的最大距离</summary>
-    [Export] private float distanceThreshold = 40f;
+    
     /// <summary> note被选中时的颜色滤镜 </summary>
     [Export] private Color selectedModulate;
     [Export] private Color deleteHighlightModulate;
     [Export] private Color toAddModulate;
-    [Export] private Color boxColor;
+    
 
 	[ExportGroup("音符贴图")]
     [Export] private Texture2D tapTexture;
@@ -40,9 +34,9 @@ public partial class NoteEditPanel : BaseEditPanel
     [Export] private Texture2D holdEndTexture;
 
 	// ---- Multimesh ---- 
-	private Dictionary<SpriteType, MultiMesh> multiMeshes = new();
-	private Dictionary<SpriteType, MultiMeshInstance2D> multiMeshInstances = new();
-	private Dictionary<SpriteType, int> visibleCounts = new();
+	// private Dictionary<SpriteType, MultiMesh> multiMeshes = new();
+	// private Dictionary<SpriteType, MultiMeshInstance2D> multiMeshInstances = new();
+	// private Dictionary<SpriteType, int> visibleCounts = new();
 
     private List<Note> selectedNotes = new();
     private List<Note> notesToDelete = new();
@@ -57,25 +51,15 @@ public partial class NoteEditPanel : BaseEditPanel
     /// </summary>
     public event Action<int, List<Note> > NoteDeleteRequested;
 
-    private InputController _inputController;
-    private BoxSelectController _boxSelectController;
-    private CoordinateComponent _coordComponent;
-    private DragPlaceComponent _dragPlaceComponent;
-
-    /// <summary>
-    /// 框选矩形框的起始坐标 坐标系：Control坐标
-    /// </summary>
-    private Vector2 boxStartPos;
-    /// <summary>
-    /// 框选矩形框的结束坐标 坐标系：Control坐标
-    /// </summary>
-    private Vector2 boxEndPos;
+    
 
     public NoteType PlacingNote { get; set; } // 正在放置的note
 
     public override void _Ready()
     {
-		//设置multiMeshInstance
+        base._Ready();
+
+		//设置multiMesh
 		foreach(SpriteType type in allSpriteTypes)
 		{
 			Texture2D texture = type switch
@@ -89,79 +73,38 @@ public partial class NoteEditPanel : BaseEditPanel
 				_ => tapTexture
 			};
 
-            //设置Multimesh
-			MultiMesh multiMesh = new MultiMesh
+            string key = type switch
 			{
-				TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
-				InstanceCount = 0,
-				VisibleInstanceCount = 0,
-                UseColors = true, // 用于提示选中
+				SpriteType.Tap => "Tap",
+				SpriteType.Drag => "Drag",
+				SpriteType.Flick => "Flick",
+				SpriteType.HoldHead => "HoldHead",
+				SpriteType.HoldBody => "HoldBody",
+				SpriteType.HoldEnd => "HoldEnd",
+				_ => "Tap"
 			};
-            multiMesh.InstanceCount = 10000;
-			multiMeshes[type] = multiMesh;
 
-			MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
-            multiMeshInstance.Texture = texture;
-            multiMeshInstance.Multimesh = multiMesh;
-			multiMeshInstances[type] = multiMeshInstance;
-
-			// 根据纹理实际尺寸创建 QuadMesh
-			var quad = new QuadMesh();
-			quad.Size = new Vector2(texture.GetSize().X, -texture.GetSize().Y);   // 保持宽高比，去掉负值
-			multiMeshInstance.Multimesh.Mesh = quad;
-
-			AddChild(multiMeshInstance);
-			multiMeshInstances[type] = multiMeshInstance;
-            multiMeshes[type] = multiMesh;
+            RegisterMultiMesh(key, texture);
 		}
 
-        // 设置inputController
-        _inputController = new InputController();
-        _inputController.PointerDown += OnButtonDown;
-        _inputController.PointerUp += OnButtonUp;
-        _inputController.PointerDrag += OnMotionInput;
-
-        // 设置_boxSelectController
-        _boxSelectController = new BoxSelectController();
-        _boxSelectController.BoxUpdated += OnBoxUpdated;
-        _boxSelectController.BoxEnded += OnBoxEnded;
-
-        // 设置_coordinateConverter
-        _coordComponent = new CoordinateComponent();
-
-        //设置_dragPlaceComponent
-        _dragPlaceComponent = new DragPlaceComponent();
-        _dragPlaceComponent.DragEnded += OnDragEnded;
+        
 
     }
 
     public override void _ExitTree()
     {
         base._ExitTree();
-
-        // 设置inputController
-        _inputController.PointerDown -= OnButtonDown;
-        _inputController.PointerUp -= OnButtonUp;
-        _inputController.PointerDrag -= OnMotionInput;
-        _inputController = null;
-
-        // 设置_boxSelectController
-        _boxSelectController.BoxUpdated -= OnBoxUpdated;
-        _boxSelectController.BoxEnded -= OnBoxEnded;
-        _boxSelectController = null;
-
-        // 设置_coordinateConverter
-        _coordComponent = null;
-
-        //设置_dragPlaceComponent
-        _dragPlaceComponent.DragEnded -= OnDragEnded;
-        _dragPlaceComponent = null;
         
     }
 
 
 
-	protected override void UpdateVisuals()
+	// protected override void UpdateVisuals()
+    // {
+    //     base.UpdateVisuals();
+    // }
+
+    protected override void RenderContent()
     {
         // 如果没有可用的谱面或判定线，则隐藏所有池节点
 		if (editingChart == null || 
@@ -169,30 +112,15 @@ public partial class NoteEditPanel : BaseEditPanel
 			editingLineId < 0 || 
 			editingLineId >= editingChart.JudgeLineList.Count)
 		{
-			HideAllNodes();
+			//HideAllNodes();
 			return;
 		}
 
 		List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
 		if(notes == null)
 		{
-			HideAllNodes();
+			//HideAllNodes();
 			return;
-		}
-
-        //同步_coordinateConverter
-        _coordComponent.horMargin = horMargin;
-        _coordComponent.verMargin = verMargin;
-        _coordComponent.subBeatCount = subBeatCount;
-        _coordComponent.verLineCount = verLineCount;
-        _coordComponent.horOffsetSmoothed = horOffsetSmoothed;
-        _coordComponent.horSeparationSmoothed = horSeparationSmoothed;
-        _coordComponent.parentSize = Size;
-		
-		//归零可见数量
-		foreach(SpriteType spriteType in allSpriteTypes)
-		{
-			visibleCounts[spriteType] = 0;
 		}
 
 		// ============= 渲染视口范围内的 note ============= 
@@ -234,13 +162,6 @@ public partial class NoteEditPanel : BaseEditPanel
                 renderEffect: NoteToAddRender
             );
         }
-
-        // 更新所有 MultiMesh 的可见实例数量
-        foreach (SpriteType type in allSpriteTypes)
-        {
-            multiMeshes[type].VisibleInstanceCount = visibleCounts[type];
-        }
-
     }
 
     private void MultiMeshRenderNote(NoteType noteType, Beat startBeat, Beat endBeat, float chartPosX, Action<MultiMesh, int> renderEffect)
@@ -252,109 +173,155 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         
         // 计算起始拍数
-        float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
-        Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
-        float panelX = panelPos.X;
-        float startY = panelPos.Y;
+        //float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
+        //Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
+        //float panelX = panelPos.X;
+        //float startY = panelPos.Y;
+
+        float localX = _coordComponent.GetPanelPosX(chartPosX);
 
         // 裁切：超出面板范围则不渲染
-        if (panelX < 0 || panelX > Size.X || startY < 0 || startY > Size.Y) return;
+        // if (panelX < 0 || panelX > Size.X || startY < 0 || startY > Size.Y) return;
 
-        SpriteType type = noteType switch
+        // SpriteType type = noteType switch
+        // {
+        //     NoteType.Tap => SpriteType.Tap,
+        //     NoteType.Flick => SpriteType.Flick,
+        //     NoteType.Drag => SpriteType.Drag,
+        //     _ => SpriteType.Tap
+        // };
+
+        string key = noteType switch
         {
-            NoteType.Tap => SpriteType.Tap,
-            NoteType.Flick => SpriteType.Flick,
-            NoteType.Drag => SpriteType.Drag,
-            _ => SpriteType.Tap
+            NoteType.Tap => "Tap",
+            NoteType.Drag => "Drag",
+            NoteType.Flick => "Flick",
+            _ => "Tap"
         };
 
-        // 构建变换：位置 + 固定缩放
-        Transform2D transform = Transform2D.Identity;
-        transform.Origin = new Vector2(panelX, startY);
-        transform.X = new Vector2(noteScale, 0);
-        transform.Y = new Vector2(0, noteScale);
+        RenderObject(
+            key: key,
+            localX: localX,
+            beat: startBeat,
+            offset: Vector2.Zero,
+            scale: noteScale,
+            renderEffect: renderEffect
+        );
 
-        multiMeshes[type].SetInstanceTransform2D(visibleCounts[type], transform);
-        multiMeshes[type].SetInstanceColor(visibleCounts[type], Colors.White);
+        // // 构建变换：位置 + 固定缩放
+        // Transform2D transform = Transform2D.Identity;
+        // transform.Origin = new Vector2(panelX, startY);
+        // transform.X = new Vector2(noteScale, 0);
+        // transform.Y = new Vector2(0, noteScale);
 
-        // 渲染效果
-        renderEffect?.Invoke(multiMeshes[type], visibleCounts[type]);
+        // multiMeshes[type].SetInstanceTransform2D(visibleCounts[type], transform);
+        // multiMeshes[type].SetInstanceColor(visibleCounts[type], Colors.White);
 
-        visibleCounts[type]++;
+        // // 渲染效果
+        // renderEffect?.Invoke(multiMeshes[type], visibleCounts[type]);
+
+        // visibleCounts[type]++;
     }
 
     private void MultiMeshRenderHold(Beat startBeat, Beat endBeat, float chartPosX, Action<MultiMesh, int> renderEffect)
     {
-        // 计算起始拍数
-        float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
-        Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
-        float panelX = panelPos.X;
-        float startY = panelPos.Y;
+        // // 计算起始拍数
+        // float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
+        // Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
+        // float panelX = panelPos.X;
+        // float startY = panelPos.Y;
 
-        // 计算结束拍数和结束 Y 坐标
-        float endBeatValue = endBeat[0] + endBeat[1] * 1f / endBeat[2];
-        float endY = _coordComponent.GetPanelPosY(endBeatValue);
+        // // 计算结束拍数和结束 Y 坐标
+        // float endBeatValue = endBeat[0] + endBeat[1] * 1f / endBeat[2];
+        // float endY = _coordComponent.GetPanelPosY(endBeatValue);
 
         // 裁切：若头部和尾部都在面板外且不可见，则跳过（但若部分可见仍渲染）
-        if (panelX < 0 || panelX > Size.X || startY < 0f || endY > Size.Y) return;
+        // if (panelX < 0 || panelX > Size.X || startY < 0f || endY > Size.Y) return;
+
+        float localX = _coordComponent.GetPanelPosX(chartPosX);
 
         // ---- 1. 渲染 Hold 头部 ----
+        RenderObject(
+            key: "HoldHead",
+            localX: localX,
+            beat: startBeat,
+            offset: new Vector2(0, holdHeadTexture.GetSize().Y / 2f),
+            scale: noteScale,
+            renderEffect: renderEffect
+        );
         {
-            Transform2D transform = Transform2D.Identity;
-            transform.Origin = new Vector2(panelX, startY);
-            transform.X = new Vector2(noteScale, 0);
-            transform.Y = new Vector2(0, noteScale);
-            multiMeshes[SpriteType.HoldHead].SetInstanceTransform2D(
-                visibleCounts[SpriteType.HoldHead],
-                transform
-            );
-            multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], Colors.White);
+            // Transform2D transform = Transform2D.Identity;
+            // transform.Origin = new Vector2(panelX, startY);
+            // transform.X = new Vector2(noteScale, 0);
+            // transform.Y = new Vector2(0, noteScale);
+            // multiMeshes[SpriteType.HoldHead].SetInstanceTransform2D(
+            //     visibleCounts[SpriteType.HoldHead],
+            //     transform
+            // );
+            // multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], Colors.White);
             
-            // 渲染效果
-            renderEffect?.Invoke(multiMeshes[SpriteType.HoldHead], visibleCounts[SpriteType.HoldEnd]);
+            // // 渲染效果
+            // renderEffect?.Invoke(multiMeshes[SpriteType.HoldHead], visibleCounts[SpriteType.HoldEnd]);
             
-            visibleCounts[SpriteType.HoldHead]++;
+            // visibleCounts[SpriteType.HoldHead]++;
         }
 
         // ---- 2. 渲染 Hold 身体（拉伸条） ----
+        RenderLongObject(
+            key: "HoldBody",
+            localX: localX,
+            startBeat: startBeat,
+            endBeat: endBeat,
+            offset: Vector2.Zero,
+            scale: noteScale,
+            renderEffect: renderEffect
+        );
         {
-            float bodyLength = startY - endY;   // 正数表示向下延伸
+            // float bodyLength = startY - endY;   // 正数表示向下延伸
             
-            float midY = (startY + endY) / 2f;
-            // 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
-            float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
+            // float midY = (startY + endY) / 2f;
+            // // 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
+            // float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
 
-            Transform2D transform = Transform2D.Identity;
-            transform.Origin = new Vector2(panelX, midY);
-            transform.X = new Vector2(noteScale, 0);
-            transform.Y = new Vector2(0, scaleY);
-            multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
-                visibleCounts[SpriteType.HoldBody], transform
-            );
-            multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], Colors.White);
+            // Transform2D transform = Transform2D.Identity;
+            // transform.Origin = new Vector2(panelX, midY);
+            // transform.X = new Vector2(noteScale, 0);
+            // transform.Y = new Vector2(0, scaleY);
+            // multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
+            //     visibleCounts[SpriteType.HoldBody], transform
+            // );
+            // multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], Colors.White);
             
-            // 渲染效果
-            renderEffect?.Invoke(multiMeshes[SpriteType.HoldBody], visibleCounts[SpriteType.HoldBody]);
+            // // 渲染效果
+            // renderEffect?.Invoke(multiMeshes[SpriteType.HoldBody], visibleCounts[SpriteType.HoldBody]);
 
-            visibleCounts[SpriteType.HoldBody]++;
+            // visibleCounts[SpriteType.HoldBody]++;
             
         }
 
         // ---- 3. 渲染 Hold 尾部 ----
+        RenderObject(
+            key: "HoldEnd",
+            localX: localX,
+            beat: endBeat,
+            offset: new Vector2(0, -holdHeadTexture.GetSize().Y / 2f),
+            scale: noteScale,
+            renderEffect: renderEffect
+        );
         {
-            Transform2D transform = Transform2D.Identity;
-            transform.Origin = new Vector2(panelX, endY);
-            transform.X = new Vector2(noteScale, 0);
-            transform.Y = new Vector2(0, noteScale);
-            multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
-                visibleCounts[SpriteType.HoldEnd], transform
-            );
-            multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], Colors.White);
+            // Transform2D transform = Transform2D.Identity;
+            // transform.Origin = new Vector2(panelX, endY);
+            // transform.X = new Vector2(noteScale, 0);
+            // transform.Y = new Vector2(0, noteScale);
+            // multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
+            //     visibleCounts[SpriteType.HoldEnd], transform
+            // );
+            // multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], Colors.White);
             
-            // 渲染效果
-            renderEffect?.Invoke(multiMeshes[SpriteType.HoldEnd], visibleCounts[SpriteType.HoldEnd]);
+            // // 渲染效果
+            // renderEffect?.Invoke(multiMeshes[SpriteType.HoldEnd], visibleCounts[SpriteType.HoldEnd]);
 
-            visibleCounts[SpriteType.HoldEnd]++;
+            // visibleCounts[SpriteType.HoldEnd]++;
         }
     }
 
@@ -362,25 +329,7 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         base._Draw();
 
-        // ============= 绘制框选矩形 ============= 
-        if(_boxSelectController.IsDragging){
-            Vector2 pos = new Vector2(
-                Mathf.Min(boxStartPos.X, boxEndPos.X),
-                Mathf.Min(boxStartPos.Y, boxEndPos.Y)
-            );
-            Vector2 size = new Vector2(
-                Mathf.Abs(boxStartPos.X - boxEndPos.X),
-                Mathf.Abs(boxStartPos.Y - boxEndPos.Y)
-            );
-            Rect2 rect = new Rect2(pos, size);
-            DrawRect(
-                rect: rect,
-                color: boxColor,
-                filled: false,
-                width: 5
-            );
-
-        }
+        
     }
 
 
@@ -398,45 +347,14 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         multiMesh.SetInstanceColor(id, toAddModulate);
     }
-
-    public override void _GuiInput(InputEvent @event)
-    {
-        base._GuiInput(@event);
-
-        // 只处理左键和触摸，其余事件（滚轮、中键）忽略
-        bool handled = false;
-        if (@event is InputEventMouseButton mouseBtn && mouseBtn.ButtonIndex == MouseButton.Left)
-        {
-            _inputController.ProcessEvent(@event);
-            handled = true;
-        }
-        else if (@event is InputEventMouseMotion mouseMotion && Input.IsMouseButtonPressed(MouseButton.Left))
-        {
-            _inputController.ProcessEvent(@event);
-            handled = true;
-        }
-        else if (@event is InputEventScreenTouch touch)
-        {
-            _inputController.ProcessEvent(@event);
-            handled = true;
-        }
-        else if (@event is InputEventScreenDrag drag)
-        {
-            _inputController.ProcessEvent(@event);
-            handled = true;
-        }
-
-        if (handled) AcceptEvent(); // 标记事件已处理，阻止向上冒泡
-        
-    }
     
-    private void OnButtonDown(Vector2 pos)
+    protected override void OnButtonDown(Vector2 pos)
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             
         }
-        else if(EditModeManager.EditMode == EditModeEnum.PlacingNote)
+        else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
             if(PlacingNote != NoteType.Hold) // 放置普通note
             {
@@ -474,7 +392,7 @@ public partial class NoteEditPanel : BaseEditPanel
         }
     }
 
-    private void OnButtonUp(Vector2 pos)
+    protected override void OnButtonUp(Vector2 pos)
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
@@ -488,7 +406,7 @@ public partial class NoteEditPanel : BaseEditPanel
                 OnNoteTaped(noteIndex);
             }
         }
-        else if(EditModeManager.EditMode == EditModeEnum.PlacingNote)
+        else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
             if (PlacingNote == NoteType.Hold)
             {
@@ -511,13 +429,13 @@ public partial class NoteEditPanel : BaseEditPanel
         }
     }
 
-    private void OnMotionInput(Vector2 position, Vector2 relative)
+    protected override void OnMotionInput(Vector2 position, Vector2 relative)
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             
         }
-        else if(EditModeManager.EditMode == EditModeEnum.PlacingNote)
+        else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
             if (PlacingNote == NoteType.Hold)
             {
@@ -657,21 +575,6 @@ public partial class NoteEditPanel : BaseEditPanel
         
     }
 
-    public Vector2 GetScreenPosition(float beatValue, float posX)
-    {
-        Vector2 localPos = _coordComponent.GetPanelPosition(posX, beatValue);
-
-        // 1. 获取视口（Viewport）的屏幕变换
-        Transform2D screenTransform = GetViewport().GetScreenTransform();
-
-        // 2. 获取节点自身的全局画布变换
-        Transform2D globalCanvasTransform = GetGlobalTransformWithCanvas();
-
-        // 3. 按顺序相乘：屏幕变换 * 全局画布变换 * 局部坐标
-        Vector2 screenPos = screenTransform * (globalCanvasTransform * localPos);
-
-        return screenPos;
-    }
 
     public void DeselectAll()
     {
@@ -679,7 +582,7 @@ public partial class NoteEditPanel : BaseEditPanel
     }
 
 
-    private void OnBoxUpdated(Vector2 startDataPos, Vector2 endDataPos)
+    protected override void OnBoxUpdated(Vector2 startDataPos, Vector2 endDataPos)
     {
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
@@ -698,11 +601,10 @@ public partial class NoteEditPanel : BaseEditPanel
                 notesToDelete.Add(notes[i]);
             }
 
-            
         }
     }
 
-    private void OnBoxEnded(Vector2 startDataPos, Vector2 endDataPos)
+    protected override void OnBoxEnded(Vector2 startDataPos, Vector2 endDataPos)
     {
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
@@ -738,7 +640,7 @@ public partial class NoteEditPanel : BaseEditPanel
         return RectUtil.GetNotesInRect(notes, rect);
     }
 
-    private void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
+    protected override void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
     {
         float chartPosX = -675 + verLineIndex * (1350f / (verLineCount - 1));
 

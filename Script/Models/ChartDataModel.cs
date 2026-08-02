@@ -211,6 +211,16 @@ namespace QuickType
         public int[] StartTime { get; set; }
     }
 
+    public enum LineEventEnum
+    {
+        MoveX,
+        MoveY,
+        Rotate,
+        Alpha,
+        Speed,
+        //TODO 特殊事件枚举
+    }
+
     // public partial class SpeedEvent
     // {
     //     [JsonProperty("end")]

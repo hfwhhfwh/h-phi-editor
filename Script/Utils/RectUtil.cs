@@ -79,4 +79,38 @@ public static class RectUtil
 
         return notesInRect;
     }
+
+    public static bool IsEventInRect(LineEvent lineEvent, float chartPosX, Rect2 rect)
+    {
+        float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
+        float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
+        
+        // TODO Event的框选可以选择多种模式，包括部分包含、完全包含、头部选中
+        // 这里暂时用部分包含
+        
+        // 1. X 在矩形范围内
+        bool xInRange = chartPosX >= rect.Position.X && chartPosX <= rect.End.X;
+        // 2. Y 轴有重叠（矩形与 Hold 区间相交）
+        bool yOverlap = !(rect.Position.Y > endBeatValue || rect.End.Y < startBeatValue);
+
+        // GD.Print($"xInRange:{xInRange}, yOverlap:{yOverlap}");
+
+        return xInRange && yOverlap;
+    }
+
+    public static List<ValueTuple<float, LineEvent>> GetEventsInRect(List<ValueTuple<float, LineEvent>> lineEvents, Rect2 rect)
+    {
+        List<ValueTuple<float, LineEvent>> eventsInRect = new();
+        for (int i = 0; i < lineEvents.Count; i++)
+        {
+            ValueTuple<float, LineEvent> lineEvent = lineEvents[i];
+            if (IsEventInRect(lineEvent.Item2, lineEvent.Item1, rect))
+            {
+                eventsInRect.Add(lineEvent);
+            }
+        }
+
+        return eventsInRect;
+    }
+
 }
