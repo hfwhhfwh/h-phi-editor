@@ -2,10 +2,17 @@
 
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="1_pwh32"]
 [ext_resource type="Script" uid="uid://ch1jgktudu5kj" path="res://Script/TestSceneScripts/TestSceneChooseLinePanel.cs" id="1_q5e2n"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="2_5mpg1"]
 
 [node name="TestSceneChooseLinePanel" type="Node" unique_id=1969081231 node_paths=PackedStringArray("chooseLinePanel")]
 script = ExtResource("1_q5e2n")
 chooseLinePanel = NodePath("ChooseLinePanel")
+theme = ExtResource("2_5mpg1")
 
 [node name="ChooseLinePanel" parent="." unique_id=143035431 instance=ExtResource("1_pwh32")]
 custom_minimum_size = Vector2(23.525, 38.58)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=897256386]
+position = Vector2(576, 324)
+enabled = false
+zoom = Vector2(0.55, 0.55)

@@ -48,7 +48,13 @@ public partial class NoteEditPanel : BaseEditPanel
     private List<Note> notesToDelete = new();
 
     [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex);
+    /// <summary>
+    /// 请求添加一个note的事件，参数为(音符类型，起始Beat，结束Beat，谱面X坐标)
+    /// </summary>
     public event Action<NoteType, Beat, Beat, float> NoteAddRequested;
+    /// <summary>
+    /// 请求删除note的事件，参数为(判定线编号，要删除的note的列表)
+    /// </summary>
     public event Action<int, List<Note> > NoteDeleteRequested;
 
     private InputController _inputController;
@@ -125,6 +131,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
         //设置_dragPlaceComponent
         _dragPlaceComponent = new DragPlaceComponent();
+        _dragPlaceComponent.DragEnded += OnDragEnded;
 
     }
 
@@ -145,6 +152,11 @@ public partial class NoteEditPanel : BaseEditPanel
 
         // 设置_coordinateConverter
         _coordComponent = null;
+
+        //设置_dragPlaceComponent
+        _dragPlaceComponent.DragEnded -= OnDragEnded;
+        _dragPlaceComponent = null;
+        
     }
 
 
@@ -155,7 +167,7 @@ public partial class NoteEditPanel : BaseEditPanel
 		if (editingChart == null || 
 			editingChart.JudgeLineList == null || 
 			editingLineId < 0 || 
-			editingLineId >= editingChart.JudgeLineList.Length)
+			editingLineId >= editingChart.JudgeLineList.Count)
 		{
 			HideAllNodes();
 			return;
@@ -645,7 +657,7 @@ public partial class NoteEditPanel : BaseEditPanel
         
     }
 
-    public Vector2 GetGlobalPosition(float beatValue, float posX)
+    public Vector2 GetScreenPosition(float beatValue, float posX)
     {
         Vector2 localPos = _coordComponent.GetPanelPosition(posX, beatValue);
 
@@ -724,6 +736,13 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
         return RectUtil.GetNotesInRect(notes, rect);
+    }
+
+    private void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
+    {
+        float chartPosX = -675 + verLineIndex * (1350f / (verLineCount - 1));
+
+        NoteAddRequested?.Invoke(NoteType.Hold, startBeat, endBeat, chartPosX);
     }
 
     

@@ -216,7 +216,7 @@ public static class ChartDataHelper
     {
         BpmEvent[] bpmList = chart.BpmList;
 
-        if(chart.JudgeLineList == null || chart.JudgeLineList.Length == 0) return;
+        if(chart.JudgeLineList == null || chart.JudgeLineList.Count == 0) return;
         foreach(JudgeLine line in chart.JudgeLineList)
         {
             if(line.Notes == null || line.Notes.Count == 0) continue;

@@ -59,7 +59,8 @@ public partial class ChartPlayer : BaseChartPlayer
         {
             // 为每条判定线创建一个节点
             var lineNode = new JudgeLineNode();
-            int index = Array.IndexOf(Chart.JudgeLineList, lineData);
+            int index = Chart.JudgeLineList.IndexOf(lineData);
+            
             
             // 传入数据及对ChartPlayer的引用（用于时间转换等）、贴图、索引
             lineNode.SetData(lineData, this, index, judgeLineNodes); 

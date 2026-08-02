@@ -135,6 +135,100 @@ public partial class ChartEditService : Node
 
         GD.Print($"[{this.Name}] 删除note:{Util.ListToString(notes)}");
     }
+
+    /// <summary>
+    /// 添加一条判定线
+    /// </summary>
+    /// <param name="judgeLines">所有判定线的列表</param>
+    /// <param name="id">添加判定线的索引，-1代表添加至末尾</param>
+    public void AddLine(List<JudgeLine> judgeLines, int id = -1)
+    {
+        // HACK AddLine考虑直接在数据模型中写构造函数，设置默认值
+        LineEvent[] lineEvents = [];
+        EventLayer eventLayer = new EventLayer
+        {
+            MoveXEvents = lineEvents,
+            MoveYEvents = lineEvents,
+            RotateEvents = lineEvents,
+            AlphaEvents = lineEvents,
+            SpeedEvents = lineEvents,
+        };
+        EventLayer[] eventLayers = new EventLayer[5];
+        for(int i = 0; i < 5; i++)
+        {
+            eventLayers[i] = eventLayer;
+        }
+        JudgeLine line = new JudgeLine
+        {
+            Texture = "line.png",
+            EventLayers = eventLayers,
+            Father = -1,
+            Notes = new List<Note>(),
+        };
+
+        if(id < 0 || id > judgeLines.Count)
+        {
+            judgeLines.Add(line);
+        }
+        else
+        {
+            judgeLines.Insert(id, line);
+        }
+        
+        ChartEventBus.NotifyDataChanged();
+    }
+
+    /// <summary>
+    /// 删除一个判定线（不发出事件通知）
+    /// </summary>
+    /// <param name="judgeLines">所有判定线的列表</param>
+    /// <param name="lineId">要删除的判定线索引</param>
+    public void DeleteLineWithoutSignal(List<JudgeLine> judgeLines, int lineId)
+    {
+        if(lineId < 0 || lineId > judgeLines.Count - 1)
+        {
+            GD.PrintErr($"[{this.Name}] DeleteLine 索引越界:{lineId}");
+            return;
+        }
+        
+        judgeLines.RemoveAt(lineId);
+    }
+
+    /// <summary>
+    /// 删除一个判定线
+    /// </summary>
+    /// <param name="judgeLines">所有判定线的列表</param>
+    /// <param name="lineId">要删除的判定线索引</param>
+    public void DeleteLine(List<JudgeLine> judgeLines, int lineId)
+    {
+        DeleteLineWithoutSignal(judgeLines, lineId);
+
+        ChartEventBus.NotifyDataChanged();
+
+        GD.Print($"[{this.Name}] 成功删除判定线:{lineId}");
+    }
+
+    /// <summary>
+    /// 删除若干个判定线
+    /// </summary>
+    /// <param name="judgeLines">所有判定线的列表</param>
+    /// <param name="linesId">要删除的判定线索引列表（无需有序）</param>
+    public void DeleteLines(List<JudgeLine> judgeLines, List<int> linesId)
+    {
+        linesId.Sort();
+
+        //倒序遍历删除
+        for(int i = linesId.Count - 1; i >= 0; i--)
+        {
+            DeleteLineWithoutSignal(judgeLines, i);
+        }
+
+        ChartEventBus.NotifyDataChanged();
+
+        GD.Print($"[{this.Name}] 成功删除判定线:{Util.ListToString(linesId)}");
+    }
+
+    
 }
 
 /// <summary>

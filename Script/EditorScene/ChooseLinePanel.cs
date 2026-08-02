@@ -13,17 +13,36 @@ public partial class ChooseLinePanel : Panel
 	}
 
 	private Theme theme;
-	private VBoxContainer vBoxContainer;
+	[Export] private VBoxContainer vBoxContainer;
+	[Export] private Button addButton;
+	// [Export] private Button selectButton; // TODO 选择并批量操作判定线
+
+	[Signal] public delegate void RefreshRequestedEventHandler();
 
 	[Signal] public delegate void LineSelectedEventHandler(int id);
+	[Signal] public delegate void DeleteLineRequestedEventHandler(int id);
+	[Signal] public delegate void AddLineRequestedEventHandler();
 
 
     public override void _Ready()
     {
         base._Ready();
 		theme = GD.Load<Theme>("res://theme_gray.tres");
-		vBoxContainer = GetNode<VBoxContainer>("MarginContainer/ScrollContainer/VBoxContainer");
+
+		addButton.ButtonUp += () => EmitSignal(SignalName.AddLineRequested);
+		// selectButton.ButtonUp += () => {};
+
+		// 监听谱面数据变化
+		ChartEventBus.OnChartDataChanged += RequestRefresh;
     }
+
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+
+		ChartEventBus.OnChartDataChanged -= RequestRefresh;
+    }
+
 
 
 	public void ShowInfos(List<LineInfo> infos)
@@ -43,22 +62,70 @@ public partial class ChooseLinePanel : Panel
 
 	public void CreateButton(LineInfo info)
 	{
+		// 行容器（水平）
+		HBoxContainer row = new HBoxContainer();
+		row.SizeFlagsHorizontal = SizeFlags.Fill; // 占满 VBoxContainer 宽度
+		vBoxContainer.AddChild(row);
+
+
+		// 创建主按钮
 		Button button = new Button();
-		button.Theme = GD.Load<Theme>("res://theme_gray.tres");
+		button.Theme = theme;
 		button.Text = $"id:{info.Id} 音符数量:{info.NoteCount} 下一个事件:{info.NextEventTime}";
+		button.MouseFilter = MouseFilterEnum.Pass;
 		button.SetMeta("id", info.Id);
 		button.ButtonUp += () =>
 		{
-			OnButtonClicked((int)button.GetMeta("id"));
+			// OnButtonClicked((int)button.GetMeta("id"));
+			// GD.Print($"OnButtonClicked:{id}");
+			EmitSignal(SignalName.LineSelected, (int)button.GetMeta("id"));
 		};
-		vBoxContainer.AddChild(button);
+		button.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+		row.AddChild(button);
+		
+
+		//右侧...按钮
+		{
+			Button otherButton = new Button();
+			otherButton.Theme = GD.Load<Theme>("res://theme_gray.tres");
+			otherButton.Text = "···";
+			otherButton.MouseFilter = MouseFilterEnum.Pass;
+			// button.SetMeta("id", info.Id);
+			otherButton.ButtonUp += () =>
+			{
+				// 显示弹窗菜单
+				List<PopupMenuItem> items = [
+					new PopupMenuItem { 
+						Text = "删除",
+						Callback = () => EmitSignal(SignalName.DeleteLineRequested, info.Id)
+					}
+				];
+
+				//获取坐标
+				Vector2 screenPos = otherButton.GetScreenPosition();
+
+				PopupMenuHelper.ShowPopupMenu(this, screenPos + new Vector2(30, 30), items);
+
+				// GD.Print($"localPos:{localPos}, globalPos:{globalPos}, screenPos:{screenPos}");
+
+			};
+
+			row.AddChild(otherButton);
+		}
+		
 	}
 
-	public void OnButtonClicked(int id)
+	/// <summary>
+	/// 发出事件，向上级请求刷新数据
+	/// </summary>
+	private void RequestRefresh()
 	{
-		// GD.Print($"OnButtonClicked:{id}");
-		EmitSignal(SignalName.LineSelected, id);
+		EmitSignal(SignalName.RefreshRequested);
 	}
 
-	
+	// private void OnButtonClicked(int id)
+	// {
+	// 	// GD.Print($"OnButtonClicked:{id}");
+	// 	EmitSignal(SignalName.LineSelected, id);
+	// }
 }

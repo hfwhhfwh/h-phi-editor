@@ -173,12 +173,16 @@ public partial class EditorScene : Node
 
         chartPlayParent.ClipContents = true;
 
+        // 设置chooseLinePanel
         chooseLinePanel.Visible = false;
         chooseLinePanel.LineSelected += SetEditingLine;
+        chooseLinePanel.AddLineRequested += AddLine;
+        chooseLinePanel.DeleteLineRequested += DeleteLine;
+        chooseLinePanel.RefreshRequested += RefreshChooseLinePanel;
 
         editingLineLabel.Text = $"正在编辑:线{0}";
 
-        //设置NoteEditPanel
+        // 设置NoteEditPanel
         noteEditPanel.OnNoteSelected += OnNoteSelected;
         noteEditPanel.NoteAddRequested += AddNote;
         noteEditPanel.NoteDeleteRequested += OnNotesDelete;
@@ -379,35 +383,40 @@ public partial class EditorScene : Node
         isPlaying = false;
     }
 
-    public void OnChooseLineClicked()
+    private void OnChooseLineClicked()
     {
         if(chooseLinePanel.Visible == false)
         {
             chooseLinePanel.Visible = true;
             inputManager.IsEnable = false;
 
-            //准备LineInfo数据
-            List<ChooseLinePanel.LineInfo> lineInfos = new();
-            for (int i = 0; i < editingChart.JudgeLineList.Length; i++)
-            {
-                JudgeLine line = editingChart.JudgeLineList[i];
-
-                lineInfos.Add(new ChooseLinePanel.LineInfo
-                {
-                    Id = i, // 判定线的编号从0开始
-                    NoteCount = line.NumOfNotes,
-                    //NextEventTime = //TODO 在ChooseLinePanel显示下一个事件的时间
-                });
-            }
-
-            //设置LineInfo数据
-            chooseLinePanel.ShowInfos(lineInfos);
+            RefreshChooseLinePanel();
         }
         else
         {
             chooseLinePanel.Visible = false;
             inputManager.IsEnable = true;
         }
+    }
+
+    private void RefreshChooseLinePanel()
+    {
+        //准备LineInfo数据
+        List<ChooseLinePanel.LineInfo> lineInfos = new();
+        for (int i = 0; i < editingChart.JudgeLineList.Count; i++)
+        {
+            JudgeLine line = editingChart.JudgeLineList[i];
+
+            lineInfos.Add(new ChooseLinePanel.LineInfo
+            {
+                Id = i, // 判定线的编号从0开始
+                NoteCount = line.NumOfNotes,
+                //NextEventTime = //TODO 在ChooseLinePanel显示下一个事件的时间
+            });
+        }
+
+        //设置LineInfo数据
+        chooseLinePanel.ShowInfos(lineInfos);
     }
 
     private void SetEditingLine(int id)
@@ -434,7 +443,7 @@ public partial class EditorScene : Node
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
 
         float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-        Vector2 popupPos = noteEditPanel.GetGlobalPosition(beatValue, note.PositionX)
+        Vector2 popupPos = noteEditPanel.GetScreenPosition(beatValue, note.PositionX)
             + new Vector2(30,30);
 
         // 构建菜单项（使用闭包捕获当前音符信息）
@@ -536,4 +545,19 @@ public partial class EditorScene : Node
         ChartEventBus.NotifyDataChanged();
     }
 
+    private void AddLine()
+    {
+        chartEditService.AddLine(editingChart.JudgeLineList, -1);
+    }
+
+    private void DeleteLine(int id)
+    {
+        if(editingChart.JudgeLineList.Count <= 1)
+        {
+            GD.Print($"[{this.Name}] 最少保留一条判定线，删除失败");
+            // TODO 最少保留一条判定线，删除失败 同时显示弹窗提示
+            return;
+        }
+        chartEditService.DeleteLine(editingChart.JudgeLineList, id);
+    }
 }

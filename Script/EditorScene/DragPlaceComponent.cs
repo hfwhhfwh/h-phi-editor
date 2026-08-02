@@ -14,9 +14,9 @@ public class DragPlaceComponent
     // public event Action<ValueTuple<int, Beat>, ValueTuple<int, Beat>> DragUpdated;
 
     /// <summary>
-    /// 事件：框选结束时触发（用于执行操作），参数为 (起点, 终点) 元组：(竖线索引, Beat)
+    /// 事件：框选结束时触发（用于执行操作），参数为 (竖线索引, 起始Beat, 结束Beat) 
     /// </summary>
-    public event Action<ValueTuple<int, Beat>, ValueTuple<int, Beat>> DragEnded;
+    public event Action<int, Beat, Beat> DragEnded;
 
     public void StartDrag(int verLineIndex, Beat beat)
     {
@@ -33,9 +33,9 @@ public class DragPlaceComponent
         endBeat = beat;
     }
 
-    public void EndDrag(int verLineIndex, Beat beat)
+    public void EndDrag(int verLineIndex, Beat endBeat)
     {
-        DragEnded?.Invoke(new (verLineIndex, beat), new (verLineIndex, beat));
+        DragEnded?.Invoke(verLineIndex, startBeat, endBeat);
         IsDragging = false;
     }
 }

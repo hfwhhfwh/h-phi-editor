@@ -73,7 +73,7 @@ namespace QuickType
         public string[] JudgeLineGroup { get; set; }
 
         [JsonProperty("judgeLineList")]
-        public JudgeLine[] JudgeLineList { get; set; }
+        public List<JudgeLine> JudgeLineList { get; set; }
 
         // [JsonProperty("multiLineString")]
         // public string MultiLineString { get; set; }

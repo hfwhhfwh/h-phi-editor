@@ -58,7 +58,7 @@ public partial class EventEditPanel : BaseEditPanel
 		if (editingChart == null || 
 			editingChart.JudgeLineList == null || 
 			editingLineId < 0 || 
-			editingLineId >= editingChart.JudgeLineList.Length)
+			editingLineId >= editingChart.JudgeLineList.Count)
 		{
 			HideAllNodes();
 			return;
