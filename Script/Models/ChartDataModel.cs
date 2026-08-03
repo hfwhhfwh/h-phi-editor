@@ -163,25 +163,25 @@ namespace QuickType
     public partial class EventLayer
     {
         [JsonProperty("alphaEvents")]
-        public LineEvent[] AlphaEvents { get; set; }
+        public List<LineEvent> AlphaEvents { get; set; }
 
         [JsonProperty("moveXEvents")]
-        public LineEvent[] MoveXEvents { get; set; }
+        public List<LineEvent> MoveXEvents { get; set; }
 
         [JsonProperty("moveYEvents")]
-        public LineEvent[] MoveYEvents { get; set; }
+        public List<LineEvent> MoveYEvents { get; set; }
 
         [JsonProperty("rotateEvents")]
-        public LineEvent[] RotateEvents { get; set; }
+        public List<LineEvent> RotateEvents { get; set; }
 
         [JsonProperty("speedEvents", NullValueHandling = NullValueHandling.Ignore)]
-        public LineEvent[] SpeedEvents { get; set; }
+        public List<LineEvent> SpeedEvents { get; set; }
     }
 
     public partial class LineEvent
     {
         [JsonProperty("bezier")]
-        public int Bezier { get; set; }
+        public bool Bezier { get; set; }
 
         [JsonProperty("bezierPoints")]
         public float[] BezierPoints { get; set; }
@@ -483,6 +483,22 @@ namespace QuickType
         /// note所在时刻累积的所有位移，用于优化性能
         /// </summary>
         [JsonIgnore] public float allDisplacement;
+    }
+
+    public partial class EventLayer
+    {
+        public List<LineEvent> GetLineEvents(LineEventEnum lineEventEnum)
+        {
+            return lineEventEnum switch
+            {
+                LineEventEnum.MoveX => MoveXEvents,
+                LineEventEnum.MoveY => MoveYEvents,
+                LineEventEnum.Rotate => RotateEvents,
+                LineEventEnum.Alpha => AlphaEvents,
+                LineEventEnum.Speed => SpeedEvents,
+                _ => null,
+            };
+        }
     }
 }
 

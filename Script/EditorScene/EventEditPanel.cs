@@ -7,9 +7,13 @@ using System.Linq;
 public partial class EventEditPanel : BaseEditPanel
 {
 
-	[ExportGroup("事件特有设置")]
+	// [ExportGroup("事件特有设置")]
     [Export] private float widthScale = 0.4f;
     [Export] private Texture2D eventHoldTexture;
+
+	[Export] private Color selectedModulate = new Color(1f, 0.223f, 0.947f, 1f);
+    [Export] private Color deleteHighlightModulate = new Color(1f, 0.184f, 0, 1f);
+    [Export] private Color toAddModulate = new Color(1f, 1f, 1f, 0.588f);
 
 	// ---- Multimesh ----
 	// private MultiMesh multiMesh;
@@ -19,9 +23,63 @@ public partial class EventEditPanel : BaseEditPanel
     private List<LineEvent> eventsToDelete = new();
 
 	/// <summary>
+	/// 当事件被选择时发出，参数:(判定线编号，事件类型，事件索引，弹窗位置（坐标系：viewportCoord）)
+	/// </summary>
+	public event Action<int, LineEventEnum, int, Vector2> EventSelected;
+	/// <summary>
 	/// 请求删除若干个事件，参数:(判定线编号，LineEvent列表)
 	/// </summary>
-	public event Action<int, List<LineEvent>> NoteDeleteRequested;
+	public event Action<int, List<LineEvent>> EventsDeleteRequested;
+
+	/// <summary>
+	/// 请求添加一个事件，参数:(判定线编号，事件类型，起始Beat，结束Beat)
+	/// </summary>
+	public event Action<int, LineEventEnum, Beat, Beat> AddEventRequested;
+
+	/// <summary>
+	/// 字典：每一种事件类型对应的竖线编号
+	/// 键：LineEventEnum，值：竖线编号(int)
+	/// </summary>
+	/// <returns></returns>
+	private Dictionary<LineEventEnum, int> EventTypeToIndexDic = new()
+    {
+		{LineEventEnum.MoveX, 0},
+		{LineEventEnum.MoveY, 1},
+		{LineEventEnum.Rotate, 2},
+		{LineEventEnum.Alpha, 3},
+		{LineEventEnum.Speed, 4},
+	};
+
+	private Dictionary<int, LineEventEnum> IndexToEventTypeDic = new()
+	{
+		{0, LineEventEnum.MoveX},
+		{1, LineEventEnum.MoveY},
+		{2, LineEventEnum.Rotate},
+		{3, LineEventEnum.Alpha},
+		{4, LineEventEnum.Speed},
+	};
+
+	/// <summary>
+	/// 获取某种事件类型在面板上的谱面X坐标
+	/// 注：事件实际上没有谱面X坐标，但是为了方便，类比NoteEditPanel，给予事件[-675,675]的X坐标
+	/// </summary>
+	/// <param name="lineEventEnum"></param>
+	/// <returns></returns>
+	private float EventTypeToChartX(LineEventEnum lineEventEnum)
+	{
+		int verLineIndex = EventTypeToIndexDic[lineEventEnum];
+		float chartX = -675f + (1350f / (verLineCount - 1)) * verLineIndex;
+
+		return chartX;
+	}
+
+	private float EventTypeToRatioX(LineEventEnum lineEventEnum)
+	{
+		int verLineIndex = EventTypeToIndexDic[lineEventEnum];
+		float ratioX = verLineIndex * 1f / (verLineCount - 1);
+
+		return ratioX;
+	}
 
     public override void _Ready()
     {
@@ -77,27 +135,27 @@ public partial class EventEditPanel : BaseEditPanel
 			return;
 		}
 
-		LineEvent[] moveXEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].MoveXEvents;
-		LineEvent[] moveYEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].MoveYEvents;
-		LineEvent[] rotateEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].RotateEvents;
-		LineEvent[] alphaEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].AlphaEvents;
-		LineEvent[] speedEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].SpeedEvents;
+		List<LineEvent> moveXEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].MoveXEvents;
+		List<LineEvent> moveYEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].MoveYEvents;
+		List<LineEvent> rotateEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].RotateEvents;
+		List<LineEvent> alphaEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].AlphaEvents;
+		List<LineEvent> speedEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].SpeedEvents;
 
 		// int visibleCount = 0;
 
-		var allEvents = new (LineEvent[] events, float xRatio)[]
+		var allEvents = new (List<LineEvent> events, float xRatio)[]
         {
-            (moveXEvents, 0.0f),
-            (moveYEvents, 0.25f),
-            (rotateEvents, 0.5f),
-            (alphaEvents, 0.75f),
-            (speedEvents, 1.0f)
+            (moveXEvents, EventTypeToRatioX(LineEventEnum.MoveX)),
+            (moveYEvents, EventTypeToRatioX(LineEventEnum.MoveY)),
+            (rotateEvents, EventTypeToRatioX(LineEventEnum.Rotate)),
+            (alphaEvents, EventTypeToRatioX(LineEventEnum.Alpha)),
+            (speedEvents, EventTypeToRatioX(LineEventEnum.Speed))
         };
 
 		// 为实际存在的 event 激活池节点
-		foreach((LineEvent[] events, float xRatio) type in allEvents)
+		foreach((List<LineEvent> events, float xRatio) type in allEvents)
 		{
-			for (int i = 0; i < type.events.Length; i++)
+			for (int i = 0; i < type.events.Count; i++)
 			{
 				LineEvent lineEvent = type.events[i];
 
@@ -123,6 +181,18 @@ public partial class EventEditPanel : BaseEditPanel
 				Beat startBeat = new Beat(lineEvent.StartTime);
 				Beat endBeat = new Beat(lineEvent.EndTime);
 
+				Action<MultiMesh, int> renderEffect = null;
+				//选中效果
+				if (selectedEvents.Contains(lineEvent))
+				{
+					renderEffect = SelectedRender;
+				}
+				//即将删除的高亮效果
+				if (eventsToDelete.Contains(lineEvent))
+				{
+					renderEffect = AboutToDeleteRender;
+				}
+
 				//使用MultimeshInstance渲染
 				RenderLongObject(
 					key: "Event",
@@ -131,7 +201,7 @@ public partial class EventEditPanel : BaseEditPanel
 					endBeat: endBeat,
 					offset: Vector2.Zero,
 					scale: widthScale,
-					renderEffect: null
+					renderEffect: renderEffect
 				);
 				// Transform2D transform = Transform2D.Identity;
 				// transform.X = new Vector2(widthScale, 0);
@@ -151,8 +221,74 @@ public partial class EventEditPanel : BaseEditPanel
 		// {
 		// 	nodePool[i].Visible = false;
 		// }
+		
+		// 额外绘制即将创建的Event
+        if(_dragPlaceComponent.IsDragging){
+            float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (verLineCount - 1));
+			float localX = _coordComponent.GetPanelPosX(chartPosX);
+            RenderLongObject(
+                key: "Event",
+				localX: localX,
+				startBeat: _dragPlaceComponent.startBeat,
+                endBeat: _dragPlaceComponent.endBeat,
+				offset: Vector2.Zero,
+				scale: widthScale,
+				renderEffect: ToAddRender
+            );
+        }
     }
 
+	private void SelectedRender(MultiMesh multiMesh, int id)
+    {
+        multiMesh.SetInstanceColor(id, selectedModulate);
+    }
+
+    private void AboutToDeleteRender(MultiMesh multiMesh, int id)
+    {
+        multiMesh.SetInstanceColor(id, deleteHighlightModulate);
+    }
+
+    private void ToAddRender(MultiMesh multiMesh, int id)
+    {
+        multiMesh.SetInstanceColor(id, toAddModulate);
+    }
+
+	private void DeselectAll()
+	{
+		selectedEvents.Clear();
+	}
+
+	private void OnEventTapped(LineEventEnum lineEventEnum, int index, Vector2 localPos)
+	{
+		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[0];
+		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[index];
+
+		Vector2 screenPos = GetScreenPosition(localPos); // debug
+		Vector2 viewportPos = GetGlobalTransformWithCanvas() * localPos;
+		Vector2 popupPos = viewportPos + new Vector2(30, 30);
+		// GD.Print($"pos:{localPos}, viewportPos:{GetGlobalTransformWithCanvas() * localPos}, ab em pos:{GetScreenTransform() * localPos} screenPos:{screenPos}");
+        
+        if(selectMode == SelectMode.Single)
+        {
+            selectedEvents = [lineEvent];
+            EventSelected?.Invoke(editingLineId, lineEventEnum, index, popupPos);
+        }
+        else if(selectMode == SelectMode.Multi)
+        {
+            if (selectedEvents.Contains(lineEvent))
+            {
+                selectedEvents.Remove(lineEvent);
+            }
+            else
+            {
+                selectedEvents.Add(lineEvent);
+            }
+        }
+        else
+        {
+            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{selectMode}");
+        }
+	}
 
     protected override void OnButtonDown(Vector2 pos)
     {
@@ -186,20 +322,25 @@ public partial class EventEditPanel : BaseEditPanel
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-			// TODO 实现EventEditPanel单点编辑
-            // int noteIndex = FildNearestNoteIndex(pos);
-            // if(noteIndex == -1) // -1代表没有选中
-            // {
-            //     DeselectAll();
-            // }
-            // else
-            // {
-            //     OnNoteTaped(noteIndex);
-            // }
+            ValueTuple<LineEventEnum?, int> tuple = FineNearestEvent(pos);
+            if(tuple.Item1 == null || tuple.Item2 < 0) // 代表没有选中
+            {
+                DeselectAll();
+            }
+            else
+            {
+                OnEventTapped(tuple.Item1.Value, tuple.Item2, pos);
+            }
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
-            
+            float chartX = _coordComponent.GetChartPosX(pos.X);
+			int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+
+			float beatValue = _coordComponent.GetBeatValue(pos.Y);
+			Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+			_dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
         }
         else if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
@@ -238,6 +379,80 @@ public partial class EventEditPanel : BaseEditPanel
             _boxSelectController.Move(dataPos);
         }
     }
+
+	/// <summary>
+	/// 获取点击位置最近的event
+	/// </summary>
+	/// <param name="pos">点击位置 坐标系：Control本地坐标</param>
+	/// <returns>ValueTuple<LineEventEnum?, int>，参数:(事件类型，索引)，若Item1为null，表示没有找到</returns>
+	private ValueTuple<LineEventEnum?, int> FineNearestEvent(Vector2 pos)
+	{
+		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[0]; // TODO
+		Dictionary<LineEventEnum, List<LineEvent> > allLineEvents = new(){
+			{LineEventEnum.MoveX, eventLayer.MoveXEvents},
+			{LineEventEnum.MoveY, eventLayer.MoveYEvents},
+			{LineEventEnum.Rotate, eventLayer.RotateEvents},
+			{LineEventEnum.Alpha, eventLayer.AlphaEvents},
+			{LineEventEnum.Speed, eventLayer.SpeedEvents},
+		};
+
+		LineEventEnum? nearestEventType = null;
+        int nearestEventIndex = -1;
+        float nearestDistSquared = 99999f;
+		
+		foreach(LineEventEnum lineEventEnum in allLineEvents.Keys)
+		{
+			List<LineEvent> lineEvents = allLineEvents[lineEventEnum];
+
+            for (int i = 0; i < lineEvents.Count; i++)
+			{
+                LineEvent lineEvent = lineEvents[i];
+
+                float distSquared;
+
+				float startBeat = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
+                float endBeat = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
+				float chartPosX = EventTypeToChartX(lineEventEnum);
+                Vector2 startPos = _coordComponent.GetPanelPosition(chartPosX, startBeat);
+                Vector2 endPos = _coordComponent.GetPanelPosition(chartPosX, endBeat);
+
+                if(pos.Y < endPos.Y)
+                {
+                    //计算点击位置和结束点（最上方）的距离
+                    distSquared = pos.DistanceSquaredTo(endPos);
+
+                }
+                else if(pos.Y > startPos.Y)
+                {
+                    //计算点击位置和开始点（最下方）的距离
+                    distSquared = pos.DistanceSquaredTo(startPos);
+                }
+                else
+                {
+                    // 点击位置在hold两侧，计算水平距离
+                    distSquared = (float)Math.Pow(pos.X - startPos.X, 2);
+                }
+
+				if(distSquared < nearestDistSquared)
+				{
+					nearestDistSquared = distSquared;
+					nearestEventType = lineEventEnum;
+					nearestEventIndex = i;
+				}
+			}
+		}
+
+        //判断距离是否小于阈值
+        float distance = (float)Math.Sqrt(nearestDistSquared);
+        if(distance > distanceThreshold)
+        {
+            GD.Print($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
+            return new (null, -1);
+        }
+
+        GD.Print($"[{this.Name}] 点击位置:{pos} 最近的event:{nearestEventType}-{nearestEventIndex}, 距离:{distance}");
+        return new(nearestEventType, nearestEventIndex);
+	}
 
     protected override void OnBoxUpdated(Vector2 startDataPos, Vector2 endDataPos)
     {
@@ -280,7 +495,7 @@ public partial class EventEditPanel : BaseEditPanel
             }
 
 			//触发事件，请求删除note
-            NoteDeleteRequested?.Invoke(EditingLineId, deletingEvents);
+            EventsDeleteRequested?.Invoke(EditingLineId, deletingEvents);
 
 			//清除高亮显示
             eventsToDelete.Clear();
@@ -290,7 +505,10 @@ public partial class EventEditPanel : BaseEditPanel
 
     protected override void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
     {
-        // throw new NotImplementedException();
+        LineEventEnum lineEventEnum = IndexToEventTypeDic[verLineIndex];
+
+		AddEventRequested?.Invoke(editingLineId, lineEventEnum, startBeat, endBeat);
+
     }
 
 	private List<ValueTuple<float, LineEvent>> GetEventsInRect(Rect2 rect)

@@ -144,7 +144,7 @@ public partial class ChartEditService : Node
     public void AddLine(List<JudgeLine> judgeLines, int id = -1)
     {
         // HACK AddLine考虑直接在数据模型中写构造函数，设置默认值
-        LineEvent[] lineEvents = [];
+        List<LineEvent> lineEvents = [];
         EventLayer eventLayer = new EventLayer
         {
             MoveXEvents = lineEvents,
@@ -228,7 +228,37 @@ public partial class ChartEditService : Node
         GD.Print($"[{this.Name}] 成功删除判定线:{Util.ListToString(linesId)}");
     }
 
-    
+    public void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
+    {
+        LineEvent lineEvent = new()
+        {
+            Bezier = false,
+            EasingLeft = 0f,
+            EasingRight = 1f,
+            EasingType = 0, // fixed
+            Start = 0f,
+            End = 0f,
+            StartTime = startBeat.values,
+            EndTime = endBeat.values
+        };
+
+        // 调用ChratDataHelper设置note的时间，自动生成StartSec和EndSec
+        ChartDataHelper.SetEventStartTime(lineEvent, startBeat.values, EditingChart.BpmList);
+        ChartDataHelper.SetEventEndTime(lineEvent, endBeat.values, EditingChart.BpmList);
+
+        List<LineEvent> lineEvents = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+        lineEvents.Add(lineEvent); // FIXME 添加音符时 必须 直接插入到合适的位置
+
+        // 速度事件需要刷新前缀和
+        if(lineEventEnum == LineEventEnum.Speed)
+        {
+            ChartDataHelper.RefreshEventPrefix(lineEvents);
+        }
+
+        ChartEventBus.NotifyDataChanged();
+
+        GD.Print($"[{this.Name}] 成功添加event:{lineId}_{lineEventEnum}_{lineEvents.IndexOf(lineEvent)}");
+    }
 }
 
 /// <summary>

@@ -14,11 +14,11 @@ public abstract partial class BaseEditPanel : Panel
 
     // ---- 网格样式 ----
     [ExportGroup("网格样式设置")]
-    [Export] protected Color horColor = Colors.Red;
+    [Export] protected Color horColor = new Color(1f, 0, 0, 0.686f);
     [Export] protected float horWidth = 1;
-    [Export] protected Color verColor = Colors.Green;
+    [Export] protected Color verColor = new Color(0, 1f, 0, 0.588f);
     [Export] protected float verWidth = 1;
-    [Export] protected Color horSubColor = Colors.Yellow;
+    [Export] protected Color horSubColor = new Color(1f, 1f, 0, 0.588f);
     [Export] protected float horSubWidth = 1;
 
     // ---- 滚动/缩放 ----
@@ -47,7 +47,7 @@ public abstract partial class BaseEditPanel : Panel
 	/// <summary>选择note时点击位置与实际位置的最大距离</summary>
     [Export] protected float distanceThreshold = 40f;
 
-	[Export] protected Color boxColor;
+	[Export] protected Color boxColor = new Color(1f, 0, 0, 0.471f);
 
 	protected InputController _inputController;
     protected BoxSelectController _boxSelectController;
@@ -394,7 +394,12 @@ public abstract partial class BaseEditPanel : Panel
     {
         Vector2 localPos = _coordComponent.GetPanelPosition(posX, beatValue);
 
-        // 1. 获取视口（Viewport）的屏幕变换
+        return GetScreenPosition(localPos);
+    }
+
+	public Vector2 GetScreenPosition(Vector2 localPos)
+	{
+		// 1. 获取视口（Viewport）的屏幕变换
         Transform2D screenTransform = GetViewport().GetScreenTransform();
 
         // 2. 获取节点自身的全局画布变换
@@ -403,8 +408,19 @@ public abstract partial class BaseEditPanel : Panel
         // 3. 按顺序相乘：屏幕变换 * 全局画布变换 * 局部坐标
         Vector2 screenPos = screenTransform * (globalCanvasTransform * localPos);
 
+		// GD.Print($"localPos:{localPos}, viewportPos:{globalCanvasTransform * localPos}, screenPos:{screenPos}");
+
         return screenPos;
-    }
+	}
+
+	public Vector2 GetViewportPos(Vector2 localPos)
+	{
+		Transform2D globalCanvasTransform = GetGlobalTransformWithCanvas();
+
+		Vector2 viewportPos = globalCanvasTransform * localPos;
+
+		return viewportPos;
+	}
 
 
 	public override void _GuiInput(InputEvent @event)

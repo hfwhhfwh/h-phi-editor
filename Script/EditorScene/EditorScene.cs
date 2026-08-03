@@ -194,6 +194,11 @@ public partial class EditorScene : Node
 
         noteInfoPanel.OnNotePropertyChanged += SetNoteProperty;
 
+        // 设置eventEditPanel
+        eventEditPanel.EventSelected += OnEventSelected;
+        eventEditPanel.EventsDeleteRequested += DeleteEvents;
+        eventEditPanel.AddEventRequested += AddEvent;
+
         //设置弹出菜单
         PopupMenuHelper.SetTheme(theme);
 
@@ -332,6 +337,14 @@ public partial class EditorScene : Node
     {
         base._ExitTree();
 
+        // 设置NoteEditPanel
+        noteEditPanel.NoteAddRequested -= AddNote;
+        noteEditPanel.NoteDeleteRequested -= OnNotesDelete;
+
+        // 设置eventEditPanel
+        eventEditPanel.EventSelected -= OnEventSelected;
+        eventEditPanel.EventsDeleteRequested -= DeleteEvents;
+        eventEditPanel.AddEventRequested -= AddEvent;
         
     }
 
@@ -428,13 +441,13 @@ public partial class EditorScene : Node
         chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
     }
 
-    private void OnNoteSelected(int lineId, int noteIndex)
+    private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
     {
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
 
         float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-        Vector2 popupPos = noteEditPanel.GetScreenPosition(beatValue, note.PositionX)
-            + new Vector2(30,30);
+        //Vector2 popupPos = noteEditPanel.GetScreenPosition(beatValue, note.PositionX)
+        //    + new Vector2(30,30);
 
         // 构建菜单项（使用闭包捕获当前音符信息）
         var items = new List<PopupMenuItem>
@@ -447,7 +460,7 @@ public partial class EditorScene : Node
         };
 
         // 弹出菜单
-        PopupMenu popupMenu = PopupMenuHelper.ShowPopupMenu(this, popupPos, items);
+        PopupMenu popupMenu = PopupMenuHelper.ShowPopupMenu(this, popupViewportPos, items);
         popupMenu.PopupHide += () =>
         {
             noteEditPanel.DeselectAll();
@@ -549,5 +562,59 @@ public partial class EditorScene : Node
             return;
         }
         chartEditService.DeleteLine(editingChart.JudgeLineList, id);
+    }
+
+    private void OnEventSelected(int lineId, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
+    {
+        EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[0];
+		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
+
+        // 构建菜单项（使用闭包捕获当前音符信息）
+        var items = new List<PopupMenuItem>
+        {
+            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, lineEventEnum, eventIndex) },
+            new PopupMenuItem { Text = "复制", Callback = () => OnEventCopy(lineId, lineEventEnum, eventIndex) },
+            new PopupMenuItem { Text = "粘贴", Callback = () => OnEventPaste(lineId, lineEventEnum, eventIndex) },
+            new PopupMenuItem { IsSeparator = true },
+            new PopupMenuItem { Text = "删除", Callback = () => OnEventDelete(lineId, lineEventEnum, eventIndex) }
+        };
+
+        // 弹出菜单
+        PopupMenu popupMenu = PopupMenuHelper.ShowPopupMenu(this, popupViewportPos, items);
+        popupMenu.PopupHide += () =>
+        {
+            noteEditPanel.DeselectAll();
+        };
+    }
+
+    private void OnEventEdit(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+        throw new NotImplementedException();
+    }
+    private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        GD.Print($"[{this.Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+        throw new NotImplementedException();
+    }
+    private void OnEventPaste(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        GD.Print($"[{this.Name}] 粘贴事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+        throw new NotImplementedException();
+    }
+    private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        GD.Print($"[{this.Name}] 删除事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+        throw new NotImplementedException();
+    }
+
+    private void DeleteEvents(int lineId, List<LineEvent> lineEvents)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
+    {
+        throw new NotImplementedException();
     }
 }

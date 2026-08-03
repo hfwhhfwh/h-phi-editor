@@ -80,7 +80,7 @@ public static class ChartDataHelper
             {
                 if(layer == null) continue;
                 //1. MoveXEvent
-                if(layer.MoveXEvents != null && layer.MoveXEvents.Length > 0)
+                if(layer.MoveXEvents != null && layer.MoveXEvents.Count > 0)
                 {
                     foreach(LineEvent lineEvent in layer.MoveXEvents)
                     {
@@ -90,7 +90,7 @@ public static class ChartDataHelper
                 }
                 
                 //2. MoveYEvents
-                if(layer.MoveYEvents != null && layer.MoveYEvents.Length > 0)
+                if(layer.MoveYEvents != null && layer.MoveYEvents.Count > 0)
                 {
                     foreach(LineEvent lineEvent in layer.MoveYEvents)
                     {
@@ -100,7 +100,7 @@ public static class ChartDataHelper
                 }
                 
                 //3. RotateEvents
-                if(layer.RotateEvents != null && layer.RotateEvents.Length > 0)
+                if(layer.RotateEvents != null && layer.RotateEvents.Count > 0)
                 {
                     foreach(LineEvent lineEvent in layer.RotateEvents)
                     {
@@ -110,7 +110,7 @@ public static class ChartDataHelper
                 }
                 
                 //4. AlphaEvents
-                if(layer.AlphaEvents != null && layer.AlphaEvents.Length > 0)
+                if(layer.AlphaEvents != null && layer.AlphaEvents.Count > 0)
                 {
                     foreach(LineEvent lineEvent in layer.AlphaEvents)
                     {
@@ -120,7 +120,7 @@ public static class ChartDataHelper
                 }
                 
                 //5. SpeedEvents
-                if(layer.SpeedEvents != null && layer.SpeedEvents.Length > 0)
+                if(layer.SpeedEvents != null && layer.SpeedEvents.Count > 0)
                 {
                     foreach(LineEvent lineEvent in layer.SpeedEvents)
                     {
@@ -133,13 +133,13 @@ public static class ChartDataHelper
         }
     }
 
-    public static void RefreshEventPrefix(LineEvent[] events)
+    public static void RefreshEventPrefix(List<LineEvent> events)
     {
-        if (events == null || events.Length == 0) return;
+        if (events == null || events.Count == 0) return;
 
         float totalX = 0; // 总位移
         //遍历所有速度事件
-        for (int i = 0; i < events.Length; i++)
+        for (int i = 0; i < events.Count; i++)
         {
             LineEvent ev = events[i];
 
@@ -235,15 +235,15 @@ public static class ChartDataHelper
     /// <param name="events">事件列表</param>
     /// <param name="time">游戏时间</param>
     /// <returns>事件的索引，若time小于第一个事件的开始时间，则返回-1</returns>
-    public static int BinarySearchLatestEvent(LineEvent[] events, double time)
+    public static int BinarySearchLatestEvent(List<LineEvent> events, double time)
     {
-        if (events == null || events.Length == 0)
+        if (events == null || events.Count == 0)
         {
             throw new Exception("events列表为空");
         }
 
         // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
-        int idx = Array.BinarySearch(events, new LineEvent { startSec = (float)time }, 
+        int idx = events.BinarySearch(new LineEvent { startSec = (float)time }, 
             Comparer<LineEvent>.Create((a, b) => a.startSec.CompareTo(b.startSec)));
         if (idx < 0) idx = ~idx - 1;
 
@@ -257,9 +257,9 @@ public static class ChartDataHelper
     /// <param name="time">游戏运行时间</param>
     /// <param name="defaultValue">默认值</param>
     /// <returns>当前时间下的事件值</returns>
-    public static float InterpolateEvent(LineEvent[] events, double time, float defaultValue)
+    public static float InterpolateEvent(List<LineEvent> events, double time, float defaultValue)
     {
-        if (events == null || events.Length == 0) return defaultValue;
+        if (events == null || events.Count == 0) return defaultValue;
 
         // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
         int idx = BinarySearchLatestEvent(events, time);
@@ -297,7 +297,7 @@ public static class ChartDataHelper
     /// <param name="events">速度事件</param>
     /// <param name="time">游戏时间</param>
     /// <returns></returns>
-    public static float GetSpeedAtTime(LineEvent[] events, float time)
+    public static float GetSpeedAtTime(List<LineEvent> events, float time)
     {
         // //遍历所有速度事件
         // for (int i = 0; i < events.Length; i++)
@@ -339,7 +339,7 @@ public static class ChartDataHelper
         // }
         // return events[^1].End;//理论上不会执行到这里
 
-        if (events == null || events.Length == 0) return 0f;
+        if (events == null || events.Count == 0) return 0f;
 
         // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
         int idx = BinarySearchLatestEvent(events, time);
@@ -378,11 +378,11 @@ public static class ChartDataHelper
     /// <param name="events">速度事件</param>
     /// <param name="time">游戏时间</param>
     /// <returns></returns>
-    public static float IntegralSpeedEvent(LineEvent[] events, float time)
+    public static float IntegralSpeedEvent(List<LineEvent> events, float time)
     {
         float totalX = 0; // Y轴上的总位移
         //遍历所有速度事件
-        for (int i = 0; i < events.Length; i++)
+        for (int i = 0; i < events.Count; i++)
         {
             LineEvent ev = events[i];
 
@@ -413,7 +413,7 @@ public static class ChartDataHelper
             }
             
             //同时也要处理与下一个速度事件之间的部分
-            if(i < events.Length - 1) // 如果这不是最后一个事件
+            if(i < events.Count - 1) // 如果这不是最后一个事件
             {
                 float nextStartSec = events[i+1].startSec;
                 //如果time正在这个间隔中
@@ -444,9 +444,9 @@ public static class ChartDataHelper
     /// <param name="events">速度事件列表</param>
     /// <param name="time">游戏时刻</param>
     /// <returns>从0时刻到指定时刻的总位移</returns>
-    public static float GetDisplacementAtTime(LineEvent[] events, float time)
+    public static float GetDisplacementAtTime(List<LineEvent> events, float time)
     {
-        if (events == null || events.Length == 0) return 0f;
+        if (events == null || events.Count == 0) return 0f;
 
         // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
         int idx = BinarySearchLatestEvent(events, time);

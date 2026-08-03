@@ -19,10 +19,10 @@ public partial class NoteEditPanel : BaseEditPanel
 
 	[Export] private float noteScale = 0.1f;
     
-    /// <summary> note被选中时的颜色滤镜 </summary>
-    [Export] private Color selectedModulate;
-    [Export] private Color deleteHighlightModulate;
-    [Export] private Color toAddModulate;
+    /// <summary> event被选中时的颜色滤镜 </summary>
+    [Export] private Color selectedModulate = new Color(1f, 0.223f, 0.947f, 1f);
+    [Export] private Color deleteHighlightModulate = new Color(1f, 0.184f, 0, 1f);
+    [Export] private Color toAddModulate = new Color(1f, 1f, 1f, 0.588f);
     
 
 	[ExportGroup("音符贴图")]
@@ -41,7 +41,7 @@ public partial class NoteEditPanel : BaseEditPanel
     private List<Note> selectedNotes = new();
     private List<Note> notesToDelete = new();
 
-    [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex);
+    [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex, Vector2 clickViewportPos);
     /// <summary>
     /// 请求添加一个note的事件，参数为(音符类型，起始Beat，结束Beat，谱面X坐标)
     /// </summary>
@@ -128,8 +128,8 @@ public partial class NoteEditPanel : BaseEditPanel
 		{
 			Note note = notes[i];
 
-            //选中效果
             Action<MultiMesh, int> renderEffect = null;
+            //选中效果
             if (selectedNotes.Contains(note))
             {
                 renderEffect = SelectedRender;
@@ -328,8 +328,6 @@ public partial class NoteEditPanel : BaseEditPanel
     public override void _Draw()
     {
         base._Draw();
-
-        
     }
 
 
@@ -403,7 +401,7 @@ public partial class NoteEditPanel : BaseEditPanel
             }
             else
             {
-                OnNoteTaped(noteIndex);
+                OnNoteTapped(noteIndex, pos);
             }
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
@@ -458,7 +456,7 @@ public partial class NoteEditPanel : BaseEditPanel
         }
     }
 
-    public void OnNoteTaped(int noteIndex)
+    public void OnNoteTapped(int noteIndex, Vector2 localPos)
     {
         List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
         Note note = notes[noteIndex];
@@ -466,7 +464,10 @@ public partial class NoteEditPanel : BaseEditPanel
         if(selectMode == SelectMode.Single)
         {
             selectedNotes = [note];
-            EmitSignal(SignalName.OnNoteSelected, EditingLineId, noteIndex);
+            //坐标转换 本地坐标 -> viewport坐标
+            Vector2 viewportPos = GetGlobalTransformWithCanvas() * localPos;
+		    Vector2 popupPos = viewportPos + new Vector2(30, 30);
+            EmitSignal(SignalName.OnNoteSelected, EditingLineId, noteIndex, popupPos);
         }
         else if(selectMode == SelectMode.Multi)
         {
@@ -488,7 +489,7 @@ public partial class NoteEditPanel : BaseEditPanel
     /// <summary>
     /// 找到距离点击位置最近的note，若未找到返回null
     /// </summary>
-    /// <param name="pos">点击位置</param>
+    /// <param name="pos">点击位置，坐标系：Control本地坐标</param>
     /// <returns>距离点击位置最近的note</returns>
     private Note FildNearestNote(Vector2 pos)
     {
@@ -507,7 +508,7 @@ public partial class NoteEditPanel : BaseEditPanel
     /// <summary>
     /// 找到距离点击位置最近的note，若未找到返回-1
     /// </summary>
-    /// <param name="pos">点击位置</param>
+    /// <param name="pos">点击位置，坐标系：Control本地坐标</param>
     /// <returns>距离点击位置最近的note的索引</returns>
     private int FildNearestNoteIndex(Vector2 pos)
     {
