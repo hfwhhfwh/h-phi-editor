@@ -11,27 +11,35 @@ namespace QuickType
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Threading;
+
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
-    public class Beat
+    public class Beat : IComparable<Beat>
     {
-        public int[] values = new int[3];
+        private readonly int[] _values = new int[3]; // 改为只读，防止外部修改
+
+        public int[] Values { get => _values; }
+
+        public int IntegerPart => _values[0];
+        public int Numerator   => _values[1];
+        public int Denominator  => _values[2];
 
         public override string ToString()
         {
-            return $"[{values[0]},{values[1]},{values[2]}]";
+            return $"[{_values[0]},{_values[1]},{_values[2]}]";
         }
 
         public int this[int index]
         {
             get
             {
-                return values[index];
+                return _values[index];
             }
             set
             {
-                values[index] = value;
+                _values[index] = value;
             }
         }
 
@@ -39,21 +47,106 @@ namespace QuickType
         
         public Beat(int[] values)
         {
-            if(values.Length != 3)
-            {
-                throw new Exception("Beat的元素个数不为3");
-            }
-            else
-            {
-                this.values = values;
-            }
+            if (values.Length != 3)
+                throw new ArgumentException("Beat元素个数必须为3", nameof(values));
+            if (values[2] == 0)
+                throw new ArgumentException("分母不能为0", nameof(values));
+        
+            // 复制数组，避免外部修改影响内部状态
+            Array.Copy(values, this._values, 3);
+            
         }
 
         public Beat(int a, int b, int c)
         {
-            this.values[0] = a;
-            this.values[1] = b;
-            this.values[2] = c;
+            if (c == 0)
+                throw new ArgumentException("分母不能为0", nameof(c));
+            this._values[0] = a;
+            this._values[1] = b;
+            this._values[2] = c;
+        }
+
+        public int CompareTo(Beat other)
+        {
+            if (other is null) return 1; // this > null
+
+            // 先比较整数部分
+            int cmp = IntegerPart.CompareTo(other.IntegerPart);
+            if (cmp != 0) return cmp;
+
+            // 分数部分比较：a/b < c/d  <=>  ad < bc（分母为正）
+            long left = (long)Numerator * other.Denominator;
+            long right = (long)Denominator * other.Numerator;
+            return left.CompareTo(right);
+        }
+
+        // -------- 重载比较运算符（>, <, >=, <=）--------
+        // 这些运算符必须成对重载
+        public static bool operator >(Beat left, Beat right)
+        {
+            // 先处理 null 值，避免空引用异常
+            if (left is null) return false;
+            if (right is null) return true;  // left 非空 > null
+            
+            return left.CompareTo(right) > 0;
+
+        }
+
+        public static bool operator <(Beat left, Beat right)
+        {
+            if (left is null) return right is not null; // null < 非空
+            if (right is null) return false;
+
+            return left.CompareTo(right) < 0;
+        }
+
+        public static bool operator >=(Beat left, Beat right)
+        {
+            if (left is null) return right is null;
+            if (right is null) return true;
+
+            return left.CompareTo(right) >= 0;
+        }
+
+        public static bool operator <=(Beat left, Beat right)
+        {
+            if (left is null) return true;
+            if (right is null) return false; // left非空
+
+            return left.CompareTo(right) <= 0;
+        }
+
+        // -------- 重载相等运算符 (==, !=) --------
+        // 注意：重载 == 和 != 是强制的（如果重载了 > 和 <，编译器会警告，建议一起重载）
+        public static bool operator ==(Beat left, Beat right)
+        {
+            // 如果两侧都是 null，返回 true
+            if (left is null && right is null) return true;
+            if (left is null || right is null) return false;
+            
+            // 比较值是否相同
+            return left._values[0] == right._values[0]
+                && left._values[1] == right._values[1]
+                && left._values[2] == right._values[2];
+        }
+
+        public static bool operator !=(Beat left, Beat right)
+        {
+            return !(left == right);
+        }
+
+        // 重写 Equals 和 GetHashCode（任何时候重载 == 都必须这么做，消除编译器警告）
+        public override bool Equals(object obj)
+        {
+            return this == obj as Beat;
+        }
+
+        // -------- 实现 GetHashCode --------
+        public override int GetHashCode()
+        {
+            // 使用 System.HashCode 组合三个字段（.NET Core 2.1+ / .NET 5+）
+            // 若目标框架不支持，可手动组合： (a * 397) ^ b ^ (c << 16) 等
+            return HashCode.Combine(_values[0], _values[1], _values[2]);
         }
 
     }
@@ -162,20 +255,30 @@ namespace QuickType
 
     public partial class EventLayer
     {
-        [JsonProperty("alphaEvents")]
+        [JsonProperty("alphaEvents", NullValueHandling = NullValueHandling.Ignore)]
         public List<LineEvent> AlphaEvents { get; set; }
 
-        [JsonProperty("moveXEvents")]
+        [JsonProperty("moveXEvents", NullValueHandling = NullValueHandling.Ignore)]
         public List<LineEvent> MoveXEvents { get; set; }
 
-        [JsonProperty("moveYEvents")]
+        [JsonProperty("moveYEvents", NullValueHandling = NullValueHandling.Ignore)]
         public List<LineEvent> MoveYEvents { get; set; }
 
-        [JsonProperty("rotateEvents")]
+        [JsonProperty("rotateEvents", NullValueHandling = NullValueHandling.Ignore)]
         public List<LineEvent> RotateEvents { get; set; }
 
         [JsonProperty("speedEvents", NullValueHandling = NullValueHandling.Ignore)]
         public List<LineEvent> SpeedEvents { get; set; }
+    }
+
+    public enum LineEventEnum
+    {
+        MoveX,
+        MoveY,
+        Rotate,
+        Alpha,
+        Speed,
+        //TODO 特殊事件枚举
     }
 
     public partial class LineEvent
@@ -211,15 +314,18 @@ namespace QuickType
         public int[] StartTime { get; set; }
     }
 
-    public enum LineEventEnum
+    /// <summary>
+    /// LineEvent的属性类型(枚举)
+    /// </summary>
+    public enum LineEventPropertyType
     {
-        MoveX,
-        MoveY,
-        Rotate,
-        Alpha,
-        Speed,
-        //TODO 特殊事件枚举
+        Start, End,
+        StartTime, EndTime,
+        EasingType, EasingLeft, EasingRight,
+        Bezier, BezierPoints,
+
     }
+
 
     // public partial class SpeedEvent
     // {
@@ -244,8 +350,86 @@ namespace QuickType
         [JsonProperty("inclineEvents")]
         public LineEvent[] InclineEvents { get; set; }
 
+        [JsonProperty("colorEvents", NullValueHandling = NullValueHandling.Ignore)]
+        public LineEvent[] ColorEvents { get; set; }
+
         [JsonProperty("scaleXEvents", NullValueHandling = NullValueHandling.Ignore)]
         public LineEvent[] ScaleXEvents { get; set; }
+
+        [JsonProperty("scaleYEvents", NullValueHandling = NullValueHandling.Ignore)]
+        public LineEvent[] ScaleYEvents { get; set; }
+
+        [JsonProperty("textEvents", NullValueHandling = NullValueHandling.Ignore)]
+        public LineEvent[] TextEvents { get; set; }
+    }
+
+    public partial class ColorEvent
+    {
+        [JsonProperty("bezier")]
+        public long Bezier { get; set; }
+
+        [JsonProperty("bezierPoints")]
+        public long[] BezierPoints { get; set; }
+
+        [JsonProperty("easingLeft")]
+        public long EasingLeft { get; set; }
+
+        [JsonProperty("easingRight")]
+        public long EasingRight { get; set; }
+
+        [JsonProperty("easingType")]
+        public long EasingType { get; set; }
+
+        [JsonProperty("end")]
+        public long[] End { get; set; }
+
+        [JsonProperty("endTime")]
+        public long[] EndTime { get; set; }
+
+        [JsonProperty("linkgroup")]
+        public long Linkgroup { get; set; }
+
+        [JsonProperty("start")]
+        public long[] Start { get; set; }
+
+        [JsonProperty("startTime")]
+        public long[] StartTime { get; set; }
+    }
+
+    public partial class TextEvent
+    {
+        [JsonProperty("bezier")]
+        public long Bezier { get; set; }
+
+        [JsonProperty("bezierPoints")]
+        public long[] BezierPoints { get; set; }
+
+        [JsonProperty("easingLeft")]
+        public long EasingLeft { get; set; }
+
+        [JsonProperty("easingRight")]
+        public long EasingRight { get; set; }
+
+        [JsonProperty("easingType")]
+        public long EasingType { get; set; }
+
+        [JsonProperty("end")]
+        public string End { get; set; }
+
+        [JsonProperty("endTime")]
+        public long[] EndTime { get; set; }
+
+        [JsonProperty("font")]
+        public string Font { get; set; }
+
+        [JsonProperty("linkgroup")]
+        public long Linkgroup { get; set; }
+
+        [JsonProperty("start")]
+        public string Start { get; set; }
+
+        [JsonProperty("startTime")]
+        public long[] StartTime { get; set; }
     }
 
     public partial class Note
@@ -282,6 +466,22 @@ namespace QuickType
 
         [JsonProperty("yOffset")]
         public float YOffset { get; set; }
+    }
+
+    /// <summary>
+    /// note的属性类型(枚举)
+    /// </summary>
+    public enum NotePropertyEnum
+    {
+        Above,
+        Alpha,
+        StartTime, EndTime, 
+        IsFake,
+        PosX,
+        Size,
+        Type,
+        VisibleTime,
+        YOffset
     }
 
     public partial class PosControl

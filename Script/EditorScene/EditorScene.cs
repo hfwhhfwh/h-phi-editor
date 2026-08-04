@@ -558,7 +558,7 @@ public partial class EditorScene : Node
         if(editingChart.JudgeLineList.Count <= 1)
         {
             GD.Print($"[{this.Name}] 最少保留一条判定线，删除失败");
-            // TODO 最少保留一条判定线，删除失败 同时显示弹窗提示
+            // TODO 最少保留一条判定线，删除失败时显示弹窗提示
             return;
         }
         chartEditService.DeleteLine(editingChart.JudgeLineList, id);
@@ -590,31 +590,31 @@ public partial class EditorScene : Node
     private void OnEventEdit(int lineId, LineEventEnum lineEventEnum, int index)
     {
         GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
     private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
     {
         GD.Print($"[{this.Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
     private void OnEventPaste(int lineId, LineEventEnum lineEventEnum, int index)
     {
         GD.Print($"[{this.Name}] 粘贴事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
     private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
     {
         GD.Print($"[{this.Name}] 删除事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void DeleteEvents(int lineId, List<LineEvent> lineEvents)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     private void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
-        throw new NotImplementedException();
+        chartEditService.AddEvent(lineId, lineEventEnum, startBeat, endBeat);
     }
 }

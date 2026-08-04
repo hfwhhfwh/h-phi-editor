@@ -1,0 +1,100 @@
+[gd_scene format=3 uid="uid://cbmjexnp68eds"]
+
+[ext_resource type="Script" uid="uid://dufoekn77ap1k" path="res://Script/EditorScene/EasingEditor.cs" id="1_ynh12"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="2_eefoq"]
+
+[node name="EasingEditor" type="Control" unique_id=1617449642 node_paths=PackedStringArray("easingFuncOptionButton", "easingIOOptionButton", "easingLeftLineEdit", "easingRightLineEdit")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ynh12")
+easingFuncOptionButton = NodePath("VBoxContainer/HBoxContainer/HBoxContainer/EasingFuncOptionButton")
+easingIOOptionButton = NodePath("VBoxContainer/HBoxContainer/HBoxContainer2/EasingIOOptionButton")
+easingLeftLineEdit = NodePath("VBoxContainer/HBoxContainer2/HBoxContainer/EasingLeftLineEdit")
+easingRightLineEdit = NodePath("VBoxContainer/HBoxContainer2/HBoxContainer2/EasingRightLineEdit")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1115269231]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=909519590]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer" unique_id=1677061407]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer/HBoxContainer" unique_id=1734877280]
+layout_mode = 2
+theme = ExtResource("2_eefoq")
+text = "缓动函数"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EasingFuncOptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer/HBoxContainer" unique_id=1945899981]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_eefoq")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/HBoxContainer" unique_id=442705919]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer/HBoxContainer2" unique_id=248474917]
+layout_mode = 2
+theme = ExtResource("2_eefoq")
+text = "缓动IO"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EasingIOOptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer/HBoxContainer2" unique_id=664546712]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_eefoq")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer" unique_id=1332405192]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer2" unique_id=903421318]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer2/HBoxContainer" unique_id=1629477530]
+layout_mode = 2
+theme = ExtResource("2_eefoq")
+text = "左剪切"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EasingLeftLineEdit" type="LineEdit" parent="VBoxContainer/HBoxContainer2/HBoxContainer" unique_id=549780117]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_eefoq")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/HBoxContainer2" unique_id=1488523668]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer2/HBoxContainer2" unique_id=1376042995]
+layout_mode = 2
+theme = ExtResource("2_eefoq")
+text = "右剪切"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EasingRightLineEdit" type="LineEdit" parent="VBoxContainer/HBoxContainer2/HBoxContainer2" unique_id=390661226]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_eefoq")
+
+[node name="Visual" type="Control" parent="VBoxContainer" unique_id=1828692130]
+layout_mode = 2

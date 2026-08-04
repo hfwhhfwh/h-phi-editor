@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://dymwqxc5lv3yn"]
+
+[ext_resource type="Script" uid="uid://bgfju4rih0mx1" path="res://Script/TestSceneScripts/TestSceneEasingEditor.cs" id="1_mks61"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_yxhrw"]
+[ext_resource type="PackedScene" uid="uid://cbmjexnp68eds" path="res://Scene/easing_editor.tscn" id="2_mks61"]
+
+[node name="TestSceneEasingEditor" type="Node" unique_id=1948357344 node_paths=PackedStringArray("easingEditor")]
+script = ExtResource("1_mks61")
+easingEditor = NodePath("Panel/MarginContainer/EasingEditor")
+
+[node name="Panel" type="Panel" parent="." unique_id=831769090]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_yxhrw")
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=1571321544]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="EasingEditor" parent="Panel/MarginContainer" unique_id=1617449642 instance=ExtResource("2_mks61")]
+layout_mode = 2

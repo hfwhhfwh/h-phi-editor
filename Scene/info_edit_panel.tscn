@@ -3,7 +3,8 @@
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_g1hfy"]
 [ext_resource type="Script" uid="uid://bknfsbmsops4k" path="res://Script/EditorScene/InfoEditPanel.cs" id="2_r5llj"]
 
-[node name="InfoEditPanel" type="Panel" unique_id=1498111790 node_paths=PackedStringArray("_vBoxContainer", "_nameLabel", "_confirmButton")]
+[node name="InfoEditPanel" type="Control" unique_id=296322886 node_paths=PackedStringArray("_vBoxContainer", "_nameLabel", "_confirmButton")]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

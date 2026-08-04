@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://bpkv57wpohu8e"]
+
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_wt3vp"]
+[ext_resource type="Script" uid="uid://bl8mxo8dgxy7k" path="res://Script/EditorScene/EventInfoPanel.cs" id="2_e7nb6"]
+[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="2_hxnlg"]
+
+[node name="EventInfoPanel" type="Panel" unique_id=1587088222 node_paths=PackedStringArray("infoEditPanel")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_wt3vp")
+script = ExtResource("2_e7nb6")
+infoEditPanel = NodePath("InfoEditPanel")
+
+[node name="InfoEditPanel" parent="." unique_id=1498111790 instance=ExtResource("2_hxnlg")]
+layout_mode = 1

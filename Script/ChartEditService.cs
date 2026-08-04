@@ -20,10 +20,10 @@ public partial class ChartEditService : Node
                 note.Alpha = Convert.ToSingle(value);
                 break;
             case NotePropertyEnum.StartTime:
-                note.StartTime = ((Beat)value).values;
+                note.StartTime = ((Beat)value).Values;
                 break;
             case NotePropertyEnum.EndTime:
-                note.EndTime = ((Beat)value).values;
+                note.EndTime = ((Beat)value).Values;
                 break;
             case NotePropertyEnum.IsFake:
                 note.IsFake = (bool)value;
@@ -93,8 +93,8 @@ public partial class ChartEditService : Node
         };
 
         // 调用ChratDataHelper设置note的时间，自动生成StartSec和EndSec
-        ChartDataHelper.SetNoteStartTime(note, startBeat.values, EditingChart.BpmList);
-        ChartDataHelper.SetNoteEndTime(note, endBeat.values, EditingChart.BpmList);
+        ChartDataHelper.SetNoteStartTime(note, startBeat.Values, EditingChart.BpmList);
+        ChartDataHelper.SetNoteEndTime(note, endBeat.Values, EditingChart.BpmList);
 
         note.allDisplacement = ChartDataHelper.GetDisplacementAtTime(
             EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents,
@@ -238,16 +238,19 @@ public partial class ChartEditService : Node
             EasingType = 0, // fixed
             Start = 0f,
             End = 0f,
-            StartTime = startBeat.values,
-            EndTime = endBeat.values
+            StartTime = startBeat.Values,
+            EndTime = endBeat.Values
         };
 
         // 调用ChratDataHelper设置note的时间，自动生成StartSec和EndSec
-        ChartDataHelper.SetEventStartTime(lineEvent, startBeat.values, EditingChart.BpmList);
-        ChartDataHelper.SetEventEndTime(lineEvent, endBeat.values, EditingChart.BpmList);
+        ChartDataHelper.SetEventStartTime(lineEvent, startBeat.Values, EditingChart.BpmList);
+        ChartDataHelper.SetEventEndTime(lineEvent, endBeat.Values, EditingChart.BpmList);
 
-        List<LineEvent> lineEvents = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
-        lineEvents.Add(lineEvent); // FIXME 添加音符时 必须 直接插入到合适的位置
+        List<LineEvent> lineEvents = 
+            EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+
+        
+        InsertLineEventSorted(lineEvents, lineEvent); // 添加音符时 必须 直接插入到合适的位置
 
         // 速度事件需要刷新前缀和
         if(lineEventEnum == LineEventEnum.Speed)
@@ -259,21 +262,21 @@ public partial class ChartEditService : Node
 
         GD.Print($"[{this.Name}] 成功添加event:{lineId}_{lineEventEnum}_{lineEvents.IndexOf(lineEvent)}");
     }
+
+    /// <summary>
+    /// <para> 将某一个LineEvent插入到LineEvent列表中，按照startTime的顺序 </para>
+    /// <para> 注意：调用此方法前必须设置lineEvent的StartSec </para>
+    /// <para> 此方法<b>不会</b>更新速度事件的前缀和位移 </para>
+    /// <para> 此方法<b>不会</b>发出信号 </para>
+    /// </summary>
+    /// <param name="lineEvents">LineEvent列表</param>
+    /// <param name="lineEvent">要插入的LineEvent</param>
+    private void InsertLineEventSorted(List<LineEvent> lineEvents, LineEvent lineEvent)
+    {
+        // 最后一个 startSec <= time 的事件
+        int index = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
+
+        lineEvents.Insert(index + 1, lineEvent);
+    }
 }
 
-/// <summary>
-/// note的属性类型(枚举)
-/// </summary>
-public enum NotePropertyEnum
-{
-    Above,
-    Alpha,
-    StartTime,
-    EndTime,
-    IsFake,
-    PosX,
-    Size,
-    Type,
-    VisibleTime,
-    YOffset
-}

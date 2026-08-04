@@ -11,7 +11,10 @@ public partial class NoteInfoPanel : Panel
 
 	[Signal] public delegate void OnConfirmedEventHandler();
 
-	public Action <int, int, NotePropertyEnum, object> OnNotePropertyChanged;
+	/// <summary>
+	/// 当note的属性发生变化时触发，参数:(判定线编号，note索引，note属性枚举，修改值)
+	/// </summary>
+	public event Action <int, int, NotePropertyEnum, object> OnNotePropertyChanged;
 	
 
     public override void _Ready()
@@ -47,14 +50,9 @@ public partial class NoteInfoPanel : Panel
         data.Name = $"音符{noteIndex}";
 
 		//时间节拍
-        Beat startBeat = new Beat
-        {
-            values = note.StartTime
-        };
-        Beat endBeat = new Beat
-        {
-            values = note.EndTime
-        };
+        Beat startBeat = new Beat(note.StartTime);
+        Beat endBeat = new Beat(note.EndTime);
+        
         data.Properties["StartTime"] = startBeat;
         data.Properties["EndTime"] = endBeat;
 

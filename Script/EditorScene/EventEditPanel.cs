@@ -226,11 +226,12 @@ public partial class EventEditPanel : BaseEditPanel
         if(_dragPlaceComponent.IsDragging){
             float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (verLineCount - 1));
 			float localX = _coordComponent.GetPanelPosX(chartPosX);
+
             RenderLongObject(
                 key: "Event",
 				localX: localX,
-				startBeat: _dragPlaceComponent.startBeat,
-                endBeat: _dragPlaceComponent.endBeat,
+				startBeat: _dragPlaceComponent.StartBeat, // 确保startBeat和endBeat的大小关系正确
+                endBeat: _dragPlaceComponent.EndBeat,
 				offset: Vector2.Zero,
 				scale: widthScale,
 				renderEffect: ToAddRender

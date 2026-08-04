@@ -4,7 +4,14 @@ using System;
 
 public class DragPlaceComponent
 {
-    public Beat startBeat, endBeat;
+    /// <summary>用户开始拖动的beat</summary>
+    public Beat beat1;
+    /// <summary>用户结束拖动的beat</summary>
+    public Beat beat2;
+
+    public Beat StartBeat => beat1 < beat2 ? beat1 : beat2;
+    public Beat EndBeat => beat1 < beat2 ? beat2 : beat1;
+
     public int verLineIndex;
     public bool IsDragging { get; private set; }
 
@@ -21,8 +28,8 @@ public class DragPlaceComponent
     public void StartDrag(int verLineIndex, Beat beat)
     {
         this.verLineIndex = verLineIndex;
-        startBeat = beat;
-        endBeat = beat;
+        beat1 = beat;
+        beat2 = beat;
         IsDragging = true;
         //DragUpdated?.Invoke(new (verLineIndex, beat), new (verLineIndex, beat));
     }
@@ -30,12 +37,13 @@ public class DragPlaceComponent
     public void Move(int verLineIndex, Beat beat)
     {
         this.verLineIndex = verLineIndex;
-        endBeat = beat;
+        beat2 = beat;
     }
 
-    public void EndDrag(int verLineIndex, Beat endBeat)
+    public void EndDrag(int verLineIndex, Beat beat2)
     {
-        DragEnded?.Invoke(verLineIndex, startBeat, endBeat);
+        this.beat2 = beat2;
+        DragEnded?.Invoke(verLineIndex, StartBeat, EndBeat);
         IsDragging = false;
     }
 }

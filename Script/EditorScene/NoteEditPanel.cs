@@ -156,8 +156,8 @@ public partial class NoteEditPanel : BaseEditPanel
             float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (verLineCount - 1));
             MultiMeshRenderNote(
                 noteType: NoteType.Hold,
-                startBeat: _dragPlaceComponent.startBeat,
-                endBeat: _dragPlaceComponent.endBeat,
+                startBeat: _dragPlaceComponent.StartBeat,
+                endBeat: _dragPlaceComponent.EndBeat,
                 chartPosX: chartPosX,
                 renderEffect: NoteToAddRender
             );

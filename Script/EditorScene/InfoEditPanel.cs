@@ -3,7 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 
-public partial class InfoEditPanel : Panel
+public partial class InfoEditPanel : Control
 {
 	public class Data
 	{
@@ -108,6 +108,10 @@ public partial class InfoEditPanel : Panel
 		else if(type == typeof(Beat))
 		{
 			return CreateBeatEditor(key, (Beat)value);
+		}
+		else if (type == typeof(EasingData))
+		{
+			return CreateEasingEditor(key, (EasingData)value);
 		}
 		else
 		{
@@ -265,7 +269,7 @@ public partial class InfoEditPanel : Panel
 			LineEdit lineEdit = new LineEdit();
 			hBoxContainer.AddChild(lineEdit);
 
-			lineEdit.Text = $"{initialValue.values[i]}";
+			lineEdit.Text = $"{initialValue.Values[i]}";
 
 			lineEdit.TextSubmitted += (string newValue) =>
 			{
@@ -281,12 +285,12 @@ public partial class InfoEditPanel : Panel
 					GD.PrintErr($"[{this.Name}] 输入整数非法:{e.Message}");
 					// 恢复为当前值（从 _data 中取对应索引）
 					Beat currentBeat = (Beat)_data.Properties[key];
-					lineEdit.Text = currentBeat.values[index].ToString();
+					lineEdit.Text = currentBeat.Values[index].ToString();
 					return;
 				}
 				// 更新 _data 中的 Beat 对象
 				Beat beat = (Beat)_data.Properties[key];
-				beat.values[index] = (int)newInt;
+				beat.Values[index] = (int)newInt;
 				OnValueChanged(key, beat);
 			};
 		}
@@ -294,9 +298,70 @@ public partial class InfoEditPanel : Panel
 		return hBoxContainer;
 	}
 
+	private Control CreateEasingEditor(string key, EasingData easingData)
+	{
+		EasingEditor editor = new();
+		// 初始化显示
+		editor.Init(
+			easingData.EasingFunc, 
+			easingData.EasingIO, 
+			easingData.EasingLeft, 
+			easingData.EasingRight
+		);
+
+		// 订阅所有子属性变更事件，更新数据并触发父级变化
+		editor.EasingFuncChanged += (newFunc) =>
+		{
+			var data = (EasingData)_data.Properties[key];
+			data.EasingFunc = newFunc;
+			OnValueChanged(key, data);
+		};
+		editor.EasingIOChanged += (newIO) =>
+		{
+			var data = (EasingData)_data.Properties[key];
+			data.EasingIO = newIO;
+			OnValueChanged(key, data);
+		};
+		editor.EasingLeftChanged += (newLeft) =>
+		{
+			var data = (EasingData)_data.Properties[key];
+			data.EasingLeft = newLeft;
+			OnValueChanged(key, data);
+		};
+		editor.EasingRightChanged += (newRight) =>
+		{
+			var data = (EasingData)_data.Properties[key];
+			data.EasingRight = newRight;
+			OnValueChanged(key, data);
+		};
+
+		return editor;
+	}
+
 	public void OnValueChanged(string key, object value)
 	{
 		PropertyChanged?.Invoke(key, value);
 	}
 
+}
+
+public class EasingData
+{
+	public EasingIO EasingIO { get; set; }
+
+	public EasingFunc EasingFunc { get; set; }
+
+	public float EasingLeft { get; set; }
+	public float EasingRight { get; set; }
+
+	public EasingData Duplicate()
+	{
+		return new EasingData
+		{
+			EasingIO = EasingIO,
+			EasingFunc = EasingFunc,
+			EasingLeft = EasingLeft,
+			EasingRight = EasingRight
+		};
+	}
 }

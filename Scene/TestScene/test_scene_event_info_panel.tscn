@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://dywn3chh5bcyp"]
+
+[ext_resource type="Script" uid="uid://bbgyoejkfbguj" path="res://Script/TestSceneScripts/TestSceneEventInfoPanel.cs" id="1_gdx5w"]
+[ext_resource type="PackedScene" uid="uid://bpkv57wpohu8e" path="res://Scene/event_info_panel.tscn" id="2_dq8ii"]
+
+[node name="TestSceneEventInfoPanel" type="Node" unique_id=502682505 node_paths=PackedStringArray("eventInfoPanel")]
+script = ExtResource("1_gdx5w")
+eventInfoPanel = NodePath("EventInfoPanel")
+
+[node name="EventInfoPanel" parent="." unique_id=1587088222 instance=ExtResource("2_dq8ii")]
