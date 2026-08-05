@@ -75,6 +75,8 @@ jobs:
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
           -scheme "${NAME}" \
+          -sdk iphoneos \
+          -destination 'generic/platform=iOS' \
           -archivePath build/ios/App.xcarchive \
           -configuration Release \
           CODE_SIGN_STYLE=Manual \
@@ -82,6 +84,7 @@ jobs:
           PROVISIONING_PROFILE_SPECIFIER="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
+          ARCHS=arm64 \
           | xcpretty
 
     # 5. Package .ipa
