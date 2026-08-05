@@ -6,8 +6,9 @@ on:
   workflow_dispatch:
 
 env:
-  GODOT_VERSION: 4.6-stable
-  IOS_PRESET: iOS                     # 你的 iOS 导出预设名称
+  # 统一使用具体版本号（4.6.2），避免混用 4.6-stable 和 4.6.2
+  GODOT_VERSION: 4.6.2-stable
+  IOS_PRESET: iOS                     # 请与项目中的导出预设名称完全一致
   NAME: ${{ github.event.repository.name }}
   HOMEBREW_NO_AUTO_UPDATE: 1
 
@@ -21,46 +22,54 @@ jobs:
         with:
           lfs: true
 
-      # 1. 下载 Godot .NET 版本（带 Mono 支持）
-      - name: Download Godot .NET (mono)
+      # 1. 下载 Godot .NET（带 Mono）
+      - name: Download Godot .NET
         run: |
           curl -L \
-            "https://github.com/godotengine/godot-builds/releases/download/4.6.2-stable/Godot_v4.6.2-stable_mono_macos.universal.zip" \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_mono_macos.universal.zip" \
             -o godot.zip
           unzip -q godot.zip -d godot
-          # 将可执行文件移出嵌套目录以便调用
           mv godot/Godot_mono.app godot/Godot.app
 
-      # 2. 安装 .NET SDK（macOS-14 自带，但确保可用）
+      # 2. 安装 .NET SDK（确保版本一致）
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      # 3. 安装 iOS 导出模板（解压到模板目录）
+      # 3. 安装 iOS 导出模板（直接下载 ios.zip，不要用 .tpz）
       - name: Install iOS export template
         run: |
-          TEMPLATES_DIR="$HOME/Library/Application Support/Godot/export_templates/4.6.stable"
+          TEMPLATES_DIR="$HOME/Library/Application Support/Godot/export_templates/${GODOT_VERSION}"
           mkdir -p "$TEMPLATES_DIR"
           curl -L \
             "https://github.com/godotengine/godot-builds/releases/download/4.6.2-stable/Godot_v4.6.2-stable_export_templates.tpz" \
-            -o /tmp/ios.zip
-          # 解压模板（覆盖原有文件）
-          unzip -o /tmp/ios.zip -d "$TEMPLATES_DIR"
+            -o "$TEMPLATES_DIR/ios.zip"
+          # Godot 4 会自动识别该 zip，无需手动解压
 
-      # 4. 编译 C# 解决方案（必须）
-      - name: Build C# solutions
+      # 4. 清理 .godot 缓存（解决 UID 冲突和残留编译缓存）
+      - name: Clean .godot directory
+        run: rm -rf .godot
+
+      # 5. 手动还原 NuGet 包并编译 C#（输出详细错误）
+      - name: Restore and build C# project
         run: |
-          godot/Godot.app/Contents/MacOS/Godot --headless --path . --build-solutions
+          dotnet restore --verbosity normal
+          dotnet build --configuration Release --no-restore --verbosity normal
 
-      # 5. 导出为 Xcode 项目
+      # 6. 让 Godot 加载并注册脚本（可省略，但保留确保状态）
+      - name: Sync scripts with Godot
+        run: |
+          godot/Godot.app/Contents/MacOS/Godot --headless --path . --build-solutions --quit
+
+      # 7. 导出为 Xcode 项目
       - name: Export to Xcode project
         run: |
           mkdir -p build/ios
           godot/Godot.app/Contents/MacOS/Godot --headless --path . \
             --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
 
-      # 6. 使用 xcodebuild 构建未签名的 archive
+      # 8. 使用 xcodebuild 构建未签名的 archive
       - name: xcodebuild archive (unsigned)
         run: |
           xcodebuild archive \
@@ -75,7 +84,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
-      # 7. 打包 .app 为 .ipa
+      # 9. 打包 .app 为 .ipa
       - name: Package IPA
         run: |
           cd build/ios
@@ -84,7 +93,7 @@ jobs:
           zip -r "${NAME}.ipa" Payload
           mv "${NAME}.ipa" ../../
 
-      # 8. 上传产物
+      # 10. 上传产物
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
