@@ -51,11 +51,10 @@ jobs:
       - name: Clean .godot directory
         run: rm -rf .godot
 
-      # 5. 手动还原 NuGet 包并编译 C#（输出详细错误）
-      - name: Restore and build C# project
+      # 5. 直接构建项目文件（跳过 .sln 的配置歧义）
+      - name: Build C# project
         run: |
-          dotnet restore --verbosity normal
-          dotnet build --configuration Release --no-restore --verbosity normal
+          dotnet build HPhiEditor.csproj --configuration Release --no-restore --verbosity normal
 
       # 6. 让 Godot 加载并注册脚本（可省略，但保留确保状态）
       - name: Sync scripts with Godot
