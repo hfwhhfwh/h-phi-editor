@@ -41,16 +41,21 @@ jobs:
       - name: Build C# project
         run: dotnet build --configuration Debug
 
-      # 5. 让 Godot 导入所有资源并强制退出（此时脚本已编译，场景可加载）
-      - name: Import assets
-        run: |
-          ./Godot.app/Contents/MacOS/Godot --headless --path . -e --quit || true
-          # 即使有错误也继续，因为 Godot 可能返回非零但已完成导入
+      # 1. 先用 Godot 生成 Mono 项目（这一步会生成 .godot/mono 和必要的元数据）
+      - name: Generate Mono project with Godot
+        run: ./Godot.app/Contents/MacOS/Godot --headless --path . --build-solutions --quit || true
 
-      # 6. 再次触发 Godot 的 C# 编译（确保绑定生成）
-      - name: Build solutions with Godot
-        run: |
-          ./Godot.app/Contents/MacOS/Godot --headless --path . --build-solutions --quit || true
+      # 2. 然后再导入资源（此时脚本类已注册，场景能正确加载）
+      - name: Import assets
+        run: ./Godot.app/Contents/MacOS/Godot --headless --path . -e --quit || true
+
+      # 3. 创建导出目录（防止目录不存在）
+      - name: Create export directory
+        run: mkdir -p build/ios
+
+      # 4. 导出 iOS（现在应该成功）
+      - name: Export iOS
+        run: ./Godot.app/Contents/MacOS/Godot --headless --path . --export-release iOS
 
       # 7. 导出 iOS 项目（如果预设名不是 "iOS"，请修改）
       - name: Export iOS project
