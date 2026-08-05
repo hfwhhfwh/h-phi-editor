@@ -46,6 +46,19 @@ jobs:
         mkdir -p "$templates_root"
         cp -R "export_templates/." "$templates_root/"
 
+    # 2.5 安装 .NET SDK（iOS C# 需要 .NET 8+）
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    # 2.6 构建 C# 项目（必须先编译通过，Godot 才能识别 autoload）
+    - name: Build C# project
+      run: |
+        dotnet build
+        # 或者如果项目文件不在根目录：
+        # dotnet build HPhiEditor.csproj
+
     # 3. Export preset -> Xcode project
     #    TODO: In addition to other mandatory fields (try running the export locally first),
     #    you need to enable `application/export_project_only=true` and `application/delete_old_export_files_unconditionally=true`.
