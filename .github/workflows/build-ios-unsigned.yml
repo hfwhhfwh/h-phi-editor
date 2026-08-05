@@ -33,19 +33,15 @@ jobs:
 
       # 3. 安装 iOS 导出模板
       # 不再需要 export_templates/ios.zip，改为自动下载
-      - name: Download and install iOS export template
+      - name: Download & install iOS export template
         run: |
-          TEMPLATES_DIR="$HOME/Library/Application Support/Godot/export_templates"
+          TEMPLATES_DIR="$HOME/Library/Application Support/Godot/export_templates/4.6.stable"
           mkdir -p "$TEMPLATES_DIR"
-          
-          # 从 Godot 官方 Releases 下载 iOS 模板
+
+          # 只下载 iOS 导出模板（约 180 MB）
           curl -L \
-            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz" \
-            -o templates.tpz
-          
-          # 解压并提取 ios.zip
-          unzip -q templates.tpz -d templates_temp
-          cp templates_temp/templates/ios.zip "$TEMPLATES_DIR/4.6.stable/ios.zip"
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/ios.zip" \
+            -o "$TEMPLATES_DIR/ios.zip"
 
       # 4. 用 Godot 导出为 Xcode 项目
       #     注意：导出预设中需开启：
