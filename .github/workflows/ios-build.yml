@@ -1,0 +1,35 @@
+name: Build iOS App
+
+on: [push]
+
+jobs:
+  build_ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 这里需要添加步骤来获取你的 Godot 项目导出的 Xcode 项目
+      # 这可能意味着你需要先在本地导出 Xcode 项目并上传到仓库，或在 CI 中通过命令行导出。
+
+      - name: Build archive and create IPA
+        run: |
+          # 假设你的 Xcode 项目名为 'HPhiEditor.xcodeproj'
+          xcodebuild archive \
+            -project HPhiEditor.xcodeproj \
+            -scheme 'HPhiEditor' \
+            -archivePath HPhiEditor.xcarchive \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
+
+          # 创建 .ipa 文件
+          mkdir Payload
+          mv HPhiEditor.xcarchive/Products/Applications/HPhiEditor.app Payload/
+          zip -r "HPhiEditor.ipa" "Payload"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: HPhiEditor-ipa
+          path: HPhiEditor.ipa

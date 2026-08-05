@@ -1,0 +1,66 @@
+{
+  "globs": {
+    "android": {
+      "exclude": [
+        "ios/**",
+        "*.ipa",
+        "*.xcarchive"
+      ],
+      "include": []
+    },
+    "base": {
+      "exclude": [
+        ".git",
+        ".gitignore",
+        "shipthis.json",
+        "shipthis-*.zip",
+        ".godot/**",
+        ".nomedia",
+        ".import/**",
+        "export.cfg",
+        "export_credentials.cfg",
+        "*.translation",
+        ".mono/**",
+        "data_*/**",
+        "mono_crash.*.json",
+        "*.apk",
+        "*.aab",
+        ".DS_Store",
+        "Thumbs.db",
+        "*.iml",
+        ".idea/",
+        ".vscode/",
+        ".gradle/",
+        "**/build/",
+        "local.properties",
+        "*.jks",
+        "*.keystore",
+        "keystore.properties",
+        ".cxx/",
+        ".externalNativeBuild/",
+        "*.log",
+        "*.tmp",
+        "*.temp",
+        "*.swp",
+        "*.swo",
+        "*~",
+        ".env"
+      ],
+      "include": [
+        "**/*"
+      ]
+    },
+    "ios": {
+      "exclude": [
+        "android/**",
+        "*.apk",
+        "*.aab",
+        ".gradle/**"
+      ],
+      "include": []
+    }
+  },
+  "project": {
+    "id": "520b6e49-5498-4224-8e38-546c851c2d0a"
+  }
+}
