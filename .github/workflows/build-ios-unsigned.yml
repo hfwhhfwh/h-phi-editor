@@ -85,6 +85,7 @@ jobs:
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
           ARCHS=arm64 \
+          LIBRARY_SEARCH_PATHS="/usr/lib/swift" \
           | xcpretty
 
     # 5. Package .ipa
