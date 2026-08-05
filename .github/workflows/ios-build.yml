@@ -10,9 +10,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4  # 目前 v4 没问题，警告可忽略
+        uses: actions/checkout@v4
 
-      # 1. 下载 Godot 4.6 编辑器及导出模板（不依赖缓存，避免版本混乱）
+      # 1. 下载 Godot 4.6 及导出模板
       - name: Download Godot and export templates
         run: |
           wget -q https://github.com/godotengine/godot-builds/releases/download/4.6-stable/Godot_v4.6-stable_macos.universal.zip
@@ -22,23 +22,34 @@ jobs:
           mkdir -p ~/Library/Application\ Support/Godot/export_templates/4.6.stable
           mv templates/* ~/Library/Application\ Support/Godot/export_templates/4.6.stable
 
-      # 2. （可选）如果项目需要 .NET SDK，macOS runner 已预装，无需额外安装
+      # 2. 确保 .NET SDK 可用（macOS runner 默认有，但显式检查一下）
+      - name: Check .NET SDK
+        run: dotnet --info
 
-      # 3. 打开项目一次，导入资产并还原 NuGet（去掉超时，给予充足时间）
-      - name: Import assets and restore NuGet
-        run: |
-          ./Godot.app/Contents/MacOS/Godot --headless --path . -e
-        # 不加超时，让它正常完成
+      # 3. 删除可能过期的 .godot 缓存（避免 UID 冲突）
+      - name: Clean .godot cache
+        run: rm -rf .godot
 
-      # 4. 执行 iOS 导出
+      # 4. 还原 NuGet 包（可选，但推荐）
+      - name: Restore NuGet packages
+        run: dotnet restore
+
+      # 5. 编译 C# 代码（Godot 的 --build-solutions 会同时还原和编译）
+      - name: Build C# solutions
+        run: ./Godot.app/Contents/MacOS/Godot --headless --path . --build-solutions
+
+      # 6. 导入所有资产（并自动退出）
+      - name: Import assets
+        run: ./Godot.app/Contents/MacOS/Godot --headless --path . -e --quit
+
+      # 7. 导出 iOS 项目
       - name: Export iOS project
-        run: |
-          ./Godot.app/Contents/MacOS/Godot --headless --path . --export-release iOS
+        run: ./Godot.app/Contents/MacOS/Godot --headless --path . --export-release iOS
 
-      # 5. 上传生成的 IPA（路径需与你的导出预设一致）
+      # 8. 上传 IPA（路径请根据你的 export_presets.cfg 调整）
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: MyGame-ipa
-          path: ./build/ios/*.ipa   # 请根据你的 export_presets.cfg 调整
+          path: ./build/ios/*.ipa
           retention-days: 7
