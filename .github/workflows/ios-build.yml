@@ -39,7 +39,7 @@ jobs:
         run: dotnet restore
 
       - name: Build C# project
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Debug
 
       # 5. 让 Godot 导入所有资源并强制退出（此时脚本已编译，场景可加载）
       - name: Import assets
