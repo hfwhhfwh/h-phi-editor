@@ -1,35 +1,61 @@
-name: Build iOS App
 
-on: [push]
+name: 'Godot 4 iOS Export'
+description: 'Export a Godot Engine 4 project to iOS'
+author: 'Simon Dalvai @dulvui'
+branding:
+  color: blue
+  icon: upload-cloud
 
-jobs:
-  build_ios:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+inputs:
+  godot-version:
+    description: 'Godot Engine version. Supported are 4.x versions'
+    required: true
+  godot-channel:
+    description: 'Godot Engine release channel (stable, beta, rc1, rc2, rc3...). Defaults to stable'
+    required: false
+    default: 'stable'
+  working-directory:
+    description: 'The working directory'
+    required: false
+    default: '.'
+  
+runs:
+  using: "composite"
+  steps:
+    - name: Check is running on mac-os
+      if: runner.os != 'macos'
+      shell: bash
+      run: exit 1
+    
+    - name: Cache Godot files
+      id: cache-godot
+      uses: actions/cache@v3
+      with:
+        path: |
+          Godot.app
+           /Users/runner/Library/Application\ Support/Godot/
+        key: ${{ runner.os }}-godot-${{ inputs.godot-version }}-${{ inputs.godot-channel }}
 
-      # 这里需要添加步骤来获取你的 Godot 项目导出的 Xcode 项目
-      # 这可能意味着你需要先在本地导出 Xcode 项目并上传到仓库，或在 CI 中通过命令行导出。
+    - name: Download and config Godot Engine linux server and templates
+      shell: bash
+      if: steps.cache-godot.outputs.cache-hit != 'true'
+      run: |
+        wget -q https://github.com/godotengine/godot-builds/releases/download/${{ inputs.godot-version }}-${{ inputs.godot-channel}}/Godot_v${{ inputs.godot-version }}-${{ inputs.godot-channel}}_macos.universal.zip
+        wget -q https://github.com/godotengine/godot-builds/releases/download/${{ inputs.godot-version }}-${{ inputs.godot-channel}}/Godot_v${{ inputs.godot-version }}-${{ inputs.godot-channel}}_export_templates.tpz
+        unzip Godot_v${{ inputs.godot-version }}-${{ inputs.godot-channel}}_macos.universal.zip
+        unzip Godot_v${{ inputs.godot-version }}-${{ inputs.godot-channel}}_export_templates.tpz
+        mkdir -p ~/Library/Application\ Support/Godot/export_templates/${{ inputs.godot-version }}.${{ inputs.godot-channel}}
+        mv templates/* ~/Library/Application\ Support/Godot/export_templates/${{ inputs.godot-version }}.${{ inputs.godot-channel}}
 
-      - name: Build archive and create IPA
-        run: |
-          # 假设你的 Xcode 项目名为 'HPhiEditor.xcodeproj'
-          xcodebuild archive \
-            -project HPhiEditor.xcodeproj \
-            -scheme 'HPhiEditor' \
-            -archivePath HPhiEditor.xcarchive \
-            -configuration Release \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO
+    - name: Install coreutils for gtimeout
+      shell: bash
+      run: brew install coreutils
 
-          # 创建 .ipa 文件
-          mkdir Payload
-          mv HPhiEditor.xcarchive/Products/Applications/HPhiEditor.app Payload/
-          zip -r "HPhiEditor.ipa" "Payload"
+    - name: Open project once to import assets
+      shell: bash
+      continue-on-error: true # timeout will exit with code 124
+      run: gtimeout 60 ./Godot.app/Contents/MacOS/Godot --headless --path ${{ inputs.working-directory }} -e
 
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: HPhiEditor-ipa
-          path: HPhiEditor.ipa
+    - name: Godot iOS export
+      shell: bash
+      run: ./Godot.app/Contents/MacOS/Godot --headless --path ${{ inputs.working-directory }} --export-release iOS
