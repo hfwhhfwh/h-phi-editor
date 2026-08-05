@@ -3,25 +3,42 @@ name: Build iOS IPA
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # 允许手动触发
+  workflow_dispatch:
 
 jobs:
-  export_ios:
+  build_ios:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # 目前 v4 没问题，警告可忽略
 
-      - name: Export iOS project using Godot 4.6
-        uses: dulvui/godot4-ios-export@v1
-        with:
-          godot-version: 4.6
-          godot-channel: stable   # 可以是 beta, rc1 等
-          working-directory: .    # 你的项目根目录
+      # 1. 下载 Godot 4.6 编辑器及导出模板（不依赖缓存，避免版本混乱）
+      - name: Download Godot and export templates
+        run: |
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6-stable/Godot_v4.6-stable_macos.universal.zip
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6-stable/Godot_v4.6-stable_export_templates.tpz
+          unzip -q Godot_v4.6-stable_macos.universal.zip
+          unzip -q Godot_v4.6-stable_export_templates.tpz
+          mkdir -p ~/Library/Application\ Support/Godot/export_templates/4.6.stable
+          mv templates/* ~/Library/Application\ Support/Godot/export_templates/4.6.stable
 
-      - name: Upload IPA artifact
+      # 2. （可选）如果项目需要 .NET SDK，macOS runner 已预装，无需额外安装
+
+      # 3. 打开项目一次，导入资产并还原 NuGet（去掉超时，给予充足时间）
+      - name: Import assets and restore NuGet
+        run: |
+          ./Godot.app/Contents/MacOS/Godot --headless --path . -e
+        # 不加超时，让它正常完成
+
+      # 4. 执行 iOS 导出
+      - name: Export iOS project
+        run: |
+          ./Godot.app/Contents/MacOS/Godot --headless --path . --export-release iOS
+
+      # 5. 上传生成的 IPA（路径需与你的导出预设一致）
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: MyGame-ipa
-          path: ./build/ios/*.ipa   # 根据实际导出路径调整
+          path: ./build/ios/*.ipa   # 请根据你的 export_presets.cfg 调整
           retention-days: 7
