@@ -33,6 +33,7 @@ jobs:
           "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_mono_macos.universal.zip" \
           -o godot.zip
         unzip -q godot.zip -d godot
+        ls -la godot/  # 看看实际解压出来叫什么
         
     # 2. Copy iOS export template from repo folder
     #    TODO: To save some bandwidth, I decided to store export template in the repository. (180 MB vs over 1 GB)
@@ -52,7 +53,7 @@ jobs:
     - name: Export to Xcode project
       run: |
         mkdir -p build/ios
-        godot/Godot.app/Contents/MacOS/Godot --headless --path . \
+        godot/Godot_mono.app/Contents/MacOS/Godot --headless --path . \
           --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
 
     # 4. Build unsigned archive (mirrors mak448a/build-ios)
