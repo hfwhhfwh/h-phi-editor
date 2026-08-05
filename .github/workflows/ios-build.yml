@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. 下载 Godot 4.6 及导出模板
+      # 1. 下载 Godot 4.6 编辑器及导出模板
       - name: Download Godot and export templates
         run: |
           wget -q https://github.com/godotengine/godot-builds/releases/download/4.6-stable/Godot_v4.6-stable_macos.universal.zip
@@ -22,34 +22,44 @@ jobs:
           mkdir -p ~/Library/Application\ Support/Godot/export_templates/4.6.stable
           mv templates/* ~/Library/Application\ Support/Godot/export_templates/4.6.stable
 
-      # 2. 确保 .NET SDK 可用（macOS runner 默认有，但显式检查一下）
+      # 2. 检查 .NET SDK 版本（Godot 4.6 需要 .NET 8）
       - name: Check .NET SDK
         run: dotnet --info
 
-      # 3. 删除可能过期的 .godot 缓存（避免 UID 冲突）
-      - name: Clean .godot cache
-        run: rm -rf .godot
+      # 3. 清理所有可能的缓存（彻底）
+      - name: Clean caches
+        run: |
+          rm -rf .godot
+          rm -rf obj
+          rm -rf bin
+          find . -name "*.csproj.user" -delete
 
-      # 4. 还原 NuGet 包（可选，但推荐）
+      # 4. 手动还原和编译 C# 项目（关键！）
       - name: Restore NuGet packages
         run: dotnet restore
 
-      # 5. 编译 C# 代码（Godot 的 --build-solutions 会同时还原和编译）
-      - name: Build C# solutions
-        run: ./Godot.app/Contents/MacOS/Godot --headless --path . --build-solutions
+      - name: Build C# project
+        run: dotnet build --configuration Release
 
-      # 6. 导入所有资产（并自动退出）
+      # 5. 让 Godot 导入所有资源并强制退出（此时脚本已编译，场景可加载）
       - name: Import assets
-        run: ./Godot.app/Contents/MacOS/Godot --headless --path . -e --quit
+        run: |
+          ./Godot.app/Contents/MacOS/Godot --headless --path . -e --quit || true
+          # 即使有错误也继续，因为 Godot 可能返回非零但已完成导入
 
-      # 7. 导出 iOS 项目
+      # 6. 再次触发 Godot 的 C# 编译（确保绑定生成）
+      - name: Build solutions with Godot
+        run: |
+          ./Godot.app/Contents/MacOS/Godot --headless --path . --build-solutions --quit || true
+
+      # 7. 导出 iOS 项目（如果预设名不是 "iOS"，请修改）
       - name: Export iOS project
         run: ./Godot.app/Contents/MacOS/Godot --headless --path . --export-release iOS
 
-      # 8. 上传 IPA（路径请根据你的 export_presets.cfg 调整）
+      # 8. 上传 IPA
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: MyGame-ipa
-          path: ./build/ios/*.ipa
+          path: ./build/ios/*.ipa   # 请根据你的 export_presets.cfg 调整
           retention-days: 7
