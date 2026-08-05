@@ -1,0 +1,92 @@
+name: Build iOS (unsigned IPA)
+
+# 触发条件：推送 main 分支 + 手动触发
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.6-stable        # ← 修改为你需要的 Godot 版本
+  IOS_PRESET:    iOS                # Godot 导出预设的名称
+  NAME:          ${{ github.event.repository.name }}
+  HOMEBREW_NO_AUTO_UPDATE: 1       # 禁止 brew 自动更新以节省时间
+
+jobs:
+  build-ios:
+    runs-on: macos-14               # Apple Silicon runner，自带 Xcode 16
+    timeout-minutes: 30
+    steps:
+      # 1. 拉取仓库代码（含 LFS）
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # 2. 下载 Godot headless 版本（用于命令行导出）
+      - name: Download Godot headless
+        run: |
+          curl -L \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_macos.universal.zip" \
+            -o godot.zip
+          unzip -q godot.zip -d godot
+
+      # 3. 安装 iOS 导出模板
+      # 不再需要 export_templates/ios.zip，改为自动下载
+      - name: Download and install iOS export template
+        run: |
+          TEMPLATES_DIR="$HOME/Library/Application Support/Godot/export_templates"
+          mkdir -p "$TEMPLATES_DIR"
+          
+          # 从 Godot 官方 Releases 下载 iOS 模板
+          curl -L \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz" \
+            -o templates.tpz
+          
+          # 解压并提取 ios.zip
+          unzip -q templates.tpz -d templates_temp
+          cp templates_temp/templates/ios.zip "$TEMPLATES_DIR/4.6.stable/ios.zip"
+
+      # 4. 用 Godot 导出为 Xcode 项目
+      #     注意：导出预设中需开启：
+      #       application/export_project_only=true
+      #       application/delete_old_export_files_unconditionally=true
+      - name: Export to Xcode project
+        run: |
+          mkdir -p build/ios
+          godot/Godot.app/Contents/MacOS/Godot --headless --path . \
+            --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
+
+      # 5. 用 xcodebuild 构建未签名的 archive
+      #     关键：CODE_SIGN_IDENTITY="" + CODE_SIGNING_ALLOWED=NO
+      - name: xcodebuild archive (unsigned)
+        run: |
+          xcodebuild archive \
+            -project build/ios/${NAME}.xcodeproj \
+            -scheme "${NAME}" \
+            -archivePath build/ios/App.xcarchive \
+            -configuration Release \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+
+            | xcpretty
+
+      # 6. 打包 .app 为 .ipa
+      - name: Package IPA
+        run: |
+          cd build/ios
+          mkdir -p Payload
+          cp -R App.xcarchive/Products/Applications/*.app Payload/
+          zip -r "${NAME}.ipa" Payload
+          mv "${NAME}.ipa" ../../
+
+      # 7. 上传产物作为 Artifact
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-ipa
+          path: ${{ env.NAME }}.ipa
+          retention-days: 14
