@@ -23,13 +23,21 @@ jobs:
         with:
           lfs: true
 
-      # 2. 下载 Godot headless 版本（用于命令行导出）
-      - name: Download Godot headless
+       # 1. 下载 Godot .NET 版本（带 Mono 支持）
+      - name: Download Godot .NET (mono)
         run: |
           curl -L \
-            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_macos.universal.zip" \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_mono_macos.universal.zip" \
             -o godot.zip
           unzip -q godot.zip -d godot
+          # 将可执行文件移出嵌套目录以便调用
+          mv godot/Godot_mono.app godot/Godot.app
+
+      # 2. 安装 .NET SDK（macOS-14 自带，但确保可用）
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
       # 3. 安装 iOS 导出模板
       # 不再需要 export_templates/ios.zip，改为自动下载
