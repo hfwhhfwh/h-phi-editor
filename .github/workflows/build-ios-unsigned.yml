@@ -40,7 +40,7 @@ jobs:
 
           # 只下载 iOS 导出模板（约 180 MB）
           curl -L \
-            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/ios.zip" \
+            "https://github.com/godotengine/godot-builds/releases/download/4.6.2-stable/Godot_v4.6.2-stable_export_templates.tpz" \
             -o "$TEMPLATES_DIR/ios.zip"
 
       # 4. 用 Godot 导出为 Xcode 项目
