@@ -3,6 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 public partial class StartMenu : Node
 {
@@ -16,6 +17,8 @@ public partial class StartMenu : Node
     private FileDialogManager fileDialogManager;
 
     private string _currentSelectedChartId;
+
+    [Export] private Label testLabel;
 
     public override void _Ready()
     {
@@ -39,6 +42,20 @@ public partial class StartMenu : Node
 
         // 初始化列表
         RefreshChartList();
+
+        //debug
+        if (OS.HasFeature("ios"))
+        {
+            testLabel.Text = "运行平台:ios";
+        }
+        else if (OS.GetCmdlineUserArgs().Contains("simulate_ios"))
+        {
+            testLabel.Text = "运行平台:simulate_ios";
+        }
+        else
+        {
+            testLabel.Text = "运行平台:";
+        }
     }
 
     private void RefreshChartList()
@@ -64,7 +81,7 @@ public partial class StartMenu : Node
             (path) =>
             {
                 if(string.IsNullOrEmpty(path)) return;
-                
+
                 _chartService.ImportChart(path);
                 RefreshChartList();
             },
