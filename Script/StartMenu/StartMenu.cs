@@ -60,9 +60,11 @@ public partial class StartMenu : Node
     public void OnImportButtonPressed()
     {
         string[] filters = {"*.*;所有文件;"};
-        fileDialogManager.ShowNativeOpenDialog(
+        fileDialogManager.ShowOpenDialog(
             (path) =>
             {
+                if(string.IsNullOrEmpty(path)) return;
+                
                 _chartService.ImportChart(path);
                 RefreshChartList();
             },

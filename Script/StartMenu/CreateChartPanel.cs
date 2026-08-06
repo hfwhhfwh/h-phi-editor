@@ -30,7 +30,7 @@ public partial class CreateChartPanel : PanelContainer
 		{
 			"*.mp3,*.wav,*.ogg,*.flac,*.aac,*.m4a,*.wma,*.aiff;音频文件;audio/mpeg,audio/x-wav,audio/ogg,audio/flac,audio/aac,audio/mp4,audio/x-ms-wma,audio/aiff"
 		};
-		fileDialogManager.ShowNativeOpenDialog(
+		fileDialogManager.ShowOpenDialog(
             (path) =>
             {
                 _musicPathEdit.Text = path;
@@ -46,7 +46,7 @@ public partial class CreateChartPanel : PanelContainer
         {
             "*.png,*.jpg,*.jpeg,*.bmp,*.webp;图像文件;image/png,image/jpg,image/jpeg,image/bmp,image/webp"
         };
-		fileDialogManager.ShowNativeOpenDialog(
+		fileDialogManager.ShowOpenDialog(
             (path) =>
             {
                 _picPathEdit.Text = path;
