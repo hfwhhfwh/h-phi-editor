@@ -162,6 +162,13 @@ theme_override_styles/disabled = ExtResource("1_20fd0")
 theme_override_styles/focus = ExtResource("1_20fd0")
 text = "删除"
 
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/Main/HBoxContainer/EditOptions" unique_id=335335076]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme = ExtResource("2_4otsm")
+text = "版本:2026年8月6日18:35:11"
+autowrap_mode = 1
+
 [node name="CreateChartPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1838436379 node_paths=PackedStringArray("_nameEdit", "_musicPathEdit", "_picPathEdit", "_bpmEdit", "_composerEdit", "_charterEdit", "_picTextureRect")]
 visible = false
 layout_mode = 2
