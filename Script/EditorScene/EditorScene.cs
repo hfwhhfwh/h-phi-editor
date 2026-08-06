@@ -154,7 +154,7 @@ public partial class EditorScene : Node
         if (bgImage == null)
         {
             GD.PrintErr($"[{this.Name}] 背景图片导入失败");
-            return;
+            //return;
         }
         //TODO 图片模糊效果
         // chartPlayer2.bgImage = bgImage;
@@ -165,7 +165,7 @@ public partial class EditorScene : Node
         if (audioStream == null)
         {
             GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
-            return;
+            //return;
         }
 
         chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream);

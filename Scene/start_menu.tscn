@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://qa3xs6cd7ogw" path="res://Script/StartMenu/StartMenu.cs" id="1_4qtu7"]
 [ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_20fd0"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="2_4otsm"]
 [ext_resource type="Script" uid="uid://oi0nad78m6cc" path="res://Script/UI/ChartList.cs" id="3_6k74u"]
 [ext_resource type="PackedScene" uid="uid://byp55t3wek7jr" path="res://Scene/chart_list_item.tscn" id="4_6k74u"]
 [ext_resource type="StyleBox" uid="uid://dx6dd4bb0sw41" path="res://Panel.tres" id="5_jikgm"]
@@ -13,13 +14,14 @@
 [ext_resource type="Script" uid="uid://bslsq2gjtb1th" path="res://Script/StartMenu/ExportPanel.cs" id="11_1kda2"]
 [ext_resource type="Texture2D" uid="uid://ejl1hu2xxquy" path="res://icon.svg" id="11_7eatm"]
 
-[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel")]
+[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "testLabel")]
 script = ExtResource("1_4qtu7")
 _chartList = NodePath("PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer/ChartList")
 _createPanel = NodePath("PanelContainer/SafeArea/CreateChartPanel")
 _deletePanel = NodePath("PanelContainer/SafeArea/DeletePanel")
 _infoPanel = NodePath("PanelContainer/SafeArea/InfoPanel")
 _exportPanel = NodePath("PanelContainer/SafeArea/ExportPanel")
+testLabel = NodePath("PanelContainer/SafeArea/Main/Head/TestText")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=127864174]
 anchors_preset = 15
@@ -47,6 +49,13 @@ layout_mode = 2
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "H Phi Editer"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TestText" type="Label" parent="PanelContainer/SafeArea/Main/Head" unique_id=410336608]
+layout_mode = 2
+theme = ExtResource("2_4otsm")
+text = "TestText"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -152,6 +161,13 @@ theme_override_styles/hover = ExtResource("1_20fd0")
 theme_override_styles/disabled = ExtResource("1_20fd0")
 theme_override_styles/focus = ExtResource("1_20fd0")
 text = "删除"
+
+[node name="Label" type="Label" parent="PanelContainer/SafeArea/Main/HBoxContainer/EditOptions" unique_id=335335076]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme = ExtResource("2_4otsm")
+text = "版本:2026年8月6日19:43:09"
+autowrap_mode = 1
 
 [node name="CreateChartPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1838436379 node_paths=PackedStringArray("_nameEdit", "_musicPathEdit", "_picPathEdit", "_bpmEdit", "_composerEdit", "_charterEdit", "_picTextureRect")]
 visible = false
