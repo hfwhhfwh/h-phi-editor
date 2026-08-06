@@ -5,10 +5,27 @@ using System.Linq;
 public partial class FileDialogManager : Node
 {   
 
+    /// <summary>
+    /// 判断是否处于 iOS 环境（真机或模拟）
+    /// </summary>
+    private bool IsIOS()
+    {
+        if (OS.HasFeature("ios"))
+        {
+            return true;
+        }
+        if (OS.GetCmdlineUserArgs().Contains("simulate_ios"))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public void ShowOpenDialog(Action<string> onFileSelected, string[] filters = null)
     {
         // iOS 不支持原生文件对话框，使用内置的
-        if (OS.HasFeature("ios") || OS.GetCmdlineUserArgs().Contains("simulate_ios"))
+        if (IsIOS())
         {
             ShowBuiltInOpenDialog(onFileSelected, filters);
         }
@@ -48,7 +65,7 @@ public partial class FileDialogManager : Node
         ));
     }
 
-    public void ShowNativeOpenDialog(Action<string> onFileSelected)
+    private void ShowNativeOpenDialog(Action<string> onFileSelected)
     {
         string[] filters = ["*.*"];
         ShowNativeOpenDialog(onFileSelected, filters);
@@ -60,6 +77,9 @@ public partial class FileDialogManager : Node
         dialog.FileMode = FileDialog.FileModeEnum.OpenFile;
         dialog.Access = FileDialog.AccessEnum.Filesystem;
         dialog.UseNativeDialog = false;
+
+        // 关键修复：iOS 上用 OS.GetUserDataDir() 代替 OS.GetSystemDir()
+        dialog.CurrentPath = OS.GetUserDataDir() + "/";
         
         if (filters != null)
         {
@@ -76,7 +96,7 @@ public partial class FileDialogManager : Node
 
     public void SaveFile(Action<string> onFileSelected, string[] filters)
     {
-        if (OS.HasFeature("ios") || OS.GetCmdlineUserArgs().Contains("simulate_ios"))
+        if (IsIOS())
         {
             ShowBuiltInSaveDialog(onFileSelected, filters);
         }
@@ -125,7 +145,9 @@ public partial class FileDialogManager : Node
         dialog.Access = FileDialog.AccessEnum.Filesystem;
         dialog.UseNativeDialog = false;
         dialog.Title = "保存文件";
-        dialog.CurrentPath = OS.GetSystemDir(OS.SystemDir.Documents) + "/";
+
+        // 关键修复：iOS 上用 OS.GetUserDataDir() 代替 OS.GetSystemDir()
+        dialog.CurrentPath = OS.GetUserDataDir() + "/";
 
         if (filters != null)
         {
