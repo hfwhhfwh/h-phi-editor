@@ -4,6 +4,7 @@ name: Build iOS (unsigned IPA)
 on:
   push:
     branches: [main]
+    branches: [test-ios-build]
   workflow_dispatch:
 
 env:
