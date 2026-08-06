@@ -3,8 +3,7 @@ name: Build iOS (unsigned IPA)
 # Run on every push to main + on demand (workflow_dispatch)
 on:
   push:
-    branches: [main]
-    branches: [test-ios-build]
+    branches: [main, test-ios-build]
   workflow_dispatch:
 
 env:
