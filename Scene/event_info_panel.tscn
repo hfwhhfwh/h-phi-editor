@@ -1,18 +1,70 @@
 [gd_scene format=3 uid="uid://bpkv57wpohu8e"]
 
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_wt3vp"]
-[ext_resource type="Script" uid="uid://bl8mxo8dgxy7k" path="res://Script/EditorScene/EventInfoPanel.cs" id="2_e7nb6"]
-[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="2_hxnlg"]
+[ext_resource type="Script" uid="uid://ci2ua0jh7hpa5" path="res://Script/EditorScene/LineEventEditPanel.cs" id="2_4bniu"]
 
-[node name="EventInfoPanel" type="Panel" unique_id=1587088222 node_paths=PackedStringArray("infoEditPanel")]
+[node name="EventInfoPanel" type="Panel" unique_id=1587088222 node_paths=PackedStringArray("_container", "_titleLabel", "_confirmButton")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_wt3vp")
-script = ExtResource("2_e7nb6")
-infoEditPanel = NodePath("InfoEditPanel")
+script = ExtResource("2_4bniu")
+_container = NodePath("MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer")
+_titleLabel = NodePath("MarginContainer/VBoxContainer/Label")
+_confirmButton = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Button")
 
-[node name="InfoEditPanel" parent="." unique_id=1498111790 instance=ExtResource("2_hxnlg")]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1630262005]
 layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=2056269721]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1692395600]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme = ExtResource("1_wt3vp")
+text = "正在编辑：{Text}"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=2037398000]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=1164943631]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Item" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=954857362]
+visible = false
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/Item" unique_id=1573900208]
+layout_mode = 2
+text = "项目名称"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/Item" unique_id=867787955]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1777689381]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=448241619]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "确定"

@@ -7,30 +7,30 @@ public partial class TestSceneEasingEditor : Node
 
     public override void _Ready()
     {
-        base._Ready();
+        // base._Ready();
 
-        easingEditor.EasingFuncChanged += OnEasingFuncChanged;
-        easingEditor.EasingIOChanged += OnEasingIOChanged;
-        easingEditor.EasingLeftChanged += OnEasingLeftChanged;
-        easingEditor.EasingRightChanged += OnEasingRightChanged;
+        // easingEditor.EasingFuncChanged += OnEasingFuncChanged;
+        // easingEditor.EasingIOChanged += OnEasingIOChanged;
+        // easingEditor.EasingLeftChanged += OnEasingLeftChanged;
+        // easingEditor.EasingRightChanged += OnEasingRightChanged;
 
-        easingEditor.Init(
-            EasingFunc.Sine,
-            EasingIO.In,
-            0f,
-            1f
-        );
+        // easingEditor.Init(
+        //     EasingFunc.Sine,
+        //     EasingIO.In,
+        //     0f,
+        //     1f
+        // );
 
     }
 
     public override void _ExitTree()
     {
-        base._ExitTree();
+        // base._ExitTree();
 
-        easingEditor.EasingFuncChanged -= OnEasingFuncChanged;
-        easingEditor.EasingIOChanged -= OnEasingIOChanged;
-        easingEditor.EasingLeftChanged -= OnEasingLeftChanged;
-        easingEditor.EasingRightChanged -= OnEasingRightChanged;
+        // easingEditor.EasingFuncChanged -= OnEasingFuncChanged;
+        // easingEditor.EasingIOChanged -= OnEasingIOChanged;
+        // easingEditor.EasingLeftChanged -= OnEasingLeftChanged;
+        // easingEditor.EasingRightChanged -= OnEasingRightChanged;
     }
 
 
