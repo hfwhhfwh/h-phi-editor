@@ -72,8 +72,7 @@ jobs:
     # 4. Build unsigned archive (mirrors mak448a/build-ios)
     - name: xcodebuild archive (unsigned)
       run: |
-        # 先清理 DerivedData，避免缓存问题
-        rm -rf ~/Library/Developer/Xcode/DerivedData
+        set -o pipefail  # 关键：管道中任一命令失败就退出
         
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
@@ -89,9 +88,12 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
-          IPHONEOS_DEPLOYMENT_TARGET=13.0 \
-          LD_RUNPATH_SEARCH_PATHS="/usr/lib/swift" \
+          IPHONEOS_DEPLOYMENT_TARGET=14.0 \
+          OTHER_LDFLAGS="-ld_classic" \
           | xcpretty
+
+    - name: Verify archive exists
+      run: ls -R build/ios/
 
     # 5. Package .ipa
     - name: Package IPA
