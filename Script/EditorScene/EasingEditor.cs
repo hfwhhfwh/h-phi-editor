@@ -36,17 +36,17 @@ public partial class EasingEditor : Control
 		if (_isReady) RefreshUI();
 		
 
-		currentEasingFunc = easingFunc;
-		easingFuncOptionButton.Select((int)easingFunc);
+		// currentEasingFunc = easingFunc;
+		// easingFuncOptionButton.Select((int)easingFunc);
 
-		currentEasingIO = easingIO;
-		easingIOOptionButton.Select((int)easingIO);
+		// currentEasingIO = easingIO;
+		// easingIOOptionButton.Select((int)easingIO);
 
-		currentEasingLeft = easingLeft;
-		easingLeftLineEdit.Text = $"{easingLeft}";
+		// currentEasingLeft = easingLeft;
+		// easingLeftLineEdit.Text = $"{easingLeft}";
 
-		currentEasingRight = easingRight;
-		easingRightLineEdit.Text = $"{easingRight}";
+		// currentEasingRight = easingRight;
+		// easingRightLineEdit.Text = $"{easingRight}";
 
 	}
 
