@@ -72,6 +72,9 @@ jobs:
     # 4. Build unsigned archive (mirrors mak448a/build-ios)
     - name: xcodebuild archive (unsigned)
       run: |
+        # 先清理 DerivedData，避免缓存问题
+        rm -rf ~/Library/Developer/Xcode/DerivedData
+        
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
           -scheme "${NAME}" \
@@ -87,6 +90,7 @@ jobs:
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
           IPHONEOS_DEPLOYMENT_TARGET=13.0 \
+          LD_RUNPATH_SEARCH_PATHS="/usr/lib/swift" \
           | xcpretty
 
     # 5. Package .ipa
