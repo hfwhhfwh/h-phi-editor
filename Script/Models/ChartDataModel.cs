@@ -215,7 +215,7 @@ namespace QuickType
         [JsonProperty("eventLayers")]
         public EventLayer[] EventLayers { get; set; }
 
-        [JsonProperty("extended")]
+        [JsonProperty("extended", NullValueHandling = NullValueHandling.Ignore)]
         public Extended Extended { get; set; }
 
         [JsonProperty("father")]
@@ -355,11 +355,11 @@ namespace QuickType
 
     public partial class Extended
     {
-        [JsonProperty("inclineEvents")]
+        [JsonProperty("inclineEvents", NullValueHandling = NullValueHandling.Ignore)]
         public LineEvent[] InclineEvents { get; set; }
 
         [JsonProperty("colorEvents", NullValueHandling = NullValueHandling.Ignore)]
-        public LineEvent[] ColorEvents { get; set; }
+        public ColorEvent[] ColorEvents { get; set; }
 
         [JsonProperty("scaleXEvents", NullValueHandling = NullValueHandling.Ignore)]
         public LineEvent[] ScaleXEvents { get; set; }
@@ -368,40 +368,40 @@ namespace QuickType
         public LineEvent[] ScaleYEvents { get; set; }
 
         [JsonProperty("textEvents", NullValueHandling = NullValueHandling.Ignore)]
-        public LineEvent[] TextEvents { get; set; }
+        public TextEvent[] TextEvents { get; set; }
     }
 
     public partial class ColorEvent
     {
         [JsonProperty("bezier")]
-        public long Bezier { get; set; }
+        public bool Bezier { get; set; }
 
         [JsonProperty("bezierPoints")]
-        public long[] BezierPoints { get; set; }
+        public float[] BezierPoints { get; set; }
 
         [JsonProperty("easingLeft")]
-        public long EasingLeft { get; set; }
+        public float EasingLeft { get; set; }
 
         [JsonProperty("easingRight")]
-        public long EasingRight { get; set; }
+        public float EasingRight { get; set; }
 
         [JsonProperty("easingType")]
-        public long EasingType { get; set; }
+        public int EasingType { get; set; }
 
         [JsonProperty("end")]
-        public long[] End { get; set; }
+        public int[] End { get; set; }
 
         [JsonProperty("endTime")]
-        public long[] EndTime { get; set; }
+        public int[] EndTime { get; set; }
 
         [JsonProperty("linkgroup")]
-        public long Linkgroup { get; set; }
+        public int Linkgroup { get; set; }
 
         [JsonProperty("start")]
-        public long[] Start { get; set; }
+        public int[] Start { get; set; }
 
         [JsonProperty("startTime")]
-        public long[] StartTime { get; set; }
+        public int[] StartTime { get; set; }
     }
 
     public partial class TextEvent
