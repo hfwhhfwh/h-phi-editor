@@ -109,10 +109,10 @@ public partial class InfoEditPanel : Control
 		{
 			return CreateBeatEditor(key, (Beat)value);
 		}
-		else if (type == typeof(EasingData))
-		{
-			return CreateEasingEditor(key, (EasingData)value);
-		}
+		// else if (type == typeof(EasingData))
+		// {
+		// 	// return CreateEasingEditor(key, (EasingData)value);
+		// }
 		else
 		{
 			// 未知类型回退为字符串输入（调用 ToString）
@@ -298,45 +298,45 @@ public partial class InfoEditPanel : Control
 		return hBoxContainer;
 	}
 
-	private Control CreateEasingEditor(string key, EasingData easingData)
-	{
-		EasingEditor editor = new();
-		// 初始化显示
-		editor.Init(
-			easingData.EasingFunc, 
-			easingData.EasingIO, 
-			easingData.EasingLeft, 
-			easingData.EasingRight
-		);
+	// private Control CreateEasingEditor(string key, EasingData easingData)
+	// {
+	// 	EasingEditor editor = new();
+	// 	// 初始化显示
+	// 	editor.Init(
+	// 		easingData.EasingFunc, 
+	// 		easingData.EasingIO, 
+	// 		easingData.EasingLeft, 
+	// 		easingData.EasingRight
+	// 	);
 
-		// 订阅所有子属性变更事件，更新数据并触发父级变化
-		editor.EasingFuncChanged += (newFunc) =>
-		{
-			var data = (EasingData)_data.Properties[key];
-			data.EasingFunc = newFunc;
-			OnValueChanged(key, data);
-		};
-		editor.EasingIOChanged += (newIO) =>
-		{
-			var data = (EasingData)_data.Properties[key];
-			data.EasingIO = newIO;
-			OnValueChanged(key, data);
-		};
-		editor.EasingLeftChanged += (newLeft) =>
-		{
-			var data = (EasingData)_data.Properties[key];
-			data.EasingLeft = newLeft;
-			OnValueChanged(key, data);
-		};
-		editor.EasingRightChanged += (newRight) =>
-		{
-			var data = (EasingData)_data.Properties[key];
-			data.EasingRight = newRight;
-			OnValueChanged(key, data);
-		};
+	// 	// 订阅所有子属性变更事件，更新数据并触发父级变化
+	// 	editor.EasingFuncChanged += (newFunc) =>
+	// 	{
+	// 		var data = (EasingData)_data.Properties[key];
+	// 		data.EasingFunc = newFunc;
+	// 		OnValueChanged(key, data);
+	// 	};
+	// 	editor.EasingIOChanged += (newIO) =>
+	// 	{
+	// 		var data = (EasingData)_data.Properties[key];
+	// 		data.EasingIO = newIO;
+	// 		OnValueChanged(key, data);
+	// 	};
+	// 	editor.EasingLeftChanged += (newLeft) =>
+	// 	{
+	// 		var data = (EasingData)_data.Properties[key];
+	// 		data.EasingLeft = newLeft;
+	// 		OnValueChanged(key, data);
+	// 	};
+	// 	editor.EasingRightChanged += (newRight) =>
+	// 	{
+	// 		var data = (EasingData)_data.Properties[key];
+	// 		data.EasingRight = newRight;
+	// 		OnValueChanged(key, data);
+	// 	};
 
-		return editor;
-	}
+	// 	return editor;
+	// }
 
 	public void OnValueChanged(string key, object value)
 	{

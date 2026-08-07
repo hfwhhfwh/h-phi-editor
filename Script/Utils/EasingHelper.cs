@@ -203,13 +203,18 @@ public static class EasingHelper
         return x1 + (x2-x1) * CutInterpolate(t, easingType, left, right);
     }
     
+    public static bool IsNumberValid(int num)
+    {
+        return num >= 0 && num <= 29;
+    }
+
     public static class Convert
     {
         public static ValueTuple<EasingFunc, EasingIO> NumberToEasing(int num)
         {
             switch (num)
             {
-                case 0: return (EasingFunc.Linear, EasingIO.In); // Fixed
+                case 0: return (EasingFunc.Linear, EasingIO.In);   // Fixed
                 case 1: return (EasingFunc.Linear, EasingIO.In);   // Linear
                 case 2: return (EasingFunc.Sine, EasingIO.Out);    // easeOutSine
                 case 3: return (EasingFunc.Sine, EasingIO.In);     // easeInSine

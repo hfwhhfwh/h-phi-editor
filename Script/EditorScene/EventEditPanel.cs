@@ -254,7 +254,7 @@ public partial class EventEditPanel : BaseEditPanel
         multiMesh.SetInstanceColor(id, toAddModulate);
     }
 
-	private void DeselectAll()
+	public void DeselectAll()
 	{
 		selectedEvents.Clear();
 	}

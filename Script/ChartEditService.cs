@@ -230,13 +230,16 @@ public partial class ChartEditService : Node
 
     public void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
+        List<LineEvent> lineEvents = 
+            EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+        
         LineEvent lineEvent = new()
         {
             Bezier = false,
             EasingLeft = 0f,
             EasingRight = 1f,
-            EasingType = 0, // fixed
-            Start = 0f,
+            EasingType = 1, // fixed/linear
+            Start = 0f, // TODO 事件的默认值为上一个事件的末尾值
             End = 0f,
             StartTime = startBeat.Values,
             EndTime = endBeat.Values
@@ -246,11 +249,15 @@ public partial class ChartEditService : Node
         ChartDataHelper.SetEventStartTime(lineEvent, startBeat.Values, EditingChart.BpmList);
         ChartDataHelper.SetEventEndTime(lineEvent, endBeat.Values, EditingChart.BpmList);
 
-        List<LineEvent> lineEvents = 
-            EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
-
+        // 设置事件的默认值为上一个事件的末尾值
+        int lastEventIndex = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
+        LineEvent lastEvent = lineEvents[lastEventIndex];
+        lineEvent.Start = lastEvent.End;
+        lineEvent.End = lastEvent.End;
         
-        InsertLineEventSorted(lineEvents, lineEvent); // 添加音符时 必须 直接插入到合适的位置
+        // 添加音符时 必须 直接插入到合适的位置
+        //InsertLineEventSorted(lineEvents, lineEvent); 
+        lineEvents.Insert(lastEventIndex + 1, lineEvent);
 
         // 速度事件需要刷新前缀和
         if(lineEventEnum == LineEventEnum.Speed)
@@ -277,6 +284,64 @@ public partial class ChartEditService : Node
         int index = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
 
         lineEvents.Insert(index + 1, lineEvent);
+    }
+
+    public void SetEventProperty(
+        int lineId, LineEventEnum lineEventEnum, int index,
+        LineEventPropertyType property, object value)
+    {
+        List<LineEvent> lineEvents = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+        LineEvent lineEvent = lineEvents[index];
+
+        switch (property)
+        {
+            case LineEventPropertyType.StartTime:
+                // 【关键】重新计算秒数
+                ChartDataHelper.SetEventStartTime(lineEvent, ((Beat)value).Values, EditingChart.BpmList);
+                break;
+            case LineEventPropertyType.EndTime:
+                ChartDataHelper.SetEventEndTime(lineEvent, ((Beat)value).Values, EditingChart.BpmList);
+                break;
+            case LineEventPropertyType.Start:
+                lineEvent.Start = (float)value;
+                break;
+            case LineEventPropertyType.End:
+                lineEvent.End = (float)value;
+                break;
+            case LineEventPropertyType.EasingType:
+                lineEvent.EasingType = (int)value;
+                break;
+            case LineEventPropertyType.EasingLeft:
+                lineEvent.EasingLeft = (float)value;
+                break;
+            case LineEventPropertyType.EasingRight:
+                lineEvent.EasingRight = (float)value;
+                break;
+            case LineEventPropertyType.Bezier:
+                lineEvent.Bezier = (bool)value;
+                break;
+            default:
+                throw new ArgumentException($"未知的属性类型: {property}");
+        }
+
+        // 【关键】如果修改了时间，需要确保事件列表仍然按 startSec 有序
+        // 因为用户可能将时间改到另一个事件之前/之后，破坏二分查找的前提
+        if (property == LineEventPropertyType.StartTime || property == LineEventPropertyType.EndTime)
+        {
+            // 先移除再重新插入到正确位置
+            lineEvents.Remove(lineEvent);
+            InsertLineEventSorted(lineEvents, lineEvent);
+            
+            // 如果是速度事件，修改时间后前缀和也需要刷新
+            if (lineEventEnum == LineEventEnum.Speed)
+            {
+                ChartDataHelper.RefreshEventPrefix(lineEvents);
+            }
+        }
+
+        GD.Print($"[{this.Name}] 修改event(line{lineId}_{lineEventEnum}_{index})属性 {property} : {value}");
+        
+        ChartEventBus.NotifyDataChanged();  // 广播
     }
 }
 
