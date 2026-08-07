@@ -242,12 +242,33 @@ public static class ChartDataHelper
             throw new Exception("events列表为空");
         }
 
-        // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
-        int idx = events.BinarySearch(new LineEvent { startSec = (float)time }, 
-            Comparer<LineEvent>.Create((a, b) => a.startSec.CompareTo(b.startSec)));
-        if (idx < 0) idx = ~idx - 1;
+        // // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
+        // int idx = events.BinarySearch(new LineEvent { startSec = (float)time }, 
+        //     Comparer<LineEvent>.Create((a, b) => a.startSec.CompareTo(b.startSec)));
+        // if (idx < 0) idx = ~idx - 1;
 
-        return idx;
+        // return idx;
+
+        //优化二分查找，避免创建新实例
+        int left = 0;
+        int right = events.Count - 1;
+        int result = -1;
+        float target = (float)time;
+
+        while (left <= right)
+        {
+            int mid = (left + right) >> 1;
+            if (events[mid].startSec <= target)
+            {
+                result = mid;
+                left = mid + 1;
+            }
+            else
+            {
+                right = mid - 1;
+            }
+        }
+        return result;
     }
 
     /// <summary>
