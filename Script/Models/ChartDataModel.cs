@@ -18,7 +18,7 @@ namespace QuickType
 
     public class Beat : IComparable<Beat>
     {
-        private readonly int[] _values = new int[3]; // 改为只读，防止外部修改
+        private int[] _values = new int[3];
 
         public int[] Values { get => _values; }
 
@@ -41,6 +41,14 @@ namespace QuickType
             {
                 _values[index] = value;
             }
+        }
+
+        public Beat Duplicate()
+        {
+            return new Beat
+            {
+                _values = [_values[0], _values[1], _values[2]]
+            };
         }
 
         public Beat(){}

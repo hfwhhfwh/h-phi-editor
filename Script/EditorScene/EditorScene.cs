@@ -30,6 +30,7 @@ public partial class EditorScene : Node
     [Export] private RightPanel rightPanel;
     [Export] private ChooseLinePanel chooseLinePanel;
     [Export] private NoteInfoPanel noteInfoPanel;
+    [Export] private LineEventInfoPanel eventInfoPanel;
     [Export] private NoteChooser noteChooser;
     [Export] private MenuButton fileMenuButtion;
     [Export] private MenuButton editMenuButtion;
@@ -194,6 +195,10 @@ public partial class EditorScene : Node
 
         noteInfoPanel.OnNotePropertyChanged += SetNoteProperty;
 
+        // 设置eventInfoPanel
+        eventInfoPanel.OnConfirmed += () => eventInfoPanel.Visible = false;
+        eventInfoPanel.PropertyChanged += SetEventProperty;
+
         // 设置eventEditPanel
         eventEditPanel.EventSelected += OnEventSelected;
         eventEditPanel.EventsDeleteRequested += DeleteEvents;
@@ -257,6 +262,22 @@ public partial class EditorScene : Node
         
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
+
+        {
+            GD.Print(
+                $"Y_1:{editingChart.JudgeLineList[0].EventLayers[0].MoveYEvents[1].EasingType}"
+            );
+            GD.Print(
+                $"Y_2:{editingChart.JudgeLineList[0].EventLayers[0].MoveYEvents[2].EasingType}"
+            );
+
+            GD.Print(
+                $"X_1:{editingChart.JudgeLineList[0].EventLayers[0].MoveXEvents[1].EasingType}"
+            );
+            GD.Print(
+                $"X_2:{editingChart.JudgeLineList[0].EventLayers[0].MoveXEvents[2].EasingType}"
+            );
+        }
     }
 
     public override void _Process(double delta)
@@ -345,6 +366,11 @@ public partial class EditorScene : Node
         eventEditPanel.EventSelected -= OnEventSelected;
         eventEditPanel.EventsDeleteRequested -= DeleteEvents;
         eventEditPanel.AddEventRequested -= AddEvent;
+
+        //设置eventInfoPanel
+        eventInfoPanel.PropertyChanged -= SetEventProperty;
+
+        EditModeManager.OnEditModeChanged -= OnEditModeChanged;
         
     }
 
@@ -590,8 +616,21 @@ public partial class EditorScene : Node
     private void OnEventEdit(int lineId, LineEventEnum lineEventEnum, int index)
     {
         GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        //throw new NotImplementedException();
+        eventInfoPanel.Visible = true;
+        eventEditPanel.DeselectAll();
+
+        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum)[index];
+
+        eventInfoPanel.Edit(lineEvent, lineId, lineEventEnum, index);
     }
+
+    private void SetEventProperty(
+        int lineId, LineEventEnum lineEventEnum, int index,
+        LineEventPropertyType propertyType, object value)
+    {
+        chartEditService.SetEventProperty(lineId, lineEventEnum, index, propertyType, value);
+    }
+
     private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
     {
         GD.Print($"[{this.Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");

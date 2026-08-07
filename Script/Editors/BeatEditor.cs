@@ -27,7 +27,7 @@ public partial class BeatEditor : PropertyEditorBase<Beat>
         for (int i = 0; i < 3; i++)
         {
             int idx = i; // 【关键】闭包捕获，否则 i 会变成 3
-            var edit = new LineEdit
+            LineEdit edit = new LineEdit
             {
                 CustomMinimumSize = new Vector2(50, 0),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill

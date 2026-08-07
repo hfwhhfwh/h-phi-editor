@@ -4,7 +4,7 @@ using System;
 
 public partial class TestSceneEventInfoPanel : Node
 {
-    [Export] private LineEventEditPanel eventInfoPanel;
+    [Export] private LineEventInfoPanel eventInfoPanel;
 
     public override void _Ready()
     {

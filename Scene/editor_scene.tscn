@@ -27,8 +27,9 @@
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
 [ext_resource type="Texture2D" uid="uid://cqkci055pm5cs" path="res://播放_间距.png" id="24_5asy7"]
+[ext_resource type="PackedScene" uid="uid://bpkv57wpohu8e" path="res://Scene/event_info_panel.tscn" id="28_605qm"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "helpMenuButtion", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "helpMenuButtion", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -42,6 +43,7 @@ editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
 noteInfoPanel = NodePath("EditorPanel/SafeArea/NoteInfoPanel")
+eventInfoPanel = NodePath("EditorPanel/SafeArea/EventInfoPanel")
 noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/NoteChooser")
 fileMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/FileButton")
 editMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/EditButton")
@@ -351,6 +353,10 @@ vertical_alignment = 1
 autowrap_mode = 1
 
 [node name="NoteInfoPanel" parent="EditorPanel/SafeArea" unique_id=1318802048 instance=ExtResource("20_mm2kl")]
+visible = false
+layout_mode = 2
+
+[node name="EventInfoPanel" parent="EditorPanel/SafeArea" unique_id=1587088222 instance=ExtResource("28_605qm")]
 visible = false
 layout_mode = 2
 

@@ -8,7 +8,7 @@ public static class PropertyEditorFactory
 {
     private static readonly Dictionary<Type, Func<IPropertyEditor>> _creators = new()
     {
-        [typeof(string)]  = () => null,//new StringEditor(),
+        [typeof(string)]  = () => new StringEditor(),
         [typeof(int)]     = () => null,//new IntEditor(),
         [typeof(long)]    = () => null,//new IntEditor(),
         [typeof(float)]   = () => new FloatEditor(),

@@ -5,6 +5,7 @@ using HPhiEditorGame.Editor;
 
 public partial class EasingEditor : PropertyEditorBase<EasingData>
 {
+    private SpinBox _easingTypeSpinBox;
     private OptionButton _funcBtn, _ioBtn;
     private LineEdit _leftEdit, _rightEdit;
     private EasingData _value;
@@ -12,7 +13,15 @@ public partial class EasingEditor : PropertyEditorBase<EasingData>
     public override EasingData Value
     {
         get => _value;
-        set { _value = value; RefreshUI(); }
+        set { 
+            _value = value; 
+
+            // 检查数据是否有效
+            int easingNum = EasingHelper.Convert.EasingToNumber(_value.EasingFunc, _value.EasingIO);
+            if(easingNum == -1) _easingTypeSpinBox.Value = 1; // 同时会自动修改LineEvent数据
+
+            RefreshUI();
+        }
     }
 
     protected override void BuildUI()
@@ -21,30 +30,70 @@ public partial class EasingEditor : PropertyEditorBase<EasingData>
         AddChild(vbox);
 
         // 第一行：Func + IO
-        var row1 = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        HBoxContainer row1 = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         vbox.AddChild(row1);
 
-        _funcBtn = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        for (int i = 0; i < 11; i++) _funcBtn.AddItem($"{(EasingFunc)i}");
-        row1.AddChild(_funcBtn);
+        {    
+            Label label = new Label{ Text = "缓动函数" };
+            row1.AddChild(label);
 
-        _ioBtn = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        for (int i = 0; i < 3; i++) _ioBtn.AddItem($"{(EasingIO)i}");
-        row1.AddChild(_ioBtn);
+            _easingTypeSpinBox = new SpinBox();
+            row1.AddChild(_easingTypeSpinBox);
 
+            _funcBtn = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            for (int i = 0; i < 11; i++) _funcBtn.AddItem($"{(EasingFunc)i}");
+            row1.AddChild(_funcBtn);
+
+            _ioBtn = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            for (int i = 0; i < 3; i++) _ioBtn.AddItem($"{(EasingIO)i}");
+            row1.AddChild(_ioBtn);
+        }
+
+        
         // 第二行：Left + Right
-        var row2 = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        HBoxContainer row2 = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         vbox.AddChild(row2);
 
-        _leftEdit = new LineEdit { PlaceholderText = "Left", SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        row2.AddChild(_leftEdit);
+        {
+            HBoxContainer rowLeft = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            row2.AddChild(rowLeft);
 
-        _rightEdit = new LineEdit { PlaceholderText = "Right", SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        row2.AddChild(_rightEdit);
+            Label label = new Label{ Text = "左剪切" };
+            rowLeft.AddChild(label);
+
+            _leftEdit = new LineEdit { PlaceholderText = "Left", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            rowLeft.AddChild(_leftEdit);
+        }
+
+        {
+            HBoxContainer rowRight = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            row2.AddChild(rowRight);
+
+            Label label = new Label{ Text = "右剪切" };
+            rowRight.AddChild(label);
+
+            _rightEdit = new LineEdit { PlaceholderText = "Right", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            rowRight.AddChild(_rightEdit);
+        }
 
         // 事件
-        _funcBtn.ItemSelected += idx => { _value.EasingFunc = (EasingFunc)idx; NotifyChanged(_value); };
-        _ioBtn.ItemSelected   += idx => { _value.EasingIO   = (EasingIO)idx;   NotifyChanged(_value); };
+        _funcBtn.ItemSelected += idx => { _value.EasingFunc = (EasingFunc)idx; NotifyChanged(_value); RefreshUI();};
+        _ioBtn.ItemSelected   += idx => { _value.EasingIO   = (EasingIO)idx;   NotifyChanged(_value); RefreshUI();};
+
+        _easingTypeSpinBox.ValueChanged += (double v) => 
+        {
+            int intValue = Mathf.RoundToInt(v);
+            if (EasingHelper.IsNumberValid(intValue))
+            {
+                (EasingFunc func, EasingIO io) = EasingHelper.Convert.NumberToEasing(intValue);
+                _value.EasingFunc = func;
+                _value.EasingIO = io;
+            }
+
+            NotifyChanged(_value);
+            
+            RefreshUI();
+        };
 
         _leftEdit.TextSubmitted += text =>
         {
@@ -72,8 +121,13 @@ public partial class EasingEditor : PropertyEditorBase<EasingData>
     private void RefreshUI()
     {
         if (_funcBtn == null) return;
+
         _funcBtn.Select((int)_value.EasingFunc);
         _ioBtn.Select((int)_value.EasingIO);
+        
+        int easingNum = EasingHelper.Convert.EasingToNumber(_value.EasingFunc, _value.EasingIO);
+        _easingTypeSpinBox.SetValueNoSignal(easingNum == -1 ? 1 : easingNum);
+
         _leftEdit.Text = _value.EasingLeft.ToString();
         _rightEdit.Text = _value.EasingRight.ToString();
     }

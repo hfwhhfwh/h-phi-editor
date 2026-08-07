@@ -21,7 +21,7 @@ namespace HPhiEditorGame.Editor
     }
 
     /// <summary>抽象基类，自动处理 Godot 节点生命周期和事件通知</summary>
-    public abstract partial class PropertyEditorBase<T> : Control, IPropertyEditor<T>
+    public abstract partial class PropertyEditorBase<T> : MarginContainer, IPropertyEditor<T>
     {
         private string _label;
         public string Label => _label;

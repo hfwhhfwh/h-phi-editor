@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using HPhiEditorGame.Editor;
 
-public partial class LineEventEditPanel : Panel
+public partial class LineEventInfoPanel : Panel
 {
     [Export] private VBoxContainer _container;
     [Export] private Label _titleLabel;
@@ -15,9 +15,13 @@ public partial class LineEventEditPanel : Panel
     private int _eventIndex;
     private LineEvent _lineEvent;
     private readonly List<IPropertyEditor> _editors = new();
+    private readonly List<Label> _labels = new();
     private EasingData _lastEasing;
 
     [Signal] public delegate void OnConfirmedEventHandler();
+    /// <summary>
+    /// LineEvent属性修改时触发 参数:(判定线编号，事件类型，事件索引，属性(LineEventPropertyType)，值(object))
+    /// </summary>
     public event Action<int, LineEventEnum, int, LineEventPropertyType, object> PropertyChanged;
 
     public override void _Ready()
@@ -84,7 +88,7 @@ public partial class LineEventEditPanel : Panel
 
         editor.ValueChanged += (_, value) =>
         {
-            setter(value);
+            setter?.Invoke(value);
             if (propType.HasValue)
                 PropertyChanged?.Invoke(_lineId, _eventType, _eventIndex, propType.Value, value);
         };
@@ -101,6 +105,7 @@ public partial class LineEventEditPanel : Panel
 
         _container.AddChild(row);
         _editors.Add(editor);
+        _labels.Add(lbl);
     }
 
     private void HandleEasingChanged(EasingData neo)
@@ -110,11 +115,11 @@ public partial class LineEventEditPanel : Panel
         if (funcOrIO)
         {
             int type = EasingHelper.Convert.EasingToNumber(neo.EasingFunc, neo.EasingIO);
-            if (type != -1)
-            {
-                _lineEvent.EasingType = type;
-                PropertyChanged?.Invoke(_lineId, _eventType, _eventIndex, LineEventPropertyType.EasingType, type);
-            }
+            int validType = type == -1 ? 1 : type;
+            
+            _lineEvent.EasingType = validType;
+            PropertyChanged?.Invoke(_lineId, _eventType, _eventIndex, LineEventPropertyType.EasingType, validType);
+            
         }
         if (neo.EasingLeft != _lastEasing.EasingLeft)
         {
@@ -132,12 +137,27 @@ public partial class LineEventEditPanel : Panel
 
     private void ClearEditors()
     {
-        foreach (var e in _editors)
+        foreach (IPropertyEditor e in _editors)
         {
-            var parent = e.Control.GetParent();
+            Node parent = e.Control.GetParent();
             parent?.RemoveChild(e.Control);
             e.Control.QueueFree();
         }
         _editors.Clear();
+
+        foreach (Label label in _labels)
+        {
+            Node parent = label.GetParent();
+            parent?.RemoveChild(label);
+            label.QueueFree();
+        }
+        _labels.Clear();
+
+        foreach (Node node in _container.GetChildren())
+        {
+            Node parent = node.GetParent();
+            parent?.RemoveChild(node);
+            node.QueueFree();
+        }
     }
 }

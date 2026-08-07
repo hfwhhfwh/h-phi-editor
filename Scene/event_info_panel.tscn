@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bpkv57wpohu8e"]
 
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_wt3vp"]
-[ext_resource type="Script" uid="uid://ci2ua0jh7hpa5" path="res://Script/EditorScene/LineEventEditPanel.cs" id="2_4bniu"]
+[ext_resource type="Script" uid="uid://ci2ua0jh7hpa5" path="res://Script/EditorScene/LineEventInfoPanel.cs" id="2_4bniu"]
 
 [node name="EventInfoPanel" type="Panel" unique_id=1587088222 node_paths=PackedStringArray("_container", "_titleLabel", "_confirmButton")]
 anchors_preset = 15
