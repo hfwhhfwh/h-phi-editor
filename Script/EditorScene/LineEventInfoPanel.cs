@@ -39,21 +39,21 @@ public partial class LineEventInfoPanel : Panel
         ClearEditors();
         _titleLabel.Text = $"正在编辑: 事件{type}_{index}";
 
-        // ---------- 直接声明每个字段 ----------
+        // ---------- 声明字段 ----------
         AddField("StartTime", new Beat(lineEvent.StartTime),
-            v => { var b = (Beat)v; lineEvent.StartTime = new[] { b[0], b[1], b[2] }; },
+            null, // 应该只触发事件，交给上级修改谱面数据
             LineEventPropertyType.StartTime);
 
         AddField("EndTime", new Beat(lineEvent.EndTime),
-            v => { var b = (Beat)v; lineEvent.EndTime = new[] { b[0], b[1], b[2] }; },
+            null, 
             LineEventPropertyType.EndTime);
 
         AddField("Start", lineEvent.Start,
-            v => lineEvent.Start = (float)v,
+            null, 
             LineEventPropertyType.Start);
 
         AddField("End", lineEvent.End,
-            v => lineEvent.End = (float)v,
+            null, 
             LineEventPropertyType.End);
 
         // 缓动：先拆包，编辑完再比较差异并分发事件

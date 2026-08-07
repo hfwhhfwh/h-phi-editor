@@ -170,7 +170,7 @@ custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_4otsm")
-text = "版本:2026年8月6日19:43:09"
+text = "版本:2026年8月7日20:48:54"
 autowrap_mode = 1
 
 [node name="CreateChartPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1838436379 node_paths=PackedStringArray("_nameEdit", "_musicPathEdit", "_picPathEdit", "_bpmEdit", "_composerEdit", "_charterEdit", "_picTextureRect")]

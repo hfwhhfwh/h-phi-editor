@@ -263,21 +263,7 @@ public partial class EditorScene : Node
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
 
-        {
-            GD.Print(
-                $"Y_1:{editingChart.JudgeLineList[0].EventLayers[0].MoveYEvents[1].EasingType}"
-            );
-            GD.Print(
-                $"Y_2:{editingChart.JudgeLineList[0].EventLayers[0].MoveYEvents[2].EasingType}"
-            );
-
-            GD.Print(
-                $"X_1:{editingChart.JudgeLineList[0].EventLayers[0].MoveXEvents[1].EasingType}"
-            );
-            GD.Print(
-                $"X_2:{editingChart.JudgeLineList[0].EventLayers[0].MoveXEvents[2].EasingType}"
-            );
-        }
+        
     }
 
     public override void _Process(double delta)
@@ -504,8 +490,8 @@ public partial class EditorScene : Node
         editModeLabel.Text = editMode switch
         {
             EditModeEnum.Normal => "编辑模式：常规模式",
-            EditModeEnum.Place => "编辑模式：放置音符",
-            EditModeEnum.Delete => "编辑模式：删除音符",
+            EditModeEnum.Place => "编辑模式：放置模式",
+            EditModeEnum.Delete => "编辑模式：删除模式",
             _ => "编辑模式：未知",
         };
     }

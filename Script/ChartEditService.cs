@@ -290,14 +290,17 @@ public partial class ChartEditService : Node
         int lineId, LineEventEnum lineEventEnum, int index,
         LineEventPropertyType property, object value)
     {
-        LineEvent lineEvent = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum)[index];
+        List<LineEvent> lineEvents = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+        LineEvent lineEvent = lineEvents[index];
+
         switch (property)
         {
             case LineEventPropertyType.StartTime:
-                lineEvent.StartTime = ((Beat)value).Duplicate().Values;
+                // 【关键】重新计算秒数
+                ChartDataHelper.SetEventStartTime(lineEvent, ((Beat)value).Values, EditingChart.BpmList);
                 break;
             case LineEventPropertyType.EndTime:
-                lineEvent.EndTime = ((Beat)value).Duplicate().Values;
+                ChartDataHelper.SetEventEndTime(lineEvent, ((Beat)value).Values, EditingChart.BpmList);
                 break;
             case LineEventPropertyType.Start:
                 lineEvent.Start = (float)value;
@@ -319,6 +322,21 @@ public partial class ChartEditService : Node
                 break;
             default:
                 throw new ArgumentException($"未知的属性类型: {property}");
+        }
+
+        // 【关键】如果修改了时间，需要确保事件列表仍然按 startSec 有序
+        // 因为用户可能将时间改到另一个事件之前/之后，破坏二分查找的前提
+        if (property == LineEventPropertyType.StartTime || property == LineEventPropertyType.EndTime)
+        {
+            // 先移除再重新插入到正确位置
+            lineEvents.Remove(lineEvent);
+            InsertLineEventSorted(lineEvents, lineEvent);
+            
+            // 如果是速度事件，修改时间后前缀和也需要刷新
+            if (lineEventEnum == LineEventEnum.Speed)
+            {
+                ChartDataHelper.RefreshEventPrefix(lineEvents);
+            }
         }
 
         GD.Print($"[{this.Name}] 修改event(line{lineId}_{lineEventEnum}_{index})属性 {property} : {value}");

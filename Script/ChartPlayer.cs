@@ -187,6 +187,8 @@ public partial class ChartPlayer : BaseChartPlayer
         {
             SetJudgeLineList();
             needRebuildLines = false;
+
+            GD.Print($"[{this.Name}] 成功重建谱面数据");
         }
     }
 
