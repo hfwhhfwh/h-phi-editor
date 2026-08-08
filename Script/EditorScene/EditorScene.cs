@@ -84,12 +84,15 @@ public partial class EditorScene : Node
         }
     }
 
+    #if TOOLS
     // ---- 性能分析 ----
     private double _setChartTimeTimeUs = 0;
     private double _logicTimeUs = 0;
     private double _renderTimeUs = 0;
     private double _uiTimeUs = 0;
     private double _drawEditPanelTimeUs = 0;
+
+    #endif
 
     /// <summary>
 	/// 用于缩放
@@ -114,12 +117,14 @@ public partial class EditorScene : Node
 
     public override void _Ready()
     {
+        #if TOOLS
         // 注册自定义监视器
         Performance.AddCustomMonitor("EditorScene/SetChartTimeTimeUs", Callable.From(() => _setChartTimeTimeUs));
         Performance.AddCustomMonitor("EditorScene/LogicTimeUs", Callable.From(() => _logicTimeUs));
         Performance.AddCustomMonitor("EditorScene/RenderTimeUs", Callable.From(() => _renderTimeUs));
         Performance.AddCustomMonitor("EditorScene/UITimeUs", Callable.From(() => _uiTimeUs));
         Performance.AddCustomMonitor("EditorScene/DrawEditPanelTimeUs", Callable.From(() => _drawEditPanelTimeUs));
+        #endif
 
         //获取节点引用
         inputManager = GetNode<InputManager>("/root/InputManager");
@@ -284,7 +289,9 @@ public partial class EditorScene : Node
 
     public override void _Process(double delta)
     {
+        #if TOOLS
         ulong t1 = Time.GetTicksUsec();
+        #endif
 
         if (isPlaying)
         {
@@ -297,19 +304,24 @@ public partial class EditorScene : Node
             chartPlayer.ExternalTime = chartTime;
         }
 
+        #if TOOLS
         ulong t2 = Time.GetTicksUsec();
+        #endif
         
         chartPlayer.UpdateLogic();
 
+        #if TOOLS
         ulong t3 = Time.GetTicksUsec();
+        #endif
 
         List<JudgeLineRenderData> judgeLineRenderDatas = chartPlayer.GetLineRenderDatas();
         List<NoteRenderData> noteRenderDatas = chartPlayer.GetNoteRenderDatas();
 
         chartRenderer.Render(judgeLineRenderDatas, noteRenderDatas);
 
+        #if TOOLS
         ulong t4 = Time.GetTicksUsec();
-        
+        #endif
 
         //处理摇杆垂直滚动
 		if(slideJoystick.Output != Vector2.Zero)
@@ -347,7 +359,9 @@ public partial class EditorScene : Node
             horSeparationSmoothed = horSeparation;
         }
 
+        #if TOOLS
         ulong t5 = Time.GetTicksUsec();
+        #endif
 
         //同步编辑面板
         noteEditPanel.horOffsetSmoothed = horOffsetSmoothed;
@@ -358,6 +372,7 @@ public partial class EditorScene : Node
         eventEditPanel.horSeparationSmoothed = horSeparationSmoothed;
         eventEditPanel.UpdateVisuals();
 
+        #if TOOLS
         ulong t6 = Time.GetTicksUsec();
 
         _setChartTimeTimeUs = t2 - t1;
@@ -365,6 +380,7 @@ public partial class EditorScene : Node
         _renderTimeUs = t4 - t3;
         _uiTimeUs = t5 - t4;
         _drawEditPanelTimeUs = t6 - t5;
+        #endif
 
     }
 
@@ -378,12 +394,14 @@ public partial class EditorScene : Node
     {
         base._ExitTree();
 
+        #if TOOLS
         // 取消注册自定义监视器 小心lambda诡异的生命周期问题
         Performance.RemoveCustomMonitor("EditorScene/SetChartTimeTimeUs");
         Performance.RemoveCustomMonitor("EditorScene/LogicTimeUs");
         Performance.RemoveCustomMonitor("EditorScene/RenderTimeUs");
         Performance.RemoveCustomMonitor("EditorScene/UITimeUs");
         Performance.RemoveCustomMonitor("EditorScene/DrawEditPanelTimeUs");
+        #endif
 
         // 设置NoteEditPanel
         noteEditPanel.NoteAddRequested -= AddNote;

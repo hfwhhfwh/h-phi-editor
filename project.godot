@@ -30,7 +30,7 @@ ChartEditService="*uid://kc3isyumh8h8"
 
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/vsync/vsync_mode=0
+window/vsync/vsync_mode=3
 
 [dotnet]
 

@@ -48,20 +48,27 @@ public partial class ChartRenderer : BaseChartRenderer
     /// <summary>note的宽度大小缩放</summary>
     public float noteScale;
 
+    #if TOOLS
+    // ---- 性能优化 ----
     private int _noteCount = 0;
+    #endif
 
     public override void _Ready()
     {
         base._Ready();
 
+        #if TOOLS
         Performance.AddCustomMonitor("ChartRenderer/NoteCount", Callable.From(() => _noteCount));
+        #endif
     }
 
     public override void _ExitTree()
     {
         base._ExitTree();
 
+        #if TOOLS
         Performance.RemoveCustomMonitor("ChartRenderer/NoteCount");
+        #endif
     }
 
 
