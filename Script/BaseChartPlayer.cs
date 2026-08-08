@@ -25,6 +25,9 @@ public abstract partial class BaseChartPlayer : Node
     /// </summary>
     public Action<Vector2> onNoteHited;
 
+    // 开关
+    public bool Disabled { get; set; } = false;
+
     /// <summary>
     /// 初始化
     /// </summary>

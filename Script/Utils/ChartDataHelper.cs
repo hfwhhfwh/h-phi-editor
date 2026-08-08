@@ -253,12 +253,11 @@ public static class ChartDataHelper
         int left = 0;
         int right = events.Count - 1;
         int result = -1;
-        float target = (float)time;
 
         while (left <= right)
         {
             int mid = (left + right) >> 1;
-            if (events[mid].startSec <= target)
+            if (events[mid].startSec <= time)
             {
                 result = mid;
                 left = mid + 1;

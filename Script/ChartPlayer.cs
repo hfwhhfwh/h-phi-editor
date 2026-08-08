@@ -318,7 +318,7 @@ public partial class ChartPlayer : BaseChartPlayer
 
     public override void UpdateLogic()
     {
-        if (Chart == null) return;
+        if(Chart == null) return;
 
         if (IsPlaying)
         {
@@ -332,6 +332,20 @@ public partial class ChartPlayer : BaseChartPlayer
         else
         {
             ChartTime = ExternalTime;
+        }
+
+        if (Disabled)
+        {
+            // 需要刷新所有note的_hasPlayedHitSound
+            foreach(JudgeLineNode judgeLineNode in judgeLineNodes)
+            {
+                foreach(NoteNode noteNode in judgeLineNode.noteNodes)
+                {
+                    noteNode.UpdateHitRecord(ChartTime);
+                }
+            }
+
+            return;
         }
 
         // 更新每条判定线及其上的音符
@@ -489,7 +503,7 @@ public class JudgeLineNode
 
         foreach (var note in noteNodes)
         {
-            note.UpdateNote(gameTime, this);
+            note.UpdateNote(gameTime);
         }
     }
     
@@ -502,7 +516,8 @@ public class NoteNode
 {
     public Note data;
     protected ChartPlayer _chartPlayer;
-    private int _index;
+    protected int _index;
+    protected JudgeLineNode _judgeLineNode;
 
     private bool _hasPlayedHitSound = false;//用于标记是否已播放过音效
 
@@ -534,17 +549,42 @@ public class NoteNode
     public void SetData(Note data, JudgeLineNode line, ChartPlayer player, int index)
     {
         this.data = data;
+        _judgeLineNode = line;
         _chartPlayer = player;
         _index = index;
+    }
 
-        
+    /// <summary>
+    /// 只更新note的_hasPlayedHitSound，不生成实际打击特效
+    /// 用于在ChartPlayer禁用时实时更新
+    /// </summary>
+    /// <param name="gameTime">游戏时间</param>
+    public void UpdateHitRecord(double gameTime)
+    {
+        if (data == null) return;
+
+        float hitTime = data.startSec; // 头部到达判定线的时间
+
+        // 音符到达判定线时播放音效，并生成打击特效
+        if(!data.IsFake) // 假note不需要击打
+        {
+            if (gameTime >= hitTime && !_hasPlayedHitSound)
+            {   
+                _hasPlayedHitSound = true;
+            }
+            else if (gameTime < hitTime)
+            {
+                // 时间回退到击中点之前，重置标记，允许再次触发
+                _hasPlayedHitSound = false;
+            }
+        }
     }
     
     /// <summary>
     /// 更新音符位置（受判定线位置和速度影响）
     /// 可被HoldNoteNode重写
     /// </summary>
-    public virtual void UpdateNote(double gameTime, JudgeLineNode fatherLine)
+    public virtual void UpdateNote(double gameTime)
     {
         if (data == null) return;
 
@@ -566,9 +606,9 @@ public class NoteNode
                     //理论上此时note应该在的位置，防止note速度过快导致的误差
                     Vector2 calculatedLocalChartPos = new Vector2(data.PositionX, 0); 
                     Vector2 globalChartPos = PosUtil.GetChildGlobalPosition(
-                        new Vector2(fatherLine.CurrentMoveX, fatherLine.CurrentMoveY),
+                        new Vector2(_judgeLineNode.CurrentMoveX, _judgeLineNode.CurrentMoveY),
                         calculatedLocalChartPos,
-                        fatherLine.CurrentRotate
+                        _judgeLineNode.CurrentRotate
                     );
 
                     Vector2 parentPos = PosUtil.ChartPosToViewportPos(
@@ -635,7 +675,7 @@ public class NoteNode
             //note已经移动的位移
             // float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
             // float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
-            float nowDisplacement = fatherLine.nowDisplacement;
+            float nowDisplacement = _judgeLineNode.nowDisplacement;
 
             localChartY = Math.Max(0, allDisplacement - nowDisplacement);
 
@@ -708,16 +748,16 @@ public class HoldNoteNode : NoteNode
     //     ZIndex = 0;
     // }
 
-    public override void UpdateNote(double gameTime, JudgeLineNode fatherLine)
+    public override void UpdateNote(double gameTime)
     {
         // 先调用基类更新头部位置和可见性
-        base.UpdateNote(gameTime, fatherLine);
+        base.UpdateNote(gameTime);
 
         //计算下落速度，由判定线速度和note速度共同决定
         //RPE中每个速度单位表示每秒下降120像素
-        float speed = fatherLine.CurrentSpeed * data.Speed * 120; // 坐标系: 谱面坐标
-        float startSec = _chartPlayer.BeatToSeconds(data.StartTime);
-        float endSec = _chartPlayer.BeatToSeconds(data.EndTime);
+        float speed = _judgeLineNode.CurrentSpeed * data.Speed * 120; // 坐标系: 谱面坐标
+        float startSec = data.startSec;
+        float endSec = data.endSec;
 
         //计算end位置，可以视为在endTime的音符
         //float holdLength = 0;
@@ -740,11 +780,11 @@ public class HoldNoteNode : NoteNode
                 float localChartY;
                 //全部位移 坐标系: 谱面坐标
                 //float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
-                float allDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine.Data.EventLayers[0].SpeedEvents, endSec);
+                float allDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, endSec);
 
                 //note已经移动的位移 坐标系: 谱面坐标
                 //float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
-                float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(fatherLine.Data.EventLayers[0].SpeedEvents, (float)gameTime);
+                float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, (float)gameTime);
 
 
                 localChartY = Math.Max(0f, allDisplacement - nowDisplacement); // 坐标系: 谱面坐标
@@ -808,15 +848,16 @@ public class HoldNoteNode : NoteNode
     }
 }
 
-public class JudgeLineRenderData
+public struct JudgeLineRenderData
 {
     // 当前帧的事件插值结果
+
     public Vector2 Pos { get; set; }
-    public float Rotate { get; set; } = 0;
-    public float Alpha { get; set; } = 1;
+    public float Rotate { get; set; }
+    public float Alpha { get; set; }
 }
 
-public class NoteRenderData
+public struct NoteRenderData
 {
     public Vector2 HeadPos { get; set; }
     public NoteType Type { get; set; }

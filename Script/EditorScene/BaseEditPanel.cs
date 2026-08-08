@@ -68,7 +68,12 @@ public abstract partial class BaseEditPanel : Panel
 	private Dictionary<string, MultiMeshInstance2D> multiMeshInstances = new();
 	private Dictionary<string, int> visibleCounts = new();
 
-	protected void RegisterMultiMesh(string key, Texture2D texture)
+	// 开关
+	public bool Disabled { get; set; } = false; // 禁用所有刷新
+	public bool GridDisabled { get; set; } = false; // 禁用渲染网格
+	public bool ContentDisabled { get; set; } = false; // 禁用渲染物体
+
+	protected void RegisterMultiMesh(string key, Texture2D texture, int instanceCount)
 	{
 		//设置Multimesh
 		MultiMesh multiMesh = new MultiMesh
@@ -78,7 +83,7 @@ public abstract partial class BaseEditPanel : Panel
 			VisibleInstanceCount = 0,
 			UseColors = true, // 用于提示选中
 		};
-		multiMesh.InstanceCount = 10000;
+		multiMesh.InstanceCount = instanceCount;
 		multiMeshes[key] = multiMesh;
 
 		MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
@@ -298,15 +303,19 @@ public abstract partial class BaseEditPanel : Panel
 
     }
 
-    // ---- 刷新框架 ----
-    public override void _Process(double delta)
-    {
-        UpdateVisuals();      // 子类实现具体对象位置/纹理更新
-        QueueRedraw();        // 触发网格重绘
-    }
+    // ---- 刷新框架 ---- 改为由上级调用
+    // public override void _Process(double delta)
+    // {
+    //     UpdateVisuals();      // 子类实现具体对象位置/纹理更新
+    //     QueueRedraw();        // 触发网格重绘
+    // }
 
-    protected void UpdateVisuals()
+    public void UpdateVisuals()
 	{
+		if(Disabled) return;
+
+		if(!GridDisabled) QueueRedraw();// 触发网格重绘
+
 		//同步_coordinateConverter
         _coordComponent.horMargin = horMargin;
         _coordComponent.verMargin = verMargin;
@@ -316,14 +325,17 @@ public abstract partial class BaseEditPanel : Panel
         _coordComponent.horSeparationSmoothed = horSeparationSmoothed;
         _coordComponent.parentSize = Size;
 
-		//归零可见数量
-		ResetVisibleCount();
+		if (!ContentDisabled)
+		{
+			//归零可见数量
+			ResetVisibleCount();
 
-		// 更新渲染内容 (由子类重写)
-		RenderContent();
+			// 更新渲染内容 (由子类重写)
+			RenderContent();
 
-		// 更新所有 MultiMesh 的可见实例数量
-        ApplyVisibleCount();
+			// 更新所有 MultiMesh 的可见实例数量
+			ApplyVisibleCount();
+		}
 	}
 
 	protected abstract void RenderContent();
@@ -453,6 +465,35 @@ public abstract partial class BaseEditPanel : Panel
         if (handled) AcceptEvent(); // 标记事件已处理，阻止向上冒泡
         
     }
+
+	/// <summary>
+	/// 获取当前面板可见的 Beat 范围 [minBeat, maxBeat]
+	/// </summary>
+	protected void GetVisibleBeatRange(out float minBeat, out float maxBeat)
+	{
+		// 坐标公式: y = Size.Y/2 + horOffsetSmoothed - beatValue * horSeparationSmoothed
+		// 反推: beatValue = (Size.Y/2 + horOffsetSmoothed - y) / horSeparationSmoothed
+		float zeroLine = Size.Y / 2f + horOffsetSmoothed; // 零刻度线的Y坐标
+		minBeat = (zeroLine - Size.Y) / horSeparationSmoothed; // 底部对应较小 beat
+		maxBeat = zeroLine / horSeparationSmoothed;             // 顶部对应较大 beat
+		if (minBeat < 0) minBeat = 0;
+	}
+
+	/// <summary>
+	/// 动态扩容
+	/// </summary>
+	/// <param name="key"></param>
+	/// <param name="needed"></param>
+	protected void EnsureMultiMeshCapacity(string key, int needed)
+	{
+		if (needed <= 0) return;
+		var mm = multiMeshes[key];
+		if (needed <= mm.InstanceCount) return; // 容量足够，直接返回
+		
+		mm.InstanceCount = MathUtil.NextPowerOfTwo(needed);
+		GD.Print($"[{Name}] MultiMesh '{key}' 扩容至 {mm.InstanceCount}");
+	}
+
 	protected abstract void OnButtonDown(Vector2 pos);
 
     protected abstract void OnButtonUp(Vector2 pos);
