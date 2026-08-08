@@ -211,7 +211,10 @@ public partial class ChartRenderer : BaseChartRenderer
 
     public override void Render(List<JudgeLineRenderData> lineRenderDatas, List<NoteRenderData> noteRenderDatas)
     {
+        #if TOOLS
         _noteCount = 0;
+        #endif
+
         if(Disabled) return;
 
         // ---- 缓存视口参数 ----
@@ -293,7 +296,9 @@ public partial class ChartRenderer : BaseChartRenderer
                     EnsureNoteMultiMeshCapacity(spriteType, visibleCounts[spriteType] + 1);
                 }
 
+                #if TOOLS
                 _noteCount++;
+                #endif
 
                 Vector2 position = noteRenderData.HeadPos;
                 float rotate = noteRenderData.Rotate; //单位：度
@@ -330,7 +335,9 @@ public partial class ChartRenderer : BaseChartRenderer
                 // 剔除屏幕外
                 if (!HoldInViewport(noteRenderData.HeadPos, noteRenderData.EndPos)) continue;
 
+                #if TOOLS
                 _noteCount++;
+                #endif
 
                 Vector2 headPos = noteRenderData.HeadPos;
                 Vector2 endPos = noteRenderData.EndPos;
