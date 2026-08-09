@@ -38,8 +38,11 @@ public partial class NoteEditPanel : BaseEditPanel
 	// private Dictionary<SpriteType, MultiMeshInstance2D> multiMeshInstances = new();
 	// private Dictionary<SpriteType, int> visibleCounts = new();
 
-    private List<Note> selectedNotes = new();
-    private List<Note> notesToDelete = new();
+    // private List<Note> selectedNotes = new();
+    // private List<Note> notesToDelete = new();
+
+    private HashSet<Note> selectedNotes = new();
+    private HashSet<Note> notesToDelete = new();
 
     [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex, Vector2 clickViewportPos);
     /// <summary>
@@ -84,7 +87,7 @@ public partial class NoteEditPanel : BaseEditPanel
 				_ => "Tap"
 			};
 
-            RegisterMultiMesh(key, texture);
+            RegisterMultiMesh(key, texture, 1024);
 		}
 
         
@@ -117,39 +120,22 @@ public partial class NoteEditPanel : BaseEditPanel
 		}
 
 		List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
-		if(notes == null)
-		{
-			//HideAllNodes();
-			return;
-		}
 
-		// ============= 渲染视口范围内的 note ============= 
-		for (int i = 0; i < notes.Count; i++)
-		{
-			Note note = notes[i];
+        // // ========== 2. 动态扩容 ==========
+        // // 最坏情况：所有 note 都是同一类型，或全是 Hold（拆成3部分）
+        // // 因此每个 key 的容量下限设为 notes.Count 即可
+        // {
+        //     int count = notes.Count;
+        //     EnsureMultiMeshCapacity("Tap",      count);
+        //     EnsureMultiMeshCapacity("Drag",     count);
+        //     EnsureMultiMeshCapacity("Flick",    count);
+        //     EnsureMultiMeshCapacity("HoldHead", count);
+        //     EnsureMultiMeshCapacity("HoldBody", count);
+        //     EnsureMultiMeshCapacity("HoldEnd",  count);
+        // }
 
-            Action<MultiMesh, int> renderEffect = null;
-            //选中效果
-            if (selectedNotes.Contains(note))
-            {
-                renderEffect = SelectedRender;
-            }
-            //即将删除的高亮效果
-            if (notesToDelete.Contains(note))
-            {
-                renderEffect = AboutToDeleteRender;
-            }
-
-            // 渲染note
-            MultiMeshRenderNote(
-                noteType: (NoteType)note.Type,
-                startBeat: new Beat(note.StartTime),
-                endBeat: new Beat(note.EndTime),
-                chartPosX: note.PositionX,
-                renderEffect: renderEffect
-            );
-
-        }
+		// ============= 3. 渲染视口范围内的 note ============= 
+        GetVisibleBeatRange(out float minBeat, out float maxBeat);
 
         // 额外绘制即将创建的Hold
         if(_dragPlaceComponent.IsDragging){
@@ -162,6 +148,52 @@ public partial class NoteEditPanel : BaseEditPanel
                 renderEffect: NoteToAddRender
             );
         }
+
+        //绘制谱面中的note 
+        if(notes != null)
+        {
+            for (int i = 0; i < notes.Count; i++)
+            {
+                Note note = notes[i];
+
+                // ---- 快速视口裁剪：利用预计算的 startSec 或 beat 值 ----
+                float startBeat = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
+                if (startBeat > maxBeat) continue; // 还在屏幕上方（更大 beat 在更上方）
+
+                // 对于 Hold，需要判断尾部；对于非 Hold，若 startBeat < minBeat 则已掠过屏幕
+                if (note.Type != 2 && startBeat < minBeat) continue;
+
+                // Hold 的额外判断：若尾部也小于 minBeat，则完全不可见
+                if (note.Type == 2)
+                {
+                    float endBeat = note.EndTime[0] + note.EndTime[1] * 1f / note.EndTime[2];
+                    if (endBeat < minBeat) continue;
+                }
+
+                Action<MultiMesh, int> renderEffect = null;
+                //选中效果
+                if (selectedNotes.Contains(note))
+                {
+                    renderEffect = SelectedRender;
+                }
+                //即将删除的高亮效果
+                if (notesToDelete.Contains(note))
+                {
+                    renderEffect = AboutToDeleteRender;
+                }
+
+                // 渲染note
+                MultiMeshRenderNote(
+                    noteType: (NoteType)note.Type,
+                    startBeat: new Beat(note.StartTime),
+                    endBeat: new Beat(note.EndTime),
+                    chartPosX: note.PositionX,
+                    renderEffect: renderEffect
+                );
+
+            }
+        }
+		
     }
 
     private void MultiMeshRenderNote(NoteType noteType, Beat startBeat, Beat endBeat, float chartPosX, Action<MultiMesh, int> renderEffect)

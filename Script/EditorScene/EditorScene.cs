@@ -84,7 +84,15 @@ public partial class EditorScene : Node
         }
     }
 
-    
+    #if TOOLS
+    // ---- 性能分析 ----
+    private double _setChartTimeTimeUs = 0;
+    private double _logicTimeUs = 0;
+    private double _renderTimeUs = 0;
+    private double _uiTimeUs = 0;
+    private double _drawEditPanelTimeUs = 0;
+
+    #endif
 
     /// <summary>
 	/// 用于缩放
@@ -109,6 +117,15 @@ public partial class EditorScene : Node
 
     public override void _Ready()
     {
+        #if TOOLS
+        // 注册自定义监视器
+        Performance.AddCustomMonitor("EditorScene/SetChartTimeTimeUs", Callable.From(() => _setChartTimeTimeUs));
+        Performance.AddCustomMonitor("EditorScene/LogicTimeUs", Callable.From(() => _logicTimeUs));
+        Performance.AddCustomMonitor("EditorScene/RenderTimeUs", Callable.From(() => _renderTimeUs));
+        Performance.AddCustomMonitor("EditorScene/UITimeUs", Callable.From(() => _uiTimeUs));
+        Performance.AddCustomMonitor("EditorScene/DrawEditPanelTimeUs", Callable.From(() => _drawEditPanelTimeUs));
+        #endif
+
         //获取节点引用
         inputManager = GetNode<InputManager>("/root/InputManager");
         if(inputManager == null)
@@ -174,6 +191,9 @@ public partial class EditorScene : Node
 
         chartPlayParent.ClipContents = true;
 
+        SetChartPlayerVisible(false); // 初始不显示
+
+
         // 设置chooseLinePanel
         chooseLinePanel.Visible = false;
         chooseLinePanel.LineSelected += SetEditingLine;
@@ -187,22 +207,23 @@ public partial class EditorScene : Node
         noteEditPanel.OnNoteSelected += OnNoteSelected;
         noteEditPanel.NoteAddRequested += AddNote;
         noteEditPanel.NoteDeleteRequested += OnNotesDelete;
-
-        noteInfoPanel.OnConfirmed += () =>
-        {
-            noteInfoPanel.Visible = false;
-        };
-
-        noteInfoPanel.OnNotePropertyChanged += SetNoteProperty;
-
-        // 设置eventInfoPanel
-        eventInfoPanel.OnConfirmed += () => eventInfoPanel.Visible = false;
-        eventInfoPanel.PropertyChanged += SetEventProperty;
+        noteEditPanel.Disabled = false;
 
         // 设置eventEditPanel
         eventEditPanel.EventSelected += OnEventSelected;
         eventEditPanel.EventsDeleteRequested += DeleteEvents;
         eventEditPanel.AddEventRequested += AddEvent;
+        eventEditPanel.Disabled = false;
+
+        SetEditPanelVisible(true); // 初始默认显示
+
+        // 设置noteInfoPanel
+        noteInfoPanel.OnConfirmed += () => noteInfoPanel.Visible = false;
+        noteInfoPanel.OnNotePropertyChanged += SetNoteProperty;
+
+        // 设置eventInfoPanel
+        eventInfoPanel.OnConfirmed += () => eventInfoPanel.Visible = false;
+        eventInfoPanel.PropertyChanged += SetEventProperty;
 
         //设置弹出菜单
         PopupMenuHelper.SetTheme(theme);
@@ -268,7 +289,10 @@ public partial class EditorScene : Node
 
     public override void _Process(double delta)
     {
-        
+        #if TOOLS
+        ulong t1 = Time.GetTicksUsec();
+        #endif
+
         if (isPlaying)
         {
             //正在播放时，时间轴由音乐决定
@@ -279,14 +303,25 @@ public partial class EditorScene : Node
             //否则，时间轴由编辑器面板决定
             chartPlayer.ExternalTime = chartTime;
         }
+
+        #if TOOLS
+        ulong t2 = Time.GetTicksUsec();
+        #endif
         
         chartPlayer.UpdateLogic();
 
-        List<JudgeLineRenderData> judgeLineRenderDatas = chartPlayer.GetLineRenderDatas();
-        List<NoteRenderData> noteRenderDatas = chartPlayer.GetNoteRenderDatas();
+        #if TOOLS
+        ulong t3 = Time.GetTicksUsec();
+        #endif
 
-        chartRenderer.Render(judgeLineRenderDatas, noteRenderDatas);
-        
+        (JudgeLineRenderData[] lineData, int lineCount) = chartPlayer.GetLineRenderDatas();
+        (NoteRenderData[] noteData, int noteCount) = chartPlayer.GetNoteRenderDatas();
+
+        chartRenderer.Render(lineData, lineCount, noteData, noteCount);
+
+        #if TOOLS
+        ulong t4 = Time.GetTicksUsec();
+        #endif
 
         //处理摇杆垂直滚动
 		if(slideJoystick.Output != Vector2.Zero)
@@ -324,14 +359,29 @@ public partial class EditorScene : Node
             horSeparationSmoothed = horSeparation;
         }
 
+        #if TOOLS
+        ulong t5 = Time.GetTicksUsec();
+        #endif
+
         //同步编辑面板
         noteEditPanel.horOffsetSmoothed = horOffsetSmoothed;
         noteEditPanel.horSeparationSmoothed = horSeparationSmoothed;
-        noteEditPanel.QueueRedraw();
+        noteEditPanel.UpdateVisuals();
 
         eventEditPanel.horOffsetSmoothed = horOffsetSmoothed;
         eventEditPanel.horSeparationSmoothed = horSeparationSmoothed;
-        eventEditPanel.QueueRedraw();
+        eventEditPanel.UpdateVisuals();
+
+        #if TOOLS
+        ulong t6 = Time.GetTicksUsec();
+
+        _setChartTimeTimeUs = t2 - t1;
+        _logicTimeUs = t3 - t2;
+        _renderTimeUs = t4 - t3;
+        _uiTimeUs = t5 - t4;
+        _drawEditPanelTimeUs = t6 - t5;
+        #endif
+
     }
 
     public override void _PhysicsProcess(double delta)
@@ -343,6 +393,15 @@ public partial class EditorScene : Node
     public override void _ExitTree()
     {
         base._ExitTree();
+
+        #if TOOLS
+        // 取消注册自定义监视器 小心lambda诡异的生命周期问题
+        Performance.RemoveCustomMonitor("EditorScene/SetChartTimeTimeUs");
+        Performance.RemoveCustomMonitor("EditorScene/LogicTimeUs");
+        Performance.RemoveCustomMonitor("EditorScene/RenderTimeUs");
+        Performance.RemoveCustomMonitor("EditorScene/UITimeUs");
+        Performance.RemoveCustomMonitor("EditorScene/DrawEditPanelTimeUs");
+        #endif
 
         // 设置NoteEditPanel
         noteEditPanel.NoteAddRequested -= AddNote;
@@ -357,16 +416,32 @@ public partial class EditorScene : Node
         eventInfoPanel.PropertyChanged -= SetEventProperty;
 
         EditModeManager.OnEditModeChanged -= OnEditModeChanged;
+
+        GD.Print($"[{Name}] 成功退出EditorScene");
         
     }
 
+    private void SetEditPanelVisible(bool value)
+    {
+        editPanel.Visible = value;
+        noteEditPanel.Disabled = !value;
+        eventEditPanel.Disabled = !value;
+    }
+
+    private void SetChartPlayerVisible(bool value)
+    {
+        chartPlayParent.Visible = value;
+        chartPlayer.Disabled = !value;
+        chartRenderer.Disabled = !value;
+    }
 
     public void OnPlayButtonClicked()
     {
         if (!isPlaying)
         {
-            chartPlayParent.Visible = true;
-            editPanel.Visible = false;
+            SetChartPlayerVisible(true);
+
+            SetEditPanelVisible(false);
 
             //启动chartplayer的播放
             chartPlayer.Play((float)ChartTime);
@@ -386,8 +461,9 @@ public partial class EditorScene : Node
 
     public void OnStopButtonClicked()
     {
-        chartPlayParent.Visible = false;
-        editPanel.Visible = true;
+        SetChartPlayerVisible(false);
+
+        SetEditPanelVisible(true);
 
         chartPlayer.Pause();
         chartPlayer.IsPlaying = false;

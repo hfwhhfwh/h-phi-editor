@@ -19,8 +19,9 @@ public partial class EventEditPanel : BaseEditPanel
 	// private MultiMesh multiMesh;
 	// private MultiMeshInstance2D multiMeshInstance;
 
-	private List<LineEvent> selectedEvents = new();
-    private List<LineEvent> eventsToDelete = new();
+
+	private HashSet<LineEvent> selectedEvents = new();
+    private HashSet<LineEvent> eventsToDelete = new();
 
 	/// <summary>
 	/// 当事件被选择时发出，参数:(判定线编号，事件类型，事件索引，弹窗位置（坐标系：viewportCoord）)
@@ -109,7 +110,7 @@ public partial class EventEditPanel : BaseEditPanel
 
 		// AddChild(multiMeshInstance);
 
-		RegisterMultiMesh("Event", eventHoldTexture);
+		RegisterMultiMesh("Event", eventHoldTexture, 4096);
     }
 
 	// private Node2D CreateEventNode()
@@ -135,6 +136,8 @@ public partial class EventEditPanel : BaseEditPanel
 			return;
 		}
 
+		GetVisibleBeatRange(out float minBeat, out float maxBeat);
+
 		List<LineEvent> moveXEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].MoveXEvents;
 		List<LineEvent> moveYEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].MoveYEvents;
 		List<LineEvent> rotateEvents = editingChart.JudgeLineList[editingLineId].EventLayers[0].RotateEvents;
@@ -152,30 +155,24 @@ public partial class EventEditPanel : BaseEditPanel
             (speedEvents, EventTypeToRatioX(LineEventEnum.Speed))
         };
 
-		// 为实际存在的 event 激活池节点
+		// ========== 2. 动态扩容 ==========
+		{
+            int count = moveXEvents.Count + moveYEvents.Count
+				+ rotateEvents.Count + alphaEvents.Count + speedEvents.Count;
+            EnsureMultiMeshCapacity("Event", count);
+        }
+
+		// 为实际存在的 event 渲染
 		foreach((List<LineEvent> events, float xRatio) type in allEvents)
 		{
 			for (int i = 0; i < type.events.Count; i++)
 			{
 				LineEvent lineEvent = type.events[i];
 
-				//1. 计算位置和缩放
-				// float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
-				// float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
-				// //位置
-				// float localX = verMargin + type.xRatio * (Size.X - 2 * verMargin);
-				// float startPanelY = Size.Y/2f + horOffsetSmoothed - startBeatValue * horSeparationSmoothed;
-				// float endPanelY = Size.Y/2f + horOffsetSmoothed - endBeatValue * horSeparationSmoothed;
-				// float panelY = (startPanelY + endPanelY) / 2f;
-				// //缩放
-				// float sizeY = startPanelY - endPanelY;
-				// float scaleY = sizeY / eventHoldTexture.GetSize().Y;
-
-				// //判断是否需要渲染
-				// if(panelX < 0f || panelX > Size.X || startPanelY < 0f || endPanelY > Size.Y)
-				// {
-				// 	continue;
-				// }
+				// ---- 快速视口裁剪：利用预计算的 startSec 或 beat 值 ----
+				float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
+				float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
+				if (startBeatValue > maxBeat || endBeatValue < minBeat) continue;
 
 				float localX = verMargin + type.xRatio * (Size.X - 2 * verMargin);
 				Beat startBeat = new Beat(lineEvent.StartTime);

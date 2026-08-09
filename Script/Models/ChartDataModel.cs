@@ -697,15 +697,31 @@ namespace QuickType
     {
         public List<LineEvent> GetLineEvents(LineEventEnum lineEventEnum)
         {
-            return lineEventEnum switch
+            List<LineEvent> lineEvents = lineEventEnum switch
             {
                 LineEventEnum.MoveX => MoveXEvents,
                 LineEventEnum.MoveY => MoveYEvents,
                 LineEventEnum.Rotate => RotateEvents,
                 LineEventEnum.Alpha => AlphaEvents,
                 LineEventEnum.Speed => SpeedEvents,
-                _ => null,
+                _ => MoveXEvents,
             };
+
+            // 懒加载：如果为 null，创建新列表并写回对应属性
+            if (lineEvents == null)
+            {
+                lineEvents = new List<LineEvent>();
+                switch (lineEventEnum)
+                {
+                    case LineEventEnum.MoveX:  MoveXEvents  = lineEvents; break;
+                    case LineEventEnum.MoveY:  MoveYEvents  = lineEvents; break;
+                    case LineEventEnum.Rotate: RotateEvents = lineEvents; break;
+                    case LineEventEnum.Alpha:  AlphaEvents  = lineEvents; break;
+                    case LineEventEnum.Speed:  SpeedEvents  = lineEvents; break;
+                }
+            }
+
+            return lineEvents;
         }
     }
 }

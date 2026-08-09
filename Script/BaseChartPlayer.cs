@@ -17,13 +17,17 @@ public abstract partial class BaseChartPlayer : Node
 
     protected int chartOffset;                        // 谱面偏移（以毫秒计量）
 
-    public abstract List<JudgeLineRenderData> GetLineRenderDatas();
-    public abstract List<NoteRenderData> GetNoteRenderDatas();
+    // 返回数组 + 有效长度
+    public abstract (JudgeLineRenderData[] Data, int Count) GetLineRenderDatas();
+    public abstract (NoteRenderData[] Data, int Count) GetNoteRenderDatas();
 
     /// <summary>
     /// 当有note打击时触发，参数是打击位置（坐标系：parent坐标）
     /// </summary>
     public Action<Vector2> onNoteHited;
+
+    // 开关
+    public bool Disabled { get; set; } = false;
 
     /// <summary>
     /// 初始化

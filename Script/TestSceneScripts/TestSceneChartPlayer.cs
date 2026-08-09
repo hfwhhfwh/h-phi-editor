@@ -73,10 +73,10 @@ public partial class TestSceneChartPlayer : Node
 
         chartPlayer.UpdateLogic();
 
-        List<JudgeLineRenderData> judgeLineRenderDatas = chartPlayer.GetLineRenderDatas();
-        List<NoteRenderData> noteRenderDatas = chartPlayer.GetNoteRenderDatas();
+        (JudgeLineRenderData[] lineData, int lineCount) = chartPlayer.GetLineRenderDatas();
+        (NoteRenderData[] noteData, int noteCount) = chartPlayer.GetNoteRenderDatas();
 
-        chartRenderer.Render(judgeLineRenderDatas, noteRenderDatas);
+        chartRenderer.Render(lineData, lineCount, noteData, noteCount);
 
     }
 
