@@ -209,7 +209,9 @@ public partial class ChartRenderer : BaseChartRenderer
 		GD.Print($"[{Name}] MultiMesh 'Line' 扩容至 {mm.InstanceCount}");
 	}
 
-    public override void Render(List<JudgeLineRenderData> lineRenderDatas, List<NoteRenderData> noteRenderDatas)
+    public override void Render(
+        JudgeLineRenderData[] lineData, int lineCount,
+        NoteRenderData[] noteData, int noteCount)
     {
         #if TOOLS
         _noteCount = 0;
@@ -242,8 +244,10 @@ public partial class ChartRenderer : BaseChartRenderer
 		}
         
         // -------- 渲染判定线 --------
-        foreach(JudgeLineRenderData lineRenderData in lineRenderDatas)
+        for (int i = 0; i < lineCount; i++)
         {
+            JudgeLineRenderData lineRenderData = lineData[i];
+
             // 动态扩容
             if(lineVisibleCount + 1 > lineMultiMesh.InstanceCount)
             {
@@ -272,8 +276,9 @@ public partial class ChartRenderer : BaseChartRenderer
         }
 
         // -------- 渲染note --------
-        foreach(NoteRenderData noteRenderData in noteRenderDatas)
+        for (int i = 0; i < noteCount; i++)
         {
+            var noteRenderData = noteData[i];
             NoteType type = noteRenderData.Type;
 
             if(type != NoteType.Hold) // 处理非Hold音符

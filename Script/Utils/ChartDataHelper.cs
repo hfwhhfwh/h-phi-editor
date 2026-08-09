@@ -30,7 +30,7 @@ public static class ChartDataHelper
         ev.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
     }
 
-    public static void SetNoteStartTime(Note note, int[] newStartTime, BpmEvent[] bpmList)
+    public static void SetNoteStartTime(Note note, int[] newStartTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
     {
         note.StartTime = newStartTime;
         note.startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
@@ -46,23 +46,37 @@ public static class ChartDataHelper
             note.EndTime = note.StartTime;
             note.endSec = note.startSec;
         }
+
+        // 刷新总位移
+        note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
     }
 
-    public static void SetNoteEndTime(Note note, int[] newEndTime, BpmEvent[] bpmList)
+    public static void SetNoteEndTime(Note note, int[] newEndTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
     {
         note.EndTime = newEndTime;
         note.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
+
+        bool startTimeChanged = false;
+
         //防止StartTime在EndTime后面
         if(note.startSec > note.endSec)
         {
             note.StartTime = note.EndTime;
             note.startSec = note.endSec;
+            startTimeChanged = true;
         }
         //如果是tap flick drag, StartTime和EndTime必须相同
         if(note.Type == 1 || note.Type == 3 || note.Type == 4)
         {
             note.StartTime = note.EndTime;
             note.startSec = note.endSec;
+            startTimeChanged = true;
+        }
+
+        // 【关键】如果StartTime被修改了，必须刷新总位移
+        if(startTimeChanged)
+        {
+            note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
         }
     }
 
@@ -228,6 +242,14 @@ public static class ChartDataHelper
 
     }
 
+    public static void RefreshNotesAllDisplacement(JudgeLine line)
+    {
+        if(line.Notes == null || line.Notes.Count == 0) return;
+        foreach(Note note in line.Notes)
+        {
+            note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);
+        }
+    }
 
     /// <summary>
     /// 二分查找最后一个 startSec <= time 的事件

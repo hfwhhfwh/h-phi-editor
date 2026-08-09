@@ -314,10 +314,10 @@ public partial class EditorScene : Node
         ulong t3 = Time.GetTicksUsec();
         #endif
 
-        List<JudgeLineRenderData> judgeLineRenderDatas = chartPlayer.GetLineRenderDatas();
-        List<NoteRenderData> noteRenderDatas = chartPlayer.GetNoteRenderDatas();
+        (JudgeLineRenderData[] lineData, int lineCount) = chartPlayer.GetLineRenderDatas();
+        (NoteRenderData[] noteData, int noteCount) = chartPlayer.GetNoteRenderDatas();
 
-        chartRenderer.Render(judgeLineRenderDatas, noteRenderDatas);
+        chartRenderer.Render(lineData, lineCount, noteData, noteCount);
 
         #if TOOLS
         ulong t4 = Time.GetTicksUsec();

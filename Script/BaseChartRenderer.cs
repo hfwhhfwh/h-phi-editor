@@ -12,5 +12,6 @@ public abstract partial class BaseChartRenderer : Node
     public abstract void Initialize(Control parent);
 
     public abstract void Render(
-        List<JudgeLineRenderData> lineRenderDatas, List<NoteRenderData> noteRenderDatas);
+        JudgeLineRenderData[] lineData, int lineCount,
+        NoteRenderData[] noteData, int noteCount);
 }

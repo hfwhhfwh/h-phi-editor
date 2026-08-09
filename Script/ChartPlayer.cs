@@ -32,15 +32,72 @@ public partial class ChartPlayer : BaseChartPlayer
 
     private List<JudgeLineNode> judgeLineNodes = new();
 
-    private List<JudgeLineRenderData> judgeLineRenderDatas = new();
-    private List<NoteRenderData> noteRenderDatas = new();
+    // 预分配渲染数据数组，避免 List 扩容
+    private JudgeLineRenderData[] _lineRenderBuffer;
+    private NoteRenderData[] _noteRenderBuffer;
+    private int _lineRenderCount = 0;
+    private int _noteRenderCount = 0;
 
-    public override List<JudgeLineRenderData> GetLineRenderDatas() => judgeLineRenderDatas;
-    public override List<NoteRenderData> GetNoteRenderDatas() => noteRenderDatas;
+    public override (JudgeLineRenderData[] Data, int Count) GetLineRenderDatas()
+        => (_lineRenderBuffer, _lineRenderCount);
+
+    public override (NoteRenderData[] Data, int Count) GetNoteRenderDatas()
+        => (_noteRenderBuffer, _noteRenderCount);
 
     public Control Parent { get; set; } // 所有JudgeLine和Note都将渲染到Parent中
 
     private bool needRebuildLines = false;
+
+    
+
+    //存储判定线父线关系的拓扑排序
+    private List<int> _topologicalOrder = new();
+
+    private void BuildTopologicalOrder()
+    {
+        _topologicalOrder.Clear();
+        int n = judgeLineNodes.Count;
+        if (n == 0) return;
+
+        // 计算入度
+        int[] inDegree = new int[n];
+        for (int i = 0; i < n; i++)
+        {
+            int father = judgeLineNodes[i].Data.Father;
+            if (father >= 0 && father < n)
+                inDegree[i]++;
+        }
+
+        // Kahn 算法
+        Queue<int> queue = new();
+        for (int i = 0; i < n; i++)
+            if (inDegree[i] == 0) queue.Enqueue(i);
+
+        while (queue.Count > 0)
+        {
+            int u = queue.Dequeue();
+            _topologicalOrder.Add(u);
+
+            // 找到所有以 u 为父线的子线
+            for (int v = 0; v < n; v++)
+            {
+                if (judgeLineNodes[v].Data.Father == u)
+                {
+                    inDegree[v]--;
+                    if (inDegree[v] == 0)
+                        queue.Enqueue(v);
+                }
+            }
+        }
+
+        // 防御：如果存在循环引用（理论上不应有），回退到原始顺序
+        if (_topologicalOrder.Count != n)
+        {
+            GD.PrintErr($"[{Name}] 判定线存在循环引用，拓扑排序失败，回退到原始顺序");
+            _topologicalOrder.Clear();
+            for (int i = 0; i < n; i++) _topologicalOrder.Add(i);
+        }
+    }
     
 
     //将Beat（int[]）转换为秒
@@ -55,18 +112,31 @@ public partial class ChartPlayer : BaseChartPlayer
         judgeLineNodes.Clear();
         if (Chart?.JudgeLineList == null) return;
 
+        int noteCount = 0; // 统计note数量
+
         foreach (JudgeLine lineData in Chart.JudgeLineList)
         {
             // 为每条判定线创建一个节点
             var lineNode = new JudgeLineNode();
             int index = Chart.JudgeLineList.IndexOf(lineData);
             
-            
             // 传入数据及对ChartPlayer的引用（用于时间转换等）、贴图、索引
             lineNode.SetData(lineData, this, index, judgeLineNodes); 
             
             judgeLineNodes.Add(lineNode);
+
+            if(lineData.Notes != null)
+                noteCount += lineData.Notes.Count;
         }
+
+        // 预分配 buffer
+        if (_lineRenderBuffer == null || _lineRenderBuffer.Length < judgeLineNodes.Count)
+            _lineRenderBuffer = new JudgeLineRenderData[MathUtil.NextPowerOfTwo(judgeLineNodes.Count)];
+        if (_noteRenderBuffer == null || _noteRenderBuffer.Length < noteCount)
+            _noteRenderBuffer = new NoteRenderData[MathUtil.NextPowerOfTwo(noteCount)];
+
+        // 构建拓扑序
+        BuildTopologicalOrder();
     }
 
     /// <summary>
@@ -192,8 +262,6 @@ public partial class ChartPlayer : BaseChartPlayer
         }
     }
 
-
-
     private void OnChartDataChanged()
     {
         // 标记需要重新生成判定线节点，在每帧更新时处理
@@ -201,120 +269,120 @@ public partial class ChartPlayer : BaseChartPlayer
     }
 
     /// <summary>
-    /// 生成渲染数据 坐标系: Parent坐标
+    /// 生成渲染数据 坐标系: Parent坐标（已弃用）
     /// </summary>
-    private void CreateRenderDatas()
-    {
-        // 生成渲染数据 坐标系: Parent坐标
-        judgeLineRenderDatas.Clear();
-        noteRenderDatas.Clear();
-        for(int lineId = 0; lineId < judgeLineNodes.Count; lineId++)
-        {
-            JudgeLineNode judgeLineNode = judgeLineNodes[lineId];
+    // private void CreateRenderDatas()
+    // {
+    //     // 生成渲染数据 坐标系: Parent坐标
+    //     judgeLineRenderDatas.Clear();
+    //     noteRenderDatas.Clear();
+    //     for(int lineId = 0; lineId < judgeLineNodes.Count; lineId++)
+    //     {
+    //         JudgeLineNode judgeLineNode = judgeLineNodes[lineId];
 
-            Vector2 linePos = new Vector2(judgeLineNode.CurrentMoveX, judgeLineNode.CurrentMoveY);//坐标系: 谱面坐标
+    //         Vector2 linePos = new Vector2(judgeLineNode.CurrentMoveX, judgeLineNode.CurrentMoveY);//坐标系: 谱面坐标
 
-            //谱面坐标转换为Parent坐标
-            Vector2 lineParentPos = PosUtil.ChartPosToViewportPos(
-                linePos,
-                Parent.Size
-            );
+    //         //谱面坐标转换为Parent坐标
+    //         Vector2 lineParentPos = PosUtil.ChartPosToViewportPos(
+    //             linePos,
+    //             Parent.Size
+    //         );
 
-            JudgeLineRenderData lineRenderData = new()
-            {
-                Pos = lineParentPos,
-                Rotate = judgeLineNode.CurrentRotate,
-                Alpha = judgeLineNode.CurrentAlpha
-            };
-            judgeLineRenderDatas.Add(lineRenderData);
+    //         JudgeLineRenderData lineRenderData = new()
+    //         {
+    //             Pos = lineParentPos,
+    //             Rotate = judgeLineNode.CurrentRotate,
+    //             Alpha = judgeLineNode.CurrentAlpha
+    //         };
+    //         judgeLineRenderDatas.Add(lineRenderData);
 
 
-            for(int noteIndex = 0;noteIndex < judgeLineNode.noteNodes.Count; noteIndex++)
-            {
-                NoteNode noteNode = judgeLineNode.noteNodes[noteIndex];
+    //         for(int noteIndex = 0;noteIndex < judgeLineNode.noteNodes.Count; noteIndex++)
+    //         {
+    //             NoteNode noteNode = judgeLineNode.noteNodes[noteIndex];
 
-                if(noteNode.Visible == false) continue;
+    //             if(noteNode.Visible == false) continue;
 
-                if(noteNode is HoldNoteNode holdNoteNode)
-                {
-                    // //计算note的全局坐标
-                    Vector2 headGlobalPos = PosUtil.GetChildGlobalPosition(
-                        linePos,
-                        holdNoteNode.Position,
-                        judgeLineNode.CurrentRotate
-                    );
+    //             if(noteNode is HoldNoteNode holdNoteNode)
+    //             {
+    //                 // //计算note的全局坐标
+    //                 Vector2 headGlobalPos = PosUtil.GetChildGlobalPosition(
+    //                     linePos,
+    //                     holdNoteNode.Position,
+    //                     judgeLineNode.CurrentRotate
+    //                 );
 
-                    //谱面坐标转换为Parent坐标
-                    Vector2 headParentPos = PosUtil.ChartPosToViewportPos(
-                        headGlobalPos,
-                        Parent.Size
-                    );
+    //                 //谱面坐标转换为Parent坐标
+    //                 Vector2 headParentPos = PosUtil.ChartPosToViewportPos(
+    //                     headGlobalPos,
+    //                     Parent.Size
+    //                 );
 
-                    Vector2 endGlobalPos = PosUtil.GetChildGlobalPosition(
-                        linePos,
-                        holdNoteNode.EndPosition, 
-                        judgeLineNode.CurrentRotate
-                    );
+    //                 Vector2 endGlobalPos = PosUtil.GetChildGlobalPosition(
+    //                     linePos,
+    //                     holdNoteNode.EndPosition, 
+    //                     judgeLineNode.CurrentRotate
+    //                 );
 
-                    //谱面坐标转换为Parent坐标
-                    Vector2 endParentPos = PosUtil.ChartPosToViewportPos(
-                        endGlobalPos,
-                        Parent.Size
-                    );
+    //                 //谱面坐标转换为Parent坐标
+    //                 Vector2 endParentPos = PosUtil.ChartPosToViewportPos(
+    //                     endGlobalPos,
+    //                     Parent.Size
+    //                 );
 
-                    //计算旋转
-                    float noteRotation = judgeLineNode.CurrentRotate;
+    //                 //计算旋转
+    //                 float noteRotation = judgeLineNode.CurrentRotate;
 
-                    NoteRenderData noteRenderData = new()
-                    {
-                        Type = NoteType.Hold,
-                        HeadPos = headParentPos,
-                        EndPos = endParentPos,
-                        Rotate = noteRotation,
-                        Alpha = noteNode.Alpha,
-                        HeadVisible = noteNode.HeadVisible,
-                        SizeX = noteNode.SizeX,
-                    };
+    //                 NoteRenderData noteRenderData = new()
+    //                 {
+    //                     Type = NoteType.Hold,
+    //                     HeadPos = headParentPos,
+    //                     EndPos = endParentPos,
+    //                     Rotate = noteRotation,
+    //                     Alpha = noteNode.Alpha,
+    //                     HeadVisible = noteNode.HeadVisible,
+    //                     SizeX = noteNode.SizeX,
+    //                 };
 
-                    noteRenderDatas.Add(noteRenderData);
+    //                 noteRenderDatas.Add(noteRenderData);
 
-                }
-                else // Tap Flick Drag
-                {
-                    Vector2 notePos = noteNode.Position; // 坐标系：谱面坐标，相对于判定线
+    //             }
+    //             else // Tap Flick Drag
+    //             {
+    //                 Vector2 notePos = noteNode.Position; // 坐标系：谱面坐标，相对于判定线
 
-                    //计算note的全局坐标 坐标系：谱面坐标
-                    Vector2 globalPos = PosUtil.GetChildGlobalPosition(
-                        linePos,
-                        notePos,
-                        judgeLineNode.CurrentRotate
-                    );
+    //                 //计算note的全局坐标 坐标系：谱面坐标
+    //                 Vector2 globalPos = PosUtil.GetChildGlobalPosition(
+    //                     linePos,
+    //                     notePos,
+    //                     judgeLineNode.CurrentRotate
+    //                 );
 
-                    //谱面坐标转换为Parent坐标
-                    Vector2 noteParentPos = PosUtil.ChartPosToViewportPos(
-                        globalPos,
-                        Parent.Size
-                    );
+    //                 //谱面坐标转换为Parent坐标
+    //                 Vector2 noteParentPos = PosUtil.ChartPosToViewportPos(
+    //                     globalPos,
+    //                     Parent.Size
+    //                 );
 
-                    //计算旋转
-                    float noteRotation = judgeLineNode.CurrentRotate;
+    //                 //计算旋转
+    //                 float noteRotation = judgeLineNode.CurrentRotate;
 
-                    NoteRenderData noteRenderData = new()
-                    {
-                        Type = (NoteType)noteNode.data.Type,
-                        HeadPos = noteParentPos,
-                        EndPos = noteParentPos,
-                        Rotate = noteRotation,
-                        Alpha = noteNode.Alpha,
-                        SizeX = noteNode.SizeX,
-                    };
+    //                 NoteRenderData noteRenderData = new()
+    //                 {
+    //                     Type = (NoteType)noteNode.data.Type,
+    //                     HeadPos = noteParentPos,
+    //                     EndPos = noteParentPos,
+    //                     Rotate = noteRotation,
+    //                     Alpha = noteNode.Alpha,
+    //                     SizeX = noteNode.SizeX,
+    //                 };
 
-                    noteRenderDatas.Add(noteRenderData);
-                }
-            }
+    //                 noteRenderDatas.Add(noteRenderData);
+    //             }
+    //         }
 
-        }
-    }
+    //     }
+    // }
 
     public override void UpdateLogic()
     {
@@ -336,6 +404,10 @@ public partial class ChartPlayer : BaseChartPlayer
 
         if (Disabled)
         {
+            // 建议清空计数，避免 Render 误读到上一帧残留
+            _lineRenderCount = 0;
+            _noteRenderCount = 0;
+
             // 需要刷新所有note的_hasPlayedHitSound
             foreach(JudgeLineNode judgeLineNode in judgeLineNodes)
             {
@@ -348,15 +420,18 @@ public partial class ChartPlayer : BaseChartPlayer
             return;
         }
 
-        // 更新每条判定线及其上的音符
-        //SetJudgeLineList();
-        foreach (JudgeLineNode judgeLineNode in judgeLineNodes)
-        {
-            judgeLineNode.UpdateLine(ChartTime);
-        }
+        _lineRenderCount = 0;
+        _noteRenderCount = 0;
 
-        //生成渲染数据，供Render方法使用
-        CreateRenderDatas();
+        // 更新每条判定线及其上的音符
+        // 按拓扑序更新：父线先于子线
+        foreach (int idx in _topologicalOrder)
+        {
+            JudgeLineNode judgeLineNode = judgeLineNodes[idx];
+            judgeLineNode.UpdateLine(ChartTime, _lineRenderBuffer, ref _lineRenderCount, 
+            _noteRenderBuffer, ref _noteRenderCount);
+        }
+        
     }
 
     public override void Play(float time)
@@ -439,7 +514,8 @@ public class JudgeLineNode
     /// <summary>
     /// 根据当前游戏时间更新判定线状态
     /// </summary>
-    public void UpdateLine(double gameTime)
+    public void UpdateLine(double gameTime, JudgeLineRenderData[] lineBuffer, ref int lineCount,
+        NoteRenderData[] noteBuffer, ref int noteCount)
     {
         if (Data?.EventLayers == null || Data.EventLayers.Length == 0) return;
 
@@ -454,7 +530,6 @@ public class JudgeLineNode
             CurrentAlpha = ChartDataHelper.InterpolateEvent(layer.AlphaEvents, gameTime, 0);
             CurrentSpeed = ChartDataHelper.InterpolateEvent(layer.SpeedEvents, gameTime, 0);
         }
-        
 
         //其余1-3层的值叠加到第0层上
         for(int i = 1; i <= 3; i++)
@@ -477,9 +552,8 @@ public class JudgeLineNode
         if(Data.Father >= 0)
         {
             JudgeLineNode father = judgeLineNodes[Data.Father];
-            //先更新父线位置
-            father.UpdateLine(gameTime);
-            //再将自己的坐标加上父线的坐标
+            // 拓扑序保证 father 已经更新完毕
+            // 将自己的坐标加上父线的坐标
             // 父线的位置和旋转会影响子线的位置，但不会影响子线的旋转
             // 这里不能直接将自己的坐标加上父线的坐标，因为父线的旋转会导致子线的位置变化
             Vector2 currentPos = PosUtil.GetChildGlobalPosition(     // 坐标系: 谱面坐标[-675,675] [-450,450]
@@ -495,15 +569,105 @@ public class JudgeLineNode
         //调整透明度
         CurrentAlpha = Math.Clamp(CurrentAlpha, 0f, 255f);
         
-        // 更新该线上所有音符（音符位置受判定线速度和位置影响）
+        
+        // 提前计算累计位移，供note使用（简化计算） // 坐标系: 谱面坐标
         nowDisplacement = ChartDataHelper.GetDisplacementAtTime(
             Data.EventLayers[0].SpeedEvents, 
             (float)gameTime
-        ); // 提前计算累计位移，供note使用（简化计算） // 坐标系: 谱面坐标
+        ); 
 
-        foreach (var note in noteNodes)
+        // 写入LineBuffer
+        Vector2 linePos = new Vector2(CurrentMoveX, CurrentMoveY); //坐标系: 谱面坐标
+        int lineIdx = lineCount++;
+        lineBuffer[lineIdx] = new JudgeLineRenderData
         {
-            note.UpdateNote(gameTime);
+            Pos = PosUtil.ChartPosToViewportPos(linePos, _chartPlayer.Parent.Size),
+            Rotate = CurrentRotate,
+            Alpha = CurrentAlpha
+        };
+
+        // 更新该线上所有音符（音符位置受判定线速度和位置影响）
+        foreach (var noteNode in noteNodes)
+        {
+            noteNode.UpdateNote(gameTime);
+
+            // 直接生成 NoteRenderData 写入缓冲
+            if(noteNode.Visible == false) continue;
+
+            int noteIdx = noteCount++;
+
+            if(noteNode is HoldNoteNode holdNoteNode)
+            {
+                // //计算note的全局坐标
+                Vector2 headGlobalPos = PosUtil.GetChildGlobalPosition(
+                    linePos,
+                    holdNoteNode.Position,
+                    CurrentRotate
+                );
+
+                //谱面坐标转换为Parent坐标
+                Vector2 headParentPos = PosUtil.ChartPosToViewportPos(
+                    headGlobalPos,
+                    _chartPlayer.Parent.Size
+                );
+
+                Vector2 endGlobalPos = PosUtil.GetChildGlobalPosition(
+                    linePos,
+                    holdNoteNode.EndPosition, 
+                    CurrentRotate
+                );
+
+                //谱面坐标转换为Parent坐标
+                Vector2 endParentPos = PosUtil.ChartPosToViewportPos(
+                    endGlobalPos,
+                    _chartPlayer.Parent.Size
+                );
+
+                //计算旋转
+                float noteRotation = CurrentRotate;
+
+                noteBuffer[noteIdx] = new NoteRenderData
+                {
+                    Type = NoteType.Hold,
+                    HeadPos = headParentPos,
+                    EndPos = endParentPos,
+                    Rotate = noteRotation,
+                    Alpha = noteNode.Alpha,
+                    HeadVisible = noteNode.HeadVisible,
+                    SizeX = noteNode.SizeX,
+                };
+
+            }
+            else // Tap Flick Drag
+            {
+                Vector2 notePos = noteNode.Position; // 坐标系：谱面坐标，相对于判定线
+
+                //计算note的全局坐标 坐标系：谱面坐标
+                Vector2 globalPos = PosUtil.GetChildGlobalPosition(
+                    linePos,
+                    notePos,
+                    CurrentRotate
+                );
+
+                //谱面坐标转换为Parent坐标
+                Vector2 noteParentPos = PosUtil.ChartPosToViewportPos(
+                    globalPos,
+                    _chartPlayer.Parent.Size
+                );
+
+                //计算旋转
+                float noteRotation = CurrentRotate;
+                
+                noteBuffer[noteIdx] = new NoteRenderData
+                {
+                    Type = (NoteType)noteNode.data.Type,
+                    HeadPos = noteParentPos,
+                    EndPos = noteParentPos,
+                    Rotate = noteRotation,
+                    Alpha = noteNode.Alpha,
+                    SizeX = noteNode.SizeX,
+                };
+            }
         }
     }
     
@@ -591,7 +755,7 @@ public class NoteNode
         float noteStartSec = data.startSec;
         float noteEndSec = data.EndTime != null ? data.endSec : noteStartSec;
 
-        // 音符到达判定线时播放音效，并生成打击特效
+        // ------------ 音符到达判定线时播放音效，并生成打击特效 ------------
         if(data.IsFake == false) // 假note不需要击打
         {
             float hitTime = noteStartSec; // 头部到达判定线的时间
@@ -630,7 +794,7 @@ public class NoteNode
         }
 
         // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
-        //处理显示和隐藏
+        // ------------ 处理显示和隐藏 ------------
         {
             if(data.Type == 2) // hold需要特殊处理，当head到达判定线时，隐藏head的贴图
             {
@@ -658,7 +822,7 @@ public class NoteNode
             }
         }
 
-        //计算note位置     坐标系: 谱面坐标[-675,675] [-450,450]
+        //------------ 计算note位置 ------------     坐标系: 谱面坐标[-675,675] [-450,450]
         //相对于判定线的Y坐标 = 速度随时间变化的函数的积分
         //简单起见，这里分段计算位移，用到匀变速直线运动的公式
         //下落速度由判定线速度和note速度相乘共同决定
@@ -712,41 +876,15 @@ public class HoldNoteNode : NoteNode
     //private Sprite2D _bodySprite;
     //private Sprite2D _endSprite;
 
+    // 缓存数据
+    private float _cachedEndDisplacement = -1f;
+    private float _cachedEndSec = -1f;
+
     public Vector2 EndPosition { get; set; } // 坐标系: 谱面坐标[-675,675] [-450,450] 相对于判定线
     public Vector2 BodyPosition { get; set; } // 坐标系: 谱面坐标[-675,675] [-450,450] 相对于判定线
     public float BodyScale { get; set; }
 
     private Vector2 endLocalChartPos; //在铺面坐标系下end的本地坐标 坐标系: 谱面坐标[-675,675] [-450,450]
-
-    // 初始化身体和尾部纹理，创建对应的 Sprite 节点
-    // public void InitializeHold(Texture2D bodyTexture, Texture2D endTexture)
-    // {
-    //     _bodyTexture = bodyTexture;
-    //     _endTexture = endTexture;
-
-    //     // 创建身体 Sprite
-    //     _bodySprite = new Sprite2D
-    //     {
-    //         Texture = _bodyTexture,
-    //         Scale = new Vector2(_chartPlayer.noteWidthScale, _chartPlayer.noteWidthScale) // 与头部缩放一致
-    //     };
-    //     AddChild(_bodySprite);
-
-    //     // 创建尾部 Sprite
-    //     _endSprite = new Sprite2D
-    //     {
-    //         Texture = _endTexture,
-    //         Scale = new Vector2(_chartPlayer.noteWidthScale, _chartPlayer.noteWidthScale)
-    //     };
-    //     AddChild(_endSprite);
-
-    //     //holdHead和holdEnd的贴图需要设置offset
-    //     _sprite.Offset = new Vector2(0, _chartPlayer.holdHeadTexture.GetHeight() / 2f);//head
-    //     _endSprite.Offset = new Vector2(0, -_chartPlayer.holdHeadTexture.GetHeight() / 2f);//end
-
-    //     //hold需要显示在其他音符的下面
-    //     ZIndex = 0;
-    // }
 
     public override void UpdateNote(double gameTime)
     {
@@ -760,34 +898,31 @@ public class HoldNoteNode : NoteNode
         float endSec = data.endSec;
 
         //计算end位置，可以视为在endTime的音符
-        //float holdLength = 0;
         {
             //第一阶段：head到达之前，localPosition保持变不变
-            // if(gameTime <= startSec)
-            // {
-            //     float startSpeed = 120f*ChartDataHelper.GetSpeedAtTime(
-            //         fatherLine.Data.EventLayers[0].SpeedEvents, startSec); // head落在判定线上时的速度 坐标系: 谱面坐标
-            //     float s = (float)(startSpeed * (endSec - startSec)); // 坐标系: 谱面坐标
-            //     endLocalChartPos = new Vector2(0,s);
-            //     //EndPosition = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Parent.Size);
-            //     holdLength = PosUtil.ChartPosToLocalPos(endLocalChartPos, _chartPlayer.Parent.Size).Y;
-                
-            // }
             //第二阶段：hold正在缩小，localPosition不断减小至y=0
             //else if(gameTime > startSec && gameTime < endSec)
             // if(gameTime < endSec)
             {
                 float localChartY;
                 //全部位移 坐标系: 谱面坐标
-                //float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
-                float allDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, endSec);
+                // float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
+                // float allDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, endSec);
 
-                //note已经移动的位移 坐标系: 谱面坐标
-                //float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
-                float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, (float)gameTime);
+                // 缓存 endSec 对应的位移（Hold 的 endTime 不变）
+                if (_cachedEndSec != data.endSec)
+                {
+                    _cachedEndSec = data.endSec;
+                    _cachedEndDisplacement = ChartDataHelper.GetDisplacementAtTime(
+                        _judgeLineNode.Data.EventLayers[0].SpeedEvents, _cachedEndSec);
+                }
 
+                // note已经移动的位移 坐标系: 谱面坐标
+                // float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
+                // float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, (float)gameTime);
+                float nowDisplacement = _judgeLineNode.nowDisplacement;
 
-                localChartY = Math.Max(0f, allDisplacement - nowDisplacement); // 坐标系: 谱面坐标
+                localChartY = Math.Max(0f, _cachedEndDisplacement - nowDisplacement); // 坐标系: 谱面坐标
                 //GD.Print($"localChartY:{localChartY}");
 
                 endLocalChartPos = new Vector2(data.PositionX, localChartY); // 坐标系: 谱面坐标

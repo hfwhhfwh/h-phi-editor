@@ -342,6 +342,12 @@ public abstract partial class BaseEditPanel : Panel
 
 	protected void RenderObject(string key, float localX, Beat beat, Vector2 offset, float scale, Action<MultiMesh, int> renderEffect)
 	{
+		// 动态扩容
+		if(visibleCounts[key] + 1 > multiMeshes[key].InstanceCount)
+		{
+			EnsureMultiMeshCapacity(key, visibleCounts[key] + 1);
+		}
+
 		float beatBalue = beat[0] + beat[1] * 1f / beat[2];
 		float localY = _coordComponent.GetPanelPosY(beatBalue);
 
@@ -371,6 +377,12 @@ public abstract partial class BaseEditPanel : Panel
 
 	protected void RenderLongObject(string key, float localX, Beat startBeat, Beat endBeat, Vector2 offset, float scale, Action<MultiMesh, int> renderEffect)
 	{
+		// 动态扩容
+		if(visibleCounts[key] + 1 > multiMeshes[key].InstanceCount)
+		{
+			EnsureMultiMeshCapacity(key, visibleCounts[key] + 1);
+		}
+		
 		float startBeatBalue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
 		float startLocalY = _coordComponent.GetPanelPosY(startBeatBalue);
 
