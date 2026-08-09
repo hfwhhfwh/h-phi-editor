@@ -228,7 +228,7 @@ public partial class ChartPlayer : BaseChartPlayer
         ChartEventBus.OnChartDataChanged += OnChartDataChanged;
 
         //预计算所有事件时间的秒数
-        ChartDataHelper.RefreshEventSec(chart);
+        ChartDataHelper.RefreshAllEventSec(chart);
         //预计算所有note时间的秒数
         ChartDataHelper.RefreshAllNoteSec(chart);
         //预计算所有速度事件的前缀和

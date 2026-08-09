@@ -673,61 +673,6 @@ namespace QuickType
     //     public static readonly TextureConverter Singleton = new TextureConverter();
     // }
 
-    public partial class LineEvent
-    {
-        [JsonIgnore] public float startSec;
-        [JsonIgnore] public float endSec;
-
-        // 仅在速度事件中有效，在此事件的StartTime之前的所有位移，前缀和优化
-        [JsonIgnore] public float prefixX; 
-    }
-
-    public partial class Note
-    {
-        [JsonIgnore] public float startSec;
-        [JsonIgnore] public float endSec;
-
-        /// <summary>
-        /// note所在时刻累积的所有位移，用于优化性能
-        /// </summary>
-        [JsonIgnore] public float allDisplacement;
-
-        /// <summary>
-        /// （仅限Hold）Hold末尾所在时刻累积的所有位移，用于优化性能
-        /// </summary>
-        [JsonIgnore] public float endAllDisplacement;
-    }
-
-    public partial class EventLayer
-    {
-        public List<LineEvent> GetLineEvents(LineEventEnum lineEventEnum)
-        {
-            List<LineEvent> lineEvents = lineEventEnum switch
-            {
-                LineEventEnum.MoveX => MoveXEvents,
-                LineEventEnum.MoveY => MoveYEvents,
-                LineEventEnum.Rotate => RotateEvents,
-                LineEventEnum.Alpha => AlphaEvents,
-                LineEventEnum.Speed => SpeedEvents,
-                _ => MoveXEvents,
-            };
-
-            // 懒加载：如果为 null，创建新列表并写回对应属性
-            if (lineEvents == null)
-            {
-                lineEvents = new List<LineEvent>();
-                switch (lineEventEnum)
-                {
-                    case LineEventEnum.MoveX:  MoveXEvents  = lineEvents; break;
-                    case LineEventEnum.MoveY:  MoveYEvents  = lineEvents; break;
-                    case LineEventEnum.Rotate: RotateEvents = lineEvents; break;
-                    case LineEventEnum.Alpha:  AlphaEvents  = lineEvents; break;
-                    case LineEventEnum.Speed:  SpeedEvents  = lineEvents; break;
-                }
-            }
-
-            return lineEvents;
-        }
-    }
+    
 }
 

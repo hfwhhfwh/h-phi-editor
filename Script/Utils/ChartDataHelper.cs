@@ -6,86 +6,86 @@ using System.Runtime.CompilerServices;
 
 public static class ChartDataHelper
 {
-    /// <summary>
-    /// 设置事件的开始时间
-    /// </summary>
-    /// <param name="ev">事件</param>
-    /// <param name="newStartTime">新的开始时间</param>
-    /// <param name="bpmList">BPM事件列表</param>
-    public static void SetEventStartTime(LineEvent ev, int[] newStartTime, BpmEvent[] bpmList)
-    {
-        ev.StartTime = newStartTime;
-        ev.startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
-    }
+    // /// <summary>
+    // /// 设置事件的开始时间
+    // /// </summary>
+    // /// <param name="ev">事件</param>
+    // /// <param name="newStartTime">新的开始时间</param>
+    // /// <param name="bpmList">BPM事件列表</param>
+    // public static void SetEventStartTime(LineEvent ev, int[] newStartTime, BpmEvent[] bpmList)
+    // {
+    //     ev.StartTime = newStartTime;
+    //     ev.startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
+    // }
 
-    /// <summary>
-    /// 设置事件的结束时间
-    /// </summary>
-    /// <param name="ev">事件</param>
-    /// <param name="newEndTime">新的结束时间</param>
-    /// <param name="bpmList">BPM事件列表</param>
-    public static void SetEventEndTime(LineEvent ev, int[] newEndTime, BpmEvent[] bpmList)
-    {
-        ev.EndTime = newEndTime;
-        ev.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
-    }
+    // /// <summary>
+    // /// 设置事件的结束时间
+    // /// </summary>
+    // /// <param name="ev">事件</param>
+    // /// <param name="newEndTime">新的结束时间</param>
+    // /// <param name="bpmList">BPM事件列表</param>
+    // public static void SetEventEndTime(LineEvent ev, int[] newEndTime, BpmEvent[] bpmList)
+    // {
+    //     ev.EndTime = newEndTime;
+    //     ev.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
+    // }
 
-    public static void SetNoteStartTime(Note note, int[] newStartTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
-    {
-        note.StartTime = newStartTime;
-        note.startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
-        //防止StartTime在EndTime后面
-        if(note.startSec > note.endSec)
-        {
-            note.EndTime = note.StartTime;
-            note.endSec = note.startSec;
-        }
-        //如果是tap flick drag, StartTime和EndTime必须相同
-        if(note.Type == 1 || note.Type == 3 || note.Type == 4)
-        {
-            note.EndTime = note.StartTime;
-            note.endSec = note.startSec;
-        }
+    // public static void SetNoteStartTime(Note note, int[] newStartTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
+    // {
+    //     note.StartTime = newStartTime;
+    //     note.startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
+    //     //防止StartTime在EndTime后面
+    //     if(note.startSec > note.endSec)
+    //     {
+    //         note.EndTime = note.StartTime;
+    //         note.endSec = note.startSec;
+    //     }
+    //     //如果是tap flick drag, StartTime和EndTime必须相同
+    //     if(note.Type == 1 || note.Type == 3 || note.Type == 4)
+    //     {
+    //         note.EndTime = note.StartTime;
+    //         note.endSec = note.startSec;
+    //     }
 
-        // 刷新总位移
-        note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
-    }
+    //     // 刷新总位移
+    //     note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
+    // }
 
-    public static void SetNoteEndTime(Note note, int[] newEndTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
-    {
-        note.EndTime = newEndTime;
-        note.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
+    // public static void SetNoteEndTime(Note note, int[] newEndTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
+    // {
+    //     note.EndTime = newEndTime;
+    //     note.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
 
-        bool startTimeChanged = false;
+    //     bool startTimeChanged = false;
 
-        //防止StartTime在EndTime后面
-        if(note.startSec > note.endSec)
-        {
-            note.StartTime = note.EndTime;
-            note.startSec = note.endSec;
-            startTimeChanged = true;
-        }
-        //如果是tap flick drag, StartTime和EndTime必须相同
-        if(note.Type == 1 || note.Type == 3 || note.Type == 4)
-        {
-            note.StartTime = note.EndTime;
-            note.startSec = note.endSec;
-            startTimeChanged = true;
-        }
+    //     //防止StartTime在EndTime后面
+    //     if(note.startSec > note.endSec)
+    //     {
+    //         note.StartTime = note.EndTime;
+    //         note.startSec = note.endSec;
+    //         startTimeChanged = true;
+    //     }
+    //     //如果是tap flick drag, StartTime和EndTime必须相同
+    //     if(note.Type == 1 || note.Type == 3 || note.Type == 4)
+    //     {
+    //         note.StartTime = note.EndTime;
+    //         note.startSec = note.endSec;
+    //         startTimeChanged = true;
+    //     }
 
-        // 如果StartTime被修改了，必须刷新总位移
-        if(startTimeChanged)
-        {
-            note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
-        }
+    //     // 如果StartTime被修改了，必须刷新总位移
+    //     if(startTimeChanged)
+    //     {
+    //         note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
+    //     }
 
-        if(note.Type == 2) note.endAllDisplacement = GetDisplacementAtTime(speedEvents, note.endSec);
-    }
+    //     if(note.Type == 2) note.endAllDisplacement = GetDisplacementAtTime(speedEvents, note.endSec);
+    // }
 
     /// <summary>
     /// 根据事件的StartTime和EndTime，重新计算所有事件的StartSec和EndSec
     /// </summary>
-    public static void RefreshEventSec(Chart chart)
+    public static void RefreshAllEventSec(Chart chart)
     {
         BpmEvent[] bpmList = chart.BpmList;
 
@@ -100,8 +100,7 @@ public static class ChartDataHelper
                 {
                     foreach(LineEvent lineEvent in layer.MoveXEvents)
                     {
-                        lineEvent.startSec = TimeUtil.BeatToSecond(lineEvent.StartTime, bpmList);
-                        lineEvent.endSec = TimeUtil.BeatToSecond(lineEvent.EndTime, bpmList);
+                        lineEvent.RefreshSec(bpmList);
                     }
                 }
                 
@@ -110,8 +109,7 @@ public static class ChartDataHelper
                 {
                     foreach(LineEvent lineEvent in layer.MoveYEvents)
                     {
-                        lineEvent.startSec = TimeUtil.BeatToSecond(lineEvent.StartTime, bpmList);
-                        lineEvent.endSec = TimeUtil.BeatToSecond(lineEvent.EndTime, bpmList);
+                        lineEvent.RefreshSec(bpmList);
                     }
                 }
                 
@@ -120,8 +118,7 @@ public static class ChartDataHelper
                 {
                     foreach(LineEvent lineEvent in layer.RotateEvents)
                     {
-                        lineEvent.startSec = TimeUtil.BeatToSecond(lineEvent.StartTime, bpmList);
-                        lineEvent.endSec = TimeUtil.BeatToSecond(lineEvent.EndTime, bpmList);
+                        lineEvent.RefreshSec(bpmList);
                     }
                 }
                 
@@ -130,8 +127,7 @@ public static class ChartDataHelper
                 {
                     foreach(LineEvent lineEvent in layer.AlphaEvents)
                     {
-                        lineEvent.startSec = TimeUtil.BeatToSecond(lineEvent.StartTime, bpmList);
-                        lineEvent.endSec = TimeUtil.BeatToSecond(lineEvent.EndTime, bpmList);
+                        lineEvent.RefreshSec(bpmList);
                     }
                 }
                 
@@ -140,8 +136,7 @@ public static class ChartDataHelper
                 {
                     foreach(LineEvent lineEvent in layer.SpeedEvents)
                     {
-                        lineEvent.startSec = TimeUtil.BeatToSecond(lineEvent.StartTime, bpmList);
-                        lineEvent.endSec = TimeUtil.BeatToSecond(lineEvent.EndTime, bpmList);
+                        lineEvent.RefreshSec(bpmList);
                     }
                 }
                 
@@ -149,39 +144,39 @@ public static class ChartDataHelper
         }
     }
 
-    public static void RefreshEventPrefix(List<LineEvent> events)
-    {
-        if (events == null || events.Count == 0) return;
+    // public static void RefreshEventPrefix(List<LineEvent> events)
+    // {
+    //     if (events == null || events.Count == 0) return;
 
-        float totalX = 0; // 总位移
-        //遍历所有速度事件
-        for (int i = 0; i < events.Count; i++)
-        {
-            LineEvent ev = events[i];
+    //     float totalX = 0; // 总位移
+    //     //遍历所有速度事件
+    //     for (int i = 0; i < events.Count; i++)
+    //     {
+    //         LineEvent ev = events[i];
 
-            //每一个事件都需要处理上一个事件的位移和间隙的位移
-            if(i == 0)
-            {
-                //第一个事件起始时间与0的间隙，默认速度为0
-                ev.prefixX = 0;
-            }
-            else
-            {
-                //上个事件的位移
-                float lastX = (events[i-1].Start + events[i-1].End)*120f * (events[i-1].endSec - events[i-1].startSec) / 2f;
-                //事件间隙的位移
-                float gapX = events[i-1].End*120f * (ev.startSec - events[i-1].endSec);
+    //         //每一个事件都需要处理上一个事件的位移和间隙的位移
+    //         if(i == 0)
+    //         {
+    //             //第一个事件起始时间与0的间隙，默认速度为0
+    //             ev.prefixX = 0;
+    //         }
+    //         else
+    //         {
+    //             //上个事件的位移
+    //             float lastX = (events[i-1].Start + events[i-1].End)*120f * (events[i-1].endSec - events[i-1].startSec) / 2f;
+    //             //事件间隙的位移
+    //             float gapX = events[i-1].End*120f * (ev.startSec - events[i-1].endSec);
 
-                totalX += lastX + gapX;
+    //             totalX += lastX + gapX;
 
-                //GD.Print($"lastX:{lastX}, gapX:{gapX}");
+    //             //GD.Print($"lastX:{lastX}, gapX:{gapX}");
 
-                //赋值给前缀和
-                ev.prefixX = totalX;
-            }
+    //             //赋值给前缀和
+    //             ev.prefixX = totalX;
+    //         }
 
-        }
-    }
+    //     }
+    // }
 
     public static void RefreshAllEventPrefix(Chart chart)
     {
@@ -192,8 +187,7 @@ public static class ChartDataHelper
             foreach(EventLayer layer in line.EventLayers)
             {
                 if(layer == null) continue;
-                RefreshEventPrefix(layer.SpeedEvents);
-                
+                layer.RefreshSpeedEventsPrefix();
             }
         }
     }
@@ -235,22 +229,22 @@ public static class ChartDataHelper
         if(chart.JudgeLineList == null || chart.JudgeLineList.Count == 0) return;
         foreach(JudgeLine line in chart.JudgeLineList)
         {
-            RefreshNotesAllDisplacement(line);
+            line.RefreshAllNoteDisplacement();
         }
 
     }
 
-    public static void RefreshNotesAllDisplacement(JudgeLine line)
-    {
-        if(line.Notes == null || line.Notes.Count == 0) return;
-        foreach(Note note in line.Notes)
-        {
-            note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);
+    // public static void RefreshNotesAllDisplacement(JudgeLine line)
+    // {
+    //     if(line.Notes == null || line.Notes.Count == 0) return;
+    //     foreach(Note note in line.Notes)
+    //     {
+    //         note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);
 
-            if(note.Type == 2) 
-                note.endAllDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.endSec);
-        }
-    }
+    //         if(note.Type == 2) 
+    //             note.endAllDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.endSec);
+    //     }
+    // }
 
     /// <summary>
     /// 二分查找最后一个 startSec <= time 的事件
@@ -340,145 +334,145 @@ public static class ChartDataHelper
     /// <param name="events">速度事件</param>
     /// <param name="time">游戏时间</param>
     /// <returns></returns>
-    public static float GetSpeedAtTime(List<LineEvent> events, float time)
-    {
-        // //遍历所有速度事件
-        // for (int i = 0; i < events.Length; i++)
-        // {
-        //     LineEvent ev = events[i];
+    // public static float GetSpeedAtTime(List<LineEvent> events, float time)
+    // {
+    //     // //遍历所有速度事件
+    //     // for (int i = 0; i < events.Length; i++)
+    //     // {
+    //     //     LineEvent ev = events[i];
 
-        //     float start = ev.Start;
-        //     float end = ev.End;
-        //     float startSec = ev.startSec;
-        //     float endSec = ev.endSec;
+    //     //     float start = ev.Start;
+    //     //     float end = ev.End;
+    //     //     float startSec = ev.startSec;
+    //     //     float endSec = ev.endSec;
 
-        //     // 如果time正在这个事件中
-        //     if(time >= startSec && time < endSec)
-        //     {
-        //         float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
-        //         float t = (float)(time - startSec); // 时间
-        //         return start + a * t;
-        //     }
+    //     //     // 如果time正在这个事件中
+    //     //     if(time >= startSec && time < endSec)
+    //     //     {
+    //     //         float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
+    //     //         float t = (float)(time - startSec); // 时间
+    //     //         return start + a * t;
+    //     //     }
             
-        //     //同时也要处理与下一个速度事件之间的部分
-        //     if(i < events.Length - 1) // 如果这不是最后一个事件
-        //     {
-        //         float nextStartSec = events[i+1].startSec;
-        //         //如果time正在这个间隔中
-        //         if(time >= endSec && time < nextStartSec)
-        //         {
-        //             return end;
-        //         }
-        //         //如果time在这个间隔之后
-        //         else if(time >= nextStartSec)
-        //         {
-        //             continue;//继续到下一个速度事件
-        //         }
-        //     }
-        //     else// 如果这是最后一个事件之后的间隔
-        //     {
-        //         return end;
-        //     }
-        // }
-        // return events[^1].End;//理论上不会执行到这里
+    //     //     //同时也要处理与下一个速度事件之间的部分
+    //     //     if(i < events.Length - 1) // 如果这不是最后一个事件
+    //     //     {
+    //     //         float nextStartSec = events[i+1].startSec;
+    //     //         //如果time正在这个间隔中
+    //     //         if(time >= endSec && time < nextStartSec)
+    //     //         {
+    //     //             return end;
+    //     //         }
+    //     //         //如果time在这个间隔之后
+    //     //         else if(time >= nextStartSec)
+    //     //         {
+    //     //             continue;//继续到下一个速度事件
+    //     //         }
+    //     //     }
+    //     //     else// 如果这是最后一个事件之后的间隔
+    //     //     {
+    //     //         return end;
+    //     //     }
+    //     // }
+    //     // return events[^1].End;//理论上不会执行到这里
 
-        if (events == null || events.Count == 0) return 0f;
+    //     if (events == null || events.Count == 0) return 0f;
 
-        // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
-        int idx = BinarySearchLatestEvent(events, time);
+    //     // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
+    //     int idx = BinarySearchLatestEvent(events, time);
 
-        // time 在第一个事件之前（按约定，速度为0）
-        if (idx < 0) return 0f; 
+    //     // time 在第一个事件之前（按约定，速度为0）
+    //     if (idx < 0) return 0f; 
 
-        LineEvent ev = events[idx];
-        float start = ev.Start;
-        float end = ev.End;
-        float startSec = ev.startSec;
-        float endSec = ev.endSec;
+    //     LineEvent ev = events[idx];
+    //     float start = ev.Start;
+    //     float end = ev.End;
+    //     float startSec = ev.startSec;
+    //     float endSec = ev.endSec;
 
-        if (time >= startSec && time <= endSec)
-        {
-            float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
-            float t = (float)(time - startSec); // 时间
-            return start + a * t;
+    //     if (time >= startSec && time <= endSec)
+    //     {
+    //         float a = (end - start) / (endSec - startSec); // 加速度 a = △v/△t
+    //         float t = (float)(time - startSec); // 时间
+    //         return start + a * t;
             
-        }
-        else if (time > endSec)
-        {
-            return ev.End;
-        }
-        else
-        {
-            GD.PrintErr($"[ChartDataHelper] GetSpeedAtTime() Error!");
-            return 0f;
-        }
+    //     }
+    //     else if (time > endSec)
+    //     {
+    //         return ev.End;
+    //     }
+    //     else
+    //     {
+    //         GD.PrintErr($"[ChartDataHelper] GetSpeedAtTime() Error!");
+    //         return 0f;
+    //     }
 
-    }
+    // }
 
-    /// <summary>
-    /// 根据速度事件，计算note的位移（开销较大，已被前缀和替代）
-    /// </summary>
-    /// <param name="events">速度事件</param>
-    /// <param name="time">游戏时间</param>
-    /// <returns></returns>
-    public static float IntegralSpeedEvent(List<LineEvent> events, float time)
-    {
-        float totalX = 0; // Y轴上的总位移
-        //遍历所有速度事件
-        for (int i = 0; i < events.Count; i++)
-        {
-            LineEvent ev = events[i];
+    // /// <summary>
+    // /// 根据速度事件，计算note的位移（开销较大，已被前缀和替代）
+    // /// </summary>
+    // /// <param name="events">速度事件</param>
+    // /// <param name="time">游戏时间</param>
+    // /// <returns></returns>
+    // public static float IntegralSpeedEvent(List<LineEvent> events, float time)
+    // {
+    //     float totalX = 0; // Y轴上的总位移
+    //     //遍历所有速度事件
+    //     for (int i = 0; i < events.Count; i++)
+    //     {
+    //         LineEvent ev = events[i];
 
-            float start = ev.Start;
-            float end = ev.End;
-            float startSec = ev.startSec;
-            float endSec = ev.endSec;
+    //         float start = ev.Start;
+    //         float end = ev.End;
+    //         float startSec = ev.startSec;
+    //         float endSec = ev.endSec;
 
-            // 如果time已经在这个事件之后
-            if(time >= endSec)
-            {
-                totalX += 120f * (start + end) * (endSec - startSec) / 2f;
+    //         // 如果time已经在这个事件之后
+    //         if(time >= endSec)
+    //         {
+    //             totalX += 120f * (start + end) * (endSec - startSec) / 2f;
 
-            }
-            // 如果time正在这个事件中
-            else if(time >= startSec && time < endSec)
-            {
-                float a = 120f * (end - start) / (endSec - startSec); // 加速度 a = △v/△t
-                float t = (float)(time - startSec); // 时间
-                float x = (start * 120f) * t + 0.5f * a * t * t; // 位移x = v0t + 0.5at^2
-                totalX += x;
-                break;
-            }
-            //如果time在这个事件之前
-            else
-            {
-                break;
-            }
+    //         }
+    //         // 如果time正在这个事件中
+    //         else if(time >= startSec && time < endSec)
+    //         {
+    //             float a = 120f * (end - start) / (endSec - startSec); // 加速度 a = △v/△t
+    //             float t = (float)(time - startSec); // 时间
+    //             float x = (start * 120f) * t + 0.5f * a * t * t; // 位移x = v0t + 0.5at^2
+    //             totalX += x;
+    //             break;
+    //         }
+    //         //如果time在这个事件之前
+    //         else
+    //         {
+    //             break;
+    //         }
             
-            //同时也要处理与下一个速度事件之间的部分
-            if(i < events.Count - 1) // 如果这不是最后一个事件
-            {
-                float nextStartSec = events[i+1].startSec;
-                //如果time正在这个间隔中
-                if(time >= endSec && time < nextStartSec)
-                {
-                    totalX += 120f * (float)(end * (time - endSec));
-                    break;
-                }
-                //如果time在这个间隔之后
-                else if(time >= nextStartSec)
-                {
-                    totalX += 120f * (float)(end * (nextStartSec - endSec));
-                }
-            }
-            else// 如果这是最后一个事件之后的间隔
-            {
-                totalX += 120f * (float)(end * (time - endSec));
-            }
-        }
-        return totalX;
+    //         //同时也要处理与下一个速度事件之间的部分
+    //         if(i < events.Count - 1) // 如果这不是最后一个事件
+    //         {
+    //             float nextStartSec = events[i+1].startSec;
+    //             //如果time正在这个间隔中
+    //             if(time >= endSec && time < nextStartSec)
+    //             {
+    //                 totalX += 120f * (float)(end * (time - endSec));
+    //                 break;
+    //             }
+    //             //如果time在这个间隔之后
+    //             else if(time >= nextStartSec)
+    //             {
+    //                 totalX += 120f * (float)(end * (nextStartSec - endSec));
+    //             }
+    //         }
+    //         else// 如果这是最后一个事件之后的间隔
+    //         {
+    //             totalX += 120f * (float)(end * (time - endSec));
+    //         }
+    //     }
+    //     return totalX;
 
-    }
+    // }
 
 
     /// <summary>

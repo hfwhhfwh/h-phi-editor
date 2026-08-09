@@ -22,19 +22,13 @@ public partial class ChartEditService : Node
                 break;
 
             case NotePropertyEnum.StartTime:
-                ChartDataHelper.SetNoteStartTime(
-                    note, 
-                    ((Beat)value).Values, 
-                    EditingChart.BpmList, EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents
-                );
+                note.SetStartTime(((Beat)value).Values, EditingChart.BpmList, 
+                    EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents);
                 break;
 
             case NotePropertyEnum.EndTime:
-                ChartDataHelper.SetNoteEndTime(
-                    note, 
-                    ((Beat)value).Values, 
-                    EditingChart.BpmList, EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents
-                );
+                note.SetEndTime(((Beat)value).Values, EditingChart.BpmList, 
+                    EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents);
                 break;
 
             case NotePropertyEnum.IsFake:
@@ -110,16 +104,13 @@ public partial class ChartEditService : Node
             PositionX = posX,
         };
 
-        // 调用ChratDataHelper设置note的时间，自动生成StartSec和EndSec和allDisplacement
+        // 设置note的时间，自动生成StartSec和EndSec和allDisplacement
         List<LineEvent> speedEvents = EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents;
-        ChartDataHelper.SetNoteStartTime(note, startBeat.Values, EditingChart.BpmList, speedEvents);
-        ChartDataHelper.SetNoteEndTime(note, endBeat.Values, EditingChart.BpmList, speedEvents);
+        note.SetStartTime(startBeat.Values, EditingChart.BpmList, speedEvents);
+        note.SetEndTime(endBeat.Values, EditingChart.BpmList, speedEvents);
 
-        note.allDisplacement = ChartDataHelper.GetDisplacementAtTime(
-            EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents,
-            note.startSec
-        );
-
+        // 设置note的位移和
+        note.RefreshDisplacement(EditingChart.JudgeLineList[lineId]);
         
         if(EditingChart.JudgeLineList[lineId].Notes == null) // 添加第一个音符时notes可能为空
             EditingChart.JudgeLineList[lineId].Notes = new List<Note>();
@@ -268,9 +259,9 @@ public partial class ChartEditService : Node
             EndTime = endBeat.Values
         };
 
-        // 调用ChratDataHelper设置note的时间，自动生成StartSec和EndSec
-        ChartDataHelper.SetEventStartTime(lineEvent, startBeat.Values, EditingChart.BpmList);
-        ChartDataHelper.SetEventEndTime(lineEvent, endBeat.Values, EditingChart.BpmList);
+        // 设置Event的时间，自动生成StartSec和EndSec
+        lineEvent.SetStartTime(startBeat.Values, EditingChart.BpmList);
+        lineEvent.SetEndTime(endBeat.Values, EditingChart.BpmList);
 
 
         if(lineEvents.Count == 0) // 列表为空（但是不可能为null）
@@ -304,10 +295,10 @@ public partial class ChartEditService : Node
         if(lineEventEnum == LineEventEnum.Speed)
         {
             // 速度事件需要刷新前缀和
-            ChartDataHelper.RefreshEventPrefix(lineEvents);
+            EditingChart.JudgeLineList[lineId].EventLayers[0].RefreshSpeedEventsPrefix();
 
             //重新计算所有 Note 的累积位移
-            ChartDataHelper.RefreshNotesAllDisplacement(EditingChart.JudgeLineList[lineId]);
+            EditingChart.JudgeLineList[lineId].RefreshAllNoteDisplacement();
         }
 
         ChartEventBus.NotifyDataChanged();
@@ -341,11 +332,10 @@ public partial class ChartEditService : Node
         switch (property)
         {
             case LineEventPropertyType.StartTime:
-                // 【关键】重新计算秒数
-                ChartDataHelper.SetEventStartTime(lineEvent, ((Beat)value).Values, EditingChart.BpmList);
+                lineEvent.SetStartTime(((Beat)value).Values, EditingChart.BpmList);
                 break;
             case LineEventPropertyType.EndTime:
-                ChartDataHelper.SetEventEndTime(lineEvent, ((Beat)value).Values, EditingChart.BpmList);
+                lineEvent.SetEndTime(((Beat)value).Values, EditingChart.BpmList);
                 break;
             case LineEventPropertyType.Start:
                 lineEvent.Start = (float)value;
@@ -379,13 +369,14 @@ public partial class ChartEditService : Node
             
         }
 
-        // 如果是速度事件，修改时间后前缀和也需要刷新
-        if (lineEventEnum == LineEventEnum.Speed)
+        // 如果是速度事件
+        if(lineEventEnum == LineEventEnum.Speed)
         {
-            ChartDataHelper.RefreshEventPrefix(lineEvents);
+            // 速度事件需要刷新前缀和
+            EditingChart.JudgeLineList[lineId].EventLayers[0].RefreshSpeedEventsPrefix();
 
             //重新计算所有 Note 的累积位移
-            ChartDataHelper.RefreshNotesAllDisplacement(EditingChart.JudgeLineList[lineId]);
+            EditingChart.JudgeLineList[lineId].RefreshAllNoteDisplacement();
         }
 
         GD.Print($"[{this.Name}] 修改event(line{lineId}_{lineEventEnum}_{index})属性 {property} : {value}");
@@ -406,14 +397,12 @@ public partial class ChartEditService : Node
         // 特殊处理速度事件
         if(lineEventEnum == LineEventEnum.Speed)
         {
-            JudgeLine line = EditingChart.JudgeLineList[lineId];
-            List<LineEvent> lineEvents = line.EventLayers[0].GetLineEvents(lineEventEnum);
+            // 速度事件需要刷新前缀和
+            EditingChart.JudgeLineList[lineId].EventLayers[0].RefreshSpeedEventsPrefix();
 
-            // 更新prefix
-            ChartDataHelper.RefreshEventPrefix(lineEvents);
-
-            // 更新note的allDisplacement
-            ChartDataHelper.RefreshNotesAllDisplacement(line);
+            //重新计算所有 Note 的累积位移
+            EditingChart.JudgeLineList[lineId].RefreshAllNoteDisplacement();
+        
         }
 
         //发出信号
@@ -454,14 +443,11 @@ public partial class ChartEditService : Node
         // 特殊处理速度事件
         if(lineEventEnum == LineEventEnum.Speed)
         {
-            JudgeLine line = EditingChart.JudgeLineList[lineId];
-            List<LineEvent> lineEvents = line.EventLayers[0].GetLineEvents(lineEventEnum);
+            // 速度事件需要刷新前缀和
+            EditingChart.JudgeLineList[lineId].EventLayers[0].RefreshSpeedEventsPrefix();
 
-            // 更新prefix
-            ChartDataHelper.RefreshEventPrefix(lineEvents);
-
-            // 更新note的allDisplacement
-            ChartDataHelper.RefreshNotesAllDisplacement(line);
+            //重新计算所有 Note 的累积位移
+            EditingChart.JudgeLineList[lineId].RefreshAllNoteDisplacement();
         }
 
         //发出信号
