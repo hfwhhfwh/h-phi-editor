@@ -73,11 +73,13 @@ public static class ChartDataHelper
             startTimeChanged = true;
         }
 
-        // 【关键】如果StartTime被修改了，必须刷新总位移
+        // 如果StartTime被修改了，必须刷新总位移
         if(startTimeChanged)
         {
             note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
         }
+
+        if(note.Type == 2) note.endAllDisplacement = GetDisplacementAtTime(speedEvents, note.endSec);
     }
 
     /// <summary>
@@ -233,11 +235,7 @@ public static class ChartDataHelper
         if(chart.JudgeLineList == null || chart.JudgeLineList.Count == 0) return;
         foreach(JudgeLine line in chart.JudgeLineList)
         {
-            if(line.Notes == null || line.Notes.Count == 0) continue;
-            foreach(Note note in line.Notes)
-            {
-                note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);
-            }
+            RefreshNotesAllDisplacement(line);
         }
 
     }
@@ -248,6 +246,9 @@ public static class ChartDataHelper
         foreach(Note note in line.Notes)
         {
             note.allDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.startSec);
+
+            if(note.Type == 2) 
+                note.endAllDisplacement = GetDisplacementAtTime(line.EventLayers[0].SpeedEvents, note.endSec);
         }
     }
 

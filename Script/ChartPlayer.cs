@@ -876,10 +876,6 @@ public class HoldNoteNode : NoteNode
     //private Sprite2D _bodySprite;
     //private Sprite2D _endSprite;
 
-    // 缓存数据
-    private float _cachedEndDisplacement = -1f;
-    private float _cachedEndSec = -1f;
-
     public Vector2 EndPosition { get; set; } // 坐标系: 谱面坐标[-675,675] [-450,450] 相对于判定线
     public Vector2 BodyPosition { get; set; } // 坐标系: 谱面坐标[-675,675] [-450,450] 相对于判定线
     public float BodyScale { get; set; }
@@ -908,21 +904,22 @@ public class HoldNoteNode : NoteNode
                 //全部位移 坐标系: 谱面坐标
                 // float allDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, endSec);
                 // float allDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, endSec);
+                float allDisplacement = data.endAllDisplacement;
 
                 // 缓存 endSec 对应的位移（Hold 的 endTime 不变）
-                if (_cachedEndSec != data.endSec)
-                {
-                    _cachedEndSec = data.endSec;
-                    _cachedEndDisplacement = ChartDataHelper.GetDisplacementAtTime(
-                        _judgeLineNode.Data.EventLayers[0].SpeedEvents, _cachedEndSec);
-                }
+                // if (_cachedEndSec != data.endSec)
+                // {
+                //     _cachedEndSec = data.endSec;
+                //     _cachedEndDisplacement = ChartDataHelper.GetDisplacementAtTime(
+                //         _judgeLineNode.Data.EventLayers[0].SpeedEvents, _cachedEndSec);
+                // }
 
                 // note已经移动的位移 坐标系: 谱面坐标
                 // float nowDisplacement = IntegralSpeedEvent(fatherLine._data.EventLayers[0].SpeedEvents, (float)gameTime);
                 // float nowDisplacement = ChartDataHelper.GetDisplacementAtTime(_judgeLineNode.Data.EventLayers[0].SpeedEvents, (float)gameTime);
                 float nowDisplacement = _judgeLineNode.nowDisplacement;
 
-                localChartY = Math.Max(0f, _cachedEndDisplacement - nowDisplacement); // 坐标系: 谱面坐标
+                localChartY = Math.Max(0f, allDisplacement - nowDisplacement); // 坐标系: 谱面坐标
                 //GD.Print($"localChartY:{localChartY}");
 
                 endLocalChartPos = new Vector2(data.PositionX, localChartY); // 坐标系: 谱面坐标

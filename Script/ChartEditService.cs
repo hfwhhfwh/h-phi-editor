@@ -272,24 +272,34 @@ public partial class ChartEditService : Node
         ChartDataHelper.SetEventStartTime(lineEvent, startBeat.Values, EditingChart.BpmList);
         ChartDataHelper.SetEventEndTime(lineEvent, endBeat.Values, EditingChart.BpmList);
 
-        // 设置事件的默认值为上一个事件的末尾值
-        int lastEventIndex = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
-        if(lastEventIndex == -1) // 前面没有时间，按照默认值
+
+        if(lineEvents.Count == 0) // 列表为空（但是不可能为null）
         {
             lineEvent.Start = 0;
             lineEvent.End = 0;
+            
+            lineEvents.Add(lineEvent);
         }
-        else
+        else // 事件列表不为空列表
         {
-            LineEvent lastEvent = lineEvents[lastEventIndex];
-            lineEvent.Start = lastEvent.End;
-            lineEvent.End = lastEvent.End;
-        }
-        
-        // 添加事件时 必须 直接插入到合适的位置
-        //InsertLineEventSorted(lineEvents, lineEvent); 
-        lineEvents.Insert(lastEventIndex + 1, lineEvent);
+            // 设置事件的默认值为上一个事件的末尾值
+            int lastEventIndex = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
+            if(lastEventIndex == -1) // 前面没有时间，按照默认值
+            {
+                lineEvent.Start = 0;
+                lineEvent.End = 0;
+            }
+            else
+            {
+                LineEvent lastEvent = lineEvents[lastEventIndex];
+                lineEvent.Start = lastEvent.End;
+                lineEvent.End = lastEvent.End;
+            }
 
+            // 添加事件时 必须 直接插入到合适的位置
+            //InsertLineEventSorted(lineEvents, lineEvent); 
+            lineEvents.Insert(lastEventIndex + 1, lineEvent);
+        }
         
         if(lineEventEnum == LineEventEnum.Speed)
         {
@@ -367,19 +377,97 @@ public partial class ChartEditService : Node
             lineEvents.Remove(lineEvent);
             InsertLineEventSorted(lineEvents, lineEvent);
             
-            // 如果是速度事件，修改时间后前缀和也需要刷新
-            if (lineEventEnum == LineEventEnum.Speed)
-            {
-                ChartDataHelper.RefreshEventPrefix(lineEvents);
+        }
 
-                //重新计算所有 Note 的累积位移
-                ChartDataHelper.RefreshNotesAllDisplacement(EditingChart.JudgeLineList[lineId]);
-            }
+        // 如果是速度事件，修改时间后前缀和也需要刷新
+        if (lineEventEnum == LineEventEnum.Speed)
+        {
+            ChartDataHelper.RefreshEventPrefix(lineEvents);
+
+            //重新计算所有 Note 的累积位移
+            ChartDataHelper.RefreshNotesAllDisplacement(EditingChart.JudgeLineList[lineId]);
         }
 
         GD.Print($"[{this.Name}] 修改event(line{lineId}_{lineEventEnum}_{index})属性 {property} : {value}");
         
         ChartEventBus.NotifyDataChanged();  // 广播
+    }
+
+    /// <summary>
+    /// 删除Event
+    /// </summary>
+    /// <param name="lineId">判定线编号</param>
+    /// <param name="lineEventEnum">事件类型</param>
+    /// <param name="index">事件索引</param>
+    public void DeleteEvent(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        DeleteEventWithoutSignal(lineId, lineEventEnum, index);
+
+        // 特殊处理速度事件
+        if(lineEventEnum == LineEventEnum.Speed)
+        {
+            JudgeLine line = EditingChart.JudgeLineList[lineId];
+            List<LineEvent> lineEvents = line.EventLayers[0].GetLineEvents(lineEventEnum);
+
+            // 更新prefix
+            ChartDataHelper.RefreshEventPrefix(lineEvents);
+
+            // 更新note的allDisplacement
+            ChartDataHelper.RefreshNotesAllDisplacement(line);
+        }
+
+        //发出信号
+        ChartEventBus.NotifyDataChanged();
+
+        GD.Print($"[{Name}] 删除Event:line{lineId}_{lineEventEnum}_{index}");
+    }
+
+
+    /// <summary>
+    /// 删除Event（不发出信号）
+    /// 此方法不会重新计算EventPrefix和NoteAllDisplacement
+    /// </summary>
+    /// <param name="lineId"></param>
+    /// <param name="lineEventEnum"></param>
+    /// <param name="index"></param>
+    private void DeleteEventWithoutSignal(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        JudgeLine line = EditingChart.JudgeLineList[lineId];
+        List<LineEvent> lineEvents = line.EventLayers[0].GetLineEvents(lineEventEnum);
+        lineEvents.RemoveAt(index);
+
+    }
+
+    public void DeleteEvents(int lineId, LineEventEnum lineEventEnum, List<int> indexes)
+    {
+        // 递增排序
+        indexes.Sort();
+
+        // 倒序遍历索引
+        for (int i = indexes.Count - 1; i >= 0; i--)
+        {
+            int index = indexes[i];
+
+            DeleteEventWithoutSignal(lineId, lineEventEnum, index);
+        }
+
+        // 特殊处理速度事件
+        if(lineEventEnum == LineEventEnum.Speed)
+        {
+            JudgeLine line = EditingChart.JudgeLineList[lineId];
+            List<LineEvent> lineEvents = line.EventLayers[0].GetLineEvents(lineEventEnum);
+
+            // 更新prefix
+            ChartDataHelper.RefreshEventPrefix(lineEvents);
+
+            // 更新note的allDisplacement
+            ChartDataHelper.RefreshNotesAllDisplacement(line);
+        }
+
+        //发出信号
+        ChartEventBus.NotifyDataChanged();
+
+        GD.Print($"[{Name}] 删除Event:line{lineId}_{lineEventEnum}_{Util.ListToString(indexes)}");
     }
 }
 

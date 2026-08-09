@@ -705,13 +705,40 @@ public partial class EditorScene : Node
     }
     private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
     {
-        GD.Print($"[{this.Name}] 删除事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        //throw new NotImplementedException();
+        chartEditService.DeleteEvent(lineId, lineEventEnum, index);
+
     }
 
-    private void DeleteEvents(int lineId, List<LineEvent> lineEvents)
+    private void DeleteEvents(int lineId, List<LineEvent> eventsToDelete)
     {
-        //throw new NotImplementedException();
+        // lineEvents可能包含不同种类的事件，需要分别删除，构建一张表格
+        LineEventEnum[] allEventTypes = (LineEventEnum[])Enum.GetValues(typeof(LineEventEnum));
+        Dictionary<LineEventEnum, List<int>> table = new();
+
+        foreach(LineEvent lineEvent in eventsToDelete)
+        {
+            foreach(LineEventEnum lineEventEnum in allEventTypes)
+            {
+                List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+                if (lineEvents.Contains(lineEvent))
+                {
+                    //添加到表格
+                    if (!table.TryGetValue(lineEventEnum, out var indices))
+                    {
+                        indices = new List<int>();
+                        table[lineEventEnum] = indices;
+                    }
+                    indices.Add(lineEvents.IndexOf(lineEvent));
+                    break;
+                }
+            }
+        }
+
+        //分别删除
+        foreach(LineEventEnum lineEventEnum in table.Keys)
+        {
+            chartEditService.DeleteEvents(lineId, lineEventEnum, table[lineEventEnum]);
+        }
     }
 
     private void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)

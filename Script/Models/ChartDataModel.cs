@@ -691,6 +691,11 @@ namespace QuickType
         /// note所在时刻累积的所有位移，用于优化性能
         /// </summary>
         [JsonIgnore] public float allDisplacement;
+
+        /// <summary>
+        /// （仅限Hold）Hold末尾所在时刻累积的所有位移，用于优化性能
+        /// </summary>
+        [JsonIgnore] public float endAllDisplacement;
     }
 
     public partial class EventLayer
