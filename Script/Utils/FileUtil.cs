@@ -2,9 +2,11 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 public static class FileUtil
 {
+    public static string Name { get; set; } = nameof(FileUtil);
     /// <summary>
     /// 将指定路径的ZIP文件解压到与其同名的文件夹中。
     /// </summary>
@@ -462,6 +464,156 @@ public static class FileUtil
                 GD.PrintErr($"[Util] 不支持的音频格式: {extension}");
                 return null;
         }
+    }
+
+    /// <summary>
+    /// 通过文件头(Magic Number)检测图片真实格式
+    /// 支持: jpg, png, webp, bmp, ktx, svg
+    /// </summary>
+    public static string DetectImageFormat(byte[] buffer)
+    {
+        if (buffer == null || buffer.Length < 4)
+            return "unknown";
+
+        // JPEG: FF D8 FF
+        if (buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF)
+            return "jpg";
+
+        // PNG: 89 50 4E 47
+        if (buffer[0] == 0x89 && buffer[1] == 0x50 && buffer[2] == 0x4E && buffer[3] == 0x47)
+            return "png";
+
+        // WebP: RIFF....WEBP
+        if (buffer.Length >= 12 && buffer[0] == 0x52 && buffer[1] == 0x49 && buffer[2] == 0x46 && buffer[3] == 0x46)
+        {
+            if (buffer[8] == 0x57 && buffer[9] == 0x45 && buffer[10] == 0x42 && buffer[11] == 0x50)
+                return "webp";
+        }
+
+        // BMP: BM
+        if (buffer[0] == 0x42 && buffer[1] == 0x4D)
+            return "bmp";
+
+        // KTX (KTX1/KTX2): AB 4B 54 58 20 3x 3x BB 0D 0A 1A 0A
+        if (buffer.Length >= 12 &&
+            buffer[0] == 0xAB && buffer[1] == 0x4B &&
+            buffer[2] == 0x54 && buffer[3] == 0x58)
+        {
+            return "ktx";
+        }
+
+        // SVG: 文本格式，以 <?xml 或 <svg 开头（可能带 UTF-8 BOM）
+        if (buffer[0] == 0x3C || buffer[0] == 0xEF) // '<' 或 BOM
+        {
+            int checkLen = Math.Min(buffer.Length, 256);
+            try
+            {
+                string text = Encoding.UTF8.GetString(buffer, 0, checkLen).TrimStart();
+                if (text.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("<svg", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "svg";
+                }
+            }
+            catch { /* 忽略编码错误 */ }
+        }
+
+        // TGA 没有可靠 Magic Number，不在这里检测，放 fallback 兜底
+        return "unknown";
+    }
+
+    /// <summary>
+    /// 智能加载路径中的图片为Texture2D
+    /// 可以识别出扩展名与实际格式不匹配的问题
+    /// </summary>
+    /// <param name="picPath">图片路径</param>
+    /// <returns></returns>
+    public static Texture2D LoadTextureFromFile(string picPath, out string realFormat)
+    {
+        realFormat = null;
+        // 检查文件存在
+        if (!Godot.FileAccess.FileExists(picPath))
+        {
+            GD.PrintErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
+            return null;
+        }
+
+        var image = new Image();
+        Error err = Error.Failed;
+
+        // 第一步：通用加载（扩展名和格式一致时直接成功）
+        err = image.Load(picPath);
+
+        // 失败则回退到 Buffer + 格式检测
+        if (err != Error.Ok)
+        {
+            GD.Print($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
+            
+            // 重新创建实例，避免之前失败的状态残留
+            image = new Image();
+
+            using Godot.FileAccess file = Godot.FileAccess.Open(picPath, Godot.FileAccess.ModeFlags.Read);
+            ulong fileSize = file.GetLength();
+            byte[] buffer = file.GetBuffer((long)fileSize);
+
+            string format = DetectImageFormat(buffer);
+            GD.Print($"[{Name}] 检测到真实格式: {format}, 大小: {fileSize} bytes");
+            realFormat = format;
+
+            switch (format)
+            {
+                case "jpg":
+                    err = image.LoadJpgFromBuffer(buffer);
+                    break;
+                case "png":
+                    err = image.LoadPngFromBuffer(buffer);
+                    break;
+                case "webp":
+                    err = image.LoadWebpFromBuffer(buffer);
+                    break;
+                case "bmp":
+                    err = image.LoadBmpFromBuffer(buffer);
+                    break;
+                case "ktx":
+                    err = image.LoadKtxFromBuffer(buffer);
+                    break;
+                case "svg":
+                    err = image.LoadSvgFromBuffer(buffer);
+                    break;
+                default:
+                    // 兜底逐个尝试（含无 Magic Number 的 TGA）
+                    err = image.LoadJpgFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadPngFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadWebpFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadBmpFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadKtxFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadSvgFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadTgaFromBuffer(buffer);
+                    break;
+            }
+        }
+
+        if (err != Error.Ok)
+        {
+            GD.PrintErr($"[{Name}] 所有格式解码均失败:{picPath}");
+            return null;
+        }
+
+        // 检查尺寸
+        if (image.GetWidth() > 16384 || image.GetHeight() > 16384)
+        {
+            GD.PrintErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
+            return null;
+        }
+
+        Texture2D texture = ImageTexture.CreateFromImage(image);
+        if(texture == null)
+        {
+            GD.PrintErr($"[{Name}] UpdateItemDisplay() texture == null picturePath:{picPath}");
+            return null;
+        }
+
+        return texture;
     }
 
 }

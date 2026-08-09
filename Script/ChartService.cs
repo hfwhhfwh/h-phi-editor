@@ -77,7 +77,10 @@ public partial class ChartService : Node
         return chartInfo;
     }
 
-    // 删除谱面
+    /// <summary>
+    /// 删除谱面
+    /// </summary>
+    /// <param name="chartId">谱面id</param>
     public void DeleteChart(string chartId)
     {
         chartRepository.DeleteChart(chartId);
@@ -229,6 +232,10 @@ public partial class ChartService : Node
         return info;
     }
 
+    /// <summary>
+    /// 导出谱面
+    /// </summary>
+    /// <param name="chartId">谱面id</param>
     public void ExportChart(string chartId)
     {
         List<string> filePaths = new List<string>();//用于存储将要打包的文件的路径
@@ -262,6 +269,11 @@ public partial class ChartService : Node
         );
     }
 
+    /// <summary>
+    /// 保存谱面
+    /// </summary>
+    /// <param name="chartId">谱面id</param>
+    /// <param name="chart">谱面数据</param>
     public void SaveChart(string chartId, Chart chart)
     {
         ChartInfo chartInfo = GetChartInfo(chartId);
@@ -272,4 +284,11 @@ public partial class ChartService : Node
 
         GD.Print($"[{this.Name}] 谱面保存成功！谱面id:{chartId}");
     }
+
+    public void SaveChartInfo(ChartInfo info)
+    {
+        chartRepository.SaveChartInfo(info);
+    }
+
+
 }

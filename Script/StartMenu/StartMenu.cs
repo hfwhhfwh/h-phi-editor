@@ -60,8 +60,46 @@ public partial class StartMenu : Node
 
     private void RefreshChartList()
     {
-        List<ChartInfo> charts = _chartService.GetAllCharts();
-        _chartList.SetCharts(charts);
+        List<ChartInfo> chartInfos = _chartService.GetAllCharts();
+
+        // 生成数据
+        List<ChartList.Data> datas = new();
+        foreach(ChartInfo info in chartInfos)
+        {
+            // 加载曲绘图片
+            Texture2D texture = FileUtil.LoadTextureFromFile(info.PicturePath, out string realFormat);
+
+            if(!string.IsNullOrEmpty(realFormat) 
+                && realFormat != "unknown" 
+                && realFormat != info.PictureFileName.GetExtension())
+            {
+                // 后缀名有误，这里直接修改为正确的
+                // 1. 替换图片文件
+                string oPath = info.PicturePath;
+                string dPath = Path.ChangeExtension(oPath, realFormat);
+                //复制一份正确的文件，同时修改后缀名
+                FileUtil.CopyFile(oPath, dPath);
+                // 删除原来的错误文件
+                DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(oPath));
+
+                // 2. 修改info.txt
+                ChartInfo newInfo = info.Duplicate();
+                newInfo.PictureFileName = dPath.GetFile();
+                _chartService.SaveChartInfo(newInfo);
+
+                GD.Print($"[{Name}] 成功修正了曲绘文件格式:{oPath} -> {dPath}");
+            }
+
+            datas.Add(new ChartList.Data
+            {
+                ChartId = info.Id,
+                ChartName = info.Name,
+                Composer = info.Composer,
+                Picture = texture,
+            });
+        }
+
+        _chartList.SetCharts(datas);
     }
 
     private void OnChartSelected(string chartId)

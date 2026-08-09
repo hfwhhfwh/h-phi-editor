@@ -2,9 +2,19 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 public partial class ChartList : VBoxContainer
 {
+    public struct Data
+    {
+        public string ChartId { get; set; }
+        public string ChartName { get; set; }
+        public string Composer { get; set; }
+        public Texture2D Picture { get; set; }
+
+    }
+
 	[Signal] public delegate void ChartSelectedEventHandler(string chartId);
 
     private PackedScene itemScene;
@@ -23,8 +33,8 @@ public partial class ChartList : VBoxContainer
     /// <summary>
 	/// 由外部调用，传入数据更新列表
 	/// </summary>
-	/// <param name="charts"></param>
-    public void SetCharts(List<ChartInfo> charts)
+	/// <param name="datas"></param>
+    public void SetCharts(List<Data> datas)
     {
         // 清空现有项
         foreach (var child in GetChildren())
@@ -33,56 +43,34 @@ public partial class ChartList : VBoxContainer
         }
 
         // 创建新的按钮项
-        foreach (var chart in charts)
+        foreach (var data in datas)
         {
             Button itemButton = itemScene.Instantiate() as Button;
-            itemButton.SetMeta("chart_id", chart.Id);
+            itemButton.SetMeta("chart_id", data.ChartId);
             itemButton.ToggleMode = true;
             itemButton.ButtonGroup = buttonGroup;
             
             // 设置按钮的显示（名称、作曲家、曲绘等）
-            UpdateItemDisplay(itemButton, chart);
+            UpdateItemDisplay(itemButton, data);
             AddChild(itemButton);
             itemButton.Toggled += (pressed) => OnButtonToggled(pressed, itemButton);
             
         }
     }
 
-    private void UpdateItemDisplay(Button item, ChartInfo chartInfo)
+    private void UpdateItemDisplay(Button item, Data data)
     {
-        // 从item节点中找到Label和TextureRect并赋值
-        var nameLabel = item.GetNode<Label>("MarginContainer/HBoxContainer/Info/NameLabel");
-        nameLabel.Text = chartInfo.Name;
+        // 设置谱面名称
+        Label nameLabel = item.GetNode<Label>("MarginContainer/HBoxContainer/Info/NameLabel");
+        nameLabel.Text = data.ChartName;
 
+        // 设置作曲家名称
     	Label composerLabel = item.GetNode<Label>("MarginContainer/HBoxContainer/Info/ComposerLabel");
-		composerLabel.Text = chartInfo.Composer;
+		composerLabel.Text = data.Composer;
 
-        //设置曲绘图片
+        // 设置曲绘图片
 		TextureRect picTexture = item.GetNode<TextureRect>("MarginContainer/HBoxContainer/Icon");
-        string picPath = chartInfo.PicturePath.Replace('\\','/');
-        GD.Print($"picPath:{picPath}");
-
-        if (!Godot.FileAccess.FileExists(picPath))
-        {
-            GD.PrintErr($"{this.Name} UpdateItemDisplay() 文件不存在:{picPath}");
-            return;
-        }
-
-        Image image = Image.LoadFromFile(picPath);
-        if(image == null)
-        {
-            GD.PrintErr($"{this.Name} UpdateItemDisplay() textureImage == null picturePath:{picPath}");
-            return;
-        }
-
-        Texture2D texture = ImageTexture.CreateFromImage(image);
-        if(texture == null)
-        {
-            GD.PrintErr($"{this.Name} UpdateItemDisplay() texture == null picturePath:{picPath}");
-            return;
-        }
-
-		picTexture.Texture = texture;
+		picTexture.Texture = data.Picture;
     }
 
 
