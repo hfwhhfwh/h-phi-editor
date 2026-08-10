@@ -475,44 +475,44 @@ public static class ChartDataHelper
     // }
 
 
-    /// <summary>
-    /// 获取指定时刻的总位移
-    /// </summary>
-    /// <param name="events">速度事件列表</param>
-    /// <param name="time">游戏时刻</param>
-    /// <returns>从0时刻到指定时刻的总位移</returns>
-    public static float GetDisplacementAtTime(List<LineEvent> events, float time)
-    {
-        if (events == null || events.Count == 0) return 0f;
+    // /// <summary>
+    // /// 获取指定时刻的总位移
+    // /// </summary>
+    // /// <param name="events">速度事件列表</param>
+    // /// <param name="time">游戏时刻</param>
+    // /// <returns>从0时刻到指定时刻的总位移</returns>
+    // public static float GetDisplacementAtTime(List<LineEvent> events, float time)
+    // {
+    //     if (events == null || events.Count == 0) return 0f;
 
-        // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
-        int idx = BinarySearchLatestEvent(events, time);
+    //     // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
+    //     int idx = BinarySearchLatestEvent(events, time);
 
-        // time 在第一个事件之前（按约定，速度为0）
-        if (idx < 0) return 0f; 
+    //     // time 在第一个事件之前（按约定，速度为0）
+    //     if (idx < 0) return 0f; 
 
-        LineEvent ev = events[idx];
-        if (time < ev.startSec) return ev.prefixX; // 防御
-        // if (idx < events.Length - 1 && time > events[idx+1].startSec)
-        // {
-        //     // 实际上二分查找应保证 time 在 ev.startSec 和 ev.endSec 之间或后续区间
-        //     // 为简化，这里只处理落在当前事件内或之后的情况
-        // }
-        if (time < ev.endSec)
-        {
-            // 事件内部积分
-            float dt = time - ev.startSec;
-            float v0 = ev.Start;
-            float a = (ev.End - ev.Start) / (ev.endSec - ev.startSec);
-            float dispInside = 120f * (v0 * dt + 0.5f * a * dt * dt);
-            return ev.prefixX + dispInside;
-        }
-        else
-        {
-            // 这个事件已经结束，正在与下一个事件之间的间隙中
-            float dispInside = (ev.Start + ev.End)*120f * (ev.endSec - ev.startSec) / 2f;
-            float dispGap = ev.End*120f * (time - ev.endSec);
-            return ev.prefixX + dispInside + dispGap;
-        }
-    }
+    //     LineEvent ev = events[idx];
+    //     if (time < ev.startSec) return ev.prefixX; // 防御
+    //     // if (idx < events.Length - 1 && time > events[idx+1].startSec)
+    //     // {
+    //     //     // 实际上二分查找应保证 time 在 ev.startSec 和 ev.endSec 之间或后续区间
+    //     //     // 为简化，这里只处理落在当前事件内或之后的情况
+    //     // }
+    //     if (time < ev.endSec)
+    //     {
+    //         // 事件内部积分
+    //         float dt = time - ev.startSec;
+    //         float v0 = ev.Start;
+    //         float a = (ev.End - ev.Start) / (ev.endSec - ev.startSec);
+    //         float dispInside = 120f * (v0 * dt + 0.5f * a * dt * dt);
+    //         return ev.prefixX + dispInside;
+    //     }
+    //     else
+    //     {
+    //         // 这个事件已经结束，正在与下一个事件之间的间隙中
+    //         float dispInside = (ev.Start + ev.End)*120f * (ev.endSec - ev.startSec) / 2f;
+    //         float dispGap = ev.End*120f * (time - ev.endSec);
+    //         return ev.prefixX + dispInside + dispGap;
+    //     }
+    // }
 }

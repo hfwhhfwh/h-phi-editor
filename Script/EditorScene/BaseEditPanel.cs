@@ -5,25 +5,75 @@ using System.Collections.Generic;
 
 public abstract partial class BaseEditPanel : Panel
 {
+	# region 桥接到_gridDrawer的属性
     // ---- 网格布局 ----
-    [ExportGroup("网格布局设置")]
-    [Export] protected float horMargin = 50;
-    [Export] protected float verMargin = 100;
-    [Export] protected int subBeatCount = 4;
-    [Export] protected int verLineCount = 5; // 子类可重写默认值
+	public float HorMargin
+    {
+        get => _gridDrawer.HorMargin;
+		set { if (_gridDrawer != null) _gridDrawer.HorMargin = value; }
+	}
 
-    // ---- 网格样式 ----
-    [ExportGroup("网格样式设置")]
-    [Export] protected Color horColor = new Color(1f, 0, 0, 0.686f);
-    [Export] protected float horWidth = 1;
-    [Export] protected Color verColor = new Color(0, 1f, 0, 0.588f);
-    [Export] protected float verWidth = 1;
-    [Export] protected Color horSubColor = new Color(1f, 1f, 0, 0.588f);
-    [Export] protected float horSubWidth = 1;
+	public float VerMargin
+	{
+		get => _gridDrawer.VerMargin;
+		set { if (_gridDrawer != null) _gridDrawer.VerMargin = value; }
+	}
 
-    // ---- 滚动/缩放 ----
-    public float horOffsetSmoothed;
-    public float horSeparationSmoothed;
+	public int SubBeatCount
+	{
+		get => _gridDrawer.SubBeatCount;
+		set { if (_gridDrawer != null) _gridDrawer.SubBeatCount = value; }
+	}
+
+	public int VerLineCount
+	{
+		get => _gridDrawer.VerLineCount;
+		set { if (_gridDrawer != null) _gridDrawer.VerLineCount = value; }
+	}
+
+	// ---- 网格样式 ----
+	public Color HorColor
+	{
+		get => _gridDrawer.HorColor;
+		set { if (_gridDrawer != null) _gridDrawer.HorColor = value; }
+	}
+
+	public float HorWidth
+	{
+		get => _gridDrawer.HorWidth;
+		set { if (_gridDrawer != null) _gridDrawer.HorWidth = value; }
+	}
+
+	public Color VerColor
+	{
+		get => _gridDrawer.VerColor;
+		set { if (_gridDrawer != null) _gridDrawer.VerColor = value; }
+	}
+
+	public float VerWidth
+	{
+		get => _gridDrawer.VerWidth;
+		set { if (_gridDrawer != null) _gridDrawer.VerWidth = value; }
+	}
+
+	public Color HorSubColor
+	{
+		get => _gridDrawer.HorSubColor;
+		set { if (_gridDrawer != null) _gridDrawer.HorSubColor = value; }
+	}
+
+	public float HorSubWidth
+	{
+		get => _gridDrawer.HorSubWidth;
+		set { if (_gridDrawer != null) _gridDrawer.HorSubWidth = value; }
+	}
+
+	#endregion
+
+	// ---- 滚动/缩放 ----
+	public float HorOffsetSmoothed { get; set; }
+
+	public float HorSeparationSmoothed { get; set; }
 
     // ---- 数据 ----
     public Chart editingChart;
@@ -53,6 +103,7 @@ public abstract partial class BaseEditPanel : Panel
     protected BoxSelectController _boxSelectController;
     protected CoordinateComponent _coordComponent;
     protected DragPlaceComponent _dragPlaceComponent;
+	protected GridDrawer _gridDrawer;
 
 	/// <summary>
     /// 框选矩形框的起始坐标 坐标系：Control坐标
@@ -89,6 +140,7 @@ public abstract partial class BaseEditPanel : Panel
 		MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
 		multiMeshInstance.Texture = texture;
 		multiMeshInstance.Multimesh = multiMesh;
+		multiMeshInstance.ZIndex = 1;
 		multiMeshInstances[key] = multiMeshInstance;
 
 		// 根据纹理实际尺寸创建 QuadMesh
@@ -140,6 +192,13 @@ public abstract partial class BaseEditPanel : Panel
         //设置_dragPlaceComponent
         _dragPlaceComponent = new DragPlaceComponent();
         _dragPlaceComponent.DragEnded += OnDragEnded;
+
+		// 设置_gridDrawer
+		_gridDrawer = new GridDrawer();
+		_gridDrawer.Parent = this;
+		_gridDrawer.Font = font;
+		_gridDrawer.ZIndex = 0; // 最底层
+		AddChild(_gridDrawer);
     }
 	
 	public override void _ExitTree()
@@ -163,16 +222,14 @@ public abstract partial class BaseEditPanel : Panel
         //设置_dragPlaceComponent
         _dragPlaceComponent.DragEnded -= OnDragEnded;
         _dragPlaceComponent = null;
+
+		// 设置_gridDrawer
+		_gridDrawer = null;
         
     }
 
-    // ---- 绘制网格（基类统一实现） ----
     public override void _Draw()
     {
-        DrawMainBeats();
-        DrawSubBeats();
-        DrawVerticalLines();
-
 		// ============= 绘制框选矩形 ============= 
         if(_boxSelectController.IsDragging){
             Vector2 pos = new Vector2(
@@ -194,114 +251,114 @@ public abstract partial class BaseEditPanel : Panel
         }
     }
 
-    private void DrawMainBeats()
-    {
-        //画横线
-		//先画上半部分
-		{
-			float horOffsetBeat = horOffsetSmoothed / horSeparationSmoothed;
-			float num = Mathf.Ceil(horOffsetBeat);
-			float y = Size.Y/2 - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * horSeparationSmoothed;
-			for(int i=0;i<=100 && y>=0;i++)
-			{
-				Vector2 from = new Vector2(horMargin,y);
-				Vector2 to = new Vector2(Size.X - horMargin, y);
-				DrawLine(from, to, horColor, horWidth, true);
+    // private void DrawMainBeats()
+    // {
+    //     //画横线
+	// 	//先画上半部分
+	// 	{
+	// 		float horOffsetBeat = HorOffsetSmoothed / HorSeparationSmoothed;
+	// 		float num = Mathf.Ceil(horOffsetBeat);
+	// 		float y = Size.Y/2 - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * HorSeparationSmoothed;
+	// 		for(int i=0;i<=100 && y>=0;i++)
+	// 		{
+	// 			Vector2 from = new Vector2(horMargin,y);
+	// 			Vector2 to = new Vector2(Size.X - horMargin, y);
+	// 			DrawLine(from, to, horColor, horWidth, true);
 
-				Vector2 charPos = new Vector2(horMargin / 2f, y);
-				DrawString(font, charPos, $"{num}", HorizontalAlignment.Center, modulate:Colors.White, fontSize:20);
+	// 			Vector2 charPos = new Vector2(horMargin / 2f, y);
+	// 			DrawString(font, charPos, $"{num}", HorizontalAlignment.Center, modulate:Colors.White, fontSize:20);
 
-				y -= horSeparationSmoothed;   //逐步向上移动
-				num++;
-			}
-		}
+	// 			y -= HorSeparationSmoothed;   //逐步向上移动
+	// 			num++;
+	// 		}
+	// 	}
 
-		//下半部分同理，注意不能绘制0以下
-		{
-			float horOffsetBeat = horOffsetSmoothed / horSeparationSmoothed;
-			float num = Mathf.Floor(horOffsetBeat);
-			float y = Size.Y/2 + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * horSeparationSmoothed;
-			for(int i=0;i<=100 && y<=Size.Y;i++)
-			{
-				Vector2 from = new Vector2(horMargin,y);
-				Vector2 to = new Vector2(Size.X - horMargin, y);
-				DrawLine(from, to, horColor, horWidth, true);
+	// 	//下半部分同理，注意不能绘制0以下
+	// 	{
+	// 		float horOffsetBeat = HorOffsetSmoothed / HorSeparationSmoothed;
+	// 		float num = Mathf.Floor(horOffsetBeat);
+	// 		float y = Size.Y/2 + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * HorSeparationSmoothed;
+	// 		for(int i=0;i<=100 && y<=Size.Y;i++)
+	// 		{
+	// 			Vector2 from = new Vector2(horMargin,y);
+	// 			Vector2 to = new Vector2(Size.X - horMargin, y);
+	// 			DrawLine(from, to, horColor, horWidth, true);
 
-				Vector2 charPos = new Vector2(horMargin / 2f, y);
-				DrawString(font, charPos, $"{num}", HorizontalAlignment.Center, modulate:Colors.White, fontSize:20);
+	// 			Vector2 charPos = new Vector2(horMargin / 2f, y);
+	// 			DrawString(font, charPos, $"{num}", HorizontalAlignment.Center, modulate:Colors.White, fontSize:20);
 
-				y += horSeparationSmoothed;   //逐步向上移动
-				num--;
-				if(num < 0) break;
-			}
-		}
+	// 			y += HorSeparationSmoothed;   //逐步向上移动
+	// 			num--;
+	// 			if(num < 0) break;
+	// 		}
+	// 	}
 
-    }
+    // }
 
-    private void DrawSubBeats()
-    {
-        //画小横线
-		//先画上半部分
-		{
-			float horOffsetBeat = horOffsetSmoothed / horSeparationSmoothed;
-			float num = Mathf.Ceil(horOffsetBeat);
-			float y = Size.Y/2 - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * horSeparationSmoothed;
-			for(int i=0;i<=100 && y>=0;i++)
-			{
-				//找到基准节拍线，向上画subBeatCount-1条横线
-				for(int j = 1; j <= subBeatCount - 1; j++)
-				{
-					float subY = y - (horSeparationSmoothed / subBeatCount * j);
-					//不让横线超出边界
-					if(subY < 0) break;
-					Vector2 from = new Vector2(horMargin,subY);
-					Vector2 to = new Vector2(Size.X - horMargin, subY);
-					DrawLine(from, to, horSubColor, horSubWidth, true);
-				}
-				y -= horSeparationSmoothed;   //逐步向上移动
-				num++;
-			}
-		}
-		//下半部分同理
-		{
-			float horOffsetBeat = horOffsetSmoothed / horSeparationSmoothed;
-			float num = Mathf.Floor(horOffsetBeat);
-			float y = Size.Y/2 + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * horSeparationSmoothed;
-			for(int i=0;i<=100 && y<=Size.Y + horSeparationSmoothed;i++) // Size.Y + horSeparationSmoothed防止最底部因为节拍线不显示导致小横线也不显示
-			{
-				//找到基准节拍线，向上画subBeatCount-1条横线
-				for(int j = 1; j <= subBeatCount - 1; j++)
-				{
-					float subY = y - (horSeparationSmoothed / subBeatCount * j);
-					//不让横线超出边界
-					if(subY < 0) break;
-					Vector2 from = new Vector2(horMargin,subY);
-					Vector2 to = new Vector2(Size.X - horMargin, subY);
-					DrawLine(from, to, horSubColor, horSubWidth, true);
-				}
-				y += horSeparationSmoothed;   //逐步向上移动
-				num--;
-				if(num < 0) break;
-			}
-		}
+    // private void DrawSubBeats()
+    // {
+    //     //画小横线
+	// 	//先画上半部分
+	// 	{
+	// 		float horOffsetBeat = HorOffsetSmoothed / HorSeparationSmoothed;
+	// 		float num = Mathf.Ceil(horOffsetBeat);
+	// 		float y = Size.Y/2 - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * HorSeparationSmoothed;
+	// 		for(int i=0;i<=100 && y>=0;i++)
+	// 		{
+	// 			//找到基准节拍线，向上画subBeatCount-1条横线
+	// 			for(int j = 1; j <= subBeatCount - 1; j++)
+	// 			{
+	// 				float subY = y - (HorSeparationSmoothed / subBeatCount * j);
+	// 				//不让横线超出边界
+	// 				if(subY < 0) break;
+	// 				Vector2 from = new Vector2(horMargin,subY);
+	// 				Vector2 to = new Vector2(Size.X - horMargin, subY);
+	// 				DrawLine(from, to, horSubColor, horSubWidth, true);
+	// 			}
+	// 			y -= HorSeparationSmoothed;   //逐步向上移动
+	// 			num++;
+	// 		}
+	// 	}
+	// 	//下半部分同理
+	// 	{
+	// 		float horOffsetBeat = HorOffsetSmoothed / HorSeparationSmoothed;
+	// 		float num = Mathf.Floor(horOffsetBeat);
+	// 		float y = Size.Y/2 + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * HorSeparationSmoothed;
+	// 		for(int i=0;i<=100 && y<=Size.Y + HorSeparationSmoothed;i++) // Size.Y + horSeparationSmoothed防止最底部因为节拍线不显示导致小横线也不显示
+	// 		{
+	// 			//找到基准节拍线，向上画subBeatCount-1条横线
+	// 			for(int j = 1; j <= subBeatCount - 1; j++)
+	// 			{
+	// 				float subY = y - (HorSeparationSmoothed / subBeatCount * j);
+	// 				//不让横线超出边界
+	// 				if(subY < 0) break;
+	// 				Vector2 from = new Vector2(horMargin,subY);
+	// 				Vector2 to = new Vector2(Size.X - horMargin, subY);
+	// 				DrawLine(from, to, horSubColor, horSubWidth, true);
+	// 			}
+	// 			y += HorSeparationSmoothed;   //逐步向上移动
+	// 			num--;
+	// 			if(num < 0) break;
+	// 		}
+	// 	}
 		
-    }
+    // }
 
-    private void DrawVerticalLines()
-    {
-        //画竖线
-		{
-			float verSeparation = (Size.X - 2*verMargin) / (verLineCount - 1);
-			for(int i = 0; i < verLineCount; i++)
-			{
-				float x = verMargin + i*verSeparation;
-				Vector2 from = new Vector2(x,0);
-				Vector2 to = new Vector2(x,Size.Y);
-				DrawLine(from, to, verColor, verWidth, true);
-			}
-		}
+    // private void DrawVerticalLines()
+    // {
+    //     //画竖线
+	// 	{
+	// 		float verSeparation = (Size.X - 2*verMargin) / (verLineCount - 1);
+	// 		for(int i = 0; i < verLineCount; i++)
+	// 		{
+	// 			float x = verMargin + i*verSeparation;
+	// 			Vector2 from = new Vector2(x,0);
+	// 			Vector2 to = new Vector2(x,Size.Y);
+	// 			DrawLine(from, to, verColor, verWidth, true);
+	// 		}
+	// 	}
 
-    }
+    // }
 
     // ---- 刷新框架 ---- 改为由上级调用
     // public override void _Process(double delta)
@@ -314,16 +371,18 @@ public abstract partial class BaseEditPanel : Panel
 	{
 		if(Disabled) return;
 
-		if(!GridDisabled) QueueRedraw();// 触发网格重绘
-
 		//同步_coordinateConverter
-        _coordComponent.horMargin = horMargin;
-        _coordComponent.verMargin = verMargin;
-        _coordComponent.subBeatCount = subBeatCount;
-        _coordComponent.verLineCount = verLineCount;
-        _coordComponent.horOffsetSmoothed = horOffsetSmoothed;
-        _coordComponent.horSeparationSmoothed = horSeparationSmoothed;
+        _coordComponent.horMargin = HorMargin;
+        _coordComponent.verMargin = VerMargin;
+        _coordComponent.subBeatCount = SubBeatCount;
+        _coordComponent.verLineCount = VerLineCount;
+        _coordComponent.horOffsetSmoothed = HorOffsetSmoothed;
+        _coordComponent.horSeparationSmoothed = HorSeparationSmoothed;
         _coordComponent.parentSize = Size;
+
+		// 同步_gridDrawer
+		_gridDrawer.HorOffset = HorOffsetSmoothed;
+		_gridDrawer.HorSeparation = HorSeparationSmoothed;
 
 		if (!ContentDisabled)
 		{
@@ -336,6 +395,11 @@ public abstract partial class BaseEditPanel : Panel
 			// 更新所有 MultiMesh 的可见实例数量
 			ApplyVisibleCount();
 		}
+
+		if(!GridDisabled) _gridDrawer.QueueRedraw();// 触发网格重绘
+
+		//绘制框选矩形
+		QueueRedraw();
 	}
 
 	protected abstract void RenderContent();
@@ -485,9 +549,9 @@ public abstract partial class BaseEditPanel : Panel
 	{
 		// 坐标公式: y = Size.Y/2 + horOffsetSmoothed - beatValue * horSeparationSmoothed
 		// 反推: beatValue = (Size.Y/2 + horOffsetSmoothed - y) / horSeparationSmoothed
-		float zeroLine = Size.Y / 2f + horOffsetSmoothed; // 零刻度线的Y坐标
-		minBeat = (zeroLine - Size.Y) / horSeparationSmoothed; // 底部对应较小 beat
-		maxBeat = zeroLine / horSeparationSmoothed;             // 顶部对应较大 beat
+		float zeroLine = Size.Y / 2f + HorOffsetSmoothed; // 零刻度线的Y坐标
+		minBeat = (zeroLine - Size.Y) / HorSeparationSmoothed; // 底部对应较小 beat
+		maxBeat = zeroLine / HorSeparationSmoothed;             // 顶部对应较大 beat
 		if (minBeat < 0) minBeat = 0;
 	}
 

@@ -2,7 +2,6 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-//FIXME 手机端不能正确滑动
 public partial class ChooseLinePanel : Panel
 {
 	public class LineInfo
@@ -14,6 +13,8 @@ public partial class ChooseLinePanel : Panel
 
 	private Theme theme;
 	[Export] private VBoxContainer vBoxContainer;
+	[Export] private ScrollContainer scrollContainer;
+	private bool isDragging = false;
 	[Export] private Button addButton;
 	// [Export] private Button selectButton; // TODO 选择并批量操作判定线
 
@@ -28,6 +29,9 @@ public partial class ChooseLinePanel : Panel
     {
         base._Ready();
 		theme = GD.Load<Theme>("res://theme_gray.tres");
+
+		scrollContainer.ScrollStarted += () => isDragging = true;
+		scrollContainer.ScrollEnded += () => isDragging = false;
 
 		addButton.ButtonUp += () => EmitSignal(SignalName.AddLineRequested);
 		// selectButton.ButtonUp += () => {};
@@ -74,11 +78,9 @@ public partial class ChooseLinePanel : Panel
 		button.Text = $"id:{info.Id} 音符数量:{info.NoteCount} 下一个事件:{info.NextEventTime}";
 		button.MouseFilter = MouseFilterEnum.Pass;
 		button.SetMeta("id", info.Id);
-		button.ButtonUp += () =>
+		button.ButtonUp += () => 
 		{
-			// OnButtonClicked((int)button.GetMeta("id"));
-			// GD.Print($"OnButtonClicked:{id}");
-			EmitSignal(SignalName.LineSelected, (int)button.GetMeta("id"));
+			OnMainButtonPressed(button);
 		};
 		button.SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		row.AddChild(button);
@@ -90,24 +92,10 @@ public partial class ChooseLinePanel : Panel
 			otherButton.Theme = GD.Load<Theme>("res://theme_gray.tres");
 			otherButton.Text = "···";
 			otherButton.MouseFilter = MouseFilterEnum.Pass;
-			// button.SetMeta("id", info.Id);
+			otherButton.SetMeta("id", info.Id);
 			otherButton.ButtonUp += () =>
 			{
-				// 显示弹窗菜单
-				List<PopupMenuItem> items = [
-					new PopupMenuItem { 
-						Text = "删除",
-						Callback = () => EmitSignal(SignalName.DeleteLineRequested, info.Id)
-					}
-				];
-
-				//获取坐标
-				Vector2 screenPos = otherButton.GetScreenPosition();
-
-				PopupMenuHelper.ShowPopupMenu(this, screenPos + new Vector2(30, 30), items);
-
-				// GD.Print($"localPos:{localPos}, globalPos:{globalPos}, screenPos:{screenPos}");
-
+				OnOtherButtonPressed(otherButton);
 			};
 
 			row.AddChild(otherButton);
@@ -128,4 +116,33 @@ public partial class ChooseLinePanel : Panel
 	// 	// GD.Print($"OnButtonClicked:{id}");
 	// 	EmitSignal(SignalName.LineSelected, id);
 	// }
+
+	public void OnMainButtonPressed(Button button)
+	{
+		// OnButtonClicked((int)button.GetMeta("id"));
+		// GD.Print($"OnButtonClicked:{id}");
+		if(isDragging) return;
+		
+		EmitSignal(SignalName.LineSelected, (int)button.GetMeta("id"));
+	}
+
+	public void OnOtherButtonPressed(Button button)
+	{
+		if(isDragging) return;
+		
+		// 显示弹窗菜单
+		List<PopupMenuItem> items = [
+			new PopupMenuItem { 
+				Text = "删除",
+				Callback = () => EmitSignal(SignalName.DeleteLineRequested, (int)button.GetMeta("id"))
+			}
+		];
+
+		//获取坐标
+		Vector2 screenPos = button.GetScreenPosition();
+
+		PopupMenuHelper.ShowPopupMenu(this, screenPos + new Vector2(30, 30), items);
+
+		// GD.Print($"localPos:{localPos}, globalPos:{globalPos}, screenPos:{screenPos}");
+	}
 }

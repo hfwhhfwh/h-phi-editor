@@ -139,7 +139,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
         // 额外绘制即将创建的Hold
         if(_dragPlaceComponent.IsDragging){
-            float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (verLineCount - 1));
+            float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (VerLineCount - 1));
             MultiMeshRenderNote(
                 noteType: NoteType.Hold,
                 startBeat: _dragPlaceComponent.StartBeat,
@@ -549,6 +549,8 @@ public partial class NoteEditPanel : BaseEditPanel
         int nearestNoteIndex = -1;
         float nearestDistSquared = 99999f;
 
+        if(notes == null || notes.Count == 0) return -1;
+
         for (int i = 0; i < notes.Count; i++)
         {
             Note note = notes[i];
@@ -675,7 +677,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
     protected override void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
     {
-        float chartPosX = -675 + verLineIndex * (1350f / (verLineCount - 1));
+        float chartPosX = -675 + verLineIndex * (1350f / (VerLineCount - 1));
 
         NoteAddRequested?.Invoke(NoteType.Hold, startBeat, endBeat, chartPosX);
     }

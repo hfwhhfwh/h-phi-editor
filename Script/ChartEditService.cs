@@ -23,12 +23,12 @@ public partial class ChartEditService : Node
 
             case NotePropertyEnum.StartTime:
                 note.SetStartTime(((Beat)value).Values, EditingChart.BpmList, 
-                    EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents);
+                    EditingChart.JudgeLineList[lineId]);
                 break;
 
             case NotePropertyEnum.EndTime:
                 note.SetEndTime(((Beat)value).Values, EditingChart.BpmList, 
-                    EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents);
+                    EditingChart.JudgeLineList[lineId]);
                 break;
 
             case NotePropertyEnum.IsFake:
@@ -88,6 +88,7 @@ public partial class ChartEditService : Node
     /// <param name="posX">note的谱面X坐标</param>
     public void AddNote(int lineId, NoteType noteType, Beat startBeat, Beat endBeat, float posX)
     {
+        JudgeLine line = EditingChart.JudgeLineList[lineId];
         Note note = new Note
         {
             Above = 1,
@@ -105,16 +106,15 @@ public partial class ChartEditService : Node
         };
 
         // 设置note的时间，自动生成StartSec和EndSec和allDisplacement
-        List<LineEvent> speedEvents = EditingChart.JudgeLineList[lineId].EventLayers[0].SpeedEvents;
-        note.SetStartTime(startBeat.Values, EditingChart.BpmList, speedEvents);
-        note.SetEndTime(endBeat.Values, EditingChart.BpmList, speedEvents);
+        note.SetStartTime(startBeat.Values, EditingChart.BpmList, line);
+        note.SetEndTime(endBeat.Values, EditingChart.BpmList, line);
 
         // 设置note的位移和
-        note.RefreshDisplacement(EditingChart.JudgeLineList[lineId]);
+        note.RefreshDisplacement(line);
         
-        if(EditingChart.JudgeLineList[lineId].Notes == null) // 添加第一个音符时notes可能为空
-            EditingChart.JudgeLineList[lineId].Notes = new List<Note>();
-        List<Note> notes = EditingChart.JudgeLineList[lineId].Notes;
+        if(line.Notes == null) // 添加第一个音符时notes可能为空
+            line.Notes = new List<Note>();
+        List<Note> notes = line.Notes;
 
         notes.Add(note); // TODO 添加音符时可以考虑直接插入到合适的位置
 

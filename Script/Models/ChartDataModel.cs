@@ -287,7 +287,10 @@ namespace QuickType
         Alpha,
         Speed,
         //TODO 特殊事件枚举
+        
     }
+
+    
 
     public partial class LineEvent
     {

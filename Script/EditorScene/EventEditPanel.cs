@@ -6,18 +6,21 @@ using System.Linq;
 
 public partial class EventEditPanel : BaseEditPanel
 {
+	private enum VerAlign
+	{
+		Top, Center, Bottom
+	}
 
 	// [ExportGroup("事件特有设置")]
     [Export] private float widthScale = 0.4f;
     [Export] private Texture2D eventHoldTexture;
+	[Export] private float hideTextThreshold = 50f;
 
 	[Export] private Color selectedModulate = new Color(1f, 0.223f, 0.947f, 1f);
     [Export] private Color deleteHighlightModulate = new Color(1f, 0.184f, 0, 1f);
     [Export] private Color toAddModulate = new Color(1f, 1f, 1f, 0.588f);
 
-	// ---- Multimesh ----
-	// private MultiMesh multiMesh;
-	// private MultiMeshInstance2D multiMeshInstance;
+	private Control _textOverlay; // 用于显示上层的提示文字
 
 
 	private HashSet<LineEvent> selectedEvents = new();
@@ -69,7 +72,7 @@ public partial class EventEditPanel : BaseEditPanel
 	private float EventTypeToChartX(LineEventEnum lineEventEnum)
 	{
 		int verLineIndex = EventTypeToIndexDic[lineEventEnum];
-		float chartX = -675f + (1350f / (verLineCount - 1)) * verLineIndex;
+		float chartX = -675f + (1350f / (VerLineCount - 1)) * verLineIndex;
 
 		return chartX;
 	}
@@ -77,7 +80,7 @@ public partial class EventEditPanel : BaseEditPanel
 	private float EventTypeToRatioX(LineEventEnum lineEventEnum)
 	{
 		int verLineIndex = EventTypeToIndexDic[lineEventEnum];
-		float ratioX = verLineIndex * 1f / (verLineCount - 1);
+		float ratioX = verLineIndex * 1f / (VerLineCount - 1);
 
 		return ratioX;
 	}
@@ -87,41 +90,108 @@ public partial class EventEditPanel : BaseEditPanel
 		base._Ready();
 
 		// 固定竖线数为5
-        verLineCount = 5;
-        //InitializeNodePool(50, CreateEventNode);
+        VerLineCount = 5;
 
-		//设置multiMeshInstance
-		// multiMeshInstance = new MultiMeshInstance2D();
-		// multiMeshInstance.Texture = eventHoldTexture;
-
-		// //设置Multimesh
-		// multiMesh = new MultiMesh
-		// {
-		// 	TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
-        //     InstanceCount = 10000,
-        //     VisibleInstanceCount = 0
-		// };
-        // multiMeshInstance.Multimesh = multiMesh;
-        
-        // // 创建 QuadMesh 并设置尺寸
-        // var quad = new QuadMesh();
-		// quad.Size = new Vector2(100, -100); // 根据场景调整
-		// multiMeshInstance.Multimesh.Mesh = quad;
-
-		// AddChild(multiMeshInstance);
-
+		//设置multiMesh
 		RegisterMultiMesh("Event", eventHoldTexture, 4096);
+
+		// 设置_textOverlay
+		_textOverlay = new Control();
+		_textOverlay.Name = "TextOverlay";
+		_textOverlay.SetAnchorsPreset(LayoutPreset.FullRect);
+		_textOverlay.ZIndex = 2; // 显示在最上层
+		_textOverlay.Draw += OnDrawTextOverlay;
+		_textOverlay.MouseFilter = MouseFilterEnum.Ignore; // 放置拦截点击
+		AddChild(_textOverlay);
     }
 
-	// private Node2D CreateEventNode()
-    // {
-    //     var node = new Node2D();
-    //     var sprite = new Sprite2D();
-    //     sprite.Name = "bodySprite";
-    //     sprite.Scale = new Vector2(widthScale, 1);
-    //     node.AddChild(sprite);
-    //     return node;
-    // }
+    public override void _Draw()
+    {
+        base._Draw();
+		
+    }
+
+	private void DrawTextAligned(Vector2 pos, string text, int fontSize, VerAlign align)
+	{
+		// 1. 测量文本尺寸
+		Vector2 textSize = font.GetStringSize(text, fontSize: fontSize);
+
+		float descent = font.GetDescent(fontSize);
+		float ascent = font.GetAscent(fontSize);
+
+		float drawY = pos.Y + (ascent - descent) / 2;
+		drawY = align switch
+		{
+			VerAlign.Top => pos.Y + ascent,
+			VerAlign.Center => pos.Y + (ascent - descent) / 2,
+			VerAlign.Bottom => pos.Y - descent,
+			_ => pos.Y + (ascent - descent) / 2,
+		};
+		// {
+		// 	Vector2 from = new Vector2(pos.X - textSize.X / 2, drawY);
+		// 	Vector2 to = new Vector2(pos.X + textSize.X / 2, drawY);
+		// 	_textOverlay.DrawLine(from, to, Colors.SkyBlue, 2);
+		// }
+		
+
+		// 2. 计算绘制位置（水平居中 + 垂直居中）
+		//    水平：中心点减去半宽
+		//    垂直：因为 pos 是基线位置，简单近似可用 center + 半高
+		Vector2 drawPos = new Vector2(
+			pos.X - textSize.X / 2,
+			drawY
+		);
+
+		// Vector2 drawPos = pos;
+
+		_textOverlay.DrawString(font, drawPos, text, fontSize: fontSize, alignment: HorizontalAlignment.Center);
+}
+
+	private void OnDrawTextOverlay()
+	{
+		// ================ 绘制事件的起始和末尾值 ================
+		// 如果没有可用的谱面或判定线，则隐藏所有池节点
+		if (editingChart == null || 
+			editingChart.JudgeLineList == null || 
+			editingLineId < 0 || 
+			editingLineId >= editingChart.JudgeLineList.Count)
+		{
+			return;
+		}
+
+		GetVisibleBeatRange(out float minBeat, out float maxBeat);
+
+		foreach(LineEventEnum eventType in AllTypes.allLineEventTypes)
+		{
+			List<LineEvent> lineEvents = 
+				editingChart.JudgeLineList[editingLineId].EventLayers[0].GetLineEvents(eventType);
+
+			float ratioX = EventTypeToIndexDic[eventType] * 1f / (AllTypes.allLineEventTypes.Length-1);
+			float panelPosX = VerMargin + ratioX * (Size.X - 2 * VerMargin);
+			
+			for (int i = 0; i < lineEvents.Count; i++)
+			{
+				LineEvent lineEvent = lineEvents[i];
+
+				// ---- 快速视口裁剪：利用预计算的 startSec 或 beat 值 ----
+				float startBeatValue = lineEvent.StartTime[0] + lineEvent.StartTime[1] * 1f / lineEvent.StartTime[2];
+				float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
+				if (startBeatValue > maxBeat || endBeatValue < minBeat) continue;
+
+				// 绘制文字
+				float startPanelPosY = _coordComponent.GetPanelPosY(startBeatValue);
+				float endPanelPosY = _coordComponent.GetPanelPosY(endBeatValue);
+
+				if(startPanelPosY - endPanelPosY < hideTextThreshold) continue;
+				
+				DrawTextAligned(new Vector2(panelPosX, startPanelPosY), $"{lineEvent.Start}", 24, VerAlign.Bottom);
+				DrawTextAligned(new Vector2(panelPosX, endPanelPosY), $"{lineEvent.End}", 24, VerAlign.Top);
+			}
+				
+		}
+
+	}
+
 
 
     protected override void RenderContent()
@@ -174,7 +244,7 @@ public partial class EventEditPanel : BaseEditPanel
 				float endBeatValue = lineEvent.EndTime[0] + lineEvent.EndTime[1] * 1f / lineEvent.EndTime[2];
 				if (startBeatValue > maxBeat || endBeatValue < minBeat) continue;
 
-				float localX = verMargin + type.xRatio * (Size.X - 2 * verMargin);
+				float localX = VerMargin + type.xRatio * (Size.X - 2 * VerMargin);
 				Beat startBeat = new Beat(lineEvent.StartTime);
 				Beat endBeat = new Beat(lineEvent.EndTime);
 
@@ -221,7 +291,7 @@ public partial class EventEditPanel : BaseEditPanel
 		
 		// 额外绘制即将创建的Event
         if(_dragPlaceComponent.IsDragging){
-            float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (verLineCount - 1));
+            float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (VerLineCount - 1));
 			float localX = _coordComponent.GetPanelPosX(chartPosX);
 
             RenderLongObject(
@@ -234,6 +304,9 @@ public partial class EventEditPanel : BaseEditPanel
 				renderEffect: ToAddRender
             );
         }
+
+		// ============== 绘制事件值提示文本 ==============
+		_textOverlay.QueueRedraw();
     }
 
 	private void SelectedRender(MultiMesh multiMesh, int id)

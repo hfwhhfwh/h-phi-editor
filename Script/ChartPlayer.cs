@@ -571,10 +571,7 @@ public class JudgeLineNode
         
         
         // 提前计算累计位移，供note使用（简化计算） // 坐标系: 谱面坐标
-        nowDisplacement = ChartDataHelper.GetDisplacementAtTime(
-            Data.EventLayers[0].SpeedEvents, 
-            (float)gameTime
-        ); 
+        nowDisplacement = Data.GetDisplacementAtTime((float)gameTime); 
 
         // 写入LineBuffer
         Vector2 linePos = new Vector2(CurrentMoveX, CurrentMoveY); //坐标系: 谱面坐标

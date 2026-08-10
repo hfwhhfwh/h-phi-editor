@@ -364,12 +364,12 @@ public partial class EditorScene : Node
         #endif
 
         //同步编辑面板
-        noteEditPanel.horOffsetSmoothed = horOffsetSmoothed;
-        noteEditPanel.horSeparationSmoothed = horSeparationSmoothed;
+        noteEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
+        noteEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
         noteEditPanel.UpdateVisuals();
 
-        eventEditPanel.horOffsetSmoothed = horOffsetSmoothed;
-        eventEditPanel.horSeparationSmoothed = horSeparationSmoothed;
+        eventEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
+        eventEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
         eventEditPanel.UpdateVisuals();
 
         #if TOOLS
@@ -671,7 +671,7 @@ public partial class EditorScene : Node
         PopupMenu popupMenu = PopupMenuHelper.ShowPopupMenu(this, popupViewportPos, items);
         popupMenu.PopupHide += () =>
         {
-            noteEditPanel.DeselectAll();
+            eventEditPanel.DeselectAll();
         };
     }
 

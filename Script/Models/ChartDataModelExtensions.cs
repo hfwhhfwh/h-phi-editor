@@ -5,6 +5,10 @@ using Newtonsoft.Json;
 
 namespace QuickType
 {
+    public static class AllTypes
+    {
+        public readonly static LineEventEnum[] allLineEventTypes = (LineEventEnum[])Enum.GetValues(typeof(LineEventEnum));
+    }
     public partial class JudgeLine
     {
         /// <summary>
@@ -166,7 +170,7 @@ namespace QuickType
         /// </summary>
         [JsonIgnore] public float endAllDisplacement;
 
-        public void SetStartTime(int[] newStartTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
+        public void SetStartTime(int[] newStartTime, BpmEvent[] bpmList, JudgeLine line)
         {
             StartTime = newStartTime;
             startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
@@ -185,10 +189,10 @@ namespace QuickType
             }
 
             // 刷新总位移
-            allDisplacement = ChartDataHelper.GetDisplacementAtTime(speedEvents, startSec);
+            allDisplacement = line.GetDisplacementAtTime(startSec);
         }
 
-        public void SetEndTime(int[] newEndTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
+        public void SetEndTime(int[] newEndTime, BpmEvent[] bpmList, JudgeLine line)
         {
             EndTime = newEndTime;
             endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
@@ -213,10 +217,10 @@ namespace QuickType
             // 如果StartTime被修改了，必须刷新总位移
             if(startTimeChanged)
             {
-                allDisplacement = ChartDataHelper.GetDisplacementAtTime(speedEvents, startSec);
+                allDisplacement = line.GetDisplacementAtTime(startSec);
             }
 
-            if(Type == 2) endAllDisplacement = ChartDataHelper.GetDisplacementAtTime(speedEvents, endSec);
+            if(Type == 2) endAllDisplacement = line.GetDisplacementAtTime(endSec);
         }
 
         public void RefreshDisplacement(JudgeLine line)

@@ -3,8 +3,9 @@
 [ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_73dy3"]
 [ext_resource type="Script" uid="uid://ddflgrjtrybjh" path="res://Script/EditorScene/ChooseLinePanel.cs" id="2_ecstf"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="3_ecstf"]
+[ext_resource type="Script" uid="uid://chcljohi2g5r3" path="res://Script/UI/ScrollSafeButton.cs" id="4_bnoxi"]
 
-[node name="ChooseLinePanel" type="Panel" unique_id=143035431 node_paths=PackedStringArray("vBoxContainer", "addButton", "selectButton")]
+[node name="ChooseLinePanel" type="Panel" unique_id=143035431 node_paths=PackedStringArray("vBoxContainer", "scrollContainer", "addButton")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -13,8 +14,8 @@ grow_vertical = 2
 theme_override_styles/panel = ExtResource("1_73dy3")
 script = ExtResource("2_ecstf")
 vBoxContainer = NodePath("MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer")
+scrollContainer = NodePath("MarginContainer/VBoxContainer/ScrollContainer")
 addButton = NodePath("MarginContainer/VBoxContainer/Head/Right/Button")
-selectButton = NodePath("MarginContainer/VBoxContainer/Head/Right/Button2")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1685182887]
 layout_mode = 1
@@ -82,17 +83,20 @@ text = "选择"
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=1701754219]
 layout_mode = 2
 size_flags_vertical = 3
+scroll_deadzone = 20
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=1283612754]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Button3" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=2003157746]
+[node name="Button3" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=960153136]
 visible = false
 layout_mode = 2
 theme = ExtResource("3_ecstf")
 theme_override_font_sizes/font_size = 30
 text = "id 状态信息"
+script = ExtResource("4_bnoxi")
+metadata/_custom_type_script = "uid://chcljohi2g5r3"
 
 [node name="Button" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/Button3" unique_id=1688975659]
 layout_mode = 1

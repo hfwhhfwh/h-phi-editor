@@ -21,11 +21,11 @@
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="11_khybl"]
 [ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EditorScene/EventEditPanel.cs" id="12_qdb1r"]
 [ext_resource type="Script" uid="uid://bctcbmd05picq" path="res://Script/ChartRenderer.cs" id="12_roijs"]
-[ext_resource type="Texture2D" uid="uid://dwe0fgofaghae" path="res://Sprite/EventHold.png" id="13_wq0mf"]
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4d80g"]
 [ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
+[ext_resource type="Texture2D" uid="uid://btdnpjcck36nd" path="res://Sprite/EventHold_2.png" id="21_605qm"]
 [ext_resource type="Texture2D" uid="uid://cqkci055pm5cs" path="res://播放_间距.png" id="24_5asy7"]
 [ext_resource type="PackedScene" uid="uid://bpkv57wpohu8e" path="res://Scene/event_info_panel.tscn" id="28_605qm"]
 
@@ -240,9 +240,6 @@ flickTexture = ExtResource("7_wq0mf")
 holdHeadTexture = ExtResource("8_63sjd")
 holdBodyTexture = ExtResource("9_gi1tw")
 holdEndTexture = ExtResource("10_4d80g")
-horMargin = 20.0
-verMargin = 40.0
-verLineCount = 21
 
 [node name="Right" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=890883041]
 layout_mode = 2
@@ -258,9 +255,8 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 script = ExtResource("12_qdb1r")
-eventHoldTexture = ExtResource("13_wq0mf")
-horMargin = 20.0
-verMargin = 40.0
+eventHoldTexture = ExtResource("21_605qm")
+hideTextThreshold = 50.0
 
 [node name="ChooseLinePanel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=143035431 instance=ExtResource("16_qrq2u")]
 visible = false
@@ -354,10 +350,12 @@ autowrap_mode = 1
 
 [node name="NoteInfoPanel" parent="EditorPanel/SafeArea" unique_id=1318802048 instance=ExtResource("20_mm2kl")]
 visible = false
+z_index = 10
 layout_mode = 2
 
 [node name="EventInfoPanel" parent="EditorPanel/SafeArea" unique_id=1587088222 instance=ExtResource("28_605qm")]
 visible = false
+z_index = 10
 layout_mode = 2
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=424155361]
