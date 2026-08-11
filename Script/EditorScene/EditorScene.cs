@@ -14,8 +14,8 @@ public partial class EditorScene : Node
     [ExportGroup("灵敏度设置")]
 	[Export] private float verMouseSensitivity = 100f; // 鼠标滚轮竖直滚动的灵敏度
     [Export] private float zoomMouseSensitivity = 1f; // 鼠标滚轮竖直缩放的灵敏度
-	[Export] private float verJoystickSensitivity = 1000f; // 虚拟摇杆竖直滚动的灵敏度
-	[Export] private float zoomJoystickSensitivity = 1f; // 虚拟摇杆缩放的灵敏度
+	[Export] private float verJoystickSensitivity = 1500f; // 虚拟摇杆竖直滚动的灵敏度
+	[Export] private float zoomJoystickSensitivity = 2f; // 虚拟摇杆缩放的灵敏度
 
     [ExportGroup("资源引用")]
     [Export] private Theme theme;
@@ -44,9 +44,9 @@ public partial class EditorScene : Node
     private Chart editingChart; // 正在编辑的铺面
     private int editingLineId; // 正在编辑的判定线编号
 
-    private InputManager inputManager;
+    private InputManager _inputManager;
     private ChartService _chartService;
-    private ChartEditService chartEditService;
+    private ChartEditService _chartEditService;
 
     [Export] private float horOffset;
 	private float horBeatOffset;
@@ -127,12 +127,12 @@ public partial class EditorScene : Node
         #endif
 
         //获取节点引用
-        inputManager = GetNode<InputManager>("/root/InputManager");
-        if(inputManager == null)
+        _inputManager = GetNode<InputManager>("/root/InputManager");
+        if(_inputManager == null)
         {
             GD.PrintErr($"[{this.Name}] inputManager is null");
         }
-        inputManager.IsEnable = true;
+        _inputManager.IsEnable = true;
         
         _chartService = GetNode<ChartService>("/root/ChartService");
         if(_chartService == null)
@@ -140,18 +140,18 @@ public partial class EditorScene : Node
             GD.PrintErr($"[{this.Name}] ChartService is null");
         }
 
-        chartEditService = GetNode<ChartEditService>("/root/ChartEditService");
-        if(chartEditService == null)
+        _chartEditService = GetNode<ChartEditService>("/root/ChartEditService");
+        if(_chartEditService == null)
         {
             GD.PrintErr($"[{this.Name}] ChartEditService is null");
         }
 
 		//绑定事件
-		inputManager.Slide += (float x) =>
+		_inputManager.Slide += (float x) =>
         {
             Slide(x * verMouseSensitivity);
         };
-		inputManager.Zoom += (float x) =>
+		_inputManager.Zoom += (float x) =>
         {
             Zoom(x * zoomMouseSensitivity);
         };
@@ -229,7 +229,7 @@ public partial class EditorScene : Node
         PopupMenuHelper.SetTheme(theme);
 
         //设置ChartEditService
-        chartEditService.EditingChart = editingChart;
+        _chartEditService.EditingChart = editingChart;
 
         //设置顶部菜单栏
         //设置“文件”选项
@@ -280,6 +280,10 @@ public partial class EditorScene : Node
         //设置editModeLabel
         editModeLabel.Text = "编辑模式：常规模式";
         EditModeManager.OnEditModeChanged += OnEditModeChanged;
+
+        // 设置PlayModeManager
+        PlayModeManager.PlayModeChanged += OnPlayModeChanged;
+        PlayModeManager.SetPlayMode(PlayModeEnum.Editor);
         
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
@@ -415,7 +419,11 @@ public partial class EditorScene : Node
         //设置eventInfoPanel
         eventInfoPanel.PropertyChanged -= SetEventProperty;
 
+        // 设置 EditModeManager
         EditModeManager.OnEditModeChanged -= OnEditModeChanged;
+
+        // 设置PlayModeManager
+        PlayModeManager.PlayModeChanged += OnPlayModeChanged;
 
         GD.Print($"[{Name}] 成功退出EditorScene");
         
@@ -437,41 +445,65 @@ public partial class EditorScene : Node
 
     public void OnPlayButtonClicked()
     {
-        if (!isPlaying)
-        {
-            SetChartPlayerVisible(true);
+        // 切换播放模式
+        PlayModeManager.SetPlayMode(PlayModeEnum.Player);
 
-            SetEditPanelVisible(false);
+        // 开始播放
+        chartPlayer.Play((float)ChartTime);
+        chartPlayer.IsPlaying = true;
+        isPlaying = true;
 
-            //启动chartplayer的播放
-            chartPlayer.Play((float)ChartTime);
-            chartPlayer.IsPlaying = true;
-
-            //更新右侧面板
-            rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Playing);
-
-            isPlaying = true;
-            
-        }
-        else
-        {
-            OnStopButtonClicked();
-        }
+        //更新右侧面板
+        rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
+        
     }
 
     public void OnStopButtonClicked()
     {
-        SetChartPlayerVisible(false);
+        // 切换播放模式
+        PlayModeManager.SetPlayMode(PlayModeEnum.Editor);
 
-        SetEditPanelVisible(true);
-
+        // 暂停播放
         chartPlayer.Pause();
         chartPlayer.IsPlaying = false;
+        isPlaying = false;
 
         //更新右侧面板
         rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+    }
 
+    public void OnPauseClicked()
+    {
+        // 切换播放模式
+        PlayModeManager.SetPlayMode(PlayModeEnum.Player);
+
+        // 暂停播放
+        chartPlayer.IsPlaying = false;
+        chartPlayer.Pause();
         isPlaying = false;
+
+        //更新右侧面板
+        rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.DragPlay);
+
+    }
+
+    private void OnPlayModeChanged(PlayModeEnum playMode)
+    {
+        switch (playMode)
+        {
+            case PlayModeEnum.Editor:
+                SetChartPlayerVisible(false);
+                SetEditPanelVisible(true);
+                break;
+            case PlayModeEnum.Player:
+                SetChartPlayerVisible(true);
+                SetEditPanelVisible(false); 
+                break;
+            case PlayModeEnum.EditorAndPlayer:
+                SetChartPlayerVisible(true);
+                SetEditPanelVisible(true); 
+                break;
+        }
     }
 
     private void OnChooseLineClicked()
@@ -479,14 +511,14 @@ public partial class EditorScene : Node
         if(chooseLinePanel.Visible == false)
         {
             chooseLinePanel.Visible = true;
-            inputManager.IsEnable = false;
+            _inputManager.IsEnable = false;
 
             RefreshChooseLinePanel();
         }
         else
         {
             chooseLinePanel.Visible = false;
-            inputManager.IsEnable = true;
+            _inputManager.IsEnable = true;
         }
     }
 
@@ -521,12 +553,12 @@ public partial class EditorScene : Node
         editingLineLabel.Text = $"正在编辑:线{id}";
 
         chooseLinePanel.Visible = false;
-        inputManager.IsEnable = true;
+        _inputManager.IsEnable = true;
     }
 
     private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
-        chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
+        _chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
     }
 
     private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
@@ -592,12 +624,12 @@ public partial class EditorScene : Node
     private void OnNoteDelete(int lineId, int noteIndex)
     {
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        chartEditService.DeleteNote(lineId, note);
+        _chartEditService.DeleteNote(lineId, note);
     }
 
     private void OnNotesDelete(int lineId, List<Note> notes)
     {
-        chartEditService.DeleteNotes(lineId, notes);
+        _chartEditService.DeleteNotes(lineId, notes);
     }
 
     private void SaveChart()
@@ -631,14 +663,14 @@ public partial class EditorScene : Node
 
     private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
     {
-        chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
+        _chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
         //通知谱面数据产生了变化
         ChartEventBus.NotifyDataChanged();
     }
 
     private void AddLine()
     {
-        chartEditService.AddLine(editingChart.JudgeLineList, -1);
+        _chartEditService.AddLine(editingChart.JudgeLineList, -1);
     }
 
     private void DeleteLine(int id)
@@ -649,7 +681,7 @@ public partial class EditorScene : Node
             // TODO 最少保留一条判定线，删除失败时显示弹窗提示
             return;
         }
-        chartEditService.DeleteLine(editingChart.JudgeLineList, id);
+        _chartEditService.DeleteLine(editingChart.JudgeLineList, id);
     }
 
     private void OnEventSelected(int lineId, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
@@ -690,7 +722,7 @@ public partial class EditorScene : Node
         int lineId, LineEventEnum lineEventEnum, int index,
         LineEventPropertyType propertyType, object value)
     {
-        chartEditService.SetEventProperty(lineId, lineEventEnum, index, propertyType, value);
+        _chartEditService.SetEventProperty(lineId, lineEventEnum, index, propertyType, value);
     }
 
     private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
@@ -705,7 +737,7 @@ public partial class EditorScene : Node
     }
     private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
     {
-        chartEditService.DeleteEvent(lineId, lineEventEnum, index);
+        _chartEditService.DeleteEvent(lineId, lineEventEnum, index);
 
     }
 
@@ -737,12 +769,12 @@ public partial class EditorScene : Node
         //分别删除
         foreach(LineEventEnum lineEventEnum in table.Keys)
         {
-            chartEditService.DeleteEvents(lineId, lineEventEnum, table[lineEventEnum]);
+            _chartEditService.DeleteEvents(lineId, lineEventEnum, table[lineEventEnum]);
         }
     }
 
     private void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
-        chartEditService.AddEvent(lineId, lineEventEnum, startBeat, endBeat);
+        _chartEditService.AddEvent(lineId, lineEventEnum, startBeat, endBeat);
     }
 }

@@ -93,7 +93,7 @@ public partial class EventEditPanel : BaseEditPanel
         VerLineCount = 5;
 
 		//设置multiMesh
-		RegisterMultiMesh("Event", eventHoldTexture, 4096);
+		RegisterMultiMesh("Event", eventHoldTexture, 4096, 1);
 
 		// 设置_textOverlay
 		_textOverlay = new Control();
@@ -184,8 +184,8 @@ public partial class EventEditPanel : BaseEditPanel
 
 				if(startPanelPosY - endPanelPosY < hideTextThreshold) continue;
 				
-				DrawTextAligned(new Vector2(panelPosX, startPanelPosY), $"{lineEvent.Start}", 24, VerAlign.Bottom);
-				DrawTextAligned(new Vector2(panelPosX, endPanelPosY), $"{lineEvent.End}", 24, VerAlign.Top);
+				DrawTextAligned(new Vector2(panelPosX, startPanelPosY), $"{lineEvent.Start:F1}", 24, VerAlign.Bottom);
+				DrawTextAligned(new Vector2(panelPosX, endPanelPosY), $"{lineEvent.End:F1}", 24, VerAlign.Top);
 			}
 				
 		}

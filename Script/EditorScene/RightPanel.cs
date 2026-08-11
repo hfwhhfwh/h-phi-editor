@@ -7,10 +7,10 @@ public partial class RightPanel : PanelContainer
 {
     public enum RightPanelTabPage
     {
-        Normal, Playing
+        Normal, AutoPlay, DragPlay
     }
 
-    [Export] private Control normalPanel, playingPanel;
+    [Export] private Control normalPanel, playingPanel, dragPlayPanel;
 
 	[Export] private TabContainer tabContainer;
 	
@@ -59,8 +59,11 @@ public partial class RightPanel : PanelContainer
             case RightPanelTabPage.Normal:
                 SwitchToTab(normalPanel);
                 break;
-            case RightPanelTabPage.Playing:
+            case RightPanelTabPage.AutoPlay:
                 SwitchToTab(playingPanel);
+                break;
+            case RightPanelTabPage.DragPlay:
+                SwitchToTab(dragPlayPanel);
                 break;
         }
     }

@@ -87,7 +87,18 @@ public partial class NoteEditPanel : BaseEditPanel
 				_ => "Tap"
 			};
 
-            RegisterMultiMesh(key, texture, 1024);
+            int zIndex = type switch
+			{
+				SpriteType.Tap => 3,
+				SpriteType.Drag => 2,
+				SpriteType.Flick => 4,
+				SpriteType.HoldHead => 1,
+				SpriteType.HoldBody => 1,
+				SpriteType.HoldEnd => 1,
+				_ => 999
+			};
+
+            RegisterMultiMesh(key, texture, 1024, zIndex);
 		}
 
         

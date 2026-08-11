@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0jp8xmb4vru6"
-path.s3tc="res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.s3tc.ctex"
-path.etc2="res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.etc2.ctex"
+uid="uid://bijy1d18kplv7"
+path.s3tc="res://.godot/imported/向左旋转.png-58ed45fc31a024dcaf3b3b3e44c1c0f4.s3tc.ctex"
+path.etc2="res://.godot/imported/向左旋转.png-58ed45fc31a024dcaf3b3b3e44c1c0f4.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://暂停_256px.png"
-dest_files=["res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.s3tc.ctex", "res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.etc2.ctex"]
+source_file="res://向左旋转.png"
+dest_files=["res://.godot/imported/向左旋转.png-58ed45fc31a024dcaf3b3b3e44c1c0f4.s3tc.ctex", "res://.godot/imported/向左旋转.png-58ed45fc31a024dcaf3b3b3e44c1c0f4.etc2.ctex"]
 
 [params]
 

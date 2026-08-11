@@ -124,7 +124,7 @@ public abstract partial class BaseEditPanel : Panel
 	public bool GridDisabled { get; set; } = false; // 禁用渲染网格
 	public bool ContentDisabled { get; set; } = false; // 禁用渲染物体
 
-	protected void RegisterMultiMesh(string key, Texture2D texture, int instanceCount)
+	protected void RegisterMultiMesh(string key, Texture2D texture, int instanceCount, int zIndex = 1)
 	{
 		//设置Multimesh
 		MultiMesh multiMesh = new MultiMesh
@@ -140,7 +140,7 @@ public abstract partial class BaseEditPanel : Panel
 		MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
 		multiMeshInstance.Texture = texture;
 		multiMeshInstance.Multimesh = multiMesh;
-		multiMeshInstance.ZIndex = 1;
+		multiMeshInstance.ZIndex = zIndex;
 		multiMeshInstances[key] = multiMeshInstance;
 
 		// 根据纹理实际尺寸创建 QuadMesh
