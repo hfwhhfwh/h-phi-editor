@@ -213,7 +213,7 @@ namespace QuickType
         public float Bpmfactor { get; set; }
 
         [JsonProperty("eventLayers")]
-        public EventLayer[] EventLayers { get; set; }
+        public List<EventLayer> EventLayers { get; set; }
 
         [JsonProperty("extended", NullValueHandling = NullValueHandling.Ignore)]
         public Extended Extended { get; set; }

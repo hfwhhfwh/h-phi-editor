@@ -111,9 +111,22 @@ namespace QuickType
             }
         }
 
-        public void AddNote()
+        /// <summary>
+        /// 为所有的note排序
+        /// 按照时间升序排列且非Hold类型与Hold分开排列，非Hold在前
+        /// </summary>
+        public void SortNotes()
         {
-            
+            Notes.Sort((Note x, Note y) =>
+            {   
+                // Hold放在其他note的后面
+                if(x.Type == 2 && y.Type != 2) return 1;
+                if(x.Type != 2 && y.Type == 2) return -1;
+
+                //按照时间排序
+                return x.startSec.CompareTo(y.startSec);
+
+            });
         }
     }
 

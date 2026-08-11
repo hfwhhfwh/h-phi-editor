@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 public partial class ChooseLinePanel : Panel
 {
@@ -16,13 +17,18 @@ public partial class ChooseLinePanel : Panel
 	[Export] private ScrollContainer scrollContainer;
 	private bool isDragging = false;
 	[Export] private Button addButton;
-	// [Export] private Button selectButton; // TODO 选择并批量操作判定线
+	[Export] private Button closeButton;
+	[Export] private Button selectButton; // TODO 选择并批量操作判定线
+	[Export] private Button[] layerButtons;
+	private ButtonGroup layerButtonGroup;
 
 	[Signal] public delegate void RefreshRequestedEventHandler();
+	[Signal] public delegate void CloseButtonClickedEventHandler();
 
 	[Signal] public delegate void LineSelectedEventHandler(int id);
 	[Signal] public delegate void DeleteLineRequestedEventHandler(int id);
 	[Signal] public delegate void AddLineRequestedEventHandler();
+	[Signal] public delegate void LayerSelectedEventHandler(int index);
 
 
     public override void _Ready()
@@ -34,7 +40,22 @@ public partial class ChooseLinePanel : Panel
 		scrollContainer.ScrollEnded += () => isDragging = false;
 
 		addButton.ButtonUp += () => EmitSignal(SignalName.AddLineRequested);
-		// selectButton.ButtonUp += () => {};
+		closeButton.ButtonUp += () => 
+		{
+			Visible = false;
+			EmitSignal(SignalName.CloseButtonClicked);
+		};
+
+		layerButtonGroup = new ButtonGroup();
+		for(int i = 0; i <= 4; i++)
+		{
+			int index = i; // 捕获变量
+			layerButtons[i].ButtonUp += () =>
+			{
+				EmitSignal(SignalName.LayerSelected, index);
+			};
+			layerButtons[i].ButtonGroup = layerButtonGroup;
+		}
 
 		// 监听谱面数据变化
 		ChartEventBus.OnChartDataChanged += RequestRefresh;
@@ -111,12 +132,6 @@ public partial class ChooseLinePanel : Panel
 		EmitSignal(SignalName.RefreshRequested);
 	}
 
-	// private void OnButtonClicked(int id)
-	// {
-	// 	// GD.Print($"OnButtonClicked:{id}");
-	// 	EmitSignal(SignalName.LineSelected, id);
-	// }
-
 	public void OnMainButtonPressed(Button button)
 	{
 		// OnButtonClicked((int)button.GetMeta("id"));
@@ -144,5 +159,16 @@ public partial class ChooseLinePanel : Panel
 		PopupMenuHelper.ShowPopupMenu(this, screenPos + new Vector2(30, 30), items);
 
 		// GD.Print($"localPos:{localPos}, globalPos:{globalPos}, screenPos:{screenPos}");
+	}
+
+	public void SetEventLayer(int index)
+	{
+		if(index < 0 || index > 4)
+		{
+			GD.PrintErr($"[{Name}] EventLayer索引越界:{index}");
+			return;
+		}
+
+		layerButtons[index].ButtonPressed = true;
 	}
 }

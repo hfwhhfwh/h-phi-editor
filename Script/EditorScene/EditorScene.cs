@@ -43,6 +43,7 @@ public partial class EditorScene : Node
     private string editingChartId; // 正在编辑的铺面的ID
     private Chart editingChart; // 正在编辑的铺面
     private int editingLineId; // 正在编辑的判定线编号
+    private int editingLayer = 0; // 正在编辑的事件层
 
     private InputManager _inputManager;
     private ChartService _chartService;
@@ -201,6 +202,32 @@ public partial class EditorScene : Node
         chooseLinePanel.AddLineRequested += AddLine;
         chooseLinePanel.DeleteLineRequested += DeleteLine;
         chooseLinePanel.RefreshRequested += RefreshChooseLinePanel;
+        chooseLinePanel.LayerSelected += (int index) =>
+        {
+            if(index < 0 || index > 4)
+            {
+                GD.PrintErr($"[{Name}] EventLayer索引越界:{index}");
+                return;
+            }
+
+            List<EventLayer> eventLayers = editingChart.JudgeLineList[editingLineId].EventLayers;
+
+            // 如果列表元素不够，用 null 填充到目标索引
+            while (eventLayers.Count <= index)
+            {
+                eventLayers.Add(null);
+            }
+
+            if (eventLayers[index] == null)
+            {
+                eventLayers[index] = new();
+            }
+
+            editingLayer = index;
+            eventEditPanel.EditingLayer = index;
+
+            GD.Print($"切换到事件层:{index}");
+        };
 
         editingLineLabel.Text = $"正在编辑:线{0}";
 
@@ -265,7 +292,7 @@ public partial class EditorScene : Node
                 //     }
                 // },
                 // new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "偏好设置", Callback = null},
+                new PopupMenuItem { Text = "设置", Callback = null},
             };
             PopupMenuHelper.SetMenuButton(editMenuButtion, items);
         }
@@ -525,6 +552,7 @@ public partial class EditorScene : Node
             _inputManager.IsEnable = false;
 
             RefreshChooseLinePanel();
+            chooseLinePanel.SetEventLayer(editingLayer);
         }
         else
         {
@@ -696,9 +724,9 @@ public partial class EditorScene : Node
         _chartEditService.DeleteLine(editingChart.JudgeLineList, id);
     }
 
-    private void OnEventSelected(int lineId, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
+    private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
     {
-        EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[0];
+        EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
 		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
 
         // 构建菜单项（使用闭包捕获当前音符信息）
@@ -753,7 +781,7 @@ public partial class EditorScene : Node
 
     }
 
-    private void DeleteEvents(int lineId, List<LineEvent> eventsToDelete)
+    private void DeleteEvents(int lineId, int layer, List<LineEvent> eventsToDelete)
     {
         // lineEvents可能包含不同种类的事件，需要分别删除，构建一张表格
         LineEventEnum[] allEventTypes = (LineEventEnum[])Enum.GetValues(typeof(LineEventEnum));
@@ -763,7 +791,7 @@ public partial class EditorScene : Node
         {
             foreach(LineEventEnum lineEventEnum in allEventTypes)
             {
-                List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+                List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
                 if (lineEvents.Contains(lineEvent))
                 {
                     //添加到表格
@@ -785,8 +813,9 @@ public partial class EditorScene : Node
         }
     }
 
-    private void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
+    private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
-        _chartEditService.AddEvent(lineId, lineEventEnum, startBeat, endBeat);
+        _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
     }
+
 }

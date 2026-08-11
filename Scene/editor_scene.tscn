@@ -27,6 +27,8 @@
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
 [ext_resource type="Texture2D" uid="uid://btdnpjcck36nd" path="res://Sprite/EventHold_2.png" id="21_605qm"]
 [ext_resource type="Texture2D" uid="uid://cqkci055pm5cs" path="res://播放_间距.png" id="24_5asy7"]
+[ext_resource type="Texture2D" uid="uid://dc5hmif77j15m" path="res://菜单-07.png" id="25_wx7m8"]
+[ext_resource type="Texture2D" uid="uid://8esm21xk43li" path="res://菜单-02.png" id="26_3s8ev"]
 [ext_resource type="Texture2D" uid="uid://cwwb6dl8anq1i" path="res://停止.png" id="26_utcux"]
 [ext_resource type="PackedScene" uid="uid://bpkv57wpohu8e" path="res://Scene/event_info_panel.tscn" id="28_605qm"]
 [ext_resource type="Texture2D" uid="uid://bijy1d18kplv7" path="res://向左旋转.png" id="28_r1xvh"]
@@ -303,6 +305,7 @@ icon_alignment = 1
 expand_icon = true
 
 [node name="ChooseLine" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=745194988]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_vertical = 0
 theme_override_font_sizes/font_size = 30
@@ -311,7 +314,24 @@ theme_override_styles/pressed = ExtResource("1_7k27q")
 theme_override_styles/hover = ExtResource("1_7k27q")
 theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
-text = "线"
+icon = ExtResource("25_wx7m8")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Layer" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=501032959]
+visible = false
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+icon = ExtResource("26_3s8ev")
+icon_alignment = 1
+expand_icon = true
 
 [node name="NoteChooser" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=1507138121 instance=ExtResource("6_p0vr8")]
 layout_mode = 2

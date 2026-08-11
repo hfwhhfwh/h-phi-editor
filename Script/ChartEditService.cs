@@ -116,7 +116,9 @@ public partial class ChartEditService : Node
             line.Notes = new List<Note>();
         List<Note> notes = line.Notes;
 
-        notes.Add(note); // TODO 添加音符时可以考虑直接插入到合适的位置
+        // 添加音符时可以考虑直接插入到合适的位置
+        notes.Add(note);
+        line.SortNotes();
 
         GD.Print($"[{this.Name}] 成功添加note:{lineId}_{notes.IndexOf(note)}");
     }
@@ -166,7 +168,7 @@ public partial class ChartEditService : Node
             AlphaEvents = new List<LineEvent>(),
             SpeedEvents = new List<LineEvent>(),
         };
-        EventLayer[] eventLayers = new EventLayer[5];
+        List<EventLayer> eventLayers = new List<EventLayer>(5);
         for(int i = 0; i < 5; i++)
         {
             eventLayers[i] = eventLayer;
@@ -241,11 +243,11 @@ public partial class ChartEditService : Node
         GD.Print($"[{this.Name}] 成功删除判定线:{Util.ListToString(linesId)}");
     }
 
-    public void AddEvent(int lineId, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
+    public void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
         // 添加第一个事件时可能为空，但EventLayer内部实现了懒加载，返回新的空列表
         List<LineEvent> lineEvents = 
-            EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+            EditingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
         
         LineEvent lineEvent = new()
         {

@@ -517,7 +517,7 @@ public class JudgeLineNode
     public void UpdateLine(double gameTime, JudgeLineRenderData[] lineBuffer, ref int lineCount,
         NoteRenderData[] noteBuffer, ref int noteCount)
     {
-        if (Data?.EventLayers == null || Data.EventLayers.Length == 0) return;
+        if (Data?.EventLayers == null || Data.EventLayers.Count == 0) return;
 
         // 我们需要综合所有事件层，第0层为主层
         {
@@ -534,7 +534,7 @@ public class JudgeLineNode
         //其余1-3层的值叠加到第0层上
         for(int i = 1; i <= 3; i++)
         {
-            if(i > Data.EventLayers.Length - 1) break;
+            if(i > Data.EventLayers.Count - 1) break;
             EventLayer layer = Data.EventLayers[i];
             if(layer == null) continue;
             // 对每种事件类型进行插值 并叠加 坐标系: 谱面坐标[-675,675] [-450,450]

@@ -91,7 +91,7 @@ public static class ChartDataHelper
 
         foreach(JudgeLine line in chart.JudgeLineList)
         {
-            if(line.EventLayers == null || line.EventLayers.Length == 0) continue;
+            if(line.EventLayers == null || line.EventLayers.Count == 0) continue;
             foreach(EventLayer layer in line.EventLayers)
             {
                 if(layer == null) continue;

@@ -3,9 +3,10 @@
 [ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_73dy3"]
 [ext_resource type="Script" uid="uid://ddflgrjtrybjh" path="res://Script/EditorScene/ChooseLinePanel.cs" id="2_ecstf"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="3_ecstf"]
+[ext_resource type="Texture2D" uid="uid://ckyw5ugnyg5ll" path="res://星星.png" id="4_2883p"]
 [ext_resource type="Script" uid="uid://chcljohi2g5r3" path="res://Script/UI/ScrollSafeButton.cs" id="4_bnoxi"]
 
-[node name="ChooseLinePanel" type="Panel" unique_id=143035431 node_paths=PackedStringArray("vBoxContainer", "scrollContainer", "addButton")]
+[node name="ChooseLinePanel" type="Panel" unique_id=143035431 node_paths=PackedStringArray("vBoxContainer", "scrollContainer", "addButton", "closeButton", "selectButton", "layerButtons")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -15,7 +16,10 @@ theme_override_styles/panel = ExtResource("1_73dy3")
 script = ExtResource("2_ecstf")
 vBoxContainer = NodePath("MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer")
 scrollContainer = NodePath("MarginContainer/VBoxContainer/ScrollContainer")
-addButton = NodePath("MarginContainer/VBoxContainer/Head/Right/Button")
+addButton = NodePath("MarginContainer/VBoxContainer/Head/Right/Add")
+closeButton = NodePath("MarginContainer/VBoxContainer/Head/Left/Close")
+selectButton = NodePath("MarginContainer/VBoxContainer/Head/Right/Select")
+layerButtons = [NodePath("MarginContainer/VBoxContainer/Head/Left/Button0"), NodePath("MarginContainer/VBoxContainer/Head/Left/Button1"), NodePath("MarginContainer/VBoxContainer/Head/Left/Button2"), NodePath("MarginContainer/VBoxContainer/Head/Left/Button3"), NodePath("MarginContainer/VBoxContainer/Head/Left/Button4")]
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1685182887]
 layout_mode = 1
@@ -41,6 +45,44 @@ layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
 grow_vertical = 2
+
+[node name="Close" type="Button" parent="MarginContainer/VBoxContainer/Head/Left" unique_id=799946648]
+layout_mode = 2
+theme = ExtResource("3_ecstf")
+text = "返回"
+
+[node name="Button0" type="Button" parent="MarginContainer/VBoxContainer/Head/Left" unique_id=1647022839]
+layout_mode = 2
+theme = ExtResource("3_ecstf")
+toggle_mode = true
+text = "0"
+
+[node name="Button1" type="Button" parent="MarginContainer/VBoxContainer/Head/Left" unique_id=1961647125]
+layout_mode = 2
+theme = ExtResource("3_ecstf")
+toggle_mode = true
+text = "1"
+
+[node name="Button2" type="Button" parent="MarginContainer/VBoxContainer/Head/Left" unique_id=668705153]
+layout_mode = 2
+theme = ExtResource("3_ecstf")
+toggle_mode = true
+text = "2"
+
+[node name="Button3" type="Button" parent="MarginContainer/VBoxContainer/Head/Left" unique_id=1501951065]
+layout_mode = 2
+theme = ExtResource("3_ecstf")
+toggle_mode = true
+text = "3"
+
+[node name="Button4" type="Button" parent="MarginContainer/VBoxContainer/Head/Left" unique_id=2117938322]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme = ExtResource("3_ecstf")
+toggle_mode = true
+icon = ExtResource("4_2883p")
+icon_alignment = 1
+expand_icon = true
 
 [node name="Middle" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Head" unique_id=1429450466]
 layout_mode = 1
@@ -70,12 +112,12 @@ anchor_bottom = 1.0
 grow_horizontal = 0
 grow_vertical = 2
 
-[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/Head/Right" unique_id=1903325084]
+[node name="Add" type="Button" parent="MarginContainer/VBoxContainer/Head/Right" unique_id=1903325084]
 layout_mode = 2
 theme = ExtResource("3_ecstf")
 text = "添加"
 
-[node name="Button2" type="Button" parent="MarginContainer/VBoxContainer/Head/Right" unique_id=811503388]
+[node name="Select" type="Button" parent="MarginContainer/VBoxContainer/Head/Right" unique_id=811503388]
 layout_mode = 2
 theme = ExtResource("3_ecstf")
 text = "选择"

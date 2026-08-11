@@ -77,6 +77,7 @@ public partial class TestSceneChooseLinePanel : Node
         ];
 
         chooseLinePanel.ShowInfos(infos);
+        chooseLinePanel.SetEventLayer(2);
 
         chooseLinePanel.LineSelected += (id) =>
         {
@@ -91,6 +92,11 @@ public partial class TestSceneChooseLinePanel : Node
         chooseLinePanel.AddLineRequested += () =>
         {
             GD.Print($"[{this.Name}] 请求添加Line");
+        };
+
+        chooseLinePanel.LayerSelected += (int index) =>
+        {
+            GD.Print($"[{this.Name}] 用户选择了事件层:{index}");
         };
 
     }
