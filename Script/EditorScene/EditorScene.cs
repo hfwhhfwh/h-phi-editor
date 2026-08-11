@@ -54,7 +54,7 @@ public partial class EditorScene : Node
 	[Export] private float horSeparation = 100f;
     private float horOffsetSmoothed; // 用于使竖直滚动更平滑
 	private float horSeparationSmoothed; // 用于使竖直缩放更平滑
-    [Export] private float groundY = 250; // 当前时间点在EditPanel上的Y坐标（向下偏移）
+    [Export] private float groundY = 450f; // 当前时间点在EditPanel上的Y坐标（向下偏移）
 
     private bool isPlaying; // 是否正在播放铺面
     private double chartTime; // 谱面当前时间
@@ -614,6 +614,7 @@ public partial class EditorScene : Node
             new PopupMenuItem { Text = "编辑", Callback = () => OnNoteEdit(lineId, noteIndex) },
             new PopupMenuItem { Text = "复制", Callback = () => OnNoteCopy(lineId, noteIndex) },
             new PopupMenuItem { Text = "粘贴", Callback = () => OnNotePaste(lineId, noteIndex) },
+            new PopupMenuItem { Text = "移动", Callback = null },
             new PopupMenuItem { IsSeparator = true },
             new PopupMenuItem { Text = "删除", Callback = () => OnNoteDelete(lineId, noteIndex) }
         };

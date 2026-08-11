@@ -160,18 +160,17 @@ public partial class ChartEditService : Node
     public void AddLine(List<JudgeLine> judgeLines, int id = -1)
     {
         // HACK AddLine考虑直接在数据模型中写构造函数，设置默认值
-        EventLayer eventLayer = new EventLayer
-        {
-            MoveXEvents = new List<LineEvent>(),
-            MoveYEvents = new List<LineEvent>(),
-            RotateEvents = new List<LineEvent>(),
-            AlphaEvents = new List<LineEvent>(),
-            SpeedEvents = new List<LineEvent>(),
-        };
         List<EventLayer> eventLayers = new List<EventLayer>(5);
-        for(int i = 0; i < 5; i++)
+        for(int i = 0; i < 4; i++)
         {
-            eventLayers[i] = eventLayer;
+            eventLayers[i] = new EventLayer
+            {
+                MoveXEvents = new List<LineEvent>(),
+                MoveYEvents = new List<LineEvent>(),
+                RotateEvents = new List<LineEvent>(),
+                AlphaEvents = new List<LineEvent>(),
+                SpeedEvents = new List<LineEvent>(),
+            };
         }
         JudgeLine line = new JudgeLine
         {

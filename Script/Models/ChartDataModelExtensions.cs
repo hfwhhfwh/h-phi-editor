@@ -68,7 +68,7 @@ namespace QuickType
         /// <returns>从0时刻到指定时刻的总位移</returns>
         public float GetDisplacementAtTime(float time)
         {
-            List<LineEvent> events = EventLayers[0].SpeedEvents; // TODO 这里假设只有一个事件层
+            List<LineEvent> events = EventLayers[0].SpeedEvents;
             if (events == null || events.Count == 0) return 0f;
 
             // 二分查找 time 所在的段（或最后一个 startSec <= time 的段）
