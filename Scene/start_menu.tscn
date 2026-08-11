@@ -14,14 +14,15 @@
 [ext_resource type="Script" uid="uid://bslsq2gjtb1th" path="res://Script/StartMenu/ExportPanel.cs" id="11_1kda2"]
 [ext_resource type="Texture2D" uid="uid://ejl1hu2xxquy" path="res://icon.svg" id="11_7eatm"]
 
-[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "testLabel")]
+[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "deviceLabel", "versionLabel")]
 script = ExtResource("1_4qtu7")
 _chartList = NodePath("PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer/ChartList")
 _createPanel = NodePath("PanelContainer/SafeArea/CreateChartPanel")
 _deletePanel = NodePath("PanelContainer/SafeArea/DeletePanel")
 _infoPanel = NodePath("PanelContainer/SafeArea/InfoPanel")
 _exportPanel = NodePath("PanelContainer/SafeArea/ExportPanel")
-testLabel = NodePath("PanelContainer/SafeArea/Main/Head/TestText")
+deviceLabel = NodePath("PanelContainer/SafeArea/Main/Head/DeviceLabel")
+versionLabel = NodePath("PanelContainer/SafeArea/Main/Bottom/VersionLabel")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=127864174]
 anchors_preset = 15
@@ -44,6 +45,7 @@ theme_override_constants/separation = 10
 [node name="Head" type="HBoxContainer" parent="PanelContainer/SafeArea/Main" unique_id=1634049906]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
+theme_override_constants/separation = 16
 
 [node name="Title" type="Label" parent="PanelContainer/SafeArea/Main/Head" unique_id=807741570]
 layout_mode = 2
@@ -52,10 +54,10 @@ text = "H Phi Editer"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TestText" type="Label" parent="PanelContainer/SafeArea/Main/Head" unique_id=410336608]
+[node name="DeviceLabel" type="Label" parent="PanelContainer/SafeArea/Main/Head" unique_id=410336608]
 layout_mode = 2
 theme = ExtResource("2_4otsm")
-text = "TestText"
+text = "运行平台:Device"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -165,7 +167,7 @@ text = "删除"
 [node name="Bottom" type="HBoxContainer" parent="PanelContainer/SafeArea/Main" unique_id=702300178]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="PanelContainer/SafeArea/Main/Bottom" unique_id=335335076]
+[node name="VersionLabel" type="Label" parent="PanelContainer/SafeArea/Main/Bottom" unique_id=335335076]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_horizontal = 3

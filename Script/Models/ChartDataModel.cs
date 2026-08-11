@@ -545,8 +545,8 @@ namespace QuickType
 
     public partial class Meta
     {
-        [JsonProperty("RPEVersion")]
-        public int RpeVersion { get; set; }
+        // [JsonProperty("RPEVersion")]
+        // public int RpeVersion { get; set; }
 
         [JsonProperty("background")]
         public string Background { get; set; }

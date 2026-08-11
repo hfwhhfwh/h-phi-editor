@@ -18,7 +18,8 @@ public partial class StartMenu : Node
 
     private string _currentSelectedChartId;
 
-    [Export] private Label testLabel;
+    [Export] private Label deviceLabel;
+    [Export] private Label versionLabel;
 
     public override void _Ready()
     {
@@ -43,19 +44,26 @@ public partial class StartMenu : Node
         // 初始化列表
         RefreshChartList();
 
-        //debug
+        // 显示运行平台
         if (OS.HasFeature("ios"))
         {
-            testLabel.Text = "运行平台:ios";
+            deviceLabel.Text = "运行平台: ios";
         }
         else if (OS.GetCmdlineUserArgs().Contains("simulate_ios"))
         {
-            testLabel.Text = "运行平台:simulate_ios";
+            deviceLabel.Text = "运行平台: simulate_ios";
+        }
+        else if (OS.HasFeature("android"))
+        {
+            deviceLabel.Text = "运行平台: Android";
         }
         else
         {
-            testLabel.Text = "运行平台:";
+            deviceLabel.Text = "运行平台: ";
         }
+
+        // 显示版本号
+        versionLabel.Text = $"版本: {GameVersion.Version}";
     }
 
     private void RefreshChartList()
