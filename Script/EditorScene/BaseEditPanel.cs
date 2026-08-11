@@ -31,6 +31,11 @@ public abstract partial class BaseEditPanel : Panel
 		set { if (_gridDrawer != null) _gridDrawer.VerLineCount = value; }
 	}
 
+	public float GroundY
+	{
+		get => _gridDrawer.GroundY;
+		set { if (_gridDrawer != null) _gridDrawer.GroundY = value; }
+	}
 	// ---- 网格样式 ----
 	public Color HorColor
 	{
@@ -379,6 +384,7 @@ public abstract partial class BaseEditPanel : Panel
         _coordComponent.horOffsetSmoothed = HorOffsetSmoothed;
         _coordComponent.horSeparationSmoothed = HorSeparationSmoothed;
         _coordComponent.parentSize = Size;
+		_coordComponent.GroundY = GroundY;
 
 		// 同步_gridDrawer
 		_gridDrawer.HorOffset = HorOffsetSmoothed;
@@ -515,6 +521,8 @@ public abstract partial class BaseEditPanel : Panel
     {
         base._GuiInput(@event);
 
+		if(@event.Device == -1) return; // 拦截模拟输入
+
         // 只处理左键和触摸，其余事件（滚轮、中键）忽略
         bool handled = false;
         if (@event is InputEventMouseButton mouseBtn && mouseBtn.ButtonIndex == MouseButton.Left)
@@ -547,9 +555,9 @@ public abstract partial class BaseEditPanel : Panel
 	/// </summary>
 	protected void GetVisibleBeatRange(out float minBeat, out float maxBeat)
 	{
-		// 坐标公式: y = Size.Y/2 + horOffsetSmoothed - beatValue * horSeparationSmoothed
-		// 反推: beatValue = (Size.Y/2 + horOffsetSmoothed - y) / horSeparationSmoothed
-		float zeroLine = Size.Y / 2f + HorOffsetSmoothed; // 零刻度线的Y坐标
+		// 坐标公式: y = GroundY + horOffsetSmoothed - beatValue * horSeparationSmoothed
+		// 反推: beatValue = (GroundY + horOffsetSmoothed - y) / horSeparationSmoothed
+		float zeroLine = GroundY + HorOffsetSmoothed; // 零刻度线的Y坐标
 		minBeat = (zeroLine - Size.Y) / HorSeparationSmoothed; // 底部对应较小 beat
 		maxBeat = zeroLine / HorSeparationSmoothed;             // 顶部对应较大 beat
 		if (minBeat < 0) minBeat = 0;

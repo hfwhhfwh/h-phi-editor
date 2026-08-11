@@ -4,13 +4,45 @@ using System;
 
 public class DragPlaceComponent
 {
+    public enum PlaceMode
+    {
+        Point, // 放置一个点
+        LongStraight // 放置一段竖直的线段
+    }
+
+    public PlaceMode Mode { get; set; }
+
     /// <summary>用户开始拖动的beat</summary>
     public Beat beat1;
     /// <summary>用户结束拖动的beat</summary>
     public Beat beat2;
 
-    public Beat StartBeat => beat1 < beat2 ? beat1 : beat2;
-    public Beat EndBeat => beat1 < beat2 ? beat2 : beat1;
+    public Beat StartBeat
+    {
+        get
+        {
+            return Mode switch
+            {
+                PlaceMode.Point => beat2,
+                PlaceMode.LongStraight => beat1 < beat2 ? beat1 : beat2,
+                _ => beat2
+            };
+        }
+    }
+
+    public Beat EndBeat
+    {
+        get
+        {
+            return Mode switch
+            {
+                PlaceMode.Point => beat2,
+                PlaceMode.LongStraight => beat1 < beat2 ? beat2 : beat1,
+                _ => beat2
+            };
+        }
+    }
+
 
     public int verLineIndex;
     public bool IsDragging { get; private set; }

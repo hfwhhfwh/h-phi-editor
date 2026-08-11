@@ -20,14 +20,18 @@ public partial class GridDrawer : Control
     [Export] public float HorSubWidth { get; set; } = 1;
     [Export] public Color VerColor { get; set; } = new Color(0, 1f, 0, 0.588f);
     [Export] public float VerWidth { get; set; } = 1;
+	[Export] public Color GroundLineColor { get; set; } = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+	[Export] public float GroundLineWidth { get; set; } = 3;
     [ExportGroup("")]
 
     // ==== 字体 ====
     [Export] public Font Font { get; set; }
 
-    // ==== 混动/缩放 ====
+    // ==== 滚动/缩放 ====
     public float HorOffset { get; set; }
     public float HorSeparation { get; set; }
+
+	public float GroundY { get; set; }
 
     public override void _Ready()
     {
@@ -42,11 +46,19 @@ public partial class GridDrawer : Control
     {
         base._Draw();
 
+		DrawGroundLine();
         DrawMainBeats();
         DrawSubBeats();
         DrawVerticalLines();
+
     }
 
+	private void DrawGroundLine()
+	{
+		Vector2 from = new Vector2(HorMargin, GroundY);
+		Vector2 to = new Vector2(Parent.Size.X - HorMargin, GroundY);
+		DrawLine(from, to, GroundLineColor, GroundLineWidth, true);
+	}
 
     private void DrawMainBeats()
     {
@@ -55,7 +67,7 @@ public partial class GridDrawer : Control
 		{
 			float horOffsetBeat = HorOffset / HorSeparation;
 			float num = Mathf.Ceil(horOffsetBeat);
-			float y = Parent.Size.Y/2 - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * HorSeparation;
+			float y = GroundY - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * HorSeparation;
 			for(int i=0;i<=100 && y>=0;i++)
 			{
 				Vector2 from = new Vector2(HorMargin,y);
@@ -74,7 +86,7 @@ public partial class GridDrawer : Control
 		{
 			float horOffsetBeat = HorOffset / HorSeparation;
 			float num = Mathf.Floor(horOffsetBeat);
-			float y = Parent.Size.Y/2 + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * HorSeparation;
+			float y = GroundY + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * HorSeparation;
 			for(int i=0;i<=100 && y<=Parent.Size.Y;i++)
 			{
 				Vector2 from = new Vector2(HorMargin,y);
@@ -99,7 +111,7 @@ public partial class GridDrawer : Control
 		{
 			float horOffsetBeat = HorOffset / HorSeparation;
 			float num = Mathf.Ceil(horOffsetBeat);
-			float y = Parent.Size.Y/2 - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * HorSeparation;
+			float y = GroundY - (Mathf.Ceil(horOffsetBeat) - horOffsetBeat) * HorSeparation;
 			for(int i=0;i<=100 && y>=0;i++)
 			{
 				//找到基准节拍线，向上画subBeatCount-1条横线
@@ -120,7 +132,7 @@ public partial class GridDrawer : Control
 		{
 			float horOffsetBeat = HorOffset / HorSeparation;
 			float num = Mathf.Floor(horOffsetBeat);
-			float y = Parent.Size.Y/2 + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * HorSeparation;
+			float y = GroundY + (horOffsetBeat - Mathf.Floor(horOffsetBeat)) * HorSeparation;
 			for(int i=0;i<=100 && y<=Parent.Size.Y + HorSeparation;i++) // Parent.Size.Y + horSeparationSmoothed防止最底部因为节拍线不显示导致小横线也不显示
 			{
 				//找到基准节拍线，向上画subBeatCount-1条横线

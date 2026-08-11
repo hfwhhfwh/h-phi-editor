@@ -53,6 +53,7 @@ public partial class EditorScene : Node
 	[Export] private float horSeparation = 100f;
     private float horOffsetSmoothed; // 用于使竖直滚动更平滑
 	private float horSeparationSmoothed; // 用于使竖直缩放更平滑
+    [Export] private float groundY = 250; // 当前时间点在EditPanel上的Y坐标（向下偏移）
 
     private bool isPlaying; // 是否正在播放铺面
     private double chartTime; // 谱面当前时间
@@ -370,10 +371,12 @@ public partial class EditorScene : Node
         //同步编辑面板
         noteEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
         noteEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
+        noteEditPanel.GroundY = groundY;
         noteEditPanel.UpdateVisuals();
 
         eventEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
         eventEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
+        eventEditPanel.GroundY = groundY;
         eventEditPanel.UpdateVisuals();
 
         #if TOOLS
@@ -388,10 +391,18 @@ public partial class EditorScene : Node
 
     }
 
+    private int fpsRefreshCount = 0;
     public override void _PhysicsProcess(double delta)
     {
         //GD.Print($"ChartTime:{ChartTime}, BeatValue:{BeatValue}, horOffset:{horOffset}");
-        fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
+        fpsRefreshCount++;
+        if(fpsRefreshCount > 15)
+        {
+            fpsRefreshCount = 0;
+            fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
+        }
+        
+        // GD.Print($"BeatValue:{BeatValue}, ChartTime:{ChartTime}, bpm:{editingChart.BpmList[0].Bpm}");
     }
 
     public override void _ExitTree()
@@ -423,7 +434,7 @@ public partial class EditorScene : Node
         EditModeManager.OnEditModeChanged -= OnEditModeChanged;
 
         // 设置PlayModeManager
-        PlayModeManager.PlayModeChanged += OnPlayModeChanged;
+        PlayModeManager.PlayModeChanged -= OnPlayModeChanged;
 
         GD.Print($"[{Name}] 成功退出EditorScene");
         
@@ -664,6 +675,7 @@ public partial class EditorScene : Node
     private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
     {
         _chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
+
         //通知谱面数据产生了变化
         ChartEventBus.NotifyDataChanged();
     }

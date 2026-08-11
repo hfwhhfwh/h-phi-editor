@@ -105,12 +105,6 @@ public partial class EventEditPanel : BaseEditPanel
 		AddChild(_textOverlay);
     }
 
-    public override void _Draw()
-    {
-        base._Draw();
-		
-    }
-
 	private void DrawTextAligned(Vector2 pos, string text, int fontSize, VerAlign align)
 	{
 		// 1. 测量文本尺寸
@@ -377,6 +371,7 @@ public partial class EventEditPanel : BaseEditPanel
 			Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
 
 			_dragPlaceComponent.StartDrag(verLineIndex, snappedBeat);
+			_dragPlaceComponent.Mode = DragPlaceComponent.PlaceMode.LongStraight;
             
         }
         else if(EditModeManager.EditMode == EditModeEnum.Delete)

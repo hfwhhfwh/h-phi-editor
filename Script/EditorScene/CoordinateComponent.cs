@@ -8,6 +8,7 @@ public class CoordinateComponent
     public float verMargin;
     public int subBeatCount;
     public int verLineCount; 
+    public float GroundY;
 
     public float horOffsetSmoothed;
     public float horSeparationSmoothed;
@@ -38,7 +39,7 @@ public class CoordinateComponent
     public float GetPanelPosY(float beatTime)
     {
         // 起始 Y 坐标（向上为负）
-        float panelY = parentSize.Y / 2f + horOffsetSmoothed - beatTime * horSeparationSmoothed;
+        float panelY = GroundY + horOffsetSmoothed - beatTime * horSeparationSmoothed;
 
         return panelY;
     }
@@ -77,7 +78,7 @@ public class CoordinateComponent
     public float GetBeatValue(float localY)
     {
         // panelY = Size.Y / 2f + horOffsetSmoothed - beatTime * horSeparationSmoothed;
-        float beatValue = (parentSize.Y / 2f + horOffsetSmoothed - localY) / horSeparationSmoothed;
+        float beatValue = (GroundY + horOffsetSmoothed - localY) / horSeparationSmoothed;
 
         return beatValue;
     }

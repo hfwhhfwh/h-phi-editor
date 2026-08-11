@@ -148,16 +148,29 @@ public partial class NoteEditPanel : BaseEditPanel
 		// ============= 3. 渲染视口范围内的 note ============= 
         GetVisibleBeatRange(out float minBeat, out float maxBeat);
 
-        // 额外绘制即将创建的Hold
+        // 额外绘制即将创建的Note
         if(_dragPlaceComponent.IsDragging){
             float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (VerLineCount - 1));
-            MultiMeshRenderNote(
-                noteType: NoteType.Hold,
-                startBeat: _dragPlaceComponent.StartBeat,
-                endBeat: _dragPlaceComponent.EndBeat,
-                chartPosX: chartPosX,
-                renderEffect: NoteToAddRender
-            );
+            if(PlacingNote == NoteType.Hold)
+            {
+                MultiMeshRenderNote(
+                    noteType: NoteType.Hold,
+                    startBeat: _dragPlaceComponent.StartBeat,
+                    endBeat: _dragPlaceComponent.EndBeat,
+                    chartPosX: chartPosX,
+                    renderEffect: NoteToAddRender
+                );
+            }
+            else // Tap Drag Flick
+            {
+                MultiMeshRenderNote(
+                    noteType: PlacingNote,
+                    startBeat: _dragPlaceComponent.EndBeat,
+                    endBeat: _dragPlaceComponent.EndBeat,
+                    chartPosX: chartPosX,
+                    renderEffect: NoteToAddRender
+                );
+            }
         }
 
         //绘制谱面中的note 
@@ -397,31 +410,38 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
-            if(PlacingNote != NoteType.Hold) // 放置普通note
+            // if(PlacingNote != NoteType.Hold) // 放置普通note
+            // {
+            //     float chartX = _coordComponent.GetChartPosX(pos.X);
+            //     float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
+
+            //     float beatValue = _coordComponent.GetBeatValue(pos.Y);
+            //     Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+            //     NoteAddRequested?.Invoke(
+            //         PlacingNote,
+            //         snappedBeat,
+            //         snappedBeat,
+            //         snappedChartX
+            //     );
+            // }
+            // else // 放置Hold
+            // {
+            float chartX = _coordComponent.GetChartPosX(pos.X);
+            int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+
+            float beatValue = _coordComponent.GetBeatValue(pos.Y);
+            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+            _dragPlaceComponent.StartDrag(verLineIndex, snappedBeat);
+
+            _dragPlaceComponent.Mode = PlacingNote switch
             {
-                float chartX = _coordComponent.GetChartPosX(pos.X);
-                float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
+                NoteType.Hold => DragPlaceComponent.PlaceMode.LongStraight,
+                _ => DragPlaceComponent.PlaceMode.Point,
+            };
 
-                float beatValue = _coordComponent.GetBeatValue(pos.Y);
-                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
-
-                NoteAddRequested?.Invoke(
-                    PlacingNote,
-                    snappedBeat,
-                    snappedBeat,
-                    snappedChartX
-                );
-            }
-            else // 放置Hold
-            {
-                float chartX = _coordComponent.GetChartPosX(pos.X);
-                int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
-
-                float beatValue = _coordComponent.GetBeatValue(pos.Y);
-                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
-
-                _dragPlaceComponent.StartDrag(verLineIndex, snappedBeat);
-            }
+            // }
         }
         else if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
@@ -449,16 +469,16 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
-            if (PlacingNote == NoteType.Hold)
-            {
-                float chartX = _coordComponent.GetChartPosX(pos.X);
-                int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+            // if (PlacingNote == NoteType.Hold)
+            // {
+            float chartX = _coordComponent.GetChartPosX(pos.X);
+            int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
 
-                float beatValue = _coordComponent.GetBeatValue(pos.Y);
-                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+            float beatValue = _coordComponent.GetBeatValue(pos.Y);
+            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
 
-                _dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
-            }
+            _dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
+            // }
         }
         else if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
@@ -478,7 +498,7 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
-            if (PlacingNote == NoteType.Hold)
+            // if (PlacingNote == NoteType.Hold)
             {
                 float chartX = _coordComponent.GetChartPosX(position.X);
                 int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
@@ -690,7 +710,15 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         float chartPosX = -675 + verLineIndex * (1350f / (VerLineCount - 1));
 
-        NoteAddRequested?.Invoke(NoteType.Hold, startBeat, endBeat, chartPosX);
+        if(PlacingNote == NoteType.Hold)
+        {
+            NoteAddRequested?.Invoke(NoteType.Hold, startBeat, endBeat, chartPosX);
+        }
+        else
+        {
+            NoteAddRequested?.Invoke(PlacingNote, endBeat, endBeat, chartPosX);
+        }
+        
     }
 
     
