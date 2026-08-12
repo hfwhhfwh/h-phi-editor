@@ -159,7 +159,6 @@ public partial class ChartEditService : Node
     /// <param name="id">添加判定线的索引，-1代表添加至末尾</param>
     public void AddLine(List<JudgeLine> judgeLines, int id = -1)
     {
-        // HACK AddLine考虑直接在数据模型中写构造函数，设置默认值
         List<EventLayer> eventLayers = new List<EventLayer>(5);
         for(int i = 0; i < 4; i++)
         {

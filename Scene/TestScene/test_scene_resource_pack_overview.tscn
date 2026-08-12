@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://m1fejenltunt"]
+
+[ext_resource type="Script" uid="uid://b817hwp6yoske" path="res://Script/TestSceneScripts/TestSceneResourcePackOverview.cs" id="1_44rym"]
+[ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="2_60ca1"]
+
+[node name="TestSceneResourcePackOverview" type="Node" unique_id=852197376 node_paths=PackedStringArray("overview")]
+script = ExtResource("1_44rym")
+overview = NodePath("ResourcePackOverview")
+packPath = "D:\\Documents\\Phigros_Official.zip"
+
+[node name="ResourcePackOverview" parent="." unique_id=1063507614 instance=ExtResource("2_60ca1")]
