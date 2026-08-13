@@ -424,6 +424,66 @@ public static class FileUtil
     }
 
     /// <summary>
+    /// 获取目录下按字典序排列的文件（不含子目录）
+    /// 返回相对路径或完整路径
+    /// </summary>
+    public static string[] GetFilesInDir(string dirPath, bool fullPath = true)
+    {
+        using var dir = DirAccess.Open(dirPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            return null;
+        }
+
+        // 只获取文件（不含子目录）
+        string[] files = dir.GetFiles();
+        if (files.Length == 0)
+            return null;
+
+        // PackedStringArray 自带 Sort()，按字典序原地排序
+        Array.Sort(files);
+
+        // 如果需要完整路径，用 Godot 的 PathJoin 拼接
+        if (fullPath)
+        {
+            for(int i = 0; i < files.Length; i++)
+            {
+                files[i] = dirPath.PathJoin(files[i]);
+            }
+        }
+        
+        return files;
+    }
+
+    /// <summary>
+    /// 获取目录下按字典序排列的第一个文件（不含子目录）
+    /// 返回相对路径或完整路径
+    /// </summary>
+    public static string GetFirstFileAlphabetically(string dirPath, bool fullPath = true)
+    {
+        using var dir = DirAccess.Open(dirPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            return null;
+        }
+
+        // 只获取文件（不含子目录）
+        var files = dir.GetFiles();
+        if (files.Length == 0)
+            return null;
+
+        // PackedStringArray 自带 Sort()，按字典序原地排序
+        Array.Sort(files);
+
+        string firstFile = files[0];
+
+        // 如果需要完整路径，用 Godot 的 PathJoin 拼接
+        return fullPath ? dirPath.PathJoin(firstFile) : firstFile;
+    }
+
+    /// <summary>
     /// 根据文件扩展名，动态加载不同格式的音频文件。
     /// </summary>
     /// <param name="path">音频文件的路径</param>

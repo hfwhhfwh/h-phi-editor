@@ -13,21 +13,21 @@ public partial class ChartPlayer : BaseChartPlayer
     public Image BgImage { get; set; }                //背景图片，由上级设置
     public AudioStream MusicAudio { get; set; }       //音乐，由上级设置
 
-    #region 打击音效
-    [ExportGroup("打击音效")]
-    [Export] public AudioStream tapSound;
-    [Export] public AudioStream dragSound;
-    [Export] public AudioStream flickSound;
+    // #region 打击音效
+    // [ExportGroup("打击音效")]
+    // [Export] public AudioStream tapSound;
+    // [Export] public AudioStream dragSound;
+    // [Export] public AudioStream flickSound;
 
-    [ExportGroup("")]
-    #endregion
+    // [ExportGroup("")]
+    // #endregion
 
     public AudioStreamPlayer audioStreamPlayer;
 
     // public bool LogicDisabled { get; set; } // 是否禁用位置计算
 
     private HitEffectPool hitEffectPool;
-    [Export] private SpriteFrames hitFrames; // 打击特效
+    // [Export] private SpriteFrames hitFrames; // 打击特效
     private AudioPool audioPool;
 
     private List<JudgeLineNode> judgeLineNodes = new();
@@ -156,11 +156,11 @@ public partial class ChartPlayer : BaseChartPlayer
         //选择对应的音效
         AudioStream audioStream = noteType switch
         {
-            NoteType.Tap => tapSound,
-            NoteType.Hold => tapSound,
-            NoteType.Flick => flickSound,
-            NoteType.Drag => dragSound,
-            _ => tapSound
+            NoteType.Tap => _tapSound,
+            NoteType.Hold => _tapSound,
+            NoteType.Flick => _flickSound,
+            NoteType.Drag => _dragSound,
+            _ => _tapSound
         };
 
         var player = audioPool.Get();
@@ -217,7 +217,7 @@ public partial class ChartPlayer : BaseChartPlayer
         Parent = parent;
 
         //设置打击特效
-        hitEffectPool = new HitEffectPool(parent, hitFrames, 50);
+        hitEffectPool = new HitEffectPool(parent, _hitFrames, 50);
         parent.AddChild(hitEffectPool);
 
         //设置打击音效

@@ -15,10 +15,11 @@ public partial class PackManifest : Resource
     [Export] public Vector2I HoldAtlas = new(50, 50);
     [Export] public Vector2I HoldAtlasMH = new(50, 110);
     
-    // [Export] public float HitFxDuration = 0.5f;
-    // [Export] public float HitFxScale = 1.0f;
-    // [Export] public bool HitFxRotate = false;
-    // [Export] public bool HitFxTinted = true;
+    [Export] public float HitFxDuration = 0.5f;
+    [Export] public float HitFxScale = 1.0f;
+    [Export] public bool HitFxRotate = false;
+    [Export] public bool HitFxTinted = true;
+    [Export] public bool HideParticles = false;
     
     // // 颜色（存储为 Color，从 ARGB 转换）
     // [Export] public Color ColorPerfect = new(1f, 0.81f, 0.62f, 0.88f);

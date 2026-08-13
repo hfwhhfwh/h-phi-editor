@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 public class ResourcePack
 {
@@ -18,6 +19,7 @@ public class ResourcePack
     
     public Dictionary<string, Texture2D> textureDic = new();
     public Dictionary<string, AudioStream> sxDic = new();
+    public Dictionary<string, byte[]> audioRawData = new(); // 缓存原始音频字节，可用于导出
 
     public SpriteFrames hitEffectSF;
     public Texture2D holdHeadTexture, holdBodyTexture, holdEndTexture;
@@ -25,11 +27,19 @@ public class ResourcePack
 
     public void Build()
     {
-        // 1. 切割打击特效
+        // 1. 设置打击特效
+        string animName = "default";
+        // 切割为SpriteFrames
         hitEffectSF = TextureSlicer.CreateSpriteFrames(textureDic["hit_fx"],
             Manifest.HitFxGrid.X,
-            Manifest.HitFxGrid.Y
+            Manifest.HitFxGrid.Y,
+            animName
         );
+        // 不循环播放
+        hitEffectSF.SetAnimationLoop(animName, false);
+        // 设置持续时间
+        int animSpeed = Mathf.RoundToInt(hitEffectSF.GetFrameCount(animName) / Manifest.HitFxDuration);
+        hitEffectSF.SetAnimationSpeed(animName, animSpeed);
 
         // 2. 生成Hold分体贴图
         BuildHoldTexture(textureDic["hold"], Manifest.HoldAtlas, 

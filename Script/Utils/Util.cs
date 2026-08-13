@@ -14,7 +14,7 @@ public static class Util
 	/// </summary>
 	/// <param name="length">ID的位数</param>
 	/// <returns>字符串，ID</returns>
-	public static string GenerateRandomId(int length = 16)
+	public static string GenerateRandomNumId(int length = 16)
 	{
 		var rng = new RandomNumberGenerator();
 		// 设置随机种子
@@ -26,6 +26,27 @@ public static class Util
 			chars[i] = (char)('0' + rng.RandiRange(0, 9));
 		}
 		return new string(chars);
+	}
+
+	/// <summary>
+	/// 随机生成一个ID（由数字和小写字母组成）
+	/// </summary>
+	/// <param name="length">ID的位数</param>
+	/// <returns>字符串，ID</returns>
+	public static string GenerateRandomId(int length = 16)
+	{
+		var rng = new RandomNumberGenerator();
+		rng.Seed = (ulong)Time.GetTicksMsec();
+		
+		const string chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		char[] result = new char[length];
+		
+		for (int i = 0; i < length; i++)
+		{
+			result[i] = chars[rng.RandiRange(0, chars.Length - 1)];
+		}
+		
+		return new string(result);
 	}
 
 

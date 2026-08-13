@@ -86,6 +86,9 @@ public partial class EditorScene : Node
         }
     }
 
+    // 皮肤资源包
+    private ResourcePack _resourcePack;
+
     #if TOOLS
     // ---- 性能分析 ----
     private double _setChartTimeTimeUs = 0;
@@ -168,7 +171,19 @@ public partial class EditorScene : Node
         noteEditPanel.editingChart = editingChart;
         eventEditPanel.editingChart = editingChart;
 
-        // ===================初始化谱面播放器=================
+        // ================ 加载资源包 ================
+        // TODO 从Global中加载资源包
+        //string packPath = "D:/Documents/aaa测试资源包/Phigros_Official.zip";
+        string packPath = "D:/Documents/aaa测试资源包/1784786912758638379_【Xw制作】【V1修正版】圆CircleLite.zip";
+        _resourcePack = ResourcePackLoader.LoadFromZip(packPath);
+        if(_resourcePack == null)
+        {
+            GD.PrintErr($"[{Name}] 加载资源包失败:{packPath}");
+        }
+        chartPlayer.Pack = _resourcePack;
+        chartRenderer.Pack = _resourcePack;
+
+        // ================初始化谱面播放器================
         // 背景图片
         Image bgImage = Image.LoadFromFile(chartInfo.PicturePath);
         if (bgImage == null)

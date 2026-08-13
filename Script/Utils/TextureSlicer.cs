@@ -42,9 +42,6 @@ public static class TextureSlicer
             }
         }
 
-        // 设置60帧
-        spriteFrames.SetAnimationSpeed(animName, 60);
-
         return spriteFrames;
     }
 
