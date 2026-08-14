@@ -78,7 +78,9 @@ public partial class GameSettings : Node
         }
 
         // 反射自动加载所有属性，避免手动写一堆代码
-        foreach (PropertyInfo prop in Current.GetType().GetProperties())
+        // 只获取当前类声明的属性，排除 Resource / GodotObject 继承来的属性
+        foreach (PropertyInfo prop in Current.GetType().GetProperties(
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
         {
             if (!prop.CanWrite || !prop.CanRead) continue;
 
@@ -89,8 +91,9 @@ public partial class GameSettings : Node
                 // 类型安全转换
                 try
                 {
-                    object typedValue = Convert.ChangeType(value.Obj, prop.PropertyType);
-                    prop.SetValue(Current, typedValue);
+                    // object typedValue = Convert.ChangeType(value.Obj, prop.PropertyType);
+                    // prop.SetValue(Current, typedValue);
+                    Current.Set(prop.Name, value);
                 }
                 catch (Exception e)
                 {
@@ -106,40 +109,49 @@ public partial class GameSettings : Node
     public void CreateNew()
     {
         Current = _defaultSettings.Clone();
-        ConfigFile config = new ConfigFile();
-        
-        foreach (PropertyInfo prop in Current.GetType().GetProperties())
-        {
-            if (!prop.CanWrite || !prop.CanRead) continue;
-            config.SetValue("Game", prop.Name, Variant.From(prop.GetValue(Current)));
-        }
+        EnsureDirectoryExists();
+        SaveInternal();
+        GD.Print($"[{Name}] 新建设置文件成功");
+    }
 
-        Error err = config.Save(SettingsPath);
-        if (err != Error.Ok)
+    /// <summary>确保设置文件所在目录存在</summary>
+    private void EnsureDirectoryExists()
+    {
+        string dir = SettingsPath.GetBaseDir();
+        if (!DirAccess.DirExistsAbsolute(dir))
         {
-            GD.PrintErr($"[{Name}] 新建设置失败: {err}");
+            Error err = DirAccess.MakeDirRecursiveAbsolute(dir);
+            if (err != Error.Ok)
+            {
+                GD.PushError($"[{Name}] 创建目录失败 {dir}: {err}");
+            }
         }
     }
 
     // 保存设置
     public void Save()
     {
+        EnsureDirectoryExists();
+        SaveInternal();
+        GD.Print($"[{Name}] 设置已保存");
+    }
+
+    private void SaveInternal()
+    {
         ConfigFile config = new ConfigFile();
         
-        foreach (PropertyInfo prop in Current.GetType().GetProperties())
+        foreach (PropertyInfo prop in Current.GetType().GetProperties(
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
         {
             if (!prop.CanWrite || !prop.CanRead) continue;
-            config.SetValue("Game", prop.Name, Variant.From(prop.GetValue(Current)));
+            config.SetValue("Game", prop.Name, Current.Get(prop.Name));
         }
 
         Error err = config.Save(SettingsPath);
         if (err != Error.Ok)
         {
             GD.PushError($"[{Name}] 保存设置失败: {err}");
-            return;
         }
-
-        GD.Print($"[{Name}] 新建设置文件成功");
     }
 
     private double _saveDelay = 0;

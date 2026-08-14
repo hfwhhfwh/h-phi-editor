@@ -13,7 +13,7 @@ public partial class TestSceneResourcePackOverview : Node
 
         ResourcePack pack = ResourcePackLoader.LoadFromZip(packPath);
 
-        overview.Show(pack);
+        overview.Overview(pack);
     }
 
 }

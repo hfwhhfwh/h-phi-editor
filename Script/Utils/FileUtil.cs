@@ -83,8 +83,8 @@ public static class FileUtil
     /// <summary>
     /// 将指定路径的ZIP文件解压到指定路径的文件夹中。
     /// </summary>
-    /// <param name="zipPath">ZIP文件的完整路径，例如 "res://ZipFile.zip"</param>
-    /// <param name="extractBasePath">解压基础路径，例如 "res://ChartImport/"</param>
+    /// <param name="zipPath">ZIP文件的完整路径，例如 "user://ZipFile.zip"</param>
+    /// <param name="extractBasePath">解压基础路径，例如 "user://ChartImport/"</param>
     public static void UnzipFileTo(string zipPath, string extractBasePath)
     {
         var zipReader = new ZipReader();
@@ -101,8 +101,8 @@ public static class FileUtil
         foreach (string filePath in files)// 例如 Chart.json
         {
             // 计算文件的完整输出路径
-            string fullOutputPath = Path.Combine(extractBasePath, filePath); // 例如 res://ChartImport/Chart.json
-            string outputDirectory = fullOutputPath.GetBaseDir(); // 例如 res://ChartImport/
+            string fullOutputPath = Path.Combine(extractBasePath, filePath); // 例如 user://ChartImport/Chart.json
+            string outputDirectory = extractBasePath; // 例如 user://ChartImport/
 
             // 确保文件的子目录存在
             DirAccess.MakeDirRecursiveAbsolute(outputDirectory);
@@ -289,11 +289,21 @@ public static class FileUtil
 	/// <param name="path">目录路径</param>
 	public static void EnsureDirectoryExists(string directory)
 	{
-		if (!string.IsNullOrEmpty(directory) && !DirAccess.DirExistsAbsolute(directory))
+        if(string.IsNullOrEmpty(directory)) return;
+
+        string globalPath = ProjectSettings.GlobalizePath(directory);
+		if (!DirAccess.DirExistsAbsolute(directory))
 		{
-			DirAccess.MakeDirRecursiveAbsolute(directory);
+			DirAccess.MakeDirRecursiveAbsolute(globalPath);
 		}
 	}
+
+    public static bool DirExists(string dir)
+    {
+        string absoluteDir = ProjectSettings.GlobalizePath(dir);
+
+        return DirAccess.DirExistsAbsolute(absoluteDir);
+    }
 
 	/// <summary>
 	/// 递归删除目录
@@ -465,7 +475,7 @@ public static class FileUtil
         using var dir = DirAccess.Open(dirPath);
         if (dir == null)
         {
-            GD.PrintErr($"无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            GD.PrintErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
             return null;
         }
 
@@ -481,6 +491,35 @@ public static class FileUtil
 
         // 如果需要完整路径，用 Godot 的 PathJoin 拼接
         return fullPath ? dirPath.PathJoin(firstFile) : firstFile;
+    }
+
+    public static string[] GetDirsInDir(string dirPath, bool fullPath = true)
+    {
+        using var dir = DirAccess.Open(dirPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            return null;
+        }
+
+        // 只获取目录（不含子目录）
+        string[] dirs = dir.GetDirectories();
+        if (dirs.Length == 0)
+            return null;
+
+        // PackedStringArray 自带 Sort()，按字典序原地排序
+        Array.Sort(dirs);
+
+        // 如果需要完整路径，用 Godot 的 PathJoin 拼接
+        if (fullPath)
+        {
+            for(int i = 0; i < dirs.Length; i++)
+            {
+                dirs[i] = dirPath.PathJoin(dirs[i]);
+            }
+        }
+        
+        return dirs;
     }
 
     /// <summary>

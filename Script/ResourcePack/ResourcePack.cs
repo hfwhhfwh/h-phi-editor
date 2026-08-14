@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-public class ResourcePack
+public partial class ResourcePack : Resource
 {
     // public enum TextureType
     // {
@@ -77,6 +77,10 @@ public class ResourcePack
             )
         );
     }
-    
-    
+
+    // FIXME 图片导入时边缘颜色不正确
+    private static Texture2D CompressTexture(Texture2D source)
+    {
+        throw new NotImplementedException();
+    }
 }

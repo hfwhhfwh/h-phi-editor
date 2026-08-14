@@ -172,16 +172,15 @@ public partial class EditorScene : Node
         eventEditPanel.editingChart = editingChart;
 
         // ================ 加载资源包 ================
-        // TODO 从Global中加载资源包
-        //string packPath = "D:/Documents/aaa测试资源包/Phigros_Official.zip";
-        string packPath = "D:/Documents/aaa测试资源包/1784786912758638379_【Xw制作】【V1修正版】圆CircleLite.zip";
-        _resourcePack = ResourcePackLoader.LoadFromZip(packPath);
-        if(_resourcePack == null)
+        string packId = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
+        LoadResourcePack(packId);
+        GameSettings.Instance.SettingChanged += (string key, Variant value) =>
         {
-            GD.PrintErr($"[{Name}] 加载资源包失败:{packPath}");
-        }
-        chartPlayer.Pack = _resourcePack;
-        chartRenderer.Pack = _resourcePack;
+            if(key == nameof(SettingsData.ResourcePackId))
+            {
+                LoadResourcePack(value.As<string>());
+            }
+        };
 
         // ================初始化谱面播放器================
         // 背景图片
@@ -832,6 +831,17 @@ public partial class EditorScene : Node
     private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
         _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
+    }
+
+    private void LoadResourcePack(string id)
+    {
+        _resourcePack = ResourcePackLoader.LoadFromLocal(id);
+        if(_resourcePack == null)
+        {
+            GD.PrintErr($"[{Name}] 加载资源包失败, id:{id}");
+        }
+        chartPlayer.Pack = _resourcePack;
+        chartRenderer.Pack = _resourcePack;
     }
 
 }

@@ -15,7 +15,8 @@ public static class ResourcePackLoader
         "flick", "flick_mh", "hold", "hold_mh", "hit_fx"
     };
 
-    private const string LocalPackPath = "res://ResourcePacks/";
+    private const string LocalPackDir = "user://ResourcePacks/";
+    private static string LocalPackDirAbsolute => ProjectSettings.GlobalizePath(LocalPackDir);
 
     public static ResourcePack LoadFromZip(string zipPath)
     {
@@ -26,52 +27,7 @@ public static class ResourcePackLoader
         FileUtil.UnzipFileTo(zipPath, tempDir);
 
         // 2. 解析 info.yml → PackManifest
-        Dictionary<string, string> infoDic = FileUtil.ReadInfoFile(Path.Combine(tempDir, "info.yml"));
-        pack.Manifest = new PackManifest
-        {
-            Name = infoDic.GetValueOrDefault("name"),
-            Author = infoDic.GetValueOrDefault("author"),
-            Description = infoDic.GetValueOrDefault("description"),
-            HitFxGrid = infoDic.GetValueOrDefault("hitFx").StringToVector2I(),
-            HoldAtlas = infoDic.GetValueOrDefault("holdAtlas").StringToVector2I(),
-            HoldAtlasMH = infoDic.GetValueOrDefault("holdAtlasMH").StringToVector2I(),
-        };
-
-        // 其他可选属性
-        string[] optional = ["hitFxDuration", "hitFxScale", "hideParticles", "hitFxRotate", "hitFxTinted"];
-        Type[] types = [typeof(float), typeof(float), typeof(bool), typeof(bool), typeof(bool)];
-        for (int i = 0; i < optional.Length; i++)
-        {
-            if (infoDic.TryGetValue(optional[i], out string text))
-            {
-                try
-                {
-                    object value = Convert.ChangeType(text, types[i]);
-                    switch (optional[i])
-                    {
-                        case "hitFxDuration":
-                            pack.Manifest.HitFxDuration = (float)value;
-                            break;
-                        case "hitFxScale":
-                            pack.Manifest.HitFxScale = (float)value;
-                            break;
-                        case "hideParticles":
-                            pack.Manifest.HideParticles = (bool)value;
-                            break;
-                        case "hitFxRotate":
-                            pack.Manifest.HitFxRotate = (bool)value;
-                            break;
-                        case "hitFxTinted":
-                            pack.Manifest.HitFxTinted = (bool)value;
-                            break;
-                    }
-                }
-                catch(Exception e)
-                {
-                    GD.PrintErr($"无法解析资源包属性: {optional[i]}, 错误:{e.Message}");
-                }
-            }
-        }
+        pack.Manifest = ReadManifestFromYml(Path.Combine(tempDir, "info.yml"));
 
         // 3. 加载图片
         foreach (string name in RequiredTextures)
@@ -182,18 +138,35 @@ public static class ResourcePackLoader
     //     }
     // }
 
-    public static void CopyToLocal(string zipPath)
+    /// <summary>
+    /// 从外部zip导入资源包到本地
+    /// </summary>
+    /// <param name="zipPath"></param>
+    /// <returns></returns>
+    public static string CopyToLocal(string zipPath)
     {
+        if(!DirAccess.DirExistsAbsolute(LocalPackDirAbsolute)) InitPath();
+
         string id = Util.GenerateRandomId(16);
-        string localDir = Path.Combine(LocalPackPath, id, zipPath.GetFile());
+        string localDir = Path.Combine(LocalPackDir, id);
 
-        ZipFile.ExtractToDirectory(zipPath, localDir);
+        FileUtil.UnzipFileTo(zipPath, localDir);
+        
+        GD.Print($"[{Name}] 成功导入资源包{zipPath}, id:{id}");
 
+        return id;
     }
 
     public static void ExportFromLocal(string id, string exportPath)
     {
-        string localDir = Path.Combine(LocalPackPath, id);
+        if(!DirAccess.DirExistsAbsolute(LocalPackDirAbsolute)) InitPath();
+
+        string localDir = Path.Combine(LocalPackDir, id);
+        if (!FileUtil.DirExists(localDir))
+        {
+            GD.PrintErr($"[{Name}] 导出失败, 未找到资源包id:{id}");
+            return;
+        }
 
         ZipFile.CreateFromDirectory(localDir, exportPath);
 
@@ -203,7 +176,16 @@ public static class ResourcePackLoader
 
     public static ResourcePack LoadFromLocal(string id)
     {
-        string localDir = Path.Combine(LocalPackPath, id);
+        if(!DirAccess.DirExistsAbsolute(LocalPackDirAbsolute)) InitPath();
+
+
+        string localDir = Path.Combine(LocalPackDir, id);
+        if (!FileUtil.DirExists(localDir))
+        {
+            GD.PrintErr($"[{Name}] 加载资源包失败, 未找到资源包id:{id}");
+            return null;
+        }
+
         ResourcePack pack = new ResourcePack();
         
         // 1. 解析 info.yml → PackManifest
@@ -295,6 +277,38 @@ public static class ResourcePackLoader
     }
 
     /// <summary>
+    /// 获取所有资源包的id和名称列表
+    /// </summary>
+    /// <returns></returns>
+    public static List<ValueTuple<string, string>> GetPackList()
+    {
+        if(!DirAccess.DirExistsAbsolute(LocalPackDirAbsolute)) InitPath();
+
+        List<ValueTuple<string, string>> packList = new();
+
+        string[] ids = FileUtil.GetDirsInDir(LocalPackDir, fullPath: false);
+        if(ids == null || ids.Length == 0) return null;
+
+        foreach(string id in ids)
+        {
+            // 获取资源包名称
+            string ymlPath = Path.Combine(LocalPackDir, id, "info.yml");
+            PackManifest manifest = ReadManifestFromYml(ymlPath);
+
+            string name = manifest.Name;
+
+            packList.Add((id, name));
+        }
+
+        return packList;
+    }
+
+    private static void InitPath()
+    {
+        FileUtil.EnsureDirectoryExists(LocalPackDir);
+    }
+
+    /// <summary>
     /// 将 PackManifest 写入为 info.yml
     /// </summary>
     private static void WriteManifestToYml(PackManifest manifest, string path)
@@ -315,6 +329,59 @@ public static class ResourcePackLoader
         File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
     }
 
+    private static PackManifest ReadManifestFromYml(string ymlPath)
+    {
+        Dictionary<string, string> infoDic = FileUtil.ReadInfoFile(ymlPath);
+
+        PackManifest manifest = new();
+        manifest = new PackManifest
+        {
+            Name = infoDic.GetValueOrDefault("name"),
+            Author = infoDic.GetValueOrDefault("author"),
+            Description = infoDic.GetValueOrDefault("description"),
+            HitFxGrid = infoDic.GetValueOrDefault("hitFx").StringToVector2I(),
+            HoldAtlas = infoDic.GetValueOrDefault("holdAtlas").StringToVector2I(),
+            HoldAtlasMH = infoDic.GetValueOrDefault("holdAtlasMH").StringToVector2I(),
+        };
+
+        // 其他可选属性
+        string[] optional = ["hitFxDuration", "hitFxScale", "hideParticles", "hitFxRotate", "hitFxTinted"];
+        Type[] types = [typeof(float), typeof(float), typeof(bool), typeof(bool), typeof(bool)];
+        for (int i = 0; i < optional.Length; i++)
+        {
+            if (infoDic.TryGetValue(optional[i], out string text))
+            {
+                try
+                {
+                    object value = Convert.ChangeType(text, types[i]);
+                    switch (optional[i])
+                    {
+                        case "hitFxDuration":
+                            manifest.HitFxDuration = (float)value;
+                            break;
+                        case "hitFxScale":
+                            manifest.HitFxScale = (float)value;
+                            break;
+                        case "hideParticles":
+                            manifest.HideParticles = (bool)value;
+                            break;
+                        case "hitFxRotate":
+                            manifest.HitFxRotate = (bool)value;
+                            break;
+                        case "hitFxTinted":
+                            manifest.HitFxTinted = (bool)value;
+                            break;
+                    }
+                }
+                catch(Exception e)
+                {
+                    GD.PrintErr($"无法解析资源包属性: {optional[i]}, 错误:{e.Message}");
+                }
+            }
+        }
+
+        return manifest;
+    }
     /// <summary>
     /// 简单的 YAML 字符串转义（处理特殊字符和换行）
     /// </summary>

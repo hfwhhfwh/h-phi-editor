@@ -1,294 +1,222 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using HPhiEditorGame.Editor;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
-/// <summary>
-/// 动态设置面板。自动反射 SettingsData，按类型生成对应编辑器，
-/// 双向绑定 GameSettings，支持实时修改、保存、重置。
-/// </summary>
 public partial class SettingsPanel : Control
 {
-    private GameSettings _settings;
-    [Export] private VBoxContainer _propertyVBox;
-	[Export] private Button _applyButton;
-    private readonly Dictionary<string, Control> _editors = new();
-    private readonly Dictionary<string, PropertyInfo> _properties = new();
+    // ---------- 控件引用 ----------
+    // 在编辑器里把对应节点设为 Unique Name，或在 Inspector 中拖拽赋值
+    [Export] private OptionButton _vSyncOptionBtn;
+    [Export] private OptionButton _packOptionBtn;
+    // [Export] private LineEdit _resourcePackEdit;
+    // [Export] private CheckButton _fullscreenCheck;
+    // [Export] private OptionButton _resolutionOption;
+    [Export] private Button _importPackBtn;
+    [Export] private Button _exportPackBtn;
+    [Export] private Button _applyBtn;
+    [Export] private Button _confirmBtn;
 
-	[Export] private Theme _theme;
+    [Export] private ResourcePackOverview _packOverview;
+    // [Export] private Button _resetBtn;
 
-    // 分辨率预设（可按需扩展）
-    private readonly (string Name, Vector2I Size)[] _resolutions = new[]
-    {
-        ("1280 x 720",   new Vector2I(1280, 720)),
-        ("1920 x 1080",  new Vector2I(1920, 1080)),
-        ("2560 x 1440",  new Vector2I(2560, 1440)),
-        ("3840 x 2160",  new Vector2I(3840, 2160)),
-    };
+    // 分辨率预设
+    // private readonly (string Name, Vector2I Size)[] _resolutions = new[]
+    // {
+    //     ("1280 x 720",  new Vector2I(1280, 720)),
+    //     ("1920 x 1080", new Vector2I(1920, 1080)),
+    //     ("2560 x 1440", new Vector2I(2560, 1440)),
+    //     ("3840 x 2160", new Vector2I(3840, 2160)),
+    // };
 
     public override void _Ready()
     {
-        _settings = GameSettings.Instance;
-        if (_settings == null)
+
+        if (GameSettings.Instance == null)
         {
-            GD.PushError("[SettingsPanel] GameSettings.Instance 为 null, 请确保场景中存在 GameSettings 节点");
+            GD.PushError("[SettingsPanel] GameSettings.Instance 为 null");
             return;
         }
 
-        BuildUI();
-        BindValues();
+        // InitOptions();      // 填充下拉框
+        // RefreshUI();        // 从 Settings 读取初始值
 
-		_applyButton.Pressed += OnApplyPressed;
+        // UI → Settings
+        BindEvents();       
+        // Settings → UI
+        GameSettings.Instance.SettingChanged += OnSettingChanged;
+        GameSettings.Instance.SettingsApplied += OnSettingsApplied;      
 
-        _settings.SettingChanged += OnSettingChanged;
-        _settings.SettingsApplied += OnSettingsApplied;
+        _importPackBtn.Pressed += OnImportClicked;
+
+        // 打开自动重新加载
+        this.VisibilityChanged += () =>
+        {
+            if(!Visible) return;
+
+            InitOptions();      // 填充下拉框
+            RefreshUI();        // 从 Settings 读取初始值
+        };
     }
 
     public override void _ExitTree()
     {
-        if (_settings != null)
+        if (GameSettings.Instance != null)
         {
-            _settings.SettingChanged -= OnSettingChanged;
-            _settings.SettingsApplied -= OnSettingsApplied;
+            GameSettings.Instance.SettingChanged -= OnSettingChanged;
+            GameSettings.Instance.SettingsApplied -= OnSettingsApplied;
         }
     }
 
-    private void BuildUI()
+    // ---------- 初始化下拉框 ----------
+    private void InitOptions()
     {
-        // // 根边距
-        // MarginContainer margin = new MarginContainer();
-        // AddChild(margin);
-        // margin.AddThemeConstantOverride("margin_left", 28);
-        // margin.AddThemeConstantOverride("margin_right", 28);
-        // margin.AddThemeConstantOverride("margin_top", 24);
-        // margin.AddThemeConstantOverride("margin_bottom", 24);
-
-        // // 滚动区域（防止设置项过多溢出）
-        // ScrollContainer scroll = new ScrollContainer
-        // {
-        //     SizeFlagsHorizontal = SizeFlags.ExpandFill,
-        //     SizeFlagsVertical = SizeFlags.ExpandFill
-        // };
-        // margin.AddChild(scroll);
-
-        // _content = new VBoxContainer
-        // {
-        //     SizeFlagsHorizontal = SizeFlags.ExpandFill,
-        //     SizeFlagsVertical = SizeFlags.ExpandFill
-        // };
-        // _content.AddThemeConstantOverride("separation", 14);
-        // scroll.AddChild(_content);
-
-        // // 标题
-        // Label title = new Label
-        // {
-        //     Text = "游戏设置",
-        //     ThemeTypeVariation = "HeaderLarge",
-        //     HorizontalAlignment = HorizontalAlignment.Center
-        // };
-        // _content.AddChild(title);
-        // _content.AddChild(new HSeparator());
-
-        // 按属性动态生成行
-        foreach (PropertyInfo prop in typeof(SettingsData).GetProperties())
+        // VSync
+        _vSyncOptionBtn.Clear();
+        foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
         {
-            if (!prop.CanRead || !prop.CanWrite) continue;
-
-            HBoxContainer row = new HBoxContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                Alignment = BoxContainer.AlignmentMode.Begin
-            };
-
-            // 左侧标签
-            Label label = new Label
-            {
-                Text = FormatLabelName(prop.Name),
-                CustomMinimumSize = new Vector2(180, 0),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            row.AddChild(label);
-
-            // 右侧编辑器
-            Control editor = CreateEditor(prop);
-            if (editor != null)
-            {
-                editor.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-                row.AddChild(editor);
-                _editors[prop.Name] = editor;
-                _properties[prop.Name] = prop;
-                _propertyVBox.AddChild(row);
-            }
+            _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
         }
 
-        // 底部按钮
-        // HBoxContainer btnRow = new HBoxContainer
+        // 资源包
+        RefreshPackSettings();
+
+        // // 分辨率
+        // foreach (var res in _resolutions)
         // {
-        //     SizeFlagsHorizontal = SizeFlags.ExpandFill,
-        //     Alignment = BoxContainer.AlignmentMode.End
-        // };
-        // btnRow.AddThemeConstantOverride("separation", 10);
-
-        // Button resetBtn = new Button { Text = "恢复默认" };
-        // resetBtn.Pressed += OnResetPressed;
-
-        // Button applyBtn = new Button { Text = "保存并应用" };
-        // applyBtn.Pressed += OnApplyPressed;
-
-        // btnRow.AddChild(resetBtn);
-        // btnRow.AddChild(applyBtn);
-        // _propertyVBox.AddChild(new HSeparator());
-        // _propertyVBox.AddChild(btnRow);
-    }
-
-    /// <summary>根据属性类型创建合适的编辑器控件</summary>
-    private Control CreateEditor(PropertyInfo prop)
-    {
-        Type type = prop.PropertyType;
-        string name = prop.Name;
-
-        // ---------- 特殊属性：自定义原生控件 ----------
-        // if (name == nameof(SettingsData.ResolutionIndex))
-        // {
-        //     OptionButton option = new OptionButton();
-        //     foreach (var res in _resolutions)
-        //         option.AddItem(res.Name);
-        //     option.ItemSelected += idx => _settings.Set(name, (int)idx);
-        //     return option;
+        //     _resolutionOption.AddItem(res.Name);
         // }
-
-        // if (name == nameof(SettingsData.Fullscreen))
-        // {
-        //     CheckButton check = new CheckButton { Text = "启用全屏" };
-		// 	check.Theme = _theme;
-        //     check.Toggled += (bool v) => _settings.Set(name, v);
-        //     return check;
-        // }
-
-        if (name == nameof(SettingsData.VSync))
-        {
-            OptionButton option = new OptionButton();
-            foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
-            {
-                option.AddItem(FormatVSyncName(mode), (int)mode);
-            }
-			option.Theme = _theme;
-            option.ItemSelected += idx =>
-            {
-                int id = option.GetItemId((int)idx);
-                _settings.Set(name, id); // 枚举以 int 形式写入
-            };
-            return option;
-        }
-
-        // ---------- 通用属性：复用 PropertyEditor 体系 ----------
-        try
-        {
-            IPropertyEditor editor = PropertyEditorFactory.Create(type);
-			if(editor == null)
-			{
-				GD.PrintErr($"[{Name}] 无法创建对应编辑字段:{name}({type})");
-			}
-            editor.Setup(name);
-            editor.ValueChanged += (key, value) => _settings.Set(key, Variant.From(value));
-            return editor.Control;
-        }
-        catch (NotSupportedException)
-        {
-            GD.PushWarning($"[SettingsPanel] 不支持的设置类型: {type.Name} ({name})");
-            return new Label { Text = $"<不支持: {type.Name}>" };
-        }
     }
 
-    /// <summary>将 GameSettings.Current 的值同步到所有 UI 控件</summary>
-    private void BindValues()
+    // ---------- 绑定：UI 修改 → Settings ----------
+    private void BindEvents()
     {
-        foreach (KeyValuePair<string, Control> kvp in _editors)
+        _vSyncOptionBtn.ItemSelected += (long idx) =>
         {
-            string key = kvp.Key;
-            Control ctrl = kvp.Value;
-            object raw = _properties[key].GetValue(_settings.Current);
+            int id = _vSyncOptionBtn.GetItemId((int)idx);
+            GameSettings.Instance.Set(nameof(SettingsData.VSync), (DisplayServer.VSyncMode)id);
+        };
 
-            switch (ctrl)
-            {
-                case OptionButton opt:
-                    if (key == nameof(SettingsData.VSync))
-                    {
-                        int id = (int)raw;
-                        for (int i = 0; i < opt.ItemCount; i++)
-                            if (opt.GetItemId(i) == id) { opt.Select(i); break; }
-                    }
-                    else
-                    {
-                        opt.Select(Convert.ToInt32(raw));
-                    }
-                    break;
+        _packOptionBtn.ItemSelected += (long index) =>
+        {
+            string id = _packOptionBtn.GetItemMetadata((int)index).As<string>();
+            GameSettings.Instance.Set(nameof(SettingsData.ResourcePackId), id);
+        };
 
-                case CheckButton check:
-                    check.ButtonPressed = Convert.ToBoolean(raw);
-                    break;
-
-                default:
-                    if (ctrl is IPropertyEditor ipe)
-                        ipe.SetValue(raw);
-                    break;
-            }
-        }
+        _applyBtn.Pressed += () => GameSettings.Instance.Save();
+        _confirmBtn.Pressed += () =>
+        {
+            GameSettings.Instance.Save();
+            Visible = false;
+        };
+        // _resetBtn.Pressed += () => GameSettings.Instance.ResetToDefault();
     }
 
-    // ---------- 事件回调 ----------
+    // // ---------- 绑定：Settings 变化 → UI ----------
+    // private void BindSignals()
+    // {
+    //     GameSettings.Instance.SettingChanged += OnSettingChanged;
+    //     GameSettings.Instance.SettingsApplied += OnSettingsApplied;
+    // }
 
     private void OnSettingChanged(string key, Variant value)
     {
-        if (!_editors.TryGetValue(key, out Control ctrl)) return;
-
-        switch (ctrl)
+        switch (key)
         {
-            case OptionButton opt:
-                if (key == nameof(SettingsData.VSync))
-                {
-                    int id = value.AsInt32();
-                    for (int i = 0; i < opt.ItemCount; i++)
-                        if (opt.GetItemId(i) == id) { opt.Select(i); break; }
-                }
-                else
-                {
-                    opt.Select(value.AsInt32());
-                }
+            case nameof(SettingsData.VSync):
+                SelectById(_vSyncOptionBtn, value.AsInt32());
                 break;
 
-            case CheckButton check:
-                check.ButtonPressed = value.AsBool();
-                break;
-
-            default:
-                if (ctrl is IPropertyEditor ipe)
-                    ipe.SetValue(value.Obj);
+            case nameof(SettingsData.ResourcePackId):
+                RefreshPackSettings();
                 break;
         }
     }
 
-    private void OnSettingsApplied() => BindValues();
+    private void OnSettingsApplied() => RefreshUI();
 
-    // private void OnResetPressed() => _settings.ResetToDefault();
-
-    private void OnApplyPressed()
+    private void OnImportClicked()
     {
-        _settings.ApplyToEngine();
-        _settings.Save();
+        FileDialogManager.Instance.ShowOpenDialog(
+            (string path) =>
+            {
+                if(string.IsNullOrEmpty(path)) return;
+                // 导入资源包
+                string id = ResourcePackLoader.CopyToLocal(path);
+
+                // 更新设置
+                GameSettings.Instance.Set(nameof(SettingsData.ResourcePackId), id);
+
+                // RefreshUI();
+            }
+        );
     }
 
-    // ---------- 辅助 ----------
-
-    private static string FormatLabelName(string name) => name switch
+    // ---------- 从 Settings 刷新整个面板 ----------
+    private void RefreshUI()
     {
-        // nameof(SettingsData.ResolutionIndex) => "分辨率",
-        // nameof(SettingsData.Fullscreen)      => "全屏模式",
-        nameof(SettingsData.VSync)           => "垂直同步",
-        nameof(SettingsData.ResourcePackId)  => "资源包",
-        _ => name
-    };
+        var settings = GameSettings.Instance.Current;
+
+        SelectById(_vSyncOptionBtn, (int)settings.VSync);
+
+        // 资源包
+        RefreshPackSettings();
+
+        // _resourcePackEdit.Text = settings.ResourcePackId ?? "";
+        // _fullscreenCheck.ButtonPressed = cur.Fullscreen;
+        // _resolutionOption.Select(cur.ResolutionIndex);
+    }
+
+    /// <summary>
+    /// 刷新资源包相关设置的UI
+    /// </summary>
+    private void RefreshPackSettings()
+    {
+        _packOptionBtn.Clear();
+        List<ValueTuple<string, string>> packList = ResourcePackLoader.GetPackList();
+        if(packList != null)
+        {
+            for(int i = 0; i < packList.Count; i++)
+            {
+                (string id, string name) = packList[i];
+                _packOptionBtn.AddItem(name);
+
+                _packOptionBtn.SetItemMetadata(i, id);
+
+                // 当前选中
+                if(id == GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId)))
+                {
+                    _packOptionBtn.Select(i);
+                }
+            }
+        }
+
+        string packId = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
+        if(string.IsNullOrEmpty(packId)) return;
+
+        ResourcePack pack = ResourcePackLoader.LoadFromLocal(packId);
+        if(pack != null)
+        {
+            _packOverview.Overview(pack);
+        }
+        
+
+        GD.Print($"[{Name}] 成功刷新资源包设置界面");
+    }
+
+    // ---------- 辅助方法 ----------
+    private static void SelectById(OptionButton btn, int id)
+    {
+        for (int i = 0; i < btn.ItemCount; i++)
+        {
+            if (btn.GetItemId(i) == id)
+            {
+                btn.Select(i);
+                return;
+            }
+        }
+    }
 
     private static string FormatVSyncName(DisplayServer.VSyncMode mode) => mode switch
     {

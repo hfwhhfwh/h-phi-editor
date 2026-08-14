@@ -3,8 +3,10 @@
 [ext_resource type="Script" uid="uid://7kr1x7y3sa1v" path="res://Script/Settings/SettingsPanel.cs" id="1_ivhfp"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_ykn2r"]
 [ext_resource type="StyleBox" uid="uid://2eir3yfwt18w" path="res://PanelGrey.tres" id="3_bnfmk"]
+[ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
+[ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 
-[node name="SettingsPanel" type="Panel" unique_id=520307633 node_paths=PackedStringArray("_propertyVBox", "_applyButton")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_packOptionBtn", "_importPackBtn", "_exportPackBtn", "_applyBtn", "_confirmBtn", "_packOverview")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -12,24 +14,32 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_ykn2r")
 script = ExtResource("1_ivhfp")
-_propertyVBox = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/PanelContainer2/MarginContainer/ScrollContainer/Property")
-_applyButton = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Apply")
-_theme = ExtResource("1_ykn2r")
+_vSyncOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync/OptionButton")
+_packOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row/OptionButton")
+_importPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Import")
+_exportPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Export")
+_applyBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Apply")
+_confirmBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Confirm")
+_packOverview = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/ResourcePackOverview")
+
+[node name="TabManager" type="Node" parent="." unique_id=1686546388 node_paths=PackedStringArray("TabMap", "defaultButton")]
+script = ExtResource("3_j4nhx")
+TabMap = {
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Display"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display"),
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Pack"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack")
+}
+defaultButton = NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Display")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1075103956]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_constants/margin_left = 15
-theme_override_constants/margin_top = 15
+theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 15
 theme_override_constants/margin_bottom = 15
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1995900391]
 layout_mode = 2
+theme_override_constants/separation = 10
 
 [node name="Head" type="Control" parent="MarginContainer/VBoxContainer" unique_id=625509828]
 custom_minimum_size = Vector2(0, 60)
@@ -83,47 +93,101 @@ touch_dragger_enabled = true
 drag_area_highlight_in_editor = true
 split_offset = 20
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer" unique_id=1477888937]
+[node name="Section" type="PanelContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer" unique_id=1477888937]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = ExtResource("3_bnfmk")
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/PanelContainer" unique_id=1618572565]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section" unique_id=1618572565]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/PanelContainer/MarginContainer" unique_id=1448150045]
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer" unique_id=1448150045]
 layout_mode = 2
 theme = ExtResource("1_ykn2r")
 
-[node name="Section" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/PanelContainer/MarginContainer/ScrollContainer" unique_id=909174620]
+[node name="Section" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer" unique_id=909174620]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PanelContainer2" type="PanelContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer" unique_id=924282429]
+[node name="Display" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section" unique_id=542771200]
+layout_mode = 2
+text = "显示"
+
+[node name="Pack" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section" unique_id=1212252055]
+layout_mode = 2
+text = "资源包"
+
+[node name="Properties" type="PanelContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer" unique_id=924282429]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 3.0
+size_flags_stretch_ratio = 4.0
 theme_override_styles/panel = ExtResource("3_bnfmk")
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/PanelContainer2" unique_id=1581723845]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties" unique_id=1581723845]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/PanelContainer2/MarginContainer" unique_id=1633273645]
+[node name="Display" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1633273645]
+visible = false
 layout_mode = 2
 theme = ExtResource("1_ykn2r")
 
-[node name="Property" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/PanelContainer2/MarginContainer/ScrollContainer" unique_id=2063797047]
+[node name="Vbox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display" unique_id=2063797047]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VSync" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox" unique_id=529981629]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync" unique_id=1377546564]
+layout_mode = 2
+theme = ExtResource("1_ykn2r")
+text = "垂直同步"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync" unique_id=69901080]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Pack" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=2146774469]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack" unique_id=868202544]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer" unique_id=1774489831]
+layout_mode = 2
+
+[node name="Import" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer" unique_id=719445303]
+layout_mode = 2
+text = "导入"
+
+[node name="Export" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer" unique_id=1451751647]
+layout_mode = 2
+text = "导出"
+
+[node name="Row" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer" unique_id=41446396]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row" unique_id=1292921287]
+layout_mode = 2
+theme = ExtResource("1_ykn2r")
+text = "选择"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row" unique_id=144567733]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResourcePackOverview" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer" unique_id=1063507614 instance=ExtResource("5_yruwn")]
+layout_mode = 2
 size_flags_vertical = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=240990376]
@@ -134,3 +198,8 @@ alignment = 1
 layout_mode = 2
 theme = ExtResource("1_ykn2r")
 text = "应用"
+
+[node name="Confirm" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1124578789]
+layout_mode = 2
+theme = ExtResource("1_ykn2r")
+text = "完成"

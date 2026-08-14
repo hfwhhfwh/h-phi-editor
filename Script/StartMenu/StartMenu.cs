@@ -13,6 +13,7 @@ public partial class StartMenu : Node
     [Export] private DeletePanel _deletePanel;
     [Export] private InfoPanel _infoPanel;
     [Export] private ExportPanel _exportPanel;
+    [Export] private SettingsPanel _settingsPanel;
 
     private FileDialogManager fileDialogManager;
 
@@ -231,6 +232,11 @@ public partial class StartMenu : Node
         _chartService.ExportChart(chartId);
 
         _exportPanel.Visible = false;
+    }
+
+    public void OnSettingsPressed()
+    {
+        _settingsPanel.Visible = true;
     }
 
     //打开谱面，进入编辑界面

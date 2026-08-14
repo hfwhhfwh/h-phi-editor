@@ -13,14 +13,16 @@
 [ext_resource type="Script" uid="uid://cgsbmr5lt1i1b" path="res://Script/StartMenu/InfoPanel.cs" id="10_l4ger"]
 [ext_resource type="Script" uid="uid://bslsq2gjtb1th" path="res://Script/StartMenu/ExportPanel.cs" id="11_1kda2"]
 [ext_resource type="Texture2D" uid="uid://ejl1hu2xxquy" path="res://icon.svg" id="11_7eatm"]
+[ext_resource type="PackedScene" uid="uid://cuskdub26yo1x" path="res://Scene/settings_panel.tscn" id="14_tvlai"]
 
-[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "deviceLabel", "versionLabel")]
+[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "_settingsPanel", "deviceLabel", "versionLabel")]
 script = ExtResource("1_4qtu7")
 _chartList = NodePath("PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer/ChartList")
 _createPanel = NodePath("PanelContainer/SafeArea/CreateChartPanel")
 _deletePanel = NodePath("PanelContainer/SafeArea/DeletePanel")
 _infoPanel = NodePath("PanelContainer/SafeArea/InfoPanel")
 _exportPanel = NodePath("PanelContainer/SafeArea/ExportPanel")
+_settingsPanel = NodePath("PanelContainer/SafeArea/SettingsPanel")
 deviceLabel = NodePath("PanelContainer/SafeArea/Main/Head/DeviceLabel")
 versionLabel = NodePath("PanelContainer/SafeArea/Main/Bottom/VersionLabel")
 
@@ -792,6 +794,11 @@ theme_override_styles/focus = ExtResource("1_20fd0")
 text = "取消
 "
 
+[node name="SettingsPanel" parent="PanelContainer/SafeArea" unique_id=134848781 instance=ExtResource("14_tvlai")]
+visible = false
+layout_mode = 2
+
+[connection signal="button_up" from="PanelContainer/SafeArea/Main/Head/Options/Settings" to="." method="OnSettingsPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/Main/Head/Options/ImportButton" to="." method="OnImportButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/Main/Head/Options/NewButton" to="." method="OnCreateButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/Main/HBoxContainer/EditOptions/Open" to="." method="OnOpenPressed"]

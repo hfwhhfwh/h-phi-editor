@@ -3,19 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+/// <summary>
+/// 资源包预览器, 展示资源包请调用 Overview() 方法
+/// </summary>
 public partial class ResourcePackOverview : Control
 {
-	// private static readonly string[] RequiredNoteTextures =
-	// {
-	// 	"click", "click_mh", "drag", "drag_mh", "flick", "flick_mh", 
-	// 	"hold_head", "hold_head_mh", "hold_end", "hold_end_mh"
-	// };
 	[Export] private Control leftControl, rightControl;
-	// [Export] private Godot.Collections.Array<Sprite2D> sprites;
-
-	// private List<ValueTuple<Vector2, Texture2D>> layout;
-
-	//[Export] private Godot.Collections.Dictionary<string, Sprite2D> sprites;
+	
 	[Export] private Sprite2D clickSprite, clickMhSprite, dragSprite, dragMhSprite, flickSprite, flickMhSprite;
 	
 
@@ -54,7 +48,7 @@ public partial class ResourcePackOverview : Control
     }
 
 
-	public void Show(ResourcePack pack)
+	public void Overview(ResourcePack pack)
 	{
 		_resourcePack = pack;
 		// 1. 设置左边的note预览
@@ -75,7 +69,7 @@ public partial class ResourcePackOverview : Control
 		//设置偏移
 		if(pack.holdHeadTexture == null)
 		{
-			GD.PrintErr("holdHeadTexture为null");
+			GD.PrintErr($"[{Name}] holdHeadTexture为null");
 		}
 		holdHeadSprite.Offset = new Vector2(0, pack.holdHeadTexture.GetSize().Y / 2f);
 		holdHeadSpriteMh.Offset = new Vector2(0, pack.holdHeadTextureMh.GetSize().Y / 2f);
