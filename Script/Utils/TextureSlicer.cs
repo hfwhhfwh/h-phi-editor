@@ -1,8 +1,10 @@
 using Godot;
 using System;
+using System.Reflection.Metadata;
 
 public static class TextureSlicer
 {
+    public const string Name = nameof(TextureSlicer);
     /// <summary>
     /// 将 Texture2D 按网格切割为 SpriteFrames
     /// </summary>
@@ -21,24 +23,30 @@ public static class TextureSlicer
         var spriteFrames = new SpriteFrames();
         if(!spriteFrames.HasAnimation(animName)) spriteFrames.AddAnimation(animName);
 
-        // 按行优先：从左到右，从上到下
+        // 一次性获取原图像素数据
+        Image sourceImage = texture.GetImage();
+        if (sourceImage == null)
+        {
+            GD.PushError($"[{Name}] 无法读取纹理像素数据");
+            return spriteFrames;
+        }
+
         for (int y = 0; y < vframes; y++)
         {
             for (int x = 0; x < hframes; x++)
             {
-                var atlasTex = new AtlasTexture
-                {
-                    Atlas = texture,
-                    Region = new Rect2I(
-                        x * frameW, 
-                        y * frameH, 
-                        frameW, 
-                        frameH
-                    )
-                };
-                
-                // duration: 单帧显示时长（秒）
-                spriteFrames.AddFrame(animName, atlasTex);
+                Rect2I region = new Rect2I(
+                    x * frameW, 
+                    y * frameH, 
+                    frameW, 
+                    frameH
+                );
+
+                // 裁出独立像素块 → 生成独立纹理
+                Image frameImage = sourceImage.GetRegion(region);
+                ImageTexture frameTex = ImageTexture.CreateFromImage(frameImage);
+
+                spriteFrames.AddFrame(animName, frameTex);
             }
         }
 
@@ -54,7 +62,7 @@ public static class TextureSlicer
         Image sourceImage = source.GetImage();
         if (sourceImage == null)
         {
-            GD.PushError("无法读取纹理像素数据（可能是 ViewportTexture 或压缩格式不支持）");
+            GD.PushError($"[{Name}] 无法读取纹理像素数据（可能是 ViewportTexture 或压缩格式不支持）");
             return null;
         }
 

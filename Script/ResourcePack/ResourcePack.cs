@@ -47,6 +47,9 @@ public partial class ResourcePack : Resource
         BuildHoldTexture(textureDic["hold_mh"], Manifest.HoldAtlasMH, 
             out holdHeadTextureMh, out holdBodyTextureMh, out holdEndTextureMh);
         
+        // // 3. 压缩所有贴图
+        // CompressPackTextures(this);
+        
     }
 
     private static void BuildHoldTexture(Texture2D texture, Vector2I atlas, 
@@ -78,9 +81,68 @@ public partial class ResourcePack : Resource
         );
     }
 
-    // FIXME 图片导入时边缘颜色不正确
+    // /// <summary>
+    // /// 将资源包内所有 Texture2D 压缩为 VRAM Compressed (S3TC/ETC2/BCn)
+    // /// </summary>
+    // private static void CompressPackTextures(ResourcePack pack)
+    // {
+    //     GD.Print("[ResourcePack] 正在压缩资源包纹理...");
+    //     // 1. 基础纹理字典（hit_fx 等）
+    //     foreach (string key in new List<string>(pack.textureDic.Keys))
+    //     {
+    //         if (pack.textureDic[key] != null)
+    //             pack.textureDic[key] = CompressTexture(pack.textureDic[key]);
+    //     }
+
+    //     // 2. Hold 分体贴图
+    //     pack.holdHeadTexture = CompressTexture(pack.holdHeadTexture);
+    //     pack.holdBodyTexture = CompressTexture(pack.holdBodyTexture);
+    //     pack.holdEndTexture = CompressTexture(pack.holdEndTexture);
+    //     pack.holdHeadTextureMh = CompressTexture(pack.holdHeadTextureMh);
+    //     pack.holdBodyTextureMh = CompressTexture(pack.holdBodyTextureMh);
+    //     pack.holdEndTextureMh = CompressTexture(pack.holdEndTextureMh);
+
+    //     // 3. 打击特效 SpriteFrames
+    //     // 注意：如果 TextureSlicer.CreateSpriteFrames 内部使用的是 AtlasTexture，
+    //     // 直接压缩会丢失 Region 信息。建议确保 CreateSpriteFrames 生成的是独立 ImageTexture，
+    //     if (pack.hitEffectSF != null)
+    //     {
+    //         string anim = "default";
+    //         int frameCount = pack.hitEffectSF.GetFrameCount(anim);
+    //         for (int i = 0; i < frameCount; i++)
+    //         {
+    //             Texture2D frameTex = pack.hitEffectSF.GetFrameTexture(anim, i);
+    //             if (frameTex != null)
+    //                 pack.hitEffectSF.SetFrame(anim, i, CompressTexture(frameTex));
+    //         }
+    //     }
+
+    //     GD.Print("[ResourcePack] 压缩资源包纹理完成!");
+    // }
+
     private static Texture2D CompressTexture(Texture2D source)
     {
-        throw new NotImplementedException();
+        if (source == null) return null;
+
+        // 获取 CPU 端图像数据
+        Image img = source.GetImage();
+        if (img == null) return source;
+
+        // 进行 VRAM 压缩。使用 Srgb 源以正确保留颜色渐变。
+        // 关键：压缩为 VRAM Compressed，走 GPU 压缩纹理上传路径
+        // PC 平台用 BPTC（高质量），或 S3TC（兼容性好）
+        Error err = img.Compress(Image.CompressMode.Bptc, Image.CompressSource.Generic);
+        if (err != Error.Ok)
+        {
+            // BPTC 不支持时回退到 S3TC
+            err = img.Compress(Image.CompressMode.S3Tc, Image.CompressSource.Generic);
+        }
+        if(err != Error.Ok)
+        {
+            GD.PushWarning($"无法压缩图片, 可能导致白色纹理渲染不正确, 详情见issue#117181");
+            return source;
+        }
+
+        return ImageTexture.CreateFromImage(img);
     }
 }

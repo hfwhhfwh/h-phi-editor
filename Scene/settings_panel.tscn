@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_packOptionBtn", "_importPackBtn", "_exportPackBtn", "_applyBtn", "_confirmBtn", "_packOverview")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_packOptionBtn", "_maxFpsEdit", "_importPackBtn", "_exportPackBtn", "_applyBtn", "_confirmBtn", "_packOverview")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -16,6 +16,7 @@ theme = ExtResource("1_ykn2r")
 script = ExtResource("1_ivhfp")
 _vSyncOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync/OptionButton")
 _packOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row/OptionButton")
+_maxFpsEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/MaxFps/SpinBox")
 _importPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Import")
 _exportPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Export")
 _applyBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Apply")
@@ -136,7 +137,6 @@ theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
 [node name="Display" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1633273645]
-visible = false
 layout_mode = 2
 theme = ExtResource("1_ykn2r")
 
@@ -157,7 +157,22 @@ text = "垂直同步"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="MaxFps" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox" unique_id=1382748134]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/MaxFps" unique_id=1716335880]
+layout_mode = 2
+theme = ExtResource("1_ykn2r")
+text = "最大帧率"
+
+[node name="SpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/MaxFps" unique_id=161974705]
+layout_mode = 2
+size_flags_horizontal = 3
+allow_greater = true
+allow_lesser = true
+
 [node name="Pack" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=2146774469]
+visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack" unique_id=868202544]

@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-[GlobalClass]
+// [GlobalClass]
 public partial class SettingsData : Resource
 {
     // [Export] public float MasterVolume { get; set; } = 1.0f;
@@ -12,6 +12,7 @@ public partial class SettingsData : Resource
     // [Export] public int ResolutionIndex { get; set; } = 0;
     // [Export] public bool Fullscreen { get; set; } = false;
     [Export] public DisplayServer.VSyncMode VSync { get; set; } = DisplayServer.VSyncMode.Mailbox;
+    [Export] public int MaxFps { get; set; } = 0; // 无上限
     
     // [Export] public string Language { get; set; } = "zh_CN";
     // [Export] public float CameraSensitivity { get; set; } = 0.5f;

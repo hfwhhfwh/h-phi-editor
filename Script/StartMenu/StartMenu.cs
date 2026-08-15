@@ -242,6 +242,12 @@ public partial class StartMenu : Node
     //打开谱面，进入编辑界面
     public void OnOpenPressed()
     {
+        if (string.IsNullOrEmpty(_currentSelectedChartId))
+        {
+            GD.Print($"[{Name}] 未选中任何谱面");
+            return;
+        }
+        
         var global = GetNode<Global>("/root/Global");
         global.editingChartId = _currentSelectedChartId;
         global.GotoScene("res://Scene/editor_scene.tscn");

@@ -10,6 +10,7 @@ public partial class SettingsPanel : Control
     // 在编辑器里把对应节点设为 Unique Name，或在 Inspector 中拖拽赋值
     [Export] private OptionButton _vSyncOptionBtn;
     [Export] private OptionButton _packOptionBtn;
+    [Export] private SpinBox _maxFpsEdit;
     // [Export] private LineEdit _resourcePackEdit;
     // [Export] private CheckButton _fullscreenCheck;
     // [Export] private OptionButton _resolutionOption;
@@ -104,6 +105,12 @@ public partial class SettingsPanel : Control
             GameSettings.Instance.Set(nameof(SettingsData.ResourcePackId), id);
         };
 
+        _maxFpsEdit.ValueChanged += (double value) =>
+        {
+            int intValue = Mathf.RoundToInt(value);
+            GameSettings.Instance.Set(nameof(SettingsData.MaxFps), intValue);
+        };
+
         _applyBtn.Pressed += () => GameSettings.Instance.Save();
         _confirmBtn.Pressed += () =>
         {
@@ -126,10 +133,16 @@ public partial class SettingsPanel : Control
         {
             case nameof(SettingsData.VSync):
                 SelectById(_vSyncOptionBtn, value.AsInt32());
+                GameSettings.Instance.ApplyToEngine();
                 break;
 
             case nameof(SettingsData.ResourcePackId):
                 RefreshPackSettings();
+                break;
+            
+            case nameof(SettingsData.MaxFps):
+                _maxFpsEdit.Value = GameSettings.Instance.Get<int>(nameof(SettingsData.MaxFps));
+                GameSettings.Instance.ApplyToEngine();
                 break;
         }
     }
@@ -156,12 +169,15 @@ public partial class SettingsPanel : Control
     // ---------- 从 Settings 刷新整个面板 ----------
     private void RefreshUI()
     {
-        var settings = GameSettings.Instance.Current;
+        SettingsData settings = GameSettings.Instance.Current;
 
         SelectById(_vSyncOptionBtn, (int)settings.VSync);
 
         // 资源包
         RefreshPackSettings();
+
+        // 最大帧率
+        _maxFpsEdit.Value = settings.MaxFps;
 
         // _resourcePackEdit.Text = settings.ResourcePackId ?? "";
         // _fullscreenCheck.ButtonPressed = cur.Fullscreen;

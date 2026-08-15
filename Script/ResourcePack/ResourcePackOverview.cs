@@ -57,6 +57,7 @@ public partial class ResourcePackOverview : Control
 			Sprite2D sprite = normalNotesSprites[key];
 			sprite.Texture = pack.textureDic[key];
 			sprite.Scale = new Vector2(widthScale, widthScale);
+			sprite.TextureFilter = TextureFilterEnum.LinearWithMipmaps;
 		}
 
 		holdHeadSprite.Texture = pack.holdHeadTexture;

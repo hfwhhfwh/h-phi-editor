@@ -627,7 +627,7 @@ public static class FileUtil
     /// </summary>
     /// <param name="picPath">图片路径</param>
     /// <returns></returns>
-    public static Texture2D LoadTextureFromFile(string picPath, out string realFormat)
+    public static Texture2D LoadTextureFromFile(string picPath, out string realFormat, bool mipmap = true)
     {
         realFormat = null;
         // 检查文件存在
@@ -640,10 +640,10 @@ public static class FileUtil
         var image = new Image();
         Error err = Error.Failed;
 
-        // 第一步：通用加载（扩展名和格式一致时直接成功）
+        // 1. 通用加载（扩展名和格式一致时直接成功）
         err = image.Load(picPath);
 
-        // 失败则回退到 Buffer + 格式检测
+        // 2. 失败则回退到 Buffer + 格式检测
         if (err != Error.Ok)
         {
             GD.Print($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
@@ -704,6 +704,17 @@ public static class FileUtil
             GD.PrintErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
             return null;
         }
+
+        // 生成mipmap
+        if (mipmap)
+        {
+            err = image.GenerateMipmaps();
+            if (err != Error.Ok)
+            {
+                GD.PushWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
+            }
+        }
+
 
         Texture2D texture = ImageTexture.CreateFromImage(image);
         if(texture == null)

@@ -185,9 +185,12 @@ public partial class GameSettings : Node
         //     Current.Fullscreen ? DisplayServer.WindowMode.Fullscreen : DisplayServer.WindowMode.Windowed
         // );
         DisplayServer.WindowSetVsyncMode(Current.VSync);
+        Engine.MaxFps = Current.MaxFps;
 
         // 语言
         // TranslationServer.SetLocale(Current.Language);
+
+        GD.Print($"[{Name}] 成功将设置应用到引擎");
     }
 
     // 重置为默认
