@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bs6cfa5ijqqd7"
 path.s3tc="res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.s3tc.ctex"
+path.etc2="res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Sprite/line.png"
-dest_files=["res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.s3tc.ctex"]
+dest_files=["res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.s3tc.ctex", "res://.godot/imported/line.png-04ee91ec2acf444f4c41ccc020a8c1e6.etc2.ctex"]
 
 [params]
 

@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://btdnpjcck36nd"
 path.s3tc="res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.s3tc.ctex"
+path.etc2="res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Sprite/EventHold_2.png"
-dest_files=["res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.s3tc.ctex"]
+dest_files=["res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.s3tc.ctex", "res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.etc2.ctex"]
 
 [params]
 

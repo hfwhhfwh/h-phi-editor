@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dwe0jlwqlbgt8"
 path.s3tc="res://.godot/imported/Drag.png-51b3cb12c239a3a85a5ff652331a1b84.s3tc.ctex"
+path.etc2="res://.godot/imported/Drag.png-51b3cb12c239a3a85a5ff652331a1b84.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Sprite/Drag.png"
-dest_files=["res://.godot/imported/Drag.png-51b3cb12c239a3a85a5ff652331a1b84.s3tc.ctex"]
+dest_files=["res://.godot/imported/Drag.png-51b3cb12c239a3a85a5ff652331a1b84.s3tc.ctex", "res://.godot/imported/Drag.png-51b3cb12c239a3a85a5ff652331a1b84.etc2.ctex"]
 
 [params]
 
