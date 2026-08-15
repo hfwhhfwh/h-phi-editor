@@ -4,7 +4,6 @@
 [ext_resource type="Script" uid="uid://ddflgrjtrybjh" path="res://Script/EditorScene/ChooseLinePanel.cs" id="2_ecstf"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="3_ecstf"]
 [ext_resource type="Texture2D" uid="uid://ckyw5ugnyg5ll" path="res://星星.png" id="4_2883p"]
-[ext_resource type="Script" uid="uid://chcljohi2g5r3" path="res://Script/UI/ScrollSafeButton.cs" id="4_bnoxi"]
 
 [node name="ChooseLinePanel" type="Panel" unique_id=143035431 node_paths=PackedStringArray("vBoxContainer", "scrollContainer", "addButton", "closeButton", "selectButton", "layerButtons")]
 anchors_preset = 15
@@ -131,14 +130,11 @@ scroll_deadzone = 20
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Button3" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=960153136]
-visible = false
+[node name="Button3" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=1271082528]
 layout_mode = 2
 theme = ExtResource("3_ecstf")
 theme_override_font_sizes/font_size = 30
 text = "id 状态信息"
-script = ExtResource("4_bnoxi")
-metadata/_custom_type_script = "uid://chcljohi2g5r3"
 
 [node name="Button" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/Button3" unique_id=1688975659]
 layout_mode = 1

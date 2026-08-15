@@ -1,0 +1,144 @@
+[gd_scene format=3 uid="uid://cmwclrqi85lpl"]
+
+[ext_resource type="Script" uid="uid://63x2whnlgugv" path="res://Script/ResourcePack/ResourcePackOverview.cs" id="1_jm0xf"]
+[ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="2_8up87"]
+[ext_resource type="Texture2D" uid="uid://4su3gb6l6dku" path="res://Sprite/TapHL.png" id="3_bif6w"]
+[ext_resource type="Script" uid="uid://cabyo6vvtk5c0" path="res://Script/UI/RatioPositioner.cs" id="3_n0e63"]
+[ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="4_qhlv3"]
+[ext_resource type="Texture2D" uid="uid://ckavuu86r8dl6" path="res://Sprite/DragHL.png" id="5_cthdq"]
+[ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="6_75wkk"]
+[ext_resource type="Texture2D" uid="uid://ce2i2r1d6so0" path="res://Sprite/FlickHL.png" id="7_b6fsg"]
+
+[node name="ResourcePackOverview" type="Control" unique_id=1063507614 node_paths=PackedStringArray("leftControl", "rightControl", "clickSprite", "clickMhSprite", "dragSprite", "dragMhSprite", "flickSprite", "flickMhSprite", "holdHeadSprite", "holdEndSprite", "holdHeadSpriteMh", "holdEndSpriteMh")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jm0xf")
+leftControl = NodePath("HBoxContainer/Left")
+rightControl = NodePath("HBoxContainer/Right")
+clickSprite = NodePath("HBoxContainer/Left/click/Sprite2D")
+clickMhSprite = NodePath("HBoxContainer/Left/click_mh/Sprite2D")
+dragSprite = NodePath("HBoxContainer/Left/drag/Sprite2D")
+dragMhSprite = NodePath("HBoxContainer/Left/drag_mh/Sprite2D")
+flickSprite = NodePath("HBoxContainer/Left/flick/Sprite2D")
+flickMhSprite = NodePath("HBoxContainer/Left/flick_mh/Sprite2D")
+holdHeadSprite = NodePath("HBoxContainer/Left/HoldHead/Sprite2D")
+holdEndSprite = NodePath("HBoxContainer/Left/HoldEnd/Sprite2D")
+holdHeadSpriteMh = NodePath("HBoxContainer/Left/HoldHeadMh/Sprite2D")
+holdEndSpriteMh = NodePath("HBoxContainer/Left/HoldEndMh/Sprite2D")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1644699985]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Left" type="Control" parent="HBoxContainer" unique_id=12403342]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="click" type="Node2D" parent="HBoxContainer/Left" unique_id=1771203200]
+position = Vector2(191.25, 64.8)
+script = ExtResource("3_n0e63")
+RatioX = 0.25
+RatioY = 0.1
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/click" unique_id=1024792672]
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("2_8up87")
+
+[node name="click_mh" type="Node2D" parent="HBoxContainer/Left" unique_id=848931716]
+position = Vector2(535.5, 64.8)
+script = ExtResource("3_n0e63")
+RatioX = 0.7
+RatioY = 0.1
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/click_mh" unique_id=1930418868]
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("3_bif6w")
+
+[node name="drag" type="Node2D" parent="HBoxContainer/Left" unique_id=662386406]
+position = Vector2(191.25, 162)
+script = ExtResource("3_n0e63")
+RatioX = 0.25
+RatioY = 0.25
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/drag" unique_id=1884056469]
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("4_qhlv3")
+
+[node name="drag_mh" type="Node2D" parent="HBoxContainer/Left" unique_id=1967326854]
+position = Vector2(535.5, 162)
+script = ExtResource("3_n0e63")
+RatioX = 0.7
+RatioY = 0.25
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/drag_mh" unique_id=675020963]
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("5_cthdq")
+
+[node name="flick" type="Node2D" parent="HBoxContainer/Left" unique_id=1074058454]
+position = Vector2(191.25, 259.2)
+script = ExtResource("3_n0e63")
+RatioX = 0.25
+RatioY = 0.4
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/flick" unique_id=1077859235]
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("6_75wkk")
+
+[node name="flick_mh" type="Node2D" parent="HBoxContainer/Left" unique_id=836010530]
+position = Vector2(535.5, 259.2)
+script = ExtResource("3_n0e63")
+RatioX = 0.7
+RatioY = 0.4
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/flick_mh" unique_id=1313311269]
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("7_b6fsg")
+
+[node name="HoldEnd" type="Node2D" parent="HBoxContainer/Left" unique_id=1110474308]
+position = Vector2(191.25, 388.80002)
+script = ExtResource("3_n0e63")
+RatioX = 0.25
+RatioY = 0.6
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/HoldEnd" unique_id=1681800092]
+scale = Vector2(0.15, 0.15)
+
+[node name="HoldHead" type="Node2D" parent="HBoxContainer/Left" unique_id=1339498658]
+position = Vector2(191.25, 583.2)
+script = ExtResource("3_n0e63")
+RatioX = 0.25
+RatioY = 0.9
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/HoldHead" unique_id=829965252]
+scale = Vector2(0.15, 0.15)
+
+[node name="HoldEndMh" type="Node2D" parent="HBoxContainer/Left" unique_id=1570543450]
+position = Vector2(535.5, 388.80002)
+script = ExtResource("3_n0e63")
+RatioX = 0.7
+RatioY = 0.6
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/HoldEndMh" unique_id=1097419641]
+scale = Vector2(0.15, 0.15)
+
+[node name="HoldHeadMh" type="Node2D" parent="HBoxContainer/Left" unique_id=784293786]
+position = Vector2(535.5, 583.2)
+script = ExtResource("3_n0e63")
+RatioX = 0.7
+RatioY = 0.9
+
+[node name="Sprite2D" type="Sprite2D" parent="HBoxContainer/Left/HoldHeadMh" unique_id=1330949074]
+scale = Vector2(0.15, 0.15)
+
+[node name="Right" type="Control" parent="HBoxContainer" unique_id=94201775]
+layout_mode = 2
+size_flags_horizontal = 3

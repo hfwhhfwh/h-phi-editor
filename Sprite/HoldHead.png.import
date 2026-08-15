@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvrux81oagnlk"
 path.s3tc="res://.godot/imported/HoldHead.png-d64537fe9d5ca3663c83244bdb121b86.s3tc.ctex"
-path.etc2="res://.godot/imported/HoldHead.png-d64537fe9d5ca3663c83244bdb121b86.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://Sprite/HoldHead.png"
-dest_files=["res://.godot/imported/HoldHead.png-d64537fe9d5ca3663c83244bdb121b86.s3tc.ctex", "res://.godot/imported/HoldHead.png-d64537fe9d5ca3663c83244bdb121b86.etc2.ctex"]
+dest_files=["res://.godot/imported/HoldHead.png-d64537fe9d5ca3663c83244bdb121b86.s3tc.ctex"]
 
 [params]
 

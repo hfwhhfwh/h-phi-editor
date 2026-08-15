@@ -29,6 +29,26 @@ public abstract partial class BaseChartPlayer : Node
     // 开关
     public bool Disabled { get; set; } = false;
 
+    // 资源
+    protected ResourcePack _resourcePack;
+    public AudioStream TapSound { get; set; }
+    public AudioStream DragSound { get; set; }
+    public AudioStream FlickSound { get; set; }
+    public SpriteFrames HitFrames { get; set; }
+    public ResourcePack Pack
+    {
+        set
+        {
+            _resourcePack = value;
+            TapSound = value.sxDic["click"];
+            DragSound = value.sxDic["drag"];
+            FlickSound = value.sxDic["flick"];
+            HitFrames = value.hitEffectSF;
+        }
+    }
+
+    public abstract void UseDefaultResource();
+
     /// <summary>
     /// 初始化
     /// </summary>

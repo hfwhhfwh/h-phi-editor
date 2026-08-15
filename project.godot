@@ -11,10 +11,10 @@ config_version=5
 [application]
 
 config/name="HPhiEditor"
-config/version="1.0.0"
+config/version="1.0.0-Beta"
 run/main_scene="uid://bfqi2qheha4ul"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="uid://dr5b2hjh04vy8"
 
 [autoload]
 
@@ -26,6 +26,7 @@ ChartRepository="*uid://dgrw8ly3bw4br"
 InputManager="*uid://sroqxnij5j65"
 Global="*uid://rfaccn3y6mc0"
 ChartEditService="*uid://kc3isyumh8h8"
+GameSettings="*uid://dw1yc66e2nrfi"
 
 [display]
 
@@ -53,4 +54,3 @@ common/default_scroll_deadzone=5
 
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
-textures/vram_compression/import_etc2_astc=true

@@ -9,7 +9,7 @@ namespace HPhiEditorGame.Editor
     {
         string Label { get; }
         Control Control { get; }
-        event Action<string, object> ValueChanged;
+        event Action<string, Variant> ValueChanged;
         void SetValue(object value);
         void Setup(string label); 
     }
@@ -29,12 +29,12 @@ namespace HPhiEditorGame.Editor
 
         public abstract T Value { get; set; }
         public event Action<T> TypedValueChanged;
-        public event Action<string, object> ValueChanged;
+        public event Action<string, Variant> ValueChanged;
 
         protected void NotifyChanged(T newValue)
         {
             TypedValueChanged?.Invoke(newValue);
-            ValueChanged?.Invoke(_label, newValue);
+            ValueChanged?.Invoke(_label, Variant.From(newValue));
         }
 
         public void SetValue(object value) => Value = (T)value;

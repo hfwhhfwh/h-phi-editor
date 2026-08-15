@@ -64,7 +64,7 @@ public partial class CreateChartPanel : PanelContainer
 
     public void OnConfirm()
     {
-        string id = Util.GenerateRandomId(14);
+        string id = Util.GenerateRandomNumId(14);
         var data = new ChartInfo
         {
             Id = id,

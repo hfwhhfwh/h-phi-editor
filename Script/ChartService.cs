@@ -93,7 +93,7 @@ public partial class ChartService : Node
     public void ImportChart(string path)
     {
         //1. 创建临时导入目录
-        string id = Util.GenerateRandomId(14);
+        string id = Util.GenerateRandomNumId(14);
         //GD.Print($"id:{id}");
         string tempDir = Path.Combine("user://temp_import", id);
         //GD.Print($"tempDir:{tempDir}");

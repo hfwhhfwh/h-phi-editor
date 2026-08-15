@@ -4,7 +4,31 @@ using System.Linq;
 
 public partial class FileDialogManager : Node
 {   
+    // 单例实例
+    public static FileDialogManager Instance { get; private set; }
 
+    public override void _Ready()
+    {
+        // 防止重复实例化
+        if (Instance != null)
+        {
+            GD.PrintErr("FileDialogManager 单例已存在，销毁重复实例");
+            QueueFree();
+            return;
+        }
+        Instance = this;
+    }
+
+    public override void _ExitTree()
+    {
+        // 清理时释放引用，防止野指针
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+        base._ExitTree();
+    }
+    
     /// <summary>
     /// 判断是否处于 iOS 环境（真机或模拟）
     /// </summary>

@@ -13,11 +13,12 @@ public partial class ChartPlayer : BaseChartPlayer
     public Image BgImage { get; set; }                //背景图片，由上级设置
     public AudioStream MusicAudio { get; set; }       //音乐，由上级设置
 
-    #region 打击音效
-    [ExportGroup("打击音效")]
-    [Export] public AudioStream tapSound;
-    [Export] public AudioStream dragSound;
-    [Export] public AudioStream flickSound;
+    #region 默认打击效果
+    [ExportGroup("默认打击效果")]
+    [Export] private AudioStream _defaultTapSound;
+    [Export] private AudioStream _defaultDragSound;
+    [Export] private AudioStream _defaultFlickSound;
+    [Export] private SpriteFrames _defaultHitFrames; // 打击特效
 
     [ExportGroup("")]
     #endregion
@@ -27,7 +28,7 @@ public partial class ChartPlayer : BaseChartPlayer
     // public bool LogicDisabled { get; set; } // 是否禁用位置计算
 
     private HitEffectPool hitEffectPool;
-    [Export] private SpriteFrames hitFrames; // 打击特效
+    
     private AudioPool audioPool;
 
     private List<JudgeLineNode> judgeLineNodes = new();
@@ -156,17 +157,27 @@ public partial class ChartPlayer : BaseChartPlayer
         //选择对应的音效
         AudioStream audioStream = noteType switch
         {
-            NoteType.Tap => tapSound,
-            NoteType.Hold => tapSound,
-            NoteType.Flick => flickSound,
-            NoteType.Drag => dragSound,
-            _ => tapSound
+            NoteType.Tap => TapSound,
+            NoteType.Hold => TapSound,
+            NoteType.Flick => FlickSound,
+            NoteType.Drag => DragSound,
+            _ => TapSound
         };
 
         var player = audioPool.Get();
         player.Stream = audioStream;
         player.Play(); // 播放完成后自动回收（通过 Finished 信号）
     }
+
+    public override void UseDefaultResource()
+    {
+        TapSound = _defaultTapSound;
+        DragSound = _defaultDragSound;
+        FlickSound = _defaultFlickSound;
+        HitFrames = _defaultHitFrames;
+    }
+
+
 
     public override void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio)
     {
@@ -217,7 +228,7 @@ public partial class ChartPlayer : BaseChartPlayer
         Parent = parent;
 
         //设置打击特效
-        hitEffectPool = new HitEffectPool(parent, hitFrames, 50);
+        hitEffectPool = new HitEffectPool(parent, HitFrames, 50);
         parent.AddChild(hitEffectPool);
 
         //设置打击音效

@@ -13,6 +13,7 @@ public partial class StartMenu : Node
     [Export] private DeletePanel _deletePanel;
     [Export] private InfoPanel _infoPanel;
     [Export] private ExportPanel _exportPanel;
+    [Export] private SettingsPanel _settingsPanel;
 
     private FileDialogManager fileDialogManager;
 
@@ -233,9 +234,20 @@ public partial class StartMenu : Node
         _exportPanel.Visible = false;
     }
 
+    public void OnSettingsPressed()
+    {
+        _settingsPanel.Visible = true;
+    }
+
     //打开谱面，进入编辑界面
     public void OnOpenPressed()
     {
+        if (string.IsNullOrEmpty(_currentSelectedChartId))
+        {
+            GD.Print($"[{Name}] 未选中任何谱面");
+            return;
+        }
+        
         var global = GetNode<Global>("/root/Global");
         global.editingChartId = _currentSelectedChartId;
         global.GotoScene("res://Scene/editor_scene.tscn");

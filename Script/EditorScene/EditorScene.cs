@@ -86,6 +86,9 @@ public partial class EditorScene : Node
         }
     }
 
+    // 皮肤资源包
+    private ResourcePack _resourcePack;
+
     #if TOOLS
     // ---- 性能分析 ----
     private double _setChartTimeTimeUs = 0;
@@ -168,7 +171,18 @@ public partial class EditorScene : Node
         noteEditPanel.editingChart = editingChart;
         eventEditPanel.editingChart = editingChart;
 
-        // ===================初始化谱面播放器=================
+        // ================ 加载资源包 ================
+        LoadResourcePack();
+        GameSettings.Instance.SettingChanged += (string key, Variant value) =>
+        {
+            if(key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
+            {
+                LoadResourcePack();
+            }
+        };
+        
+
+        // ================初始化谱面播放器================
         // 背景图片
         Image bgImage = Image.LoadFromFile(chartInfo.PicturePath);
         if (bgImage == null)
@@ -817,6 +831,27 @@ public partial class EditorScene : Node
     private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
         _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
+    }
+
+    private void LoadResourcePack()
+    {
+        bool useDefault = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource));
+        if (useDefault)
+        {
+            chartPlayer.UseDefaultResource();
+            chartRenderer.UseDefaultResource();
+        }
+        else
+        {
+            string id = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
+            _resourcePack = ResourcePackLoader.LoadFromLocal(id);
+            if(_resourcePack == null)
+            {
+                GD.PrintErr($"[{Name}] 加载资源包失败, id:{id}");
+            }
+            chartPlayer.Pack = _resourcePack;
+            chartRenderer.Pack = _resourcePack;
+        }
     }
 
 }

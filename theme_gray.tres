@@ -1102,6 +1102,7 @@ MenuButton/styles/normal = ExtResource("3_lnahn")
 MenuButton/styles/normal_mirrored = ExtResource("3_lnahn")
 MenuButton/styles/pressed = ExtResource("4_eqpgp")
 Panel/styles/panel = ExtResource("5_5mx2u")
+PanelContainer/styles/panel = ExtResource("5_5mx2u")
 PopupMenu/font_sizes/font_separator_size = 20
 PopupMenu/font_sizes/font_size = 30
 PopupMenu/font_sizes/title_font_size = 30

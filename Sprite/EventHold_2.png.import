@@ -3,19 +3,20 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://btdnpjcck36nd"
-path="res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.ctex"
+path.s3tc="res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://Sprite/EventHold_2.png"
-dest_files=["res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.ctex"]
+dest_files=["res://.godot/imported/EventHold_2.png-b93bff9dc10b13949b95f0b52441199e.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

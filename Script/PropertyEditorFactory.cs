@@ -13,7 +13,7 @@ public static class PropertyEditorFactory
         [typeof(long)]    = () => null,//new IntEditor(),
         [typeof(float)]   = () => new FloatEditor(),
         [typeof(double)]  = () => null,//new DoubleEditor(),
-        [typeof(bool)]    = () => null,//new BoolEditor(),
+        [typeof(bool)]    = () => new BoolEditor(),
         [typeof(Beat)]    = () => new BeatEditor(),
         [typeof(EasingData)] = () => new EasingEditor(),
     };

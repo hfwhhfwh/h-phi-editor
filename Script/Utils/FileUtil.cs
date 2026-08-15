@@ -83,8 +83,8 @@ public static class FileUtil
     /// <summary>
     /// 将指定路径的ZIP文件解压到指定路径的文件夹中。
     /// </summary>
-    /// <param name="zipPath">ZIP文件的完整路径，例如 "res://ZipFile.zip"</param>
-    /// <param name="extractBasePath">解压基础路径，例如 "res://ChartImport/"</param>
+    /// <param name="zipPath">ZIP文件的完整路径，例如 "user://ZipFile.zip"</param>
+    /// <param name="extractBasePath">解压基础路径，例如 "user://ChartImport/"</param>
     public static void UnzipFileTo(string zipPath, string extractBasePath)
     {
         var zipReader = new ZipReader();
@@ -101,8 +101,8 @@ public static class FileUtil
         foreach (string filePath in files)// 例如 Chart.json
         {
             // 计算文件的完整输出路径
-            string fullOutputPath = Path.Combine(extractBasePath, filePath); // 例如 res://ChartImport/Chart.json
-            string outputDirectory = fullOutputPath.GetBaseDir(); // 例如 res://ChartImport/
+            string fullOutputPath = Path.Combine(extractBasePath, filePath); // 例如 user://ChartImport/Chart.json
+            string outputDirectory = extractBasePath; // 例如 user://ChartImport/
 
             // 确保文件的子目录存在
             DirAccess.MakeDirRecursiveAbsolute(outputDirectory);
@@ -289,11 +289,21 @@ public static class FileUtil
 	/// <param name="path">目录路径</param>
 	public static void EnsureDirectoryExists(string directory)
 	{
-		if (!string.IsNullOrEmpty(directory) && !DirAccess.DirExistsAbsolute(directory))
+        if(string.IsNullOrEmpty(directory)) return;
+
+        string globalPath = ProjectSettings.GlobalizePath(directory);
+		if (!DirAccess.DirExistsAbsolute(directory))
 		{
-			DirAccess.MakeDirRecursiveAbsolute(directory);
+			DirAccess.MakeDirRecursiveAbsolute(globalPath);
 		}
 	}
+
+    public static bool DirExists(string dir)
+    {
+        string absoluteDir = ProjectSettings.GlobalizePath(dir);
+
+        return DirAccess.DirExistsAbsolute(absoluteDir);
+    }
 
 	/// <summary>
 	/// 递归删除目录
@@ -424,6 +434,95 @@ public static class FileUtil
     }
 
     /// <summary>
+    /// 获取目录下按字典序排列的文件（不含子目录）
+    /// 返回相对路径或完整路径
+    /// </summary>
+    public static string[] GetFilesInDir(string dirPath, bool fullPath = true)
+    {
+        using var dir = DirAccess.Open(dirPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            return null;
+        }
+
+        // 只获取文件（不含子目录）
+        string[] files = dir.GetFiles();
+        if (files.Length == 0)
+            return null;
+
+        // PackedStringArray 自带 Sort()，按字典序原地排序
+        Array.Sort(files);
+
+        // 如果需要完整路径，用 Godot 的 PathJoin 拼接
+        if (fullPath)
+        {
+            for(int i = 0; i < files.Length; i++)
+            {
+                files[i] = dirPath.PathJoin(files[i]);
+            }
+        }
+        
+        return files;
+    }
+
+    /// <summary>
+    /// 获取目录下按字典序排列的第一个文件（不含子目录）
+    /// 返回相对路径或完整路径
+    /// </summary>
+    public static string GetFirstFileAlphabetically(string dirPath, bool fullPath = true)
+    {
+        using var dir = DirAccess.Open(dirPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            return null;
+        }
+
+        // 只获取文件（不含子目录）
+        var files = dir.GetFiles();
+        if (files.Length == 0)
+            return null;
+
+        // PackedStringArray 自带 Sort()，按字典序原地排序
+        Array.Sort(files);
+
+        string firstFile = files[0];
+
+        // 如果需要完整路径，用 Godot 的 PathJoin 拼接
+        return fullPath ? dirPath.PathJoin(firstFile) : firstFile;
+    }
+
+    public static string[] GetDirsInDir(string dirPath, bool fullPath = true)
+    {
+        using var dir = DirAccess.Open(dirPath);
+        if (dir == null)
+        {
+            GD.PrintErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            return null;
+        }
+
+        // 只获取目录（不含子目录）
+        string[] dirs = dir.GetDirectories();
+        if (dirs.Length == 0)
+            return null;
+
+        // PackedStringArray 自带 Sort()，按字典序原地排序
+        Array.Sort(dirs);
+
+        // 如果需要完整路径，用 Godot 的 PathJoin 拼接
+        if (fullPath)
+        {
+            for(int i = 0; i < dirs.Length; i++)
+            {
+                dirs[i] = dirPath.PathJoin(dirs[i]);
+            }
+        }
+        
+        return dirs;
+    }
+
+    /// <summary>
     /// 根据文件扩展名，动态加载不同格式的音频文件。
     /// </summary>
     /// <param name="path">音频文件的路径</param>
@@ -528,7 +627,7 @@ public static class FileUtil
     /// </summary>
     /// <param name="picPath">图片路径</param>
     /// <returns></returns>
-    public static Texture2D LoadTextureFromFile(string picPath, out string realFormat)
+    public static Texture2D LoadTextureFromFile(string picPath, out string realFormat, bool mipmap = true)
     {
         realFormat = null;
         // 检查文件存在
@@ -541,10 +640,10 @@ public static class FileUtil
         var image = new Image();
         Error err = Error.Failed;
 
-        // 第一步：通用加载（扩展名和格式一致时直接成功）
+        // 1. 通用加载（扩展名和格式一致时直接成功）
         err = image.Load(picPath);
 
-        // 失败则回退到 Buffer + 格式检测
+        // 2. 失败则回退到 Buffer + 格式检测
         if (err != Error.Ok)
         {
             GD.Print($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
@@ -605,6 +704,17 @@ public static class FileUtil
             GD.PrintErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
             return null;
         }
+
+        // 生成mipmap
+        if (mipmap)
+        {
+            err = image.GenerateMipmaps();
+            if (err != Error.Ok)
+            {
+                GD.PushWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
+            }
+        }
+
 
         Texture2D texture = ImageTexture.CreateFromImage(image);
         if(texture == null)
