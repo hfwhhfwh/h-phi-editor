@@ -9,8 +9,10 @@ public partial class SettingsPanel : Control
     // ---------- 控件引用 ----------
     // 在编辑器里把对应节点设为 Unique Name，或在 Inspector 中拖拽赋值
     [Export] private OptionButton _vSyncOptionBtn;
-    [Export] private OptionButton _packOptionBtn;
     [Export] private SpinBox _maxFpsEdit;
+
+    [Export] private OptionButton _packOptionBtn;
+    [Export] private CheckButton _useDefaultResourceBtn;
     // [Export] private LineEdit _resourcePackEdit;
     // [Export] private CheckButton _fullscreenCheck;
     // [Export] private OptionButton _resolutionOption;
@@ -105,6 +107,11 @@ public partial class SettingsPanel : Control
             GameSettings.Instance.Set(nameof(SettingsData.ResourcePackId), id);
         };
 
+        _useDefaultResourceBtn.Toggled += (bool value) =>
+        {
+            GameSettings.Instance.Set(nameof(SettingsData.UseDefaultResource), value);
+        };
+
         _maxFpsEdit.ValueChanged += (double value) =>
         {
             int intValue = Mathf.RoundToInt(value);
@@ -143,6 +150,10 @@ public partial class SettingsPanel : Control
             case nameof(SettingsData.MaxFps):
                 _maxFpsEdit.Value = GameSettings.Instance.Get<int>(nameof(SettingsData.MaxFps));
                 GameSettings.Instance.ApplyToEngine();
+                break;
+            
+            case nameof(SettingsData.UseDefaultResource):
+                _useDefaultResourceBtn.SetPressedNoSignal(GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
                 break;
         }
     }
@@ -216,6 +227,9 @@ public partial class SettingsPanel : Control
         {
             _packOverview.Overview(pack);
         }
+
+        // 是否使用默认资源包
+        _useDefaultResourceBtn.SetPressedNoSignal(GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
         
 
         GD.Print($"[{Name}] 成功刷新资源包设置界面");

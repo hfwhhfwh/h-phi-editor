@@ -172,15 +172,15 @@ public partial class EditorScene : Node
         eventEditPanel.editingChart = editingChart;
 
         // ================ 加载资源包 ================
-        string packId = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
-        LoadResourcePack(packId);
+        LoadResourcePack();
         GameSettings.Instance.SettingChanged += (string key, Variant value) =>
         {
-            if(key == nameof(SettingsData.ResourcePackId))
+            if(key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
             {
-                LoadResourcePack(value.As<string>());
+                LoadResourcePack();
             }
         };
+        
 
         // ================初始化谱面播放器================
         // 背景图片
@@ -833,15 +833,25 @@ public partial class EditorScene : Node
         _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
     }
 
-    private void LoadResourcePack(string id)
+    private void LoadResourcePack()
     {
-        _resourcePack = ResourcePackLoader.LoadFromLocal(id);
-        if(_resourcePack == null)
+        bool useDefault = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource));
+        if (useDefault)
         {
-            GD.PrintErr($"[{Name}] 加载资源包失败, id:{id}");
+            chartPlayer.UseDefaultResource();
+            chartRenderer.UseDefaultResource();
         }
-        chartPlayer.Pack = _resourcePack;
-        chartRenderer.Pack = _resourcePack;
+        else
+        {
+            string id = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
+            _resourcePack = ResourcePackLoader.LoadFromLocal(id);
+            if(_resourcePack == null)
+            {
+                GD.PrintErr($"[{Name}] 加载资源包失败, id:{id}");
+            }
+            chartPlayer.Pack = _resourcePack;
+            chartRenderer.Pack = _resourcePack;
+        }
     }
 
 }

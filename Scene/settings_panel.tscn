@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_packOptionBtn", "_maxFpsEdit", "_importPackBtn", "_exportPackBtn", "_applyBtn", "_confirmBtn", "_packOverview")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_applyBtn", "_confirmBtn", "_packOverview")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -15,8 +15,9 @@ grow_vertical = 2
 theme = ExtResource("1_ykn2r")
 script = ExtResource("1_ivhfp")
 _vSyncOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync/OptionButton")
-_packOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row/OptionButton")
 _maxFpsEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/MaxFps/SpinBox")
+_packOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row/OptionButton")
+_useDefaultResourceBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/UseDefault")
 _importPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Import")
 _exportPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Export")
 _applyBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Apply")
@@ -137,6 +138,7 @@ theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
 [node name="Display" type="ScrollContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1633273645]
+visible = false
 layout_mode = 2
 theme = ExtResource("1_ykn2r")
 
@@ -172,7 +174,6 @@ allow_greater = true
 allow_lesser = true
 
 [node name="Pack" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=2146774469]
-visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack" unique_id=868202544]
@@ -188,6 +189,10 @@ text = "导入"
 [node name="Export" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer" unique_id=1451751647]
 layout_mode = 2
 text = "导出"
+
+[node name="UseDefault" type="CheckButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer" unique_id=248003178]
+layout_mode = 2
+text = "使用默认资源包"
 
 [node name="Row" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer" unique_id=41446396]
 layout_mode = 2

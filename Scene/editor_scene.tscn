@@ -10,10 +10,14 @@
 [ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="6_p0vr8"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
 [ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="7_75obp"]
+[ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="7_r1xvh"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
 [ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="8_63sjd"]
+[ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="8_wx7m8"]
+[ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="9_3s8ev"]
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="9_gi1tw"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="10_4d80g"]
+[ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="10_wx7m8"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="11_khybl"]
 [ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EditorScene/EventEditPanel.cs" id="12_qdb1r"]
 [ext_resource type="Script" uid="uid://bctcbmd05picq" path="res://Script/ChartRenderer.cs" id="12_roijs"]
@@ -198,9 +202,19 @@ layout_mode = 2
 
 [node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854]
 script = ExtResource("7_75obp")
+_defaultTapSound = ExtResource("7_r1xvh")
+_defaultDragSound = ExtResource("8_wx7m8")
+_defaultFlickSound = ExtResource("9_3s8ev")
+_defaultHitFrames = ExtResource("10_wx7m8")
 
 [node name="ChartRenderer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1497791091]
 script = ExtResource("12_roijs")
+_defaultTapTexture = ExtResource("5_57v2d")
+_defaultDragTexture = ExtResource("6_qdb1r")
+_defaultFlickTexture = ExtResource("7_wq0mf")
+_defaultHoldHeadTexture = ExtResource("8_63sjd")
+_defaultHoldBodyTexture = ExtResource("9_gi1tw")
+_defaultHoldEndTexture = ExtResource("10_4d80g")
 lineTexture = ExtResource("11_khybl")
 
 [node name="EditPanel" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]

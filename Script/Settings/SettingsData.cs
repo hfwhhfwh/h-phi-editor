@@ -19,7 +19,8 @@ public partial class SettingsData : Resource
     // [Export] public bool ShowDamageNumbers { get; set; } = true;
 
     // 资源包
-    [Export] public string ResourcePackId { get; set; }
+    [Export] public string ResourcePackId { get; set; } = "";
+    [Export] public bool UseDefaultResource { get; set; } = true;
 
     // 深拷贝，避免引用问题
     public SettingsData Clone()

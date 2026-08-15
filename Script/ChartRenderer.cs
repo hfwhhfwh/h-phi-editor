@@ -10,17 +10,16 @@ public partial class ChartRenderer : BaseChartRenderer
 	}
 	private readonly NoteSpriteType[] allNoteSpriteTypes = (NoteSpriteType[])Enum.GetValues(typeof(NoteSpriteType));
 
-    // #region 纹理贴图
-    // [ExportGroup("纹理贴图")]
-    // [Export] public Texture2D tapTexture;
-    // [Export] public Texture2D dragTexture;
-    // [Export] public Texture2D flickTexture;
-    // [Export] public Texture2D holdHeadTexture;
-    // [Export] public Texture2D holdBodyTexture;
-    // [Export] public Texture2D holdEndTexture;
-    // [Export] public Texture2D lineTexture;
+    #region 默认纹理贴图
+    [ExportGroup("默认纹理贴图")]
+    [Export] private Texture2D _defaultTapTexture;
+    [Export] private Texture2D _defaultDragTexture;
+    [Export] private Texture2D _defaultFlickTexture;
+    [Export] private Texture2D _defaultHoldHeadTexture;
+    [Export] private Texture2D _defaultHoldBodyTexture;
+    [Export] private Texture2D _defaultHoldEndTexture;
 
-    // #endregion
+    #endregion
 
     // 类顶部增加缓存，优化性能
     private readonly Color _white = Colors.White;
@@ -71,21 +70,30 @@ public partial class ChartRenderer : BaseChartRenderer
         #endif
     }
 
+    public override void UseDefaultResource()
+    {
+        TapTexture = _defaultTapTexture;
+        DragTexture = _defaultDragTexture;
+        FlickTexture = _defaultFlickTexture;
+        HoldHeadTexture = _defaultHoldHeadTexture;
+        HoldBodyTexture = _defaultHoldBodyTexture;
+        HoldEndTexture = _defaultHoldEndTexture;
+    }
 
 
     public override void Initialize(Control parent)
     {
         // 预计算常量
-        _holdHeadSize = _holdHeadTexture.GetSize();
-        _holdBodySize = _holdBodyTexture.GetSize();
-        _holdEndSize = _holdEndTexture.GetSize();
+        _holdHeadSize = HoldHeadTexture.GetSize();
+        _holdBodySize = HoldBodyTexture.GetSize();
+        _holdEndSize = HoldEndTexture.GetSize();
 
         Parent = parent;
         //设置note的宽度缩放
         Parent.Resized += () =>
         {
-            noteScale = Parent.Size.X * 0.16f / _tapTexture.GetWidth();
-            GD.Print($"[{this.Name}] parent.Size.X:{Parent.Size.X}, tapTexture.GetWidth():{_tapTexture.GetWidth()}, noteScale:{noteScale}");
+            noteScale = Parent.Size.X * 0.16f / TapTexture.GetWidth();
+            GD.Print($"[{this.Name}] parent.Size.X:{Parent.Size.X}, tapTexture.GetWidth():{TapTexture.GetWidth()}, noteScale:{noteScale}");
         };
 
         // 初始化MultiMesh
@@ -135,13 +143,13 @@ public partial class ChartRenderer : BaseChartRenderer
 
             Texture2D texture = type switch
 			{
-				NoteSpriteType.Tap => _tapTexture,
-				NoteSpriteType.Drag => _dragTexture,
-				NoteSpriteType.Flick => _flickTexture,
-				NoteSpriteType.HoldHead => _holdHeadTexture,
-				NoteSpriteType.HoldBody => _holdBodyTexture,
-				NoteSpriteType.HoldEnd => _holdEndTexture,
-				_ => _tapTexture
+				NoteSpriteType.Tap => TapTexture,
+				NoteSpriteType.Drag => DragTexture,
+				NoteSpriteType.Flick => FlickTexture,
+				NoteSpriteType.HoldHead => HoldHeadTexture,
+				NoteSpriteType.HoldBody => HoldBodyTexture,
+				NoteSpriteType.HoldEnd => HoldEndTexture,
+				_ => TapTexture
 			};
 
             //设置Multimesh
