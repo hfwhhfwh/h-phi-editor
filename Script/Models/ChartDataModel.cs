@@ -12,7 +12,7 @@ namespace QuickType
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading;
-
+    using Godot;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -141,6 +141,72 @@ namespace QuickType
         public static bool operator !=(Beat left, Beat right)
         {
             return !(left == right);
+        }
+
+        // 重载+-运算符
+        public static Beat operator +(Beat left, Beat right)
+        {
+            if (left is null)
+                throw new ArgumentNullException(nameof(left));
+            if (right is null)
+                throw new ArgumentNullException(nameof(right));
+            
+            // 先处理分数部分
+            int b = left.Numerator * right.Denominator + left.Denominator * right.Numerator;
+            int c = left.Denominator * right.Denominator;
+
+            // 分数b/c进行约分
+            // 约分（注意 num 可能为负，取绝对值求 GCD）
+            int gcd = MathUtil.GCD(Math.Abs(b), c);
+            b /= gcd;
+            c /= gcd;
+
+            // 处理假分数情况
+            int a2 = 0;
+            if(b > c)
+            {
+                a2 = b / c;
+                b %= c;
+            }
+
+            int a = left.IntegerPart + right.IntegerPart + a2;
+
+            return new Beat(a, b, c);
+        }
+
+        public static Beat operator -(Beat left, Beat right)
+        {
+            if (left is null)
+                throw new ArgumentNullException(nameof(left));
+            if (right is null)
+                throw new ArgumentNullException(nameof(right));
+
+            // 直接转换成假分数
+            int bl = left.IntegerPart * left.Denominator + left.Numerator;
+            int br = right.IntegerPart * right.Denominator + right.Numerator;
+
+            // 通分相减
+            int num = bl * right.Denominator - br * left.Denominator;
+            int den = left.Denominator * right.Denominator;
+
+            // 约分
+            int gcd = MathUtil.GCD(Math.Abs(num), Math.Abs(den));
+            num /= gcd;
+            den /= gcd;
+
+            // 将假分数转为带分数，确保分数部分为非负真分数（分子 < 分母，分子 >= 0）
+            int integer = num / den;        // 向零截断
+            int remainder = num % den;
+
+            if (remainder < 0)
+            {
+                // 向负无穷方向调整
+                integer--;
+                remainder += den;
+            }
+
+            // 此时 remainder 在 [0, den-1] 之间
+            return new Beat(integer, remainder, den);
         }
 
         // 重写 Equals 和 GetHashCode（任何时候重载 == 都必须这么做，消除编译器警告）

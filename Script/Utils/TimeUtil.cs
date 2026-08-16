@@ -123,4 +123,11 @@ public static class TimeUtil
         float remainingBeats = remainingSeconds * lastBpm / 60f;
         return lastBeat + remainingBeats;
     }
+
+    public static bool IsBeatEqual(int[] beat1, int[] beat2)
+    {
+        return beat1[0] == beat2[0] && 
+               beat1[1] == beat2[1] && 
+               beat1[2] == beat2[2]; 
+    }
 }

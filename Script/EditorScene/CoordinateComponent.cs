@@ -82,12 +82,58 @@ public class CoordinateComponent
 
         return beatValue;
     }
+    
+    /// <summary>
+    /// 长度换算 BeatValue -> PanelY
+    /// </summary>
+    /// <param name="beatValue"></param>
+    /// <returns></returns>
+    public float BeatValueToPanelY(float beatValue)
+    {
+        return - beatValue * horSeparationSmoothed;
+    }
+
+    /// <summary>
+    /// 长度换算 ChartX -> PanelX
+    /// </summary>
+    /// <param name="chartX"></param>
+    /// <returns></returns>
+    public float ChartXToPanelX(float chartX)
+    {
+        float ratio = chartX / 1350f;
+        float panelX = ratio * (parentSize.X - 2 * verMargin);
+
+        return panelX;
+    }
+
+    /// <summary>
+    /// 长度换算 PanelY -> BeatValue
+    /// </summary>
+    /// <param name="panelY"></param>
+    /// <returns></returns>
+    public float PanelYToBeatValue(float panelY)
+    {
+        return - panelY / horSeparationSmoothed;
+    }
+
+    /// <summary>
+    /// 长度换算 PanelX -> ChartX
+    /// </summary>
+    /// <param name="panelX"></param>
+    /// <returns></returns>
+    public float PanelXToChartX(float panelX)
+    {
+        float ratio = panelX / (parentSize.X - 2 * verMargin);
+        float chartX = ratio * 1350f;
+
+        return chartX;
+    }
 
     public float SnapChartXToGrid(float chartX)
     {
-        float ratioX = (chartX - (-675)) / 1350;
+        float ratioX = (chartX - (-675f)) / 1350f;
         float snappedratioX = Mathf.Round(ratioX * (verLineCount - 1)) / (verLineCount - 1);
-        float snappedX = -675 + snappedratioX * 1350;
+        float snappedX = -675f + snappedratioX * 1350f;
 
         return snappedX;
     }
@@ -118,6 +164,34 @@ public class CoordinateComponent
         }
         
         int b = Mathf.RoundToInt(beatValue * subBeatCount) % subBeatCount;
+        int c = subBeatCount;
+
+        return new Beat(a, b, c);
+    }
+
+    public float SnapDeltaChartXToDeltaGrid(float deltaChartX)
+    {
+        float ratioX = deltaChartX / 1350f;
+        float snappedratioX = Mathf.Round(ratioX * (verLineCount - 1)) / (verLineCount - 1);
+        float snappedX = snappedratioX * 1350f;
+
+        return snappedX;
+    }
+
+    public Beat SnapDeltaBeatValueToGrid(float deltaBeatValue)
+    {
+
+        int a;
+        if(Mathf.Ceil(deltaBeatValue) - deltaBeatValue < 1f / subBeatCount / 2)
+        {
+            a = Mathf.CeilToInt(deltaBeatValue);
+        }
+        else
+        {
+            a = Mathf.FloorToInt(deltaBeatValue);
+        }
+        
+        int b = Mathf.RoundToInt(deltaBeatValue * subBeatCount) % subBeatCount;
         int c = subBeatCount;
 
         return new Beat(a, b, c);

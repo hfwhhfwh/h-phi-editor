@@ -122,6 +122,13 @@ public partial class EditorScene : Node
 
     public override void _Ready()
     {
+        // {
+        //     Beat beat1 = new Beat(0, 1, 4);
+        //     Beat beat2 = new Beat(2, 0, 4);
+
+        //     Beat beat3 = beat1 - beat2;
+        //     GD.Print($"beat3:{beat3}");
+        // }
         #if TOOLS
         // 注册自定义监视器
         Performance.AddCustomMonitor("EditorScene/SetChartTimeTimeUs", Callable.From(() => _setChartTimeTimeUs));
@@ -249,6 +256,8 @@ public partial class EditorScene : Node
         noteEditPanel.OnNoteSelected += OnNoteSelected;
         noteEditPanel.NoteAddRequested += AddNote;
         noteEditPanel.NoteDeleteRequested += OnNotesDelete;
+        noteEditPanel.NoteMoved += MoveNote;
+        noteEditPanel.NoteTimeChanged += SetNoteTime;
         noteEditPanel.Disabled = false;
 
         // 设置eventEditPanel
@@ -462,6 +471,8 @@ public partial class EditorScene : Node
         // 设置NoteEditPanel
         noteEditPanel.NoteAddRequested -= AddNote;
         noteEditPanel.NoteDeleteRequested -= OnNotesDelete;
+        noteEditPanel.NoteMoved -= MoveNote;
+        noteEditPanel.NoteTimeChanged -= SetNoteTime;
 
         // 设置eventEditPanel
         eventEditPanel.EventSelected -= OnEventSelected;
@@ -851,6 +862,24 @@ public partial class EditorScene : Node
             }
             chartPlayer.Pack = _resourcePack;
             chartRenderer.Pack = _resourcePack;
+        }
+    }
+
+    private void MoveNote(int lineId, int noteIndex, float chartX)
+    {
+        _chartEditService.SetNoteProperty(lineId, noteIndex, NotePropertyEnum.PosX, chartX);
+    }
+
+    private void SetNoteTime(int lineId, int noteIndex, Beat startBeat, Beat endBeat)
+    {
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+        if(!TimeUtil.IsBeatEqual(note.StartTime, startBeat.Values))
+        {
+            _chartEditService.SetNoteProperty(lineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
+        }
+        if(!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
+        {
+            _chartEditService.SetNoteProperty(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
         }
     }
 
