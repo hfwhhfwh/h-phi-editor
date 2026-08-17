@@ -16,6 +16,7 @@ public partial class EditorScene : Node
     [Export] private float zoomMouseSensitivity = 1f; // 鼠标滚轮竖直缩放的灵敏度
 	[Export] private float verJoystickSensitivity = 1500f; // 虚拟摇杆竖直滚动的灵敏度
 	[Export] private float zoomJoystickSensitivity = 2f; // 虚拟摇杆缩放的灵敏度
+    [Export] private float verJoystickTimeSens = 2f; // 滚动时间时的虚拟摇杆灵敏度
 
     [ExportGroup("资源引用")]
     [Export] private Theme theme;
@@ -50,25 +51,25 @@ public partial class EditorScene : Node
     private ChartEditService _chartEditService;
 
     [Export] private float horOffset;
-	private float horBeatOffset;
 	[Export] private float horSeparation = 100f;
     private float horOffsetSmoothed; // 用于使竖直滚动更平滑
 	private float horSeparationSmoothed; // 用于使竖直缩放更平滑
     [Export] private float groundY = 450f; // 当前时间点在EditPanel上的Y坐标（向下偏移）
 
     private bool isPlaying; // 是否正在播放铺面
-    private double chartTime; // 谱面当前时间
+    private float _horBeatOffset;
+    private double _chartTime; // 谱面当前时间
 
     public float BeatValue
     {
         get
         {
-            return horBeatOffset;
+            return _horBeatOffset;
         }
         set
         {
-            horBeatOffset = value;
-            chartTime = TimeUtil.BeatToSecond(horBeatOffset, editingChart.BpmList);
+            _horBeatOffset = value;
+            _chartTime = TimeUtil.BeatToSecond(_horBeatOffset, editingChart.BpmList);
         }
     }
 
@@ -76,13 +77,13 @@ public partial class EditorScene : Node
     {
         get
         {
-            return chartTime;
+            return _chartTime;
         }
         set
         {
-            chartTime = value;
-            horBeatOffset = TimeUtil.SecondToBeat((float)chartTime, editingChart.BpmList);
-            horOffset = horBeatOffset * horSeparation;
+            _chartTime = value;
+            _horBeatOffset = TimeUtil.SecondToBeat((float)_chartTime, editingChart.BpmList);
+            horOffset = _horBeatOffset * horSeparation;
         }
     }
 
@@ -106,18 +107,33 @@ public partial class EditorScene : Node
 	public void Zoom(float zoomDelta)
 	{
 		horSeparation *= 1f + zoomDelta;
+
+        // 限制不能缩放到负数
+        if(horSeparation < 0) horSeparation = -horSeparation;
+
 		//确保当前处于的beat不变
 		horOffset = BeatValue * horSeparation;
 	}
 
     public void Slide(float deltaY)
 	{
-		horOffset += deltaY;
-		//限制不能滚动到0以下
-		if(horOffset < 0) horOffset = 0;
+        horOffset += deltaY;
+        //限制不能滚动到0以下
+        if(horOffset < 0) horOffset = 0;
 
-		BeatValue = horOffset / horSeparation;
+        BeatValue = horOffset / horSeparation;
 	}
+
+    private void SlideTime(float deltaTime)
+    {
+        ChartTime = ChartTime + deltaTime;
+
+        //限制不能滚动到0以下
+        if(ChartTime < 0) ChartTime = 0;
+
+        // 此时BeatValue收到牵连改变，需要更新horOffset
+        horOffset = BeatValue * horSeparation;
+    }
 
 
     public override void _Ready()
@@ -357,7 +373,7 @@ public partial class EditorScene : Node
         else
         {
             //否则，时间轴由编辑器面板决定
-            chartPlayer.ExternalTime = chartTime;
+            chartPlayer.ExternalTime = _chartTime;
         }
 
         #if TOOLS
@@ -382,11 +398,20 @@ public partial class EditorScene : Node
         //处理摇杆垂直滚动
 		if(slideJoystick.Output != Vector2.Zero)
 		{
-			horOffset -= slideJoystick.Output.Y * verJoystickSensitivity * (float)delta;
-			//限制不能滚动到0以下
-			if(horOffset < 0) horOffset = 0;
+            if(PlayModeManager.PlayMode == PlayModeEnum.Player)
+            {
+                SlideTime(-slideJoystick.Output.Y * verJoystickTimeSens * (float)delta);
+            }
+            else
+            {
+                Slide(-slideJoystick.Output.Y * verJoystickSensitivity * (float)delta);
+            }
+			// horOffset -= ;
+			// //限制不能滚动到0以下
+			// if(horOffset < 0) horOffset = 0;
 
-			BeatValue = horOffset / horSeparation;
+			// BeatValue = horOffset / horSeparation;
+            // GD.Print($"output:{slideJoystick.Output.Y}");
 		}
 
 		//处理摇杆缩放

@@ -176,9 +176,9 @@ custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 
 [node name="SlideJoystick" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1523606408 instance=ExtResource("3_fkvcd")]
-custom_minimum_size = Vector2(60, 120)
+custom_minimum_size = Vector2(60, 150)
 layout_mode = 2
-MaxRadius = 80.0
+MaxRadius = 90.0
 joystickDir = 2
 
 [node name="ZoomJoystick" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=701843517 instance=ExtResource("3_fkvcd")]
