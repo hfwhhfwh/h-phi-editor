@@ -60,8 +60,6 @@ public partial class ChartEditService : Node
         }
 
         GD.Print($"[{this.Name}] 修改note(line{lineId}_{noteIndex})属性 {property} : {value}");
-        
-        ChartEventBus.NotifyDataChanged();  // 广播
     }
 
 
@@ -76,7 +74,7 @@ public partial class ChartEditService : Node
 
         GD.Print($"[{this.Name}] 删除note(line{lineId}_{note})");
 
-        ChartEventBus.NotifyDataChanged();  // 广播
+        ChartEventBus.NotifyNoteCountChanged(lineId);  // 广播
     }
 
     /// <summary>
@@ -120,6 +118,8 @@ public partial class ChartEditService : Node
         notes.Add(note);
         line.SortNotes();
 
+        ChartEventBus.NotifyNoteCountChanged(lineId);  // 广播
+
         GD.Print($"[{this.Name}] 成功添加note:{lineId}_{notes.IndexOf(note)}");
     }
 
@@ -147,7 +147,7 @@ public partial class ChartEditService : Node
         }
 
         //发出信号
-        ChartEventBus.NotifyDataChanged();
+        ChartEventBus.NotifyNoteCountChanged(lineId);  // 广播
 
         GD.Print($"[{this.Name}] 删除note:{Util.ListToString(notes)}");
     }
@@ -188,7 +188,7 @@ public partial class ChartEditService : Node
             judgeLines.Insert(id, line);
         }
         
-        ChartEventBus.NotifyDataChanged();
+        ChartEventBus.NotifyLineCountChanged();
     }
 
     /// <summary>
@@ -216,7 +216,7 @@ public partial class ChartEditService : Node
     {
         DeleteLineWithoutSignal(judgeLines, lineId);
 
-        ChartEventBus.NotifyDataChanged();
+        ChartEventBus.NotifyLineCountChanged();
 
         GD.Print($"[{this.Name}] 成功删除判定线:{lineId}");
     }
@@ -236,7 +236,7 @@ public partial class ChartEditService : Node
             DeleteLineWithoutSignal(judgeLines, i);
         }
 
-        ChartEventBus.NotifyDataChanged();
+        ChartEventBus.NotifyLineCountChanged();
 
         GD.Print($"[{this.Name}] 成功删除判定线:{Util.ListToString(linesId)}");
     }
@@ -301,7 +301,7 @@ public partial class ChartEditService : Node
             EditingChart.JudgeLineList[lineId].RefreshAllNoteDisplacement();
         }
 
-        ChartEventBus.NotifyDataChanged();
+        // ChartEventBus.NotifyStructureChanged();
 
         GD.Print($"[{this.Name}] 成功添加event:{lineId}_{lineEventEnum}_{lineEvents.IndexOf(lineEvent)}");
     }
@@ -323,10 +323,10 @@ public partial class ChartEditService : Node
     }
 
     public void SetEventProperty(
-        int lineId, LineEventEnum lineEventEnum, int index,
+        int lineId, int layer, LineEventEnum lineEventEnum, int index,
         LineEventPropertyType property, object value)
     {
-        List<LineEvent> lineEvents = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+        List<LineEvent> lineEvents = EditingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
         LineEvent lineEvent = lineEvents[index];
 
         switch (property)
@@ -381,7 +381,7 @@ public partial class ChartEditService : Node
 
         GD.Print($"[{this.Name}] 修改event(line{lineId}_{lineEventEnum}_{index})属性 {property} : {value}");
         
-        ChartEventBus.NotifyDataChanged();  // 广播
+        // ChartEventBus.NotifyStructureChanged();  // 广播
     }
 
     /// <summary>
@@ -405,8 +405,8 @@ public partial class ChartEditService : Node
         
         }
 
-        //发出信号
-        ChartEventBus.NotifyDataChanged();
+        // 发出信号
+        // ChartEventBus.NotifyStructureChanged();
 
         GD.Print($"[{Name}] 删除Event:line{lineId}_{lineEventEnum}_{index}");
     }
@@ -451,7 +451,7 @@ public partial class ChartEditService : Node
         }
 
         //发出信号
-        ChartEventBus.NotifyDataChanged();
+        // ChartEventBus.NotifyStructureChanged();
 
         GD.Print($"[{Name}] 删除Event:line{lineId}_{lineEventEnum}_{Util.ListToString(indexes)}");
     }

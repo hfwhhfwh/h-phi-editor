@@ -11,6 +11,7 @@ public partial class LineEventInfoPanel : Panel
     [Export] private Button _confirmButton;
 
     private int _lineId;
+    private int _eventLayer;
     private LineEventEnum _eventType;
     private int _eventIndex;
     private LineEvent _lineEvent;
@@ -20,19 +21,20 @@ public partial class LineEventInfoPanel : Panel
 
     [Signal] public delegate void OnConfirmedEventHandler();
     /// <summary>
-    /// LineEvent属性修改时触发 参数:(判定线编号，事件类型，事件索引，属性(LineEventPropertyType)，值(object))
+    /// LineEvent属性修改时触发 参数:(判定线编号，事件层，事件类型，事件索引，属性(LineEventPropertyType)，值(object))
     /// </summary>
-    public event Action<int, LineEventEnum, int, LineEventPropertyType, object> PropertyChanged;
+    public event Action<int, int, LineEventEnum, int, LineEventPropertyType, object> PropertyChanged;
 
     public override void _Ready()
     {
         _confirmButton.ButtonUp += () => EmitSignal(SignalName.OnConfirmed);
     }
 
-    public void Edit(LineEvent lineEvent, int lineId, LineEventEnum type, int index)
+    public void Edit(LineEvent lineEvent, int lineId, int layer, LineEventEnum type, int index)
     {
         _lineEvent = lineEvent;
         _lineId = lineId;
+        _eventLayer = layer;
         _eventType = type;
         _eventIndex = index;
 
@@ -86,11 +88,11 @@ public partial class LineEventInfoPanel : Panel
         editor.Setup(label);
         editor.Value = initialValue;
 
-        editor.ValueChanged += (_, value) =>
+        editor.TypedValueChanged += (value) =>
         {
             setter?.Invoke(value);
             if (propType.HasValue)
-                PropertyChanged?.Invoke(_lineId, _eventType, _eventIndex, propType.Value, value);
+                PropertyChanged?.Invoke(_lineId, _eventLayer, _eventType, _eventIndex, propType.Value, value);
         };
 
         // UI 行布局
@@ -118,18 +120,18 @@ public partial class LineEventInfoPanel : Panel
             int validType = type == -1 ? 1 : type;
             
             _lineEvent.EasingType = validType;
-            PropertyChanged?.Invoke(_lineId, _eventType, _eventIndex, LineEventPropertyType.EasingType, validType);
+            PropertyChanged?.Invoke(_lineId, _eventLayer, _eventType, _eventIndex, LineEventPropertyType.EasingType, validType);
             
         }
         if (neo.EasingLeft != _lastEasing.EasingLeft)
         {
             _lineEvent.EasingLeft = neo.EasingLeft;
-            PropertyChanged?.Invoke(_lineId, _eventType, _eventIndex, LineEventPropertyType.EasingLeft, neo.EasingLeft);
+            PropertyChanged?.Invoke(_lineId, _eventLayer, _eventType, _eventIndex, LineEventPropertyType.EasingLeft, neo.EasingLeft);
         }
         if (neo.EasingRight != _lastEasing.EasingRight)
         {
             _lineEvent.EasingRight = neo.EasingRight;
-            PropertyChanged?.Invoke(_lineId, _eventType, _eventIndex, LineEventPropertyType.EasingRight, neo.EasingRight);
+            PropertyChanged?.Invoke(_lineId, _eventLayer, _eventType, _eventIndex, LineEventPropertyType.EasingRight, neo.EasingRight);
         }
 
         _lastEasing = neo.Duplicate();

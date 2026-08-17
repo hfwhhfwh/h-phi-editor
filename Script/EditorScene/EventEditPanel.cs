@@ -43,6 +43,11 @@ public partial class EventEditPanel : BaseEditPanel
 	public event Action<int, int, LineEventEnum, Beat, Beat> AddEventRequested;
 
 	/// <summary>
+    /// 请求修改 Event 时间，参数:(判定线编号, 事件层, 事件类型, 事件索引, 新StartTime, 新EndTime)
+    /// </summary>
+    public event Action<int, int, LineEventEnum, int, Beat, Beat> EventTimeChangeRequested;
+
+	/// <summary>
 	/// 字典：每一种事件类型对应的竖线编号
 	/// 键：LineEventEnum，值：竖线编号(int)
 	/// </summary>
@@ -105,7 +110,17 @@ public partial class EventEditPanel : BaseEditPanel
 		_textOverlay.Draw += OnDrawTextOverlay;
 		_textOverlay.MouseFilter = MouseFilterEnum.Ignore; // 放置拦截点击
 		AddChild(_textOverlay);
+
+		_dragMoveComponent.Moved += OnEventDragMoved;
     }
+
+    public override void _ExitTree()
+    {
+		_dragMoveComponent.Moved -= OnEventDragMoved;
+
+        base._ExitTree();
+    }
+
 
 	private void DrawTextAligned(Vector2 pos, string text, int fontSize, VerAlign align)
 	{
@@ -368,7 +383,57 @@ public partial class EventEditPanel : BaseEditPanel
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-            
+            (LineEventEnum?, int) hit = FindNearestEvent(pos);
+            if (hit.Item1 == null || hit.Item2 < 0) return;
+
+            LineEventEnum evtType = hit.Item1.Value;
+            int evtIndex = hit.Item2;
+            EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
+            LineEvent evt = eventLayer.GetLineEvents(evtType)[evtIndex];
+
+			// 只有已选中的对象才能拖动
+			// if(!selectedEvents.Contains(evt)) return;
+
+            // 判断拖动部位（与 Hold 逻辑完全一致）
+            float startBeatValue = evt.StartTime[0] + evt.StartTime[1] * 1f / evt.StartTime[2];
+            float endBeatValue   = evt.EndTime[0]   + evt.EndTime[1]   * 1f / evt.EndTime[2];
+            float chartX = EventTypeToChartX(evtType);
+
+            Vector2 startPos = _coordComponent.GetPanelPosition(chartX, startBeatValue);
+            Vector2 endPos   = _coordComponent.GetPanelPosition(chartX, endBeatValue);
+
+            float distStart = pos.DistanceSquaredTo(startPos);
+            float distEnd   = pos.DistanceSquaredTo(endPos);
+
+            DragMoveComponent.DragMode mode;
+            Beat initialBeat;
+
+            float thresholdSq = distanceThreshold * distanceThreshold;
+
+            if (distStart < thresholdSq && distStart < distEnd)
+            {
+                mode = DragMoveComponent.DragMode.Head;
+                initialBeat = new Beat(evt.StartTime);
+            }
+            else if (distEnd < thresholdSq && distEnd < distStart)
+            {
+                mode = DragMoveComponent.DragMode.Tail;
+                initialBeat = new Beat(evt.EndTime);
+            }
+            // else if (pos.Y <= startPos.Y && pos.Y >= endPos.Y)
+            // {
+            //     // 点击在长条中间：整体拖动
+            //     mode = DragMoveComponent.DragMode.Body;
+            //     initialBeat = new Beat(evt.StartTime); // 以 Start 为基准
+            // }
+            else
+            {
+				GD.Print($"未选中Event头尾, 不滑动Event:{evtIndex}");
+                return; // 未命中有效区域
+            }
+
+            // Event 的标识用 ValueTuple 包装
+            _dragMoveComponent.Start((evtType, evt), mode, chartX, initialBeat);
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
@@ -393,11 +458,49 @@ public partial class EventEditPanel : BaseEditPanel
         }
     }
 
-    protected override void OnButtonUp(Vector2 pos)
+    protected override void OnMotionInput(Vector2 position, Vector2 relative)
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-            ValueTuple<LineEventEnum?, int> tuple = FineNearestEvent(pos);
+            if (!_inputController.IsDragging || !_dragMoveComponent.IsDragging) return;
+
+            // Event 不允许 X 移动，只允许 Y（时间）移动
+            _dragMoveComponent.Update(position, _coordComponent, allowX: false, allowY: true);
+        }
+        else if(EditModeManager.EditMode == EditModeEnum.Place)
+        {
+            
+			float chartX = _coordComponent.GetChartPosX(position.X);
+			int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+
+			float beatValue = _coordComponent.GetBeatValue(position.Y);
+			Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+			_dragPlaceComponent.Move(verLineIndex, snappedBeat);
+            
+        }
+        else if(EditModeManager.EditMode == EditModeEnum.Delete)
+        {
+            Vector2 dataPos = new Vector2(
+                _coordComponent.GetChartPosX(position.X),
+                _coordComponent.GetBeatValue(position.Y)
+            );
+            _boxSelectController.Move(dataPos);
+        }
+    }
+
+	protected override void OnButtonUp(Vector2 pos)
+    {
+        if(EditModeManager.EditMode == EditModeEnum.Normal)
+        {
+			if (_inputController.IsDragging)
+            {
+                _dragMoveComponent.End();
+                return; // 拖动结束，不触发点击选择
+            }
+
+			// 点击选择逻辑
+            ValueTuple<LineEventEnum?, int> tuple = FindNearestEvent(pos);
             if(tuple.Item1 == null || tuple.Item2 < 0) // 代表没有选中
             {
                 DeselectAll();
@@ -427,32 +530,63 @@ public partial class EventEditPanel : BaseEditPanel
         }
     }
 
-    protected override void OnMotionInput(Vector2 position, Vector2 relative)
+	// -------- 拖动响应 --------
+    private void OnEventDragMoved(object targetId, DragMoveComponent.DragMode mode,
+                                  float newChartX, Beat newBeat)
     {
-        if(EditModeManager.EditMode == EditModeEnum.Normal)
-        {
-            
-        }
-        else if(EditModeManager.EditMode == EditModeEnum.Place)
-        {
-            
-			float chartX = _coordComponent.GetChartPosX(position.X);
-			int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+        // 取出对象引用
+		(LineEventEnum evtType, LineEvent evt) = (ValueTuple<LineEventEnum, LineEvent>)targetId;
+        if (evt == null)
+		{
+			GD.Print($"OnEventDragMoved() evt == null");
+			return;
+		}
 
-			float beatValue = _coordComponent.GetBeatValue(position.Y);
-			Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+        var eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
 
-			_dragPlaceComponent.Move(verLineIndex, snappedBeat);
-            
-        }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
+        // 通过引用反向查找当前索引和类型（防止列表重排/增删导致索引失效）
+        int evtIndex = -1;
+
+        foreach (LineEventEnum type in EventTypeToIndexDic.Keys)
         {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(position.X),
-                _coordComponent.GetBeatValue(position.Y)
-            );
-            _boxSelectController.Move(dataPos);
+            var list = eventLayer.GetLineEvents(type);
+            if (list == null) continue;
+            int idx = list.IndexOf(evt);
+            if (idx >= 0)
+            {
+                evtIndex = idx;
+                evtType = type;
+                break;
+            }
         }
+
+        // 如果对象已被删除，优雅终止拖动，避免崩溃
+        if (evtIndex < 0)
+        {
+            GD.Print($"[{Name}] 拖动的事件已被删除或不在当前层，终止拖动");
+            _dragMoveComponent.End();
+            return;
+        }
+
+        Beat newStart = new Beat(evt.StartTime);
+        Beat newEnd   = new Beat(evt.EndTime);
+
+        switch (mode)
+        {
+            case DragMoveComponent.DragMode.Head:
+                newStart = newBeat;
+                break;
+            case DragMoveComponent.DragMode.Tail:
+                newEnd = newBeat;
+                break;
+            case DragMoveComponent.DragMode.Body:
+                Beat duration = newEnd - newStart;
+                newStart = newBeat;
+                newEnd = newBeat + duration;
+                break;
+        }
+
+        EventTimeChangeRequested?.Invoke(editingLineId, EditingLayer, evtType, evtIndex, newStart, newEnd);
     }
 
 	/// <summary>
@@ -460,7 +594,7 @@ public partial class EventEditPanel : BaseEditPanel
 	/// </summary>
 	/// <param name="pos">点击位置 坐标系：Control本地坐标</param>
 	/// <returns>ValueTuple<LineEventEnum?, int>，参数:(事件类型，索引)，若Item1为null，表示没有找到</returns>
-	private ValueTuple<LineEventEnum?, int> FineNearestEvent(Vector2 pos)
+	private ValueTuple<LineEventEnum?, int> FindNearestEvent(Vector2 pos)
 	{
 		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
 		Dictionary<LineEventEnum, List<LineEvent> > allLineEvents = new(){

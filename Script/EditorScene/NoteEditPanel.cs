@@ -62,15 +62,15 @@ public partial class NoteEditPanel : BaseEditPanel
 
     public NoteType PlacingNote { get; set; } // 正在放置的note
 
-    // 拖动note位置的属性
-    // 注：当用户触发点击时存储这些变量，但是不会真的拖动，而是在滑动事件中判断是否大于阈值再执行拖动
-    private bool _isDraggingNote;
-    private int _draggingNoteIndex;
-    private bool _draggingHoldEnd; // true/false表示正在拖动hold的尾/头
-    private float _draggingNoteX;
-    private Beat _draggingNoteStartBeat, _draggingNoteEndBeat;
-    private float _lastChartX;
-    private Beat _lastBeat;
+    // // 拖动note位置的属性
+    // // 注：当用户触发点击时存储这些变量，但是不会真的拖动，而是在滑动事件中判断是否大于阈值再执行拖动
+    // private bool _isDraggingNote;
+    // private int _draggingNoteIndex;
+    // private bool _draggingHoldEnd; // true/false表示正在拖动hold的尾/头
+    // private float _draggingNoteX;
+    // private Beat _draggingNoteStartBeat, _draggingNoteEndBeat;
+    // private float _lastChartX;
+    // private Beat _lastBeat;
     // private float _lastSnappedDeltaChartX = 0;
     // private Beat _lastSnappedDeltaBeat = new Beat(0, 0, 1);
 
@@ -117,9 +117,19 @@ public partial class NoteEditPanel : BaseEditPanel
             RegisterMultiMesh(key, texture, 1024, zIndex);
 		}
 
-        
+        // ---- 订阅拖动事件 ----
+        _dragMoveComponent.Moved += OnNoteDragMoved;
+        // _dragMoveComponent.Ended += (_, _) => { /* 可选：播放音效或撤销分组 */ };
 
     }
+
+    public override void _ExitTree()
+    {
+        _dragMoveComponent.Moved -= OnNoteDragMoved;
+
+        base._ExitTree();
+    }
+
 
 
     protected override void RenderContent()
@@ -405,25 +415,24 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-            // 检测是否点击到了note/hold头尾
             int noteIndex = FindNearestNoteIndex(pos);
-            if(noteIndex == -1) 
+            if (noteIndex == -1)
             {
-                _isDraggingNote = false;
-                _draggingNoteIndex = -1;
+                // 没有命中，由 OnButtonUp 负责 DeselectAll
                 return;
             }
 
             List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
             Note note = notes[noteIndex];
 
-            if (!selectedNotes.Contains(note))
-            {
-                _isDraggingNote = false;
-                _draggingNoteIndex = -1;
-                return;
-            }
+            // 只有已选中的对象才能拖动
+            // if (!selectedNotes.Contains(note)) return;
 
+            // ---- 判断拖动部位 ----
+            DragMoveComponent.DragMode mode = DragMoveComponent.DragMode.Body;
+            float initialChartX = note.PositionX;
+            Beat initialBeat = new Beat(note.StartTime);
+            
             if(note.Type == 2)
             {
                 // hold音符，需要判断是否点击到了头/尾
@@ -441,51 +450,60 @@ public partial class NoteEditPanel : BaseEditPanel
                 if(distToHeadSquared < distanceThreshold * distanceThreshold || 
                     distToEndSquared < distanceThreshold * distanceThreshold)
                 {
-                    // 成功开始拖动
-                    _draggingHoldEnd = distToEndSquared < distToHeadSquared;
-                    _isDraggingNote = true;
-                    _draggingNoteIndex = noteIndex;
+                    // // 成功开始拖动
+                    // _draggingHoldEnd = distToEndSquared < distToHeadSquared;
+                    // _isDraggingNote = true;
+                    // _draggingNoteIndex = noteIndex;
                     
-                    // 重置上次吸附位置，确保增量计算正确
-                    // _lastSnappedDeltaChartX = 0;
-                    // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
-                    _lastChartX = note.PositionX;
-                    _lastBeat = _draggingHoldEnd ? new Beat(note.EndTime) : new Beat(note.StartTime);
+                    // // 重置上次吸附位置，确保增量计算正确
+                    // // _lastSnappedDeltaChartX = 0;
+                    // // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
+                    // _lastChartX = note.PositionX;
+                    // _lastBeat = _draggingHoldEnd ? new Beat(note.EndTime) : new Beat(note.StartTime);
 
-                    _draggingNoteX = note.PositionX;
-                    _draggingNoteStartBeat = new Beat(note.StartTime);
-                    _draggingNoteEndBeat = new Beat(note.EndTime);
+                    // _draggingNoteX = note.PositionX;
+                    // _draggingNoteStartBeat = new Beat(note.StartTime);
+                    // _draggingNoteEndBeat = new Beat(note.EndTime);
 
-                    GD.Print($"开始滑动Hold音符:{noteIndex}, 拖动尾部:{_draggingHoldEnd}");
+                    bool dragTail = distToEndSquared < distToHeadSquared;
+                    mode = dragTail ? DragMoveComponent.DragMode.Tail
+                                    : DragMoveComponent.DragMode.Head;
+                    initialBeat = dragTail ? new Beat(note.EndTime) : new Beat(note.StartTime);
+
+                    // GD.Print($"开始滑动Hold音符:{noteIndex}, 拖动尾部:{_draggingHoldEnd}");
                 }
                 else
                 {
-                    // 未点到头尾，不开始拖动
-                    _isDraggingNote = false;
-                    _draggingNoteIndex = -1;
+                    // // 未点到头尾，不开始拖动
+                    // _isDraggingNote = false;
+                    // _draggingNoteIndex = -1;
 
+                    // 没点头尾，不启动拖动
                     GD.Print($"未选中Hold头尾, 不滑动Hold音符:{noteIndex}");
+                    return;
                 }
             }
-            else
-            {
-                // 普通音符，点到即判定为开始拖动
-                _draggingHoldEnd = false;
-                _isDraggingNote = true;
-                _draggingNoteIndex = noteIndex;
+            // else
+            // {
+            //     // 普通音符，点到即判定为开始拖动
+            //     _draggingHoldEnd = false;
+            //     _isDraggingNote = true;
+            //     _draggingNoteIndex = noteIndex;
                 
-                // 重置上次吸附位置
-                // _lastSnappedDeltaChartX = 0;
-                // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
-                _lastChartX = note.PositionX;
-                _lastBeat = new Beat(note.StartTime);
+            //     // 重置上次吸附位置
+            //     // _lastSnappedDeltaChartX = 0;
+            //     // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
+            //     _lastChartX = note.PositionX;
+            //     _lastBeat = new Beat(note.StartTime);
 
-                _draggingNoteX = note.PositionX;
-                _draggingNoteStartBeat = new Beat(note.StartTime);
-                _draggingNoteEndBeat = new Beat(note.EndTime);
+            //     _draggingNoteX = note.PositionX;
+            //     _draggingNoteStartBeat = new Beat(note.StartTime);
+            //     _draggingNoteEndBeat = new Beat(note.EndTime);
 
-                GD.Print($"开始滑动普通音符:{noteIndex}");
-            }
+            //     GD.Print($"开始滑动普通音符:{noteIndex}");
+            // }
+
+            _dragMoveComponent.Start(note, mode, initialChartX, initialBeat);
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
@@ -515,105 +533,65 @@ public partial class NoteEditPanel : BaseEditPanel
         }
     }
 
-    protected override void OnButtonUp(Vector2 pos)
-    {
-        if(EditModeManager.EditMode == EditModeEnum.Normal)
-        {
-            if (_inputController.IsDragging)
-            {
-                // 结束拖动，重置状态
-                _isDraggingNote = false;
-                _draggingNoteIndex = -1;
-                // _lastSnappedDeltaChartX = 0;
-                // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
-            }
-            else
-            {
-                int noteIndex = FindNearestNoteIndex(pos);
-                if(noteIndex == -1) // -1代表没有选中
-                {
-                    DeselectAll();
-                }
-                else
-                {
-                    OnNoteTapped(noteIndex, pos);
-                }
-            }
-        }
-        else if(EditModeManager.EditMode == EditModeEnum.Place)
-        {
-            float chartX = _coordComponent.GetChartPosX(pos.X);
-            int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
-
-            float beatValue = _coordComponent.GetBeatValue(pos.Y);
-            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
-
-            _dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
-            
-        }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(pos.X),
-                _coordComponent.GetBeatValue(pos.Y)
-            );
-            _boxSelectController.EndDrag(dataPos);
-        }
-    }
-
     protected override void OnMotionInput(Vector2 position, Vector2 relative)
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-            // 只有真正点击到可拖动的音符时才处理拖动
-            if (_isDraggingNote)
-            {
-                // ================ 1. 检查是否大于阈值 ================
-                if(!_inputController.IsDragging) return;
+            // // 只有真正点击到可拖动的音符时才处理拖动
 
-                // ================ 2. 检测note是否被移动 ================
-                // TODO 安全检查：防止拖动过程中数据被外部修改导致越界
+            // if (_isDraggingNote)
+            // {
+            //     // ================ 1. 检查是否大于阈值 ================
+            //     if(!_inputController.IsDragging) return;
 
-                List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
-                Note note = notes[_draggingNoteIndex];
+            //     // ================ 2. 检测note是否被移动 ================
+            //     // TODO 安全检查：防止拖动过程中数据被外部修改导致越界
 
-                float chartX = _coordComponent.GetChartPosX(position.X);
-                float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
+            //     List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+            //     Note note = notes[_draggingNoteIndex];
 
-                float beatValue = _coordComponent.GetBeatValue(position.Y);
-                Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+            //     float chartX = _coordComponent.GetChartPosX(position.X);
+            //     float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
 
-                if(snappedChartX != _lastChartX)
-                {
-                    // 触发移动事件
-                    NoteMoved?.Invoke(editingLineId, _draggingNoteIndex, snappedChartX);
+            //     float beatValue = _coordComponent.GetBeatValue(position.Y);
+            //     Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
 
-                    // 记录新的值
-                    _lastChartX = snappedChartX;
-                }
-                if(snappedBeat != _lastBeat)
-                {
-                    if(note.Type == 2)
-                    {
-                        if (_draggingHoldEnd)
-                        {
-                            NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, _draggingNoteStartBeat, snappedBeat);
-                        }
-                        else
-                        {
-                            NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, snappedBeat, _draggingNoteEndBeat);
-                        }
-                    }
-                    else
-                    {
-                        NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, snappedBeat, snappedBeat);
-                    }
+            //     if(snappedChartX != _lastChartX)
+            //     {
+            //         // 触发移动事件
+            //         NoteMoved?.Invoke(editingLineId, _draggingNoteIndex, snappedChartX);
 
-                    _lastBeat = snappedBeat;
-                }
+            //         // 记录新的值
+            //         _lastChartX = snappedChartX;
+            //     }
+            //     if(snappedBeat != _lastBeat)
+            //     {
+            //         if(note.Type == 2)
+            //         {
+            //             if (_draggingHoldEnd)
+            //             {
+            //                 NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, _draggingNoteStartBeat, snappedBeat);
+            //             }
+            //             else
+            //             {
+            //                 NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, snappedBeat, _draggingNoteEndBeat);
+            //             }
+            //         }
+            //         else
+            //         {
+            //             NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, snappedBeat, snappedBeat);
+            //         }
 
+            //         _lastBeat = snappedBeat;
+            //     }
+            // }
 
-            }
+            // InputController 负责阈值判断；超过阈值后 IsDragging 才为 true
+            if (!_inputController.IsDragging || !_dragMoveComponent.IsDragging)
+                return;
+
+            // Note 允许 X + Y 同时移动
+            _dragMoveComponent.Update(position, _coordComponent, allowX: true, allowY: true);
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
@@ -633,6 +611,64 @@ public partial class NoteEditPanel : BaseEditPanel
                 _coordComponent.GetBeatValue(position.Y)
             );
             _boxSelectController.Move(dataPos);
+        }
+    }
+
+    protected override void OnButtonUp(Vector2 pos)
+    {
+        if(EditModeManager.EditMode == EditModeEnum.Normal)
+        {
+            // if (_inputController.IsDragging)
+            // {
+            //     // 结束拖动，重置状态
+            //     _isDraggingNote = false;
+            //     _draggingNoteIndex = -1;
+            //     // _lastSnappedDeltaChartX = 0;
+            //     // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
+            // }
+            // else
+            // {
+            //     int noteIndex = FindNearestNoteIndex(pos);
+            //     if(noteIndex == -1) // -1代表没有选中
+            //     {
+            //         DeselectAll();
+            //     }
+            //     else
+            //     {
+            //         OnNoteTapped(noteIndex, pos);
+            //     }
+            // }
+
+
+            if (_inputController.IsDragging)
+            {
+                _dragMoveComponent.End();
+                return; // 拖动结束，不触发点击选择
+            }
+
+            // 点击选择逻辑
+            int noteIndex = FindNearestNoteIndex(pos);
+            if (noteIndex == -1) DeselectAll();
+            else OnNoteTapped(noteIndex, pos);
+        }
+        else if(EditModeManager.EditMode == EditModeEnum.Place)
+        {
+            float chartX = _coordComponent.GetChartPosX(pos.X);
+            int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
+
+            float beatValue = _coordComponent.GetBeatValue(pos.Y);
+            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+            _dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
+            
+        }
+        else if(EditModeManager.EditMode == EditModeEnum.Delete)
+        {
+            Vector2 dataPos = new Vector2(
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
+            );
+            _boxSelectController.EndDrag(dataPos);
         }
     }
 
@@ -665,6 +701,38 @@ public partial class NoteEditPanel : BaseEditPanel
             GD.PrintErr($"[{this.Name}] 未设置的选择模式:{selectMode}");
         }
     }
+
+    // -------- 拖动响应 --------
+    private void OnNoteDragMoved(object targetId, DragMoveComponent.DragMode mode,
+                                 float newChartX, Beat newBeat)
+    {
+        Note note = (Note)targetId;
+        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+        int noteIndex = notes.IndexOf(note);
+
+        // X 变化
+        if (!Mathf.IsEqualApprox(newChartX, note.PositionX))
+        {
+            NoteMoved?.Invoke(editingLineId, noteIndex, newChartX);
+        }
+
+        // 时间变化
+        if (note.Type == 2) // Hold
+        {
+            if (mode == DragMoveComponent.DragMode.Head)
+                NoteTimeChanged?.Invoke(editingLineId, noteIndex, newBeat, new Beat(note.EndTime));
+            else if (mode == DragMoveComponent.DragMode.Tail)
+                NoteTimeChanged?.Invoke(editingLineId, noteIndex, new Beat(note.StartTime), newBeat);
+            else // Body：整体偏移，保持时长不变（如需此功能可在此扩展）
+                NoteTimeChanged?.Invoke(editingLineId, noteIndex, newBeat,
+                    newBeat + (new Beat(note.EndTime) - new Beat(note.StartTime)));
+        }
+        else
+        {
+            NoteTimeChanged?.Invoke(editingLineId, noteIndex, newBeat, newBeat);
+        }
+    }
+
 
     /// <summary>
     /// 找到距离点击位置最近的note，若未找到返回null

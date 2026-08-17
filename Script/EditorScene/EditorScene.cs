@@ -264,6 +264,7 @@ public partial class EditorScene : Node
         eventEditPanel.EventSelected += OnEventSelected;
         eventEditPanel.EventsDeleteRequested += DeleteEvents;
         eventEditPanel.AddEventRequested += AddEvent;
+        eventEditPanel.EventTimeChangeRequested += SetEventTime;
         eventEditPanel.Disabled = false;
 
         SetEditPanelVisible(true); // 初始默认显示
@@ -478,6 +479,7 @@ public partial class EditorScene : Node
         eventEditPanel.EventSelected -= OnEventSelected;
         eventEditPanel.EventsDeleteRequested -= DeleteEvents;
         eventEditPanel.AddEventRequested -= AddEvent;
+        eventEditPanel.EventTimeChangeRequested -= SetEventTime;
 
         //设置eventInfoPanel
         eventInfoPanel.PropertyChanged -= SetEventProperty;
@@ -639,7 +641,6 @@ public partial class EditorScene : Node
             new PopupMenuItem { Text = "编辑", Callback = () => OnNoteEdit(lineId, noteIndex) },
             new PopupMenuItem { Text = "复制", Callback = () => OnNoteCopy(lineId, noteIndex) },
             new PopupMenuItem { Text = "粘贴", Callback = () => OnNotePaste(lineId, noteIndex) },
-            new PopupMenuItem { Text = "移动", Callback = null },
             new PopupMenuItem { IsSeparator = true },
             new PopupMenuItem { Text = "删除", Callback = () => OnNoteDelete(lineId, noteIndex) }
         };
@@ -731,7 +732,7 @@ public partial class EditorScene : Node
         _chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
 
         //通知谱面数据产生了变化
-        ChartEventBus.NotifyDataChanged();
+        ChartEventBus.NotifyNoteCountChanged(editingLineId);
     }
 
     private void AddLine()
@@ -758,7 +759,7 @@ public partial class EditorScene : Node
         // 构建菜单项（使用闭包捕获当前音符信息）
         var items = new List<PopupMenuItem>
         {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, lineEventEnum, eventIndex) },
+            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, editingLayer, lineEventEnum, eventIndex) },
             new PopupMenuItem { Text = "复制", Callback = () => OnEventCopy(lineId, lineEventEnum, eventIndex) },
             new PopupMenuItem { Text = "粘贴", Callback = () => OnEventPaste(lineId, lineEventEnum, eventIndex) },
             new PopupMenuItem { IsSeparator = true },
@@ -773,22 +774,22 @@ public partial class EditorScene : Node
         };
     }
 
-    private void OnEventEdit(int lineId, LineEventEnum lineEventEnum, int index)
+    private void OnEventEdit(int lineId, int layer, LineEventEnum lineEventEnum, int index)
     {
         GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
         eventInfoPanel.Visible = true;
         eventEditPanel.DeselectAll();
 
-        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum)[index];
+        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum)[index];
 
-        eventInfoPanel.Edit(lineEvent, lineId, lineEventEnum, index);
+        eventInfoPanel.Edit(lineEvent, lineId, layer, lineEventEnum, index);
     }
 
     private void SetEventProperty(
-        int lineId, LineEventEnum lineEventEnum, int index,
+        int lineId, int layer, LineEventEnum lineEventEnum, int index,
         LineEventPropertyType propertyType, object value)
     {
-        _chartEditService.SetEventProperty(lineId, lineEventEnum, index, propertyType, value);
+        _chartEditService.SetEventProperty(lineId, layer, lineEventEnum, index, propertyType, value);
     }
 
     private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
@@ -880,6 +881,22 @@ public partial class EditorScene : Node
         if(!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
         {
             _chartEditService.SetNoteProperty(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
+        }
+    }
+
+    private void SetEventTime(int lineId, int layer, LineEventEnum type, int index, Beat startBeat, Beat endBeat)
+    {
+        List<LineEvent> lineEvents = editingChart.JudgeLineList[editingLineId].EventLayers[layer].GetLineEvents(type);
+        LineEvent lineEvent = lineEvents[index];
+
+
+        if(!TimeUtil.IsBeatEqual(lineEvent.StartTime, startBeat.Values))
+        {
+            _chartEditService.SetEventProperty(lineId, layer, type, index, LineEventPropertyType.StartTime, startBeat);
+        }
+        if(!TimeUtil.IsBeatEqual(lineEvent.EndTime, endBeat.Values))
+        {
+            _chartEditService.SetEventProperty(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
         }
     }
 

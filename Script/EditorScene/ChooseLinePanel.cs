@@ -58,14 +58,14 @@ public partial class ChooseLinePanel : Panel
 		}
 
 		// 监听谱面数据变化
-		ChartEventBus.OnChartDataChanged += RequestRefresh;
+		ChartEventBus.LineCountChanged += RequestRefresh;
     }
 
     public override void _ExitTree()
     {
         base._ExitTree();
 
-		ChartEventBus.OnChartDataChanged -= RequestRefresh;
+		ChartEventBus.LineCountChanged -= RequestRefresh;
     }
 
 

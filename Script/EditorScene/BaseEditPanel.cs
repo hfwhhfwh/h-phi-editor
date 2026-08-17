@@ -99,7 +99,7 @@ public abstract partial class BaseEditPanel : Panel
     }
     protected SelectMode selectMode = SelectMode.Single;
 
-	/// <summary>选择note时点击位置与实际位置的最大距离</summary>
+	/// <summary>选择时点击位置与实际位置的最大距离</summary>
     [Export] protected float distanceThreshold = 40f;
 
 	[Export] protected Color boxColor = new Color(1f, 0, 0, 0.471f);
@@ -108,6 +108,7 @@ public abstract partial class BaseEditPanel : Panel
     protected BoxSelectController _boxSelectController;
     protected CoordinateComponent _coordComponent;
     protected DragPlaceComponent _dragPlaceComponent;
+	protected DragMoveComponent _dragMoveComponent;
 	protected GridDrawer _gridDrawer;
 
 	/// <summary>
@@ -198,6 +199,9 @@ public abstract partial class BaseEditPanel : Panel
         _dragPlaceComponent = new DragPlaceComponent();
         _dragPlaceComponent.DragEnded += OnDragEnded;
 
+		// 设置_dragMoveComponent
+		_dragMoveComponent = new DragMoveComponent();
+
 		// 设置_gridDrawer
 		_gridDrawer = new GridDrawer();
 		_gridDrawer.Parent = this;
@@ -227,6 +231,9 @@ public abstract partial class BaseEditPanel : Panel
         //设置_dragPlaceComponent
         _dragPlaceComponent.DragEnded -= OnDragEnded;
         _dragPlaceComponent = null;
+
+		// 设置_dragMoveComponent
+		_dragMoveComponent = null;
 
 		// 设置_gridDrawer
 		_gridDrawer = null;

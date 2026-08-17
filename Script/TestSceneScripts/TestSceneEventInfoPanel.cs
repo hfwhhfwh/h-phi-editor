@@ -19,12 +19,12 @@ public partial class TestSceneEventInfoPanel : Node
             EasingType = 7,
         };
 
-        eventInfoPanel.Edit(lineEvent, 0, LineEventEnum.MoveX, 999);
+        eventInfoPanel.Edit(lineEvent, 0, 0, LineEventEnum.MoveX, 999);
 
         eventInfoPanel.PropertyChanged += (
-            int lineId, LineEventEnum type, int idx, LineEventPropertyType prop, object val) =>
+            int lineId, int layer, LineEventEnum type, int idx, LineEventPropertyType prop, object val) =>
         {
-            GD.Print($"[{Name}] 修改了 {prop}:{val} (line{lineId}_{type}_{idx})");
+            GD.Print($"[{Name}] 修改了 {prop}:{val} (line{lineId}_layer{layer}_{type}_{idx})");
         };
 
         eventInfoPanel.OnConfirmed += () => {

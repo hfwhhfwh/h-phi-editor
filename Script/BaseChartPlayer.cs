@@ -24,7 +24,7 @@ public abstract partial class BaseChartPlayer : Node
     /// <summary>
     /// 当有note打击时触发，参数是打击位置（坐标系：parent坐标）
     /// </summary>
-    public Action<Vector2> onNoteHited;
+    // public Action<Vector2> onNoteHited;
 
     // 开关
     public bool Disabled { get; set; } = false;
