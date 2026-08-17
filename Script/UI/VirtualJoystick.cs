@@ -39,63 +39,78 @@ public partial class VirtualJoystick : Control
     }
 
     // 处理所有输入事件
+    public override void _GuiInput(InputEvent @event)
+    {
+        
+    }
+
     public override void _Input(InputEvent @event)
     {
         // 只在摇杆可见时处理输入（例如当设备支持触摸时）
         if (!Visible) return;
 
-        // --- 处理触摸事件 ---
+        // ==================== 触摸事件 ====================
         if (@event is InputEventScreenTouch touchEvent)
         {
-			if ((GetGlobalRect().HasPoint(touchEvent.Position) || isDragging) && touchEvent.Index == dragFingerIndex)
-			{
-				if (touchEvent.Pressed)
-				{
-					isDragging = true;
-					dragFingerIndex = touchEvent.Index;
-					UpdateJoystick(touchEvent.Position);
-				}
-				else if (touchEvent.Index == dragFingerIndex)
-				{
-					// 当前拖动的手指抬起，重置摇杆
-					ResetJoystick();
-				}
-			}
-            
+            if (touchEvent.Pressed)
+            {
+                // 新手指按下时，dragFingerIndex 还是 -1，不能用它做判断
+                if (GetGlobalRect().HasPoint(touchEvent.Position))
+                {
+                    isDragging = true;
+                    dragFingerIndex = touchEvent.Index; // 在这里赋值
+                    UpdateJoystick(touchEvent.Position);
+                    AcceptEvent(); // 阻止进入 GuiInput
+                }
+            }
+            else
+            {
+                // 抬起：只有当前跟踪的手指才重置
+                if (touchEvent.Index == dragFingerIndex)
+                {
+                    ResetJoystick();
+                    AcceptEvent();
+                }
+            }
         }
-        else if (@event is InputEventScreenDrag dragEvent && isDragging && dragEvent.Index == dragFingerIndex)
+        else if (@event is InputEventScreenDrag dragEvent)
         {
-            UpdateJoystick(dragEvent.Position);
+            // 拖动：只有被锁定的手指才响应
+            if (isDragging && dragEvent.Index == dragFingerIndex)
+            {
+                UpdateJoystick(dragEvent.Position);
+                AcceptEvent();
+            }
         }
 
-        // --- 处理鼠标事件 (用于PC端调试) ---
+        // ==================== 鼠标事件（PC调试）====================
+        // 鼠标不涉及多指问题，保持原样或同样加上 AcceptEvent
         if (@event is InputEventMouseButton mouseEvent && mouseEvent.ButtonIndex == MouseButton.Left)
         {
-			// 检查触摸点是否在摇杆区域内
             if (GetGlobalRect().HasPoint(mouseEvent.Position) || isDragging)
-			{
-				if (mouseEvent.Pressed)
-				{
-					isDragging = true;
-					UpdateJoystick(mouseEvent.Position);
-				}
-				else
-				{
-					ResetJoystick();
-				}
-			}
-            
+            {
+                if (mouseEvent.Pressed)
+                {
+                    isDragging = true;
+                    UpdateJoystick(mouseEvent.Position);
+                }
+                else
+                {
+                    ResetJoystick();
+                }
+            }
         }
-        else if (@event is InputEventMouseMotion mouseMotion && isDragging && (mouseMotion.ButtonMask & MouseButtonMask.Left) != 0)
+        else if (@event is InputEventMouseMotion mouseMotion && isDragging 
+                && (mouseMotion.ButtonMask & MouseButtonMask.Left) != 0)
         {
             UpdateJoystick(mouseMotion.Position);
         }
 
         // 在编辑器中也需要重置，防止鼠标移出窗口导致状态卡住
-        if (Engine.IsEditorHint() && isDragging && Input.IsMouseButtonPressed(MouseButton.Left) == false)
-        {
-            ResetJoystick();
-        }
+        // if (Engine.IsEditorHint() && isDragging && Input.IsMouseButtonPressed(MouseButton.Left) == false)
+        // {
+        //     ResetJoystick();
+        // }
     }
 
     private void UpdateJoystick(Vector2 touchPos)
