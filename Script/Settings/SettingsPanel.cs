@@ -53,13 +53,12 @@ public partial class SettingsPanel : Control
 
         _importPackBtn.Pressed += OnImportClicked;
 
-        // 打开自动重新加载
-        this.VisibilityChanged += () =>
+        VisibilityChanged += () =>
         {
             if(!Visible) return;
 
-            InitOptions();      // 填充下拉框
-            RefreshUI();        // 从 Settings 读取初始值
+            // InitOptions();
+            RefreshUI();
         };
     }
 
@@ -72,25 +71,33 @@ public partial class SettingsPanel : Control
         }
     }
 
+    // public override void _Notification(int what)
+    // {
+    //     if (what == NotificationVisibilityChanged)
+    //     {
+    //         // 只在变为可见时重建 UI
+    //         if (Visible)
+    //         {
+    //             InitOptions();
+    //             RefreshUI();
+    //             GD.Print($"[{Name}] 成功重建 UI");
+    //         }
+    //     }
+    // }
+
     // ---------- 初始化下拉框 ----------
-    private void InitOptions()
-    {
-        // VSync
-        _vSyncOptionBtn.Clear();
-        foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
-        {
-            _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
-        }
+    // private void InitOptions()
+    // {
+    //     // VSync
+    //     _vSyncOptionBtn.Clear();
+    //     foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
+    //     {
+    //         _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
+    //     }
 
-        // 资源包
-        RefreshPackSettings();
-
-        // // 分辨率
-        // foreach (var res in _resolutions)
-        // {
-        //     _resolutionOption.AddItem(res.Name);
-        // }
-    }
+    //     // 资源包
+    //     RefreshPackSettings();
+    // }
 
     // ---------- 绑定：UI 修改 → Settings ----------
     private void BindEvents()
@@ -182,9 +189,15 @@ public partial class SettingsPanel : Control
     {
         SettingsData settings = GameSettings.Instance.Current;
 
+        // VSync
+        _vSyncOptionBtn.Clear();
+        foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
+        {
+            _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
+        }
         SelectById(_vSyncOptionBtn, (int)settings.VSync);
 
-        // 资源包
+        // 资源包相关
         RefreshPackSettings();
 
         // 最大帧率
@@ -193,6 +206,8 @@ public partial class SettingsPanel : Control
         // _resourcePackEdit.Text = settings.ResourcePackId ?? "";
         // _fullscreenCheck.ButtonPressed = cur.Fullscreen;
         // _resolutionOption.Select(cur.ResolutionIndex);
+
+        GD.Print($"[{Name}] 成功重建UI");
     }
 
     /// <summary>
@@ -200,11 +215,12 @@ public partial class SettingsPanel : Control
     /// </summary>
     private void RefreshPackSettings()
     {
+        // 资源包选项
         _packOptionBtn.Clear();
         List<ValueTuple<string, string>> packList = ResourcePackLoader.GetPackList();
-        if(packList != null)
+        if (packList != null)
         {
-            for(int i = 0; i < packList.Count; i++)
+            for (int i = 0; i < packList.Count; i++)
             {
                 (string id, string name) = packList[i];
                 _packOptionBtn.AddItem(name);
@@ -212,27 +228,30 @@ public partial class SettingsPanel : Control
                 _packOptionBtn.SetItemMetadata(i, id);
 
                 // 当前选中
-                if(id == GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId)))
+                if (id == GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId)))
                 {
                     _packOptionBtn.Select(i);
                 }
             }
         }
 
+        // 资源包预览
         string packId = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
-        if(string.IsNullOrEmpty(packId)) return;
-
-        ResourcePack pack = ResourcePackLoader.LoadFromLocal(packId);
-        if(pack != null)
+        if (!string.IsNullOrEmpty(packId))
         {
-            _packOverview.Overview(pack);
+            ResourcePack pack = ResourcePackLoader.LoadFromLocal(packId);
+            if (pack != null)
+            {
+                _packOverview.Overview(pack);
+            }
         }
 
         // 是否使用默认资源包
-        _useDefaultResourceBtn.SetPressedNoSignal(GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
-        
+        _useDefaultResourceBtn.SetPressedNoSignal(
+            GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
 
-        GD.Print($"[{Name}] 成功刷新资源包设置界面");
+        // GD.Print($"[{Name}] 成功刷新资源包设置界面");
+
     }
 
     // ---------- 辅助方法 ----------
