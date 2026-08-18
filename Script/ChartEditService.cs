@@ -159,17 +159,17 @@ public partial class ChartEditService : Node
     /// <param name="id">添加判定线的索引，-1代表添加至末尾</param>
     public void AddLine(List<JudgeLine> judgeLines, int id = -1)
     {
-        List<EventLayer> eventLayers = new List<EventLayer>(5);
+        List<EventLayer> eventLayers = new List<EventLayer>();
         for(int i = 0; i < 4; i++)
         {
-            eventLayers[i] = new EventLayer
+            eventLayers.Add(new EventLayer
             {
                 MoveXEvents = new List<LineEvent>(),
                 MoveYEvents = new List<LineEvent>(),
                 RotateEvents = new List<LineEvent>(),
                 AlphaEvents = new List<LineEvent>(),
                 SpeedEvents = new List<LineEvent>(),
-            };
+            });
         }
         JudgeLine line = new JudgeLine
         {
