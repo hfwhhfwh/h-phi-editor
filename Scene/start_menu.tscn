@@ -70,32 +70,20 @@ alignment = 2
 
 [node name="Settings" type="Button" parent="PanelContainer/SafeArea/Main/Head/Options" unique_id=972680540]
 layout_mode = 2
+theme = ExtResource("2_4otsm")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_20fd0")
-theme_override_styles/pressed = ExtResource("1_20fd0")
-theme_override_styles/hover = ExtResource("1_20fd0")
-theme_override_styles/disabled = ExtResource("1_20fd0")
-theme_override_styles/focus = ExtResource("1_20fd0")
 text = "设置"
 
 [node name="ImportButton" type="Button" parent="PanelContainer/SafeArea/Main/Head/Options" unique_id=1609844934]
 layout_mode = 2
+theme = ExtResource("2_4otsm")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_20fd0")
-theme_override_styles/pressed = ExtResource("1_20fd0")
-theme_override_styles/hover = ExtResource("1_20fd0")
-theme_override_styles/disabled = ExtResource("1_20fd0")
-theme_override_styles/focus = ExtResource("1_20fd0")
 text = "导入谱面"
 
 [node name="NewButton" type="Button" parent="PanelContainer/SafeArea/Main/Head/Options" unique_id=115334261]
 layout_mode = 2
+theme = ExtResource("2_4otsm")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_20fd0")
-theme_override_styles/pressed = ExtResource("1_20fd0")
-theme_override_styles/hover = ExtResource("1_20fd0")
-theme_override_styles/disabled = ExtResource("1_20fd0")
-theme_override_styles/focus = ExtResource("1_20fd0")
 text = "新建谱面"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/Main" unique_id=70983486]
@@ -127,32 +115,20 @@ layout_mode = 2
 
 [node name="Open" type="Button" parent="PanelContainer/SafeArea/Main/HBoxContainer/EditOptions" unique_id=515942092]
 layout_mode = 2
+theme = ExtResource("2_4otsm")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_20fd0")
-theme_override_styles/pressed = ExtResource("1_20fd0")
-theme_override_styles/hover = ExtResource("1_20fd0")
-theme_override_styles/disabled = ExtResource("1_20fd0")
-theme_override_styles/focus = ExtResource("1_20fd0")
 text = "打开"
 
 [node name="EditInfo" type="Button" parent="PanelContainer/SafeArea/Main/HBoxContainer/EditOptions" unique_id=1582557816]
 layout_mode = 2
+theme = ExtResource("2_4otsm")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_20fd0")
-theme_override_styles/pressed = ExtResource("1_20fd0")
-theme_override_styles/hover = ExtResource("1_20fd0")
-theme_override_styles/disabled = ExtResource("1_20fd0")
-theme_override_styles/focus = ExtResource("1_20fd0")
 text = "编辑信息"
 
 [node name="Export" type="Button" parent="PanelContainer/SafeArea/Main/HBoxContainer/EditOptions" unique_id=1531714738]
 layout_mode = 2
+theme = ExtResource("2_4otsm")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_20fd0")
-theme_override_styles/pressed = ExtResource("1_20fd0")
-theme_override_styles/hover = ExtResource("1_20fd0")
-theme_override_styles/disabled = ExtResource("1_20fd0")
-theme_override_styles/focus = ExtResource("1_20fd0")
 text = "导出zip"
 
 [node name="Delete" type="Button" parent="PanelContainer/SafeArea/Main/HBoxContainer/EditOptions" unique_id=1348861511]

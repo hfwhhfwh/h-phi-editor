@@ -191,6 +191,13 @@ joystickDir = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="DebugText" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1197970040]
+visible = false
+layout_mode = 2
+size_flags_vertical = 0
+theme = ExtResource("3_2bu1g")
+text = "DebugText"
+
 [node name="ChartPlayerContainer" type="AspectRatioContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1664464024]
 layout_mode = 2
 ratio = 1.5
@@ -200,12 +207,13 @@ visible = false
 clip_contents = true
 layout_mode = 2
 
-[node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854]
+[node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854 node_paths=PackedStringArray("_debugLabel")]
 script = ExtResource("7_75obp")
 _defaultTapSound = ExtResource("7_r1xvh")
 _defaultDragSound = ExtResource("8_wx7m8")
 _defaultFlickSound = ExtResource("9_3s8ev")
 _defaultHitFrames = ExtResource("10_wx7m8")
+_debugLabel = NodePath("../../DebugText")
 
 [node name="ChartRenderer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1497791091]
 script = ExtResource("12_roijs")

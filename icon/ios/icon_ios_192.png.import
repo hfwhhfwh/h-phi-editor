@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bq1m8dtjsnhec"
-path="res://.godot/imported/icon_ios_192.png-93dbd4e68d2aedd1261e03da2c422098.ctex"
+path.s3tc="res://.godot/imported/icon_ios_192.png-93dbd4e68d2aedd1261e03da2c422098.s3tc.ctex"
+path.etc2="res://.godot/imported/icon_ios_192.png-93dbd4e68d2aedd1261e03da2c422098.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://icon/ios/icon_ios_192.png"
-dest_files=["res://.godot/imported/icon_ios_192.png-93dbd4e68d2aedd1261e03da2c422098.ctex"]
+dest_files=["res://.godot/imported/icon_ios_192.png-93dbd4e68d2aedd1261e03da2c422098.s3tc.ctex", "res://.godot/imported/icon_ios_192.png-93dbd4e68d2aedd1261e03da2c422098.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

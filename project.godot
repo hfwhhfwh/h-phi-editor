@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="HPhiEditor"
-config/version="1.0.0-Beta2"
+config/version="1.0.0-Beta3"
 run/main_scene="uid://bfqi2qheha4ul"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="uid://dr5b2hjh04vy8"

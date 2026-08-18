@@ -63,6 +63,9 @@ public partial class ChartPlayer : BaseChartPlayer
 
     //存储判定线父线关系的拓扑排序
     private List<int> _topologicalOrder = new();
+    
+    private double _startMusicTime;
+    private double _startSystemTime;
 
     //将Beat（int[]）转换为秒
     public float BeatToSeconds(int[] beat)
@@ -384,11 +387,18 @@ public partial class ChartPlayer : BaseChartPlayer
         if (IsPlaying)
         {
             // 获取音乐当前播放位置（秒）
-            double musicTime = audioStreamPlayer.GetPlaybackPosition();
+            // double musicTime = audioStreamPlayer.GetPlaybackPosition();
+
+            // 系统级计时器
+            double elapsedTime = Godot.Time.GetTicksUsec() / 1_000_000.0 - _startSystemTime;
+            double musicTime = _startMusicTime + elapsedTime;
+
             // 应用偏移：谱面逻辑时间 = 音乐时间 - 偏移（偏移为正表示音乐滞后）
             ChartTime = musicTime - chartOffset / 1000.0;
 
             Time = musicTime;
+
+            
         }
         else
         {
@@ -581,7 +591,7 @@ public partial class ChartPlayer : BaseChartPlayer
             if (gameTime < appearSec || gameTime > disappearSec)
             {
                 // 不在显示区间内，隐藏
-                Visible = false;
+                // Visible = false;
                 return; // 不计算位置，优化性能
             }
             else
@@ -870,6 +880,10 @@ public partial class ChartPlayer : BaseChartPlayer
     {
         audioStreamPlayer.Play(time);
         IsPlaying = true;
+
+        _startMusicTime = audioStreamPlayer.GetPlaybackPosition();
+        _startSystemTime = Godot.Time.GetTicksUsec() / 1_000_000.0;
+
     }
 
     public override void Pause()

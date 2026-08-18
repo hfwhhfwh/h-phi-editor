@@ -2,6 +2,7 @@
 
 [ext_resource type="StyleBox" uid="uid://c3tkjvuuu5qsn" path="res://ButtonDisabled.tres" id="1_muhb7"]
 [ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://ButtonHover.tres" id="2_5mx2u"]
+[ext_resource type="StyleBox" uid="uid://cbi3e3614jw73" path="res://ButtonHoverPressed.tres" id="3_eqpgp"]
 [ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="3_lnahn"]
 [ext_resource type="StyleBox" uid="uid://c3x4gv1lx5uwq" path="res://ButtonPressed.tres" id="4_eqpgp"]
 [ext_resource type="StyleBox" uid="uid://dx6dd4bb0sw41" path="res://Panel.tres" id="5_5mx2u"]
@@ -1055,11 +1056,10 @@ _source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\">
 Button/font_sizes/font_size = 30
 Button/styles/disabled = ExtResource("1_muhb7")
 Button/styles/disabled_mirrored = ExtResource("1_muhb7")
-Button/styles/focus = ExtResource("2_5mx2u")
 Button/styles/hover = ExtResource("2_5mx2u")
 Button/styles/hover_mirrored = ExtResource("2_5mx2u")
-Button/styles/hover_pressed = ExtResource("2_5mx2u")
-Button/styles/hover_pressed_mirrored = ExtResource("2_5mx2u")
+Button/styles/hover_pressed = ExtResource("3_eqpgp")
+Button/styles/hover_pressed_mirrored = ExtResource("3_eqpgp")
 Button/styles/normal = ExtResource("3_lnahn")
 Button/styles/normal_mirrored = ExtResource("3_lnahn")
 Button/styles/pressed = ExtResource("4_eqpgp")
