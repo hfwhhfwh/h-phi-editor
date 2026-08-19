@@ -38,6 +38,33 @@ public partial class LineEventInfoPanel : Panel
         _eventType = type;
         _eventIndex = index;
 
+        // 选择滑动条的最大、最小值
+        float minValue = 0, maxValue = 0;
+        float step = 0.1f;
+        switch(type)
+        {
+            case LineEventEnum.MoveX:
+                minValue = -675f;
+                maxValue = 675f;
+                break;
+            case LineEventEnum.MoveY:
+                minValue = -450f;
+                maxValue = 450f;
+                break;
+            case LineEventEnum.Rotate:
+                minValue = 0f;
+                maxValue = 360f;
+                break;
+            case LineEventEnum.Alpha:
+                minValue = 0f;
+                maxValue = 255f;
+                break;
+            case LineEventEnum.Speed:
+                minValue = 0f;
+                maxValue = 20f;
+                break;
+        }
+
         ClearEditors();
         _titleLabel.Text = $"正在编辑: 事件{type}_{index}";
 
@@ -52,11 +79,15 @@ public partial class LineEventInfoPanel : Panel
 
         AddField("Start", lineEvent.Start,
             null, 
-            LineEventPropertyType.Start);
+            LineEventPropertyType.Start,
+            floatOptions: new FloatEditorOptions{MinValue = minValue, MaxValue = maxValue, Step = step}
+        );
 
         AddField("End", lineEvent.End,
             null, 
-            LineEventPropertyType.End);
+            LineEventPropertyType.End,
+            floatOptions: new FloatEditorOptions{MinValue = minValue, MaxValue = maxValue, Step = step}
+        );
 
         // 缓动：先拆包，编辑完再比较差异并分发事件
         (EasingFunc func, EasingIO io) = EasingHelper.Convert.NumberToEasing(lineEvent.EasingType);
@@ -81,10 +112,11 @@ public partial class LineEventInfoPanel : Panel
     /// <param name="initialValue">初始值，用于初始化编辑器显示</param>
     /// <param name="setter">一个 Action，定义"值变了之后怎么写回 LineEvent"</param>
     /// <param name="propType">对应的枚举，用于向外通知"哪个属性变了"；null 表示内部自行处理（如 Easing）</param>
+    /// <param name="floatOptions">Float 字段的滑块范围配置</param>
     /// <typeparam name="T"></typeparam>
-    private void AddField<T>(string label, T initialValue, Action<object> setter, LineEventPropertyType? propType)
+    private void AddField<T>(string label, T initialValue, Action<object> setter, LineEventPropertyType? propType, FloatEditorOptions floatOptions = null)
     {
-        IPropertyEditor<T> editor = PropertyEditorFactory.Create<T>();
+        IPropertyEditor<T> editor = PropertyEditorFactory.Create<T>(floatOptions);
         editor.Setup(label);
         editor.Value = initialValue;
 

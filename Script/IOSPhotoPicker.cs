@@ -4,8 +4,10 @@ using System;
 public partial class IOSPhotoPicker : Node
 {
     public static IOSPhotoPicker Instance;
-    private GodotObject _picker;
+    private GodotObject _plugin;
     private const string PluginName = "PhotoPicker";
+
+    public bool IsValid => OS.HasFeature("ios");
 
     private Action<Image> ImageLoaded;
 
@@ -22,15 +24,17 @@ public partial class IOSPhotoPicker : Node
         Instance = this;
         // =============================
 
+        if(!IsValid) return;
+
         // 检查并获取插件单例
         if (Engine.HasSingleton(PluginName))
         {
-            _picker = Engine.GetSingleton(PluginName);
+            _plugin = Engine.GetSingleton(PluginName);
             
             // 连接信号
-            _picker.Connect("image_picked", new Callable(this, nameof(OnImagePicked)));
-            _picker.Connect("permission_updated", new Callable(this, nameof(OnPermissionUpdated)));
-            _picker.Connect("error", new Callable(this, nameof(OnError)));
+            _plugin.Connect("image_picked", new Callable(this, nameof(OnImagePicked)));
+            _plugin.Connect("permission_updated", new Callable(this, nameof(OnPermissionUpdated)));
+            _plugin.Connect("error", new Callable(this, nameof(OnError)));
         }
         else
         {
@@ -51,13 +55,15 @@ public partial class IOSPhotoPicker : Node
     // 打开相册选择图片
     public void PickImageFromGallery(Action<Image> imageLoaded)
     {
-        if (_picker != null)
-        {
-            ImageLoaded = imageLoaded;
+        if(!IsValid) return;
+        if (_plugin == null) return;
 
-            // 参数：来源类型 (0=相册, 1=相机), 是否允许编辑
-            _picker.Call("pick_image", 0, false);
-        }
+        ImageLoaded = imageLoaded;
+
+        // 参数：来源类型 (0=相册, 1=相机), 是否允许编辑
+        _plugin.Call("pick_image", 0, false);
+
+        
     }
 
     // 信号回调：图片已选择

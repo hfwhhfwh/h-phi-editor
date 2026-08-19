@@ -207,13 +207,12 @@ visible = false
 clip_contents = true
 layout_mode = 2
 
-[node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854 node_paths=PackedStringArray("_debugLabel")]
+[node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854]
 script = ExtResource("7_75obp")
 _defaultTapSound = ExtResource("7_r1xvh")
 _defaultDragSound = ExtResource("8_wx7m8")
 _defaultFlickSound = ExtResource("9_3s8ev")
 _defaultHitFrames = ExtResource("10_wx7m8")
-_debugLabel = NodePath("../../DebugText")
 
 [node name="ChartRenderer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1497791091]
 script = ExtResource("12_roijs")

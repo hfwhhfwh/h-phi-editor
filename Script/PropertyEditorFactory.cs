@@ -25,5 +25,11 @@ public static class PropertyEditorFactory
         throw new NotSupportedException($"不支持的属性类型: {type}");
     }
 
-    public static IPropertyEditor<T> Create<T>() => (IPropertyEditor<T>)Create(typeof(T));
+    public static IPropertyEditor<T> Create<T>(FloatEditorOptions floatOptions = null)
+    {
+        if (typeof(T) == typeof(float))
+            return (IPropertyEditor<T>)(IPropertyEditor)new FloatEditor(floatOptions);
+
+        return (IPropertyEditor<T>)Create(typeof(T));
+    }
 }

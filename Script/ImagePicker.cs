@@ -8,6 +8,8 @@ public partial class ImagePicker : Node
     private GodotObject _plugin;
     private const string PluginName = "GodotGetImage";
 
+    public bool IsValid => OS.HasFeature("android") || OS.HasFeature("Android");
+
     // [Signal]
     // public delegate void ImageLoadedEventHandler(ImageTexture texture);
 
@@ -25,6 +27,8 @@ public partial class ImagePicker : Node
 
         Instance = this;
         // =============================
+
+        if(!IsValid) return;
 
         // 检查并获取插件单例
         if (Engine.HasSingleton(PluginName))
@@ -63,6 +67,7 @@ public partial class ImagePicker : Node
     /// </summary>
     public void PickImageFromGallery(Action<ImageTexture> imageLoaded)
     {
+        if(!IsValid) return;
         if (_plugin == null) return;
 
         ImageLoaded = imageLoaded;
@@ -88,6 +93,9 @@ public partial class ImagePicker : Node
     /// </summary>
     public void PickMultipleImagesFromGallery()
     {
+        if(!IsValid) return;
+        if (_plugin == null) return;
+
         _plugin?.Call("getGalleryImages");
     }
 
@@ -96,6 +104,9 @@ public partial class ImagePicker : Node
     /// </summary>
     public void TakePhoto()
     {
+        if(!IsValid) return;
+        if (_plugin == null) return;
+        
         _plugin?.Call("getCameraImage");
     }
 

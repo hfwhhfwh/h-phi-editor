@@ -1,16 +1,28 @@
 [gd_scene format=3 uid="uid://rp17w37x3k4t"]
 
-[ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="1_wsa5o"]
-[ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="2_o6ksy"]
+[node name="Node2D" type="Node" unique_id=1126269935]
 
-[node name="Node2D" type="Node2D" unique_id=118056527]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1218157957]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Tap" type="Sprite2D" parent="." unique_id=369742124]
-position = Vector2(620, 331)
-scale = Vector2(0.13, 0.13)
-texture = ExtResource("1_wsa5o")
+[node name="HScrollBar" type="HScrollBar" parent="VBoxContainer" unique_id=1580999774]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+allow_greater = true
+allow_lesser = true
 
-[node name="Flick" type="Sprite2D" parent="." unique_id=1789459887]
-position = Vector2(520, 479)
-scale = Vector2(0.12, 0.12)
-texture = ExtResource("2_o6ksy")
+[node name="ProgressBar" type="ProgressBar" parent="VBoxContainer" unique_id=1007530420]
+layout_mode = 2
+
+[node name="HSlider" type="HSlider" parent="VBoxContainer" unique_id=1680967470]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+step = 0.1
+allow_greater = true
+allow_lesser = true
+ticks_on_borders = true
