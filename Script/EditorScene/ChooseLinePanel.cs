@@ -156,7 +156,7 @@ public partial class ChooseLinePanel : Panel
 		//获取坐标
 		Vector2 screenPos = button.GetScreenPosition();
 
-		PopupMenuHelper.ShowPopupMenu(this, screenPos + new Vector2(30, 30), items);
+		PopupMenuHelper.Instance.ShowPopupMenu(this, screenPos + new Vector2(30, 30), items);
 
 		// GD.Print($"localPos:{localPos}, globalPos:{globalPos}, screenPos:{screenPos}");
 	}

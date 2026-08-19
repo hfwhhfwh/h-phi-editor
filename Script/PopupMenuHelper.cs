@@ -3,9 +3,37 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-public static class PopupMenuHelper
+public partial class PopupMenuHelper : Node
 {
+    public static PopupMenuHelper Instance;
     private static Theme theme;
+
+    public override void _Ready()
+    {
+        // ========== 单例保护 ==========
+        if (Instance != null && GodotObject.IsInstanceValid(Instance))
+        {
+            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            QueueFree();  // 自杀，保留旧实例
+            return;
+        }
+
+        Instance = this;
+        // =============================
+
+        theme = GD.Load<Theme>("res://theme_gray.tres");
+    }
+
+    public override void _ExitTree()
+    {
+        // 先清自己的引用，再交给 base
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+        base._ExitTree();
+    }
+
 
     public static void SetTheme(Theme theme)
     {
@@ -18,7 +46,7 @@ public static class PopupMenuHelper
     /// <param name="parent">需要将菜单添加到的父节点（通常是当前场景的根节点）</param>
     /// <param name="position">屏幕坐标（全局鼠标位置）</param>
     /// <param name="items">菜单项列表</param>
-    public static PopupMenu ShowPopupMenu(Node parent, Vector2 position, List<PopupMenuItem> items)
+    public PopupMenu ShowPopupMenu(Node parent, Vector2 position, List<PopupMenuItem> items)
     {
         // 创建 PopupMenu 实例
         PopupMenu menu = new PopupMenu();
@@ -46,7 +74,7 @@ public static class PopupMenuHelper
         return menu;
     }
 
-    public static void SetMenuButton(MenuButton menuButton, List<PopupMenuItem> items)
+    public void SetMenuButton(MenuButton menuButton, List<PopupMenuItem> items)
     {
         PopupMenu popupMenu = menuButton.GetPopup();
 
@@ -60,7 +88,7 @@ public static class PopupMenuHelper
     /// </summary>
     /// <param name="popupMenu">弹出菜单</param>
     /// <param name="items">需要显示的菜单项</param>
-    public static void SetPopupMenu(PopupMenu popupMenu, List<PopupMenuItem> items)
+    public void SetPopupMenu(PopupMenu popupMenu, List<PopupMenuItem> items)
     {
         popupMenu.Clear();
 

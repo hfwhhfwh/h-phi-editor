@@ -311,7 +311,7 @@ public partial class EditorScene : Node
                 new PopupMenuItem { Text = "保存并退出", Callback = SaveAndQuit},
                 new PopupMenuItem { Text = "仅退出", Callback = Quit},
             };
-            PopupMenuHelper.SetMenuButton(fileMenuButtion, items);
+            PopupMenuHelper.Instance.SetMenuButton(fileMenuButtion, items);
         }
         //设置“编辑”选项
         {
@@ -334,7 +334,7 @@ public partial class EditorScene : Node
                 // new PopupMenuItem { IsSeparator = true},
                 new PopupMenuItem { Text = "设置", Callback = null},
             };
-            PopupMenuHelper.SetMenuButton(editMenuButtion, items);
+            PopupMenuHelper.Instance.SetMenuButton(editMenuButtion, items);
         }
 
         //设置NoteChooser
@@ -671,7 +671,7 @@ public partial class EditorScene : Node
         };
 
         // 弹出菜单
-        PopupMenu popupMenu = PopupMenuHelper.ShowPopupMenu(this, popupViewportPos, items);
+        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
         popupMenu.PopupHide += () =>
         {
             noteEditPanel.DeselectAll();
@@ -792,7 +792,7 @@ public partial class EditorScene : Node
         };
 
         // 弹出菜单
-        PopupMenu popupMenu = PopupMenuHelper.ShowPopupMenu(this, popupViewportPos, items);
+        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
         popupMenu.PopupHide += () =>
         {
             eventEditPanel.DeselectAll();

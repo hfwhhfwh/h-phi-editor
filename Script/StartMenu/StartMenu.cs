@@ -30,7 +30,7 @@ public partial class StartMenu : Node
         // 连接信号
         _chartList.ChartSelected += OnChartSelected;
 
-        _createPanel.ChartCreated += OnChartCreated;
+        _createPanel.ChartCreated += CreateChart;
         _createPanel.Cancelled += () => _createPanel.Visible = false;
 
         _deletePanel.DeleteConfirmed += OnDeleteConfirmed;
@@ -136,9 +136,16 @@ public partial class StartMenu : Node
         );
     }
 
-    private void OnChartCreated(ChartInfo data, string songPath, string picPath)
+    // private void CreateChart(ChartInfo data, string songPath, string picPath)
+    // {
+    //     ImageTexture pic = FileUtil.LoadTextureFromFile(picPath, out string _);
+
+    //     CreateChart(data, songPath, pic);
+    // }
+
+    private void CreateChart(ChartInfo data, string songPath, Texture2D texture)
     {
-        _chartService.CreateNewChart(data, songPath, picPath);
+        _chartService.CreateNewChart(data, songPath, texture);
         RefreshChartList();
         _createPanel.Visible = false;
     }

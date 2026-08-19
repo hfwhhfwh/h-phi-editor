@@ -27,6 +27,8 @@ InputManager="*uid://sroqxnij5j65"
 Global="*uid://rfaccn3y6mc0"
 ChartEditService="*uid://kc3isyumh8h8"
 GameSettings="*uid://dw1yc66e2nrfi"
+PopupMenuHelper="*uid://d7wr8t364sv8"
+ImagePicker="*uid://c7m75i1ksev8a"
 
 [display]
 
@@ -40,7 +42,7 @@ project/assembly_name="HPhiEditor"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/Todo_Manager/plugin.cfg")
+enabled=PackedStringArray("res://addons/GodotGetImage/plugin.cfg", "res://addons/Todo_Manager/plugin.cfg")
 
 [gui]
 

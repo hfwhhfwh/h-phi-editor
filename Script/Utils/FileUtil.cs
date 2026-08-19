@@ -627,7 +627,7 @@ public static class FileUtil
     /// </summary>
     /// <param name="picPath">图片路径</param>
     /// <returns></returns>
-    public static Texture2D LoadTextureFromFile(string picPath, out string realFormat, bool mipmap = true)
+    public static ImageTexture LoadTextureFromFile(string picPath, out string realFormat, bool mipmap = true)
     {
         realFormat = null;
         // 检查文件存在
@@ -716,7 +716,7 @@ public static class FileUtil
         }
 
 
-        Texture2D texture = ImageTexture.CreateFromImage(image);
+        ImageTexture texture = ImageTexture.CreateFromImage(image);
         if(texture == null)
         {
             GD.PrintErr($"[{Name}] UpdateItemDisplay() texture == null picturePath:{picPath}");
