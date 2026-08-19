@@ -8,7 +8,9 @@ public partial class EasingEditor : PropertyEditorBase<EasingData>
     private SpinBox _easingTypeSpinBox;
     private OptionButton _funcBtn, _ioBtn;
     private LineEdit _leftEdit, _rightEdit;
+    private EasingCurvePreview _easingCurvePreview;
     private EasingData _value;
+    
 
     public override EasingData Value
     {
@@ -76,6 +78,21 @@ public partial class EasingEditor : PropertyEditorBase<EasingData>
             rowRight.AddChild(_rightEdit);
         }
 
+        // 第三行：曲线预览
+        {
+            CenterContainer row3 = new CenterContainer{SizeFlagsHorizontal = SizeFlags.ExpandFill};
+            vbox.AddChild(row3);
+
+            MarginContainer marginContainer = new MarginContainer{SizeFlagsHorizontal = SizeFlags.ExpandFill};
+            marginContainer.AddThemeConstantOverride("margin_top", 50);
+            marginContainer.AddThemeConstantOverride("margin_bottom", 50);
+            row3.AddChild(marginContainer);
+
+            _easingCurvePreview = new EasingCurvePreview();
+            _easingCurvePreview.CustomMinimumSize = new Vector2(300, 200);
+            marginContainer.AddChild(_easingCurvePreview);
+        }
+
         // 事件
         _funcBtn.ItemSelected += idx => { _value.EasingFunc = (EasingFunc)idx; NotifyChanged(_value); RefreshUI();};
         _ioBtn.ItemSelected   += idx => { _value.EasingIO   = (EasingIO)idx;   NotifyChanged(_value); RefreshUI();};
@@ -120,7 +137,7 @@ public partial class EasingEditor : PropertyEditorBase<EasingData>
 
     private void RefreshUI()
     {
-        if (_funcBtn == null) return;
+        // if (_funcBtn == null) return;
 
         _funcBtn.Select((int)_value.EasingFunc);
         _ioBtn.Select((int)_value.EasingIO);
@@ -130,5 +147,10 @@ public partial class EasingEditor : PropertyEditorBase<EasingData>
 
         _leftEdit.Text = _value.EasingLeft.ToString();
         _rightEdit.Text = _value.EasingRight.ToString();
+
+        _easingCurvePreview.EasingType = easingNum;
+        _easingCurvePreview.LeftCut = _value.EasingLeft;
+        _easingCurvePreview.RightCut = _value.EasingRight;
+        _easingCurvePreview.QueueRedraw();
     }
 }

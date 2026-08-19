@@ -16,7 +16,7 @@ public partial class TestSceneEventInfoPanel : Node
             EndTime = [4,5,6],
             Start = 123,
             End = 456,
-            EasingType = 7,
+            EasingType = 25,
         };
 
         eventInfoPanel.Edit(lineEvent, 0, 0, LineEventEnum.MoveX, 999);

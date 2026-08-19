@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://1be0y4kjk3vr"]
+
+[ext_resource type="Script" uid="uid://dffe0ka00d2mk" path="res://Script/TestSceneScripts/TestSceneEasingCurvePreview.cs" id="1_ofanv"]
+[ext_resource type="PackedScene" uid="uid://djjcog45kc4k5" path="res://Scene/easing_curve_preview.tscn" id="2_aoafy"]
+
+[node name="TestSceneEasingCurvePreview" type="Node" unique_id=617131986 node_paths=PackedStringArray("easingCurvePreview")]
+script = ExtResource("1_ofanv")
+easingCurvePreview = NodePath("Center/EasingCurvePreview")
+
+[node name="Center" type="CenterContainer" parent="." unique_id=805647958]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EasingCurvePreview" parent="Center" unique_id=125733709 instance=ExtResource("2_aoafy")]
+custom_minimum_size = Vector2(300, 200)
+layout_mode = 2
+
+[node name="Panel" type="Panel" parent="Center" unique_id=1252561865]
+custom_minimum_size = Vector2(300, 200)
+layout_mode = 2
