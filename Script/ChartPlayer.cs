@@ -878,8 +878,8 @@ public partial class ChartPlayer : BaseChartPlayer
 
     public override void Play(float time)
     {
+        base.Play(time);
         audioStreamPlayer.Play(time);
-        IsPlaying = true;
 
         _startMusicTime = audioStreamPlayer.GetPlaybackPosition();
         _startSystemTime = Godot.Time.GetTicksUsec() / 1_000_000.0;
@@ -888,9 +888,11 @@ public partial class ChartPlayer : BaseChartPlayer
 
     public override void Pause()
     {
+        base.Pause();
+
         audioStreamPlayer.Stop();
-        IsPlaying = false;
     }
+
 }
 
 // /// <summary>

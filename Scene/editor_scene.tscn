@@ -27,6 +27,7 @@
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
 [ext_resource type="Texture2D" uid="uid://btdnpjcck36nd" path="res://Sprite/EventHold_2.png" id="21_605qm"]
 [ext_resource type="Texture2D" uid="uid://cqkci055pm5cs" path="res://播放_间距.png" id="24_5asy7"]
+[ext_resource type="Texture2D" uid="uid://tfio8umpc4od" path="res://电影.png" id="25_3s8ev"]
 [ext_resource type="Texture2D" uid="uid://dc5hmif77j15m" path="res://菜单-07.png" id="25_wx7m8"]
 [ext_resource type="Texture2D" uid="uid://8esm21xk43li" path="res://菜单-02.png" id="26_3s8ev"]
 [ext_resource type="Texture2D" uid="uid://cwwb6dl8anq1i" path="res://停止.png" id="26_utcux"]
@@ -310,6 +311,20 @@ icon = ExtResource("24_5asy7")
 icon_alignment = 1
 expand_icon = true
 
+[node name="Play2" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=2012319992]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+icon = ExtResource("25_3s8ev")
+icon_alignment = 1
+expand_icon = true
+
 [node name="ChooseLine" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=745194988]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -450,6 +465,7 @@ enabled = false
 zoom = Vector2(0.5, 0.5)
 
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play2" to="." method="PlayInEditPanel"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/ChooseLine" to="." method="OnChooseLineClicked"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer/Stop" to="." method="OnStopButtonClicked"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer/Pause" to="." method="OnPauseClicked"]

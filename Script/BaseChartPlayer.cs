@@ -11,7 +11,7 @@ public abstract partial class BaseChartPlayer : Node
     public double Time{ get; set; } = 0;            // 当前游戏时间（秒），由音乐播放控制
     public double ChartTime{ get; set; } = 0;       // 当前谱面时间，应用了偏移
     public double ExternalTime { get; set; }        // 由外部设置的游戏时间（秒）
-    public bool IsPlaying{ get; set; }              // 是否正在播放，由上级设置
+    public bool IsPlaying{ get; private set; }              // 是否正在播放，由上级设置
     public Chart Chart{ get; set; }                 // 加载的谱面数据，由上级设置
 
 
@@ -63,12 +63,18 @@ public abstract partial class BaseChartPlayer : Node
     /// 从指定时间开始播放
     /// </summary>
     /// <param name="time">开始播放的时间</param>
-    public abstract void Play(float time);
+    public virtual void Play(float time)
+    {
+        IsPlaying = true;
+    }
 
 
     /// <summary>
     /// 暂停播放
     /// </summary>
-    public abstract void Pause();
+    public virtual void Pause()
+    {
+        IsPlaying = false;
+    }
 
 }

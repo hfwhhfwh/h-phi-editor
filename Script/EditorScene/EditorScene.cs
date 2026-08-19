@@ -351,7 +351,7 @@ public partial class EditorScene : Node
 
         // 设置PlayModeManager
         PlayModeManager.PlayModeChanged += OnPlayModeChanged;
-        PlayModeManager.SetPlayMode(PlayModeEnum.Editor);
+        PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
         
 
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
@@ -398,7 +398,7 @@ public partial class EditorScene : Node
         //处理摇杆垂直滚动
 		if(slideJoystick.Output != Vector2.Zero)
 		{
-            if(PlayModeManager.PlayMode == PlayModeEnum.Player)
+            if(PlayModeManager.PlayMode == PlayModeEnum.PlayerPause)
             {
                 SlideTime(-slideJoystick.Output.Y * verJoystickTimeSens * (float)delta);
             }
@@ -533,47 +533,76 @@ public partial class EditorScene : Node
         chartRenderer.Disabled = !value;
     }
 
+    private void SetIsPlaying(bool value)
+    {
+        isPlaying = value;
+        if(value) chartPlayer.Play((float)ChartTime);
+        else chartPlayer.Pause();
+        
+    }
+
     public void OnPlayButtonClicked()
     {
         // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.Player);
+        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPlaying);
 
-        // 开始播放
-        chartPlayer.Play((float)ChartTime);
-        chartPlayer.IsPlaying = true;
-        isPlaying = true;
+        // // 开始播放
+        // chartPlayer.Play((float)ChartTime);
+        // chartPlayer.IsPlaying = true;
+        // isPlaying = true;
+
+        // //更新右侧面板
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
+    }
+
+    public void PlayInEditPanel()
+    {
+        if(PlayModeManager.PlayMode == PlayModeEnum.EditorPlaying)
+        {
+            PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
+        }
+        else
+        {
+            // 切换播放模式
+            PlayModeManager.SetPlayMode(PlayModeEnum.EditorPlaying);
+        }
+        
+
+        // // 开始播放
+        // chartPlayer.Play((float)ChartTime);
+        // chartPlayer.IsPlaying = true;
+        // isPlaying = true;
 
         //更新右侧面板
-        rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
-        
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
     }
 
     public void OnStopButtonClicked()
     {
         // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.Editor);
+        PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
 
-        // 暂停播放
-        chartPlayer.Pause();
-        chartPlayer.IsPlaying = false;
-        isPlaying = false;
+        // // 暂停播放
+        // chartPlayer.Pause();
+        // chartPlayer.IsPlaying = false;
+        // isPlaying = false;
 
         //更新右侧面板
-        rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
     }
 
     public void OnPauseClicked()
     {
         // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.Player);
+        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPause);
 
-        // 暂停播放
-        chartPlayer.IsPlaying = false;
-        chartPlayer.Pause();
-        isPlaying = false;
+        // // 暂停播放
+        // chartPlayer.IsPlaying = false;
+        // chartPlayer.Pause();
+        // isPlaying = false;
 
         //更新右侧面板
-        rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.DragPlay);
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
 
     }
 
@@ -581,17 +610,37 @@ public partial class EditorScene : Node
     {
         switch (playMode)
         {
-            case PlayModeEnum.Editor:
+            case PlayModeEnum.Editing:
                 SetChartPlayerVisible(false);
                 SetEditPanelVisible(true);
+                SetIsPlaying(false);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
                 break;
-            case PlayModeEnum.Player:
+
+            case PlayModeEnum.PlayerPlaying:
                 SetChartPlayerVisible(true);
-                SetEditPanelVisible(false); 
+                SetEditPanelVisible(false);
+                SetIsPlaying(true);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
                 break;
-            case PlayModeEnum.EditorAndPlayer:
+
+            case PlayModeEnum.PlayerPause:
                 SetChartPlayerVisible(true);
-                SetEditPanelVisible(true); 
+                SetEditPanelVisible(false);
+                SetIsPlaying(false);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
+                break;
+            case PlayModeEnum.EditorPlaying:
+                SetChartPlayerVisible(false);
+                SetEditPanelVisible(true);
+                SetIsPlaying(true);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+                break;
+            case PlayModeEnum.EditorAndPlayerPlaying:
+                SetChartPlayerVisible(true);
+                SetEditPanelVisible(true);
+                SetIsPlaying(true);
+                // TODO
                 break;
         }
     }

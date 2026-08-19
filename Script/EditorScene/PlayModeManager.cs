@@ -6,9 +6,11 @@ using System;
 /// </summary>
 public enum PlayModeEnum
 {
-    Editor, // 播放器隐藏
-    Player, // 播放器正常播放
-    EditorAndPlayer, // 编辑器和播放器同时显示
+    Editing, // 播放器隐藏
+    PlayerPlaying, // 播放器正常播放
+    PlayerPause, // 播放器下暂停
+    EditorPlaying, // 在编辑器下滚动播放
+    EditorAndPlayerPlaying, // 编辑器和播放器同时显示
 }
 public static class PlayModeManager
 {
