@@ -20,7 +20,7 @@ public partial class GridDrawer : Control
     [Export] public float HorSubWidth { get; set; } = 1;
     [Export] public Color VerColor { get; set; } = new Color(0, 1f, 0, 0.588f);
     [Export] public float VerWidth { get; set; } = 1;
-	[Export] public Color GroundLineColor { get; set; } = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+	[Export] public Color GroundLineColor { get; set; } = new Color(0.7f, 0.7f, 0.7f, 0.9f);
 	[Export] public float GroundLineWidth { get; set; } = 3;
     [ExportGroup("")]
 
@@ -46,10 +46,10 @@ public partial class GridDrawer : Control
     {
         base._Draw();
 
-		DrawGroundLine();
         DrawMainBeats();
         DrawSubBeats();
         DrawVerticalLines();
+		DrawGroundLine();
 
     }
 

@@ -24,6 +24,7 @@ public partial class CreateChartPanel : PanelContainer
     {
         // 获取节点引用
         fileDialogManager = GetNode<FileDialogManager>("/root/FileDialogManager");
+
     }
 
     public void OnSelectMusic()
@@ -94,6 +95,9 @@ public partial class CreateChartPanel : PanelContainer
                     // GD.PrintErr($"[ExportPanel] SetInfo() textureImage == null picturePath:{path}");
                     return;
                 }
+                ImageTexture texture = ImageTexture.CreateFromImage(textureImage);
+
+                _picTexture = texture;
                 _picTextureRect.Texture = ImageTexture.CreateFromImage(textureImage);
             },
             filters
@@ -143,6 +147,28 @@ public partial class CreateChartPanel : PanelContainer
 
     public void OnConfirm()
     {
+        // 核实信息有效
+        if(!float.TryParse(_bpmEdit.Text, out float bpm))
+        {
+            GD.Print($"[{Name}] 输入的Bpm无效");
+            PopupHelper.Instance.ShowAlert("提示", "请输入有效的 BPM");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_musicPathEdit.Text))
+        {
+            GD.Print($"[{Name}] 输入的音乐路径无效");
+            PopupHelper.Instance.ShowAlert("提示", "请选择音乐文件");
+            return;
+        }
+
+        if(_picTexture == null)
+        {
+            GD.Print($"[{Name}] 未选择曲绘图片");
+            PopupHelper.Instance.ShowAlert("提示", "请选择曲绘图片");
+            return;
+        }
+
         string id = Util.GenerateRandomNumId(14);
         ChartInfo data = new ChartInfo
         {
@@ -150,7 +176,7 @@ public partial class CreateChartPanel : PanelContainer
             Name = _nameEdit.Text,
             SongFileName = _musicPathEdit.Text.GetFile(),
             PictureFileName = _picPathEdit.Text.GetFile(),
-            Bpm = float.Parse(_bpmEdit.Text),
+            Bpm = bpm,
             Composer = _composerEdit.Text,
             Charter = _charterEdit.Text,
             Duration = Util.GetMusicDuration(_musicPathEdit.Text)

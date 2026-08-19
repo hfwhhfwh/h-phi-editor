@@ -142,6 +142,7 @@ public partial class ImagePicker : Node
             else
             {
                 GD.PrintErr("图片加载失败: ", err);
+                PopupHelper.Instance.ShowAlert("错误", $"图片加载失败: {err}");
             }
         }
     }
@@ -150,6 +151,7 @@ public partial class ImagePicker : Node
     private void OnImageError(string error)
     {
         GD.PrintErr("图片选择错误: ", error);
+        PopupHelper.Instance.ShowAlert("错误", $"图片选择错误: {error}");
     }
 
     // 权限被拒绝回调

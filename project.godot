@@ -30,6 +30,7 @@ GameSettings="*uid://dw1yc66e2nrfi"
 PopupMenuHelper="*uid://d7wr8t364sv8"
 ImagePicker="*uid://c7m75i1ksev8a"
 IosPhotoPicker="*uid://cvl10oovvfsnx"
+PopupHelper="*uid://vokpe42lhbej"
 
 [display]
 
@@ -48,10 +49,6 @@ enabled=PackedStringArray("res://addons/GodotGetImage/plugin.cfg", "res://addons
 [gui]
 
 common/default_scroll_deadzone=5
-
-[input_devices]
-
-pointing/emulate_touch_from_mouse=true
 
 [physics]
 

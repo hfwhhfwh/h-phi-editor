@@ -171,6 +171,7 @@ public partial class ChartService : Node
         if (!Godot.FileAccess.FileExists(infoTempPath))
         {
             GD.PrintErr("无法找到info.txt文件");
+            PopupHelper.Instance.ShowAlert("错误", "谱面导入失败：未找到 info.txt");
             return;
         }
         infoDic = FileUtil.ReadInfoFile(infoTempPath);

@@ -309,7 +309,7 @@ public partial class EditorScene : Node
                 //new PopupMenuItem { Text = "另存为", Callback = null},
                 new PopupMenuItem { IsSeparator = true},
                 new PopupMenuItem { Text = "保存并退出", Callback = SaveAndQuit},
-                new PopupMenuItem { Text = "仅退出", Callback = Quit},
+                new PopupMenuItem { Text = "仅退出", Callback = OnQuitPressed},
             };
             PopupMenuHelper.Instance.SetMenuButton(fileMenuButtion, items);
         }
@@ -775,6 +775,7 @@ public partial class EditorScene : Node
     private void SaveChart()
     {
         _chartService.SaveChart(editingChartId, editingChart);
+        // TODO 保存成功后弹出Toast提示
     }
 
     private void Quit()
@@ -782,6 +783,15 @@ public partial class EditorScene : Node
         var global = GetNode<Global>("/root/Global");
         global.editingChartId = "";
         global.GotoScene("res://Scene/start_menu.tscn");
+    }
+
+    private void OnQuitPressed()
+    {
+        PopupHelper.Instance.ShowConfirm(
+            "警告",
+            "谱面信息将会丢失，是否仍要退出？",
+            Quit,
+            null);
     }
 
     private void SaveAndQuit()
@@ -819,7 +829,7 @@ public partial class EditorScene : Node
         if(editingChart.JudgeLineList.Count <= 1)
         {
             GD.Print($"[{this.Name}] 最少保留一条判定线，删除失败");
-            // TODO 最少保留一条判定线，删除失败时显示弹窗提示
+            PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
             return;
         }
         _chartEditService.DeleteLine(editingChart.JudgeLineList, id);
