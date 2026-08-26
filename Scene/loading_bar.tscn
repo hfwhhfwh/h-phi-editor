@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://dnc3t1mokox2y"]
+
+[ext_resource type="Script" uid="uid://cva6dcnxn0kwn" path="res://Script/LoadingBar/LoadingBar.cs" id="1_68ys5"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_e7ab3"]
+
+[node name="LoadingBar" type="CanvasLayer" unique_id=1615410586 node_paths=PackedStringArray("_titleLabel", "_progressBar", "_numLabel", "_descriptionLabel")]
+script = ExtResource("1_68ys5")
+_titleLabel = NodePath("BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer/Title")
+_progressBar = NodePath("BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ProgressBar")
+_numLabel = NodePath("BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ProgressBar/Label")
+_descriptionLabel = NodePath("BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer/Label")
+
+[node name="BackGround" type="ColorRect" parent="." unique_id=1738888022]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="CenterContainer" type="CenterContainer" parent="BackGround" unique_id=641353038]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="BackGround/CenterContainer" unique_id=1585225368]
+custom_minimum_size = Vector2(800, 200)
+layout_mode = 2
+theme = ExtResource("1_e7ab3")
+
+[node name="MarginContainer" type="MarginContainer" parent="BackGround/CenterContainer/PanelContainer" unique_id=386782913]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BackGround/CenterContainer/PanelContainer/MarginContainer" unique_id=34047337]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=478911909]
+layout_mode = 2
+theme = ExtResource("1_e7ab3")
+text = "标题"
+horizontal_alignment = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=656974432]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme = ExtResource("1_e7ab3")
+show_percentage = false
+
+[node name="Label" type="Label" parent="BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ProgressBar" unique_id=321770833]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_e7ab3")
+text = "1/5"
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1921431929]
+layout_mode = 2
+size_flags_vertical = 6
+theme = ExtResource("1_e7ab3")
+text = "正在加载: 进度"

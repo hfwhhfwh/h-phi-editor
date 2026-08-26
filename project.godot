@@ -11,7 +11,8 @@ config_version=5
 [application]
 
 config/name="HPhiEditor"
-config/version="1.0.0-Beta3"
+config/description="基于 Godot 4 (C#) 开发的移动端音游谱面编辑器"
+config/version="0.1.0-beta3"
 run/main_scene="uid://bfqi2qheha4ul"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="uid://dr5b2hjh04vy8"
@@ -31,6 +32,7 @@ PopupMenuHelper="*uid://d7wr8t364sv8"
 ImagePicker="*uid://c7m75i1ksev8a"
 IosPhotoPicker="*uid://cvl10oovvfsnx"
 PopupHelper="*uid://vokpe42lhbej"
+LoadingManager="*uid://b57um3paj7g87"
 
 [display]
 

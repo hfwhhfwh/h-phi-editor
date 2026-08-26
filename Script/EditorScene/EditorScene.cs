@@ -3,6 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 
 public partial class EditorScene : Node
@@ -136,15 +137,8 @@ public partial class EditorScene : Node
     }
 
 
-    public override void _Ready()
+    public override async void _Ready()
     {
-        // {
-        //     Beat beat1 = new Beat(0, 1, 4);
-        //     Beat beat2 = new Beat(2, 0, 4);
-
-        //     Beat beat3 = beat1 - beat2;
-        //     GD.Print($"beat3:{beat3}");
-        // }
         #if TOOLS
         // 注册自定义监视器
         Performance.AddCustomMonitor("EditorScene/SetChartTimeTimeUs", Callable.From(() => _setChartTimeTimeUs));
@@ -184,55 +178,70 @@ public partial class EditorScene : Node
             Zoom(x * zoomMouseSensitivity);
         };
 
-        //从global中同步数据
-        var global = GetNode<Global>("/root/Global");
-        editingChartId = global.editingChartId;
+        ChartInfo chartInfo = null;
+        Image bgImage = null;
+        AudioStream audioStream = null;
 
-        // 设置正在编辑的铺面
-        ChartInfo chartInfo = _chartService.GetChartInfo(editingChartId);
-        editingChart = ChartLoader.LoadChart(chartInfo.ChartPath);
-        noteEditPanel.editingChart = editingChart;
-        eventEditPanel.editingChart = editingChart;
+        List<(string, Func<Task>)> tasks = [
+            ("正在读取谱面...", async () => {
+                //从global中同步数据
+                var global = GetNode<Global>("/root/Global");
+                editingChartId = global.editingChartId;
 
-        // ================ 加载资源包 ================
-        LoadResourcePack();
-        GameSettings.Instance.SettingChanged += (string key, Variant value) =>
-        {
-            if(key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
-            {
+                // 设置正在编辑的铺面
+                chartInfo = _chartService.GetChartInfo(editingChartId);
+                editingChart = ChartLoader.LoadChart(chartInfo.ChartPath);
+                noteEditPanel.editingChart = editingChart;
+                eventEditPanel.editingChart = editingChart;
+                
+            }),
+            ("正在加载资源包...", async () => {
+                // ================ 加载资源包 ================
                 LoadResourcePack();
-            }
-        };
+                
+            }),
+            ("正在加载背景和音乐...", async () => {
+                // 背景图片
+                bgImage = Image.LoadFromFile(chartInfo.PicturePath);
+                if (bgImage == null)
+                {
+                    GD.PrintErr($"[{this.Name}] 背景图片导入失败");
+                    //return;
+                }
+                //TODO 图片模糊效果
+                // chartPlayer2.bgImage = bgImage;
+
+                // 音乐
+                // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
+                audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath);
+                if (audioStream == null)
+                {
+                    GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
+                    //return;
+                }
+            }),
+            ("正在初始化谱面播放器...", async () => {
+                // ================初始化谱面播放器================
+                chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream);
+                chartRenderer.Initialize(chartPlayParent);
+
+                chartPlayParent.ClipContents = true;
+
+                SetChartPlayerVisible(false); // 初始不显示
+            }),
+            ("正在初始化编辑器...", async () => {
+                InitEditor();
+            }),
+        ];
+
+        await LoadingManager.Instance.RunTasksAsync("正在进入编辑界面", tasks);
         
+        GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
+        
+    }
 
-        // ================初始化谱面播放器================
-        // 背景图片
-        Image bgImage = Image.LoadFromFile(chartInfo.PicturePath);
-        if (bgImage == null)
-        {
-            GD.PrintErr($"[{this.Name}] 背景图片导入失败");
-            //return;
-        }
-        //TODO 图片模糊效果
-        // chartPlayer2.bgImage = bgImage;
-
-        // 音乐
-        // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
-        AudioStream audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath);
-        if (audioStream == null)
-        {
-            GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
-            //return;
-        }
-
-        chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream);
-        chartRenderer.Initialize(chartPlayParent);
-
-        chartPlayParent.ClipContents = true;
-
-        SetChartPlayerVisible(false); // 初始不显示
-
-
+    private void InitEditor()
+    {
         // 设置chooseLinePanel
         chooseLinePanel.Visible = false;
         chooseLinePanel.LineSelected += SetEditingLine;
@@ -352,10 +361,14 @@ public partial class EditorScene : Node
         // 设置PlayModeManager
         PlayModeManager.PlayModeChanged += OnPlayModeChanged;
         PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
-        
 
-        GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
-
+        GameSettings.Instance.SettingChanged += (string key, Variant value) =>
+        {
+            if(key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
+            {
+                LoadResourcePack();
+            }
+        };
         
     }
 
