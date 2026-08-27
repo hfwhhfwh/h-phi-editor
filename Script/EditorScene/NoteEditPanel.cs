@@ -16,7 +16,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
 	[Export] private float noteScale = 0.1f;
     
-    /// <summary> event被选中时的颜色滤镜 </summary>
+    /// <summary> 被选中时的颜色滤镜 </summary>
     [Export] private Color selectedModulate = new Color(1f, 0.223f, 0.947f, 1f);
     [Export] private Color deleteHighlightModulate = new Color(1f, 0.184f, 0, 1f);
     [Export] private Color toAddModulate = new Color(1f, 1f, 1f, 0.588f);

@@ -3,21 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 public partial class SettingsPanel : Control
 {
     // ---------- 控件引用 ----------
-    // 在编辑器里把对应节点设为 Unique Name，或在 Inspector 中拖拽赋值
     [Export] private OptionButton _vSyncOptionBtn;
     [Export] private SpinBox _maxFpsEdit;
 
     [Export] private OptionButton _packOptionBtn;
     [Export] private CheckButton _useDefaultResourceBtn;
-    // [Export] private LineEdit _resourcePackEdit;
-    // [Export] private CheckButton _fullscreenCheck;
-    // [Export] private OptionButton _resolutionOption;
     [Export] private Button _importPackBtn;
     [Export] private Button _exportPackBtn;
+    [Export] private Button _deletePackBtn;
+
     [Export] private Button _applyBtn;
     [Export] private Button _confirmBtn;
 
@@ -52,6 +51,7 @@ public partial class SettingsPanel : Control
         GameSettings.Instance.SettingsApplied += OnSettingsApplied;      
 
         _importPackBtn.Pressed += OnImportClicked;
+        _deletePackBtn.Pressed += OnDeletePackClicked;
 
         VisibilityChanged += () =>
         {
@@ -70,34 +70,6 @@ public partial class SettingsPanel : Control
             GameSettings.Instance.SettingsApplied -= OnSettingsApplied;
         }
     }
-
-    // public override void _Notification(int what)
-    // {
-    //     if (what == NotificationVisibilityChanged)
-    //     {
-    //         // 只在变为可见时重建 UI
-    //         if (Visible)
-    //         {
-    //             InitOptions();
-    //             RefreshUI();
-    //             GD.Print($"[{Name}] 成功重建 UI");
-    //         }
-    //     }
-    // }
-
-    // ---------- 初始化下拉框 ----------
-    // private void InitOptions()
-    // {
-    //     // VSync
-    //     _vSyncOptionBtn.Clear();
-    //     foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
-    //     {
-    //         _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
-    //     }
-
-    //     // 资源包
-    //     RefreshPackSettings();
-    // }
 
     // ---------- 绑定：UI 修改 → Settings ----------
     private void BindEvents()
@@ -182,6 +154,35 @@ public partial class SettingsPanel : Control
                 // RefreshUI();
             }
         );
+    }
+
+    private void OnDeletePackClicked()
+    {
+        // 获取当前选中资源包id
+        string id = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
+
+        // ---------------- 选择字典序上一个资源包 ----------------
+        List<ValueTuple<string, string>> packs = ResourcePackLoader.GetPackList();
+
+        // 1. 提取所有 ID 并排序
+        List<string> sortedIds = packs.Select(t => t.Item1).OrderBy(id => id, StringComparer.Ordinal).ToList();
+
+        // 2. 查找目标 ID 的索引（唯一性假设）
+        int index = sortedIds.IndexOf(id);
+        if (index == -1)
+            throw new ArgumentException($"ID '{id}' not found in the list.");
+
+        // 3. 返回前一个 ID，如果是第一个就返回下一个
+        string lastId;
+        if(index == 0) lastId = sortedIds[index + 1];
+        else lastId = sortedIds[index - 1];
+
+        ResourcePackLoader.DeletePack(id);
+
+        // 选择上一个资源包
+        GameSettings.Instance.Set<string>(nameof(SettingsData.ResourcePackId), lastId);
+
+        RefreshUI();
     }
 
     // ---------- 从 Settings 刷新整个面板 ----------

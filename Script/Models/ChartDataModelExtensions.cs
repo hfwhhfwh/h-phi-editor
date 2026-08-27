@@ -144,7 +144,7 @@ namespace QuickType
         /// </summary>
         /// <param name="time">新的开始时间</param>
         /// <param name="bpmList">BPM事件列表</param>
-        public void SetStartTime(int[] time, BpmEvent[] bpmList)
+        public void SetStartTime(int[] time, List<BpmEvent> bpmList)
         {
             StartTime = time;
             startSec = TimeUtil.BeatToSecond(time, bpmList);
@@ -155,13 +155,13 @@ namespace QuickType
         /// </summary>
         /// <param name="time">新的结束时间</param>
         /// <param name="bpmList">BPM事件列表</param>
-        public void SetEndTime(int[] time, BpmEvent[] bpmList)
+        public void SetEndTime(int[] time, List<BpmEvent> bpmList)
         {
             EndTime = time;
             endSec = TimeUtil.BeatToSecond(time, bpmList);
         }
 
-        public void RefreshSec(BpmEvent[] bpmList)
+        public void RefreshSec(List<BpmEvent> bpmList)
         {
             startSec = TimeUtil.BeatToSecond(StartTime, bpmList);
             endSec = TimeUtil.BeatToSecond(EndTime, bpmList);
@@ -183,7 +183,7 @@ namespace QuickType
         /// </summary>
         [JsonIgnore] public float endAllDisplacement;
 
-        public void SetStartTime(int[] newStartTime, BpmEvent[] bpmList, JudgeLine line)
+        public void SetStartTime(int[] newStartTime, List<BpmEvent> bpmList, JudgeLine line)
         {
             StartTime = newStartTime;
             startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
@@ -205,7 +205,7 @@ namespace QuickType
             allDisplacement = line.GetDisplacementAtTime(startSec);
         }
 
-        public void SetEndTime(int[] newEndTime, BpmEvent[] bpmList, JudgeLine line)
+        public void SetEndTime(int[] newEndTime, List<BpmEvent> bpmList, JudgeLine line)
         {
             EndTime = newEndTime;
             endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);

@@ -3,6 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 public partial class ChartService : Node
 {
@@ -150,58 +151,72 @@ public partial class ChartService : Node
     /// 导入谱面
     /// </summary>
     /// <param name="path">谱面文件（zip、pez等）的路径</param>
-    public void ImportChart(string path)
+    public async Task ImportChart(string path)
     {
         //1. 创建临时导入目录
         string id = Util.GenerateRandomNumId(14);
-        //GD.Print($"id:{id}");
         string tempDir = Path.Combine("user://temp_import", id);
-        //GD.Print($"tempDir:{tempDir}");
         FileUtil.EnsureDirectoryExists(tempDir);
 
-        // 2. 解压 ZIP 到临时目录
-        GD.Print($"开始解压: {path} -> {tempDir}");
-        FileUtil.UnzipFileTo(path, tempDir); // 解压完成会在内部打印
+        Dictionary<string, string> infoDic = new Dictionary<string, string>();;
+        string songTempPath = null, picTempPath = null, jsonTempPath = null;
+        string infoTempPath = null;
+        string dir = null;
 
-        //3. 寻找info.txt文件，读取其他3个文件的路径
-        string songTempPath, picTempPath, jsonTempPath;
-        string infoTempPath = Path.Combine(tempDir, "info.txt");
-        //GD.Print($"infoTempPath:{infoTempPath}");
-        Dictionary<string, string> infoDic = new Dictionary<string, string>();
-        if (!Godot.FileAccess.FileExists(infoTempPath))
-        {
-            GD.PrintErr("无法找到info.txt文件");
-            PopupHelper.Instance.ShowAlert("错误", "谱面导入失败：未找到 info.txt");
-            return;
-        }
-        infoDic = FileUtil.ReadInfoFile(infoTempPath);
-        jsonTempPath = Path.Combine(tempDir, infoDic["Chart"]);
-        picTempPath = Path.Combine(tempDir, infoDic["Picture"]);
-        songTempPath = Path.Combine(tempDir, infoDic["Song"]);
+        List<(string, Func<Task>)> tasks = [
+            ("正在解压谱面文件...", async () => {
+                // 2. 解压 ZIP 到临时目录
+                GD.Print($"开始解压: {path} -> {tempDir}");
+                await Task.Run(() => FileUtil.UnzipFileTo(path, tempDir)); // 解压完成会在内部打印
+            }),
+            ("正在读取info.txt...", async () => {
+                //3. 寻找info.txt文件，读取其他3个文件的路径
+                infoTempPath = Path.Combine(tempDir, "info.txt");
+                if (!Godot.FileAccess.FileExists(infoTempPath))
+                {
+                    GD.PrintErr("无法找到info.txt文件");
+                    PopupHelper.Instance.ShowAlert("错误", "谱面导入失败：未找到 info.txt");
+                    return;
+                }
 
-        // GD.Print($"jsonTempPath:{jsonTempPath}");
-        // GD.Print($"picTempPath:{picTempPath}");
-        // GD.Print($"songTempPath:{songTempPath}");
+                await Task.Run(() => infoDic = FileUtil.ReadInfoFile(infoTempPath));
+                jsonTempPath = Path.Combine(tempDir, infoDic["Chart"]);
+                picTempPath = Path.Combine(tempDir, infoDic["Picture"]);
+                songTempPath = Path.Combine(tempDir, infoDic["Song"]);
+            }),
+            ("正在创建导入目录...", async () => {
+                //创建导入目录
+                dir = Path.Combine(chartRepository.GetSavesDir(), id);
+                // GD.Print($"dir:{dir}");
+                await Task.Run(() => FileUtil.EnsureDirectoryExists(dir));
+                
+            }),
+            ("正在设置id信息...", async () => {
+                //修改id信息
+                infoDic["Path"] = id;
+                infoDic["Chart"] = $"{id}.json";
+                infoDic["Song"] = $"{id}.{songTempPath.GetExtension()}";
+                infoDic["Picture"] = $"{id}.{picTempPath.GetExtension()}";
+                await Task.Run(() => FileUtil.WriteInfoFile(infoTempPath, infoDic));
+                
+            }),
+            ("正在复制info.txt...", async () => {
+                await Task.Run(() => FileUtil.CopyFile(infoTempPath, Path.Combine(dir, "info.txt")));
+            }),
+            ("正在复制谱面...", async () => {
+                await Task.Run(() => FileUtil.CopyFile(jsonTempPath, Path.Combine(dir, infoDic["Chart"])));
+            }),
+            ("正在复制背景图片...", async () => {
+                await Task.Run(() => FileUtil.CopyFile(picTempPath, Path.Combine(dir, infoDic["Picture"])));
+            }),
+            ("正在复制音乐...", async () => {
+                await Task.Run(() => FileUtil.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"])));
+            }),
+        ];
 
-        //创建导入目录
-        string dir = Path.Combine(chartRepository.GetSavesDir(), id);
-        // GD.Print($"dir:{dir}");
-        FileUtil.EnsureDirectoryExists(dir);
-
-        //修改id信息
-        infoDic["Path"] = id;
-        infoDic["Chart"] = $"{id}.json";
-        infoDic["Song"] = $"{id}.{songTempPath.GetExtension()}";
-        infoDic["Picture"] = $"{id}.{picTempPath.GetExtension()}";
-        FileUtil.WriteInfoFile(infoTempPath, infoDic);
-
-        //复制文件
-        FileUtil.CopyFile(infoTempPath, Path.Combine(dir, "info.txt"));
-        FileUtil.CopyFile(jsonTempPath, Path.Combine(dir, infoDic["Chart"]));
-        FileUtil.CopyFile(picTempPath, Path.Combine(dir, infoDic["Picture"]));
-        FileUtil.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"]));
-
-        GD.Print($"[{this.Name}] 铺面导入成功，id:{id}");
+        await LoadingManager.Instance.RunTasksAsync("正在导入谱面", tasks);
+        
+        GD.Print($"[{this.Name}] 铺面导入成功, id:{id}");
 
     }
     

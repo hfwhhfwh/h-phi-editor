@@ -303,6 +303,20 @@ public static class ResourcePackLoader
         return packList;
     }
 
+    public static void DeletePack(string id)
+    {
+        string localDir = Path.Combine(LocalPackDir, id);
+        if (!FileUtil.DirExists(localDir))
+        {
+            GD.PrintErr($"[{Name}] 删除资源包失败, 未找到资源包id:{id}");
+            return;
+        }
+
+        FileUtil.DeleteDirectoryRecursive(localDir);
+
+        GD.Print($"[{Name}] 成功删除资源包:{id}");
+    }
+
     private static void InitPath()
     {
         FileUtil.EnsureDirectoryExists(LocalPackDir);

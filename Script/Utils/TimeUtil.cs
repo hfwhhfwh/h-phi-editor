@@ -1,6 +1,7 @@
 using Godot;
 using QuickType;
 using System;
+using System.Collections.Generic;
 
 public static class TimeUtil
 {
@@ -10,9 +11,9 @@ public static class TimeUtil
     /// <param name="beat">当前节拍数</param>
     /// <param name="bpmList">谱面的所有bpm事件</param>
     /// <returns></returns>
-    public static float BeatToSecond(int[] beat, BpmEvent[] bpmList)
+    public static float BeatToSecond(int[] beat, List<BpmEvent> bpmList)
     {
-        if (bpmList == null || bpmList.Length == 0) return 0;
+        if (bpmList == null || bpmList.Count == 0) return 0;
 
         // 将Beat转为以拍为单位的总拍数： beat[0] + beat[1]/beat[2]
         float totalBeats = beat[0] + (float)beat[1] / beat[2];
@@ -26,16 +27,16 @@ public static class TimeUtil
     /// <param name="beatValue">当前节拍数</param>
     /// <param name="bpmList">谱面的所有bpm事件</param>
     /// <returns></returns>
-    public static float BeatToSecond(float beatValue, BpmEvent[] bpmList)
+    public static float BeatToSecond(float beatValue, List<BpmEvent> bpmList)
     {
-        if (bpmList == null || bpmList.Length == 0) return 0;
+        if (bpmList == null || bpmList.Count == 0) return 0;
         
         // 找到当前Beat所在的BPM段并累积时间
         float elapsedSeconds = 0;
         float lastBpmBeat = 0; // 上一个BPM事件的总拍数
         float currentBpm = bpmList[0].Bpm; // 默认第一个BPM
 
-        for (int i = 0; i < bpmList.Length; i++)
+        for (int i = 0; i < bpmList.Count; i++)
         {
             var bpmEvent = bpmList[i];
             float eventBeat = bpmEvent.StartTime[0] + (float)bpmEvent.StartTime[1] / bpmEvent.StartTime[2];
@@ -70,10 +71,10 @@ public static class TimeUtil
     /// <param name="secondValue">当前秒数</param>
     /// <param name="BpmList">谱面的所有bpm事件</param>
     /// <returns>对应的节拍数</returns>
-    public static float SecondToBeat(float secondValue, BpmEvent[] BpmList)
+    public static float SecondToBeat(float secondValue, List<BpmEvent> BpmList)
     {
         // 处理空列表或无效输入
-        if (BpmList == null || BpmList.Length == 0 || secondValue < 0)
+        if (BpmList == null || BpmList.Count == 0 || secondValue < 0)
         {
             GD.PrintErr($"[Util] SecondToBeat() 输入不合法");
             return 0f;
@@ -88,7 +89,7 @@ public static class TimeUtil
         float currentBeat = GetEventBeat(BpmList[0]);
 
         // 遍历BPM段（除最后一个事件外，每个段由当前事件到下一个事件构成）
-        for (int i = 0; i < BpmList.Length - 1; i++)
+        for (int i = 0; i < BpmList.Count - 1; i++)
         {
             BpmEvent curEvent = BpmList[i];
             BpmEvent nextEvent = BpmList[i + 1];
@@ -116,7 +117,7 @@ public static class TimeUtil
         }
 
         // 处理最后一个BPM段（从最后一个事件到无限远）
-        BpmEvent lastEvent = BpmList[BpmList.Length - 1];
+        BpmEvent lastEvent = BpmList[BpmList.Count - 1];
         float lastBeat = GetEventBeat(lastEvent);
         float lastBpm = (float)lastEvent.Bpm;
         float remainingSeconds = secondValue - elapsedSeconds;

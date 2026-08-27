@@ -228,7 +228,7 @@ namespace QuickType
     public partial class Chart
     {
         [JsonProperty("BPMList")]
-        public BpmEvent[] BpmList { get; set; }
+        public List<BpmEvent> BpmList { get; set; }
 
         [JsonProperty("META")]
         public Meta Meta { get; set; }

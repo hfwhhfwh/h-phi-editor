@@ -12,7 +12,7 @@ public static class ChartDataHelper
     // /// <param name="ev">事件</param>
     // /// <param name="newStartTime">新的开始时间</param>
     // /// <param name="bpmList">BPM事件列表</param>
-    // public static void SetEventStartTime(LineEvent ev, int[] newStartTime, BpmEvent[] bpmList)
+    // public static void SetEventStartTime(LineEvent ev, int[] newStartTime, List<BpmEvent> bpmList)
     // {
     //     ev.StartTime = newStartTime;
     //     ev.startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
@@ -24,13 +24,13 @@ public static class ChartDataHelper
     // /// <param name="ev">事件</param>
     // /// <param name="newEndTime">新的结束时间</param>
     // /// <param name="bpmList">BPM事件列表</param>
-    // public static void SetEventEndTime(LineEvent ev, int[] newEndTime, BpmEvent[] bpmList)
+    // public static void SetEventEndTime(LineEvent ev, int[] newEndTime, List<BpmEvent> bpmList)
     // {
     //     ev.EndTime = newEndTime;
     //     ev.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
     // }
 
-    // public static void SetNoteStartTime(Note note, int[] newStartTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
+    // public static void SetNoteStartTime(Note note, int[] newStartTime, List<BpmEvent> bpmList, List<LineEvent> speedEvents)
     // {
     //     note.StartTime = newStartTime;
     //     note.startSec = TimeUtil.BeatToSecond(newStartTime, bpmList);
@@ -51,7 +51,7 @@ public static class ChartDataHelper
     //     note.allDisplacement = GetDisplacementAtTime(speedEvents, note.startSec);
     // }
 
-    // public static void SetNoteEndTime(Note note, int[] newEndTime, BpmEvent[] bpmList, List<LineEvent> speedEvents)
+    // public static void SetNoteEndTime(Note note, int[] newEndTime, List<BpmEvent> bpmList, List<LineEvent> speedEvents)
     // {
     //     note.EndTime = newEndTime;
     //     note.endSec = TimeUtil.BeatToSecond(newEndTime, bpmList);
@@ -87,7 +87,7 @@ public static class ChartDataHelper
     /// </summary>
     public static void RefreshAllEventSec(Chart chart)
     {
-        BpmEvent[] bpmList = chart.BpmList;
+        List<BpmEvent> bpmList = chart.BpmList;
 
         foreach(JudgeLine line in chart.JudgeLineList)
         {
@@ -180,7 +180,7 @@ public static class ChartDataHelper
 
     public static void RefreshAllEventPrefix(Chart chart)
     {
-        BpmEvent[] bpmList = chart.BpmList;
+        List<BpmEvent> bpmList = chart.BpmList;
 
         foreach(JudgeLine line in chart.JudgeLineList)
         {
@@ -194,7 +194,7 @@ public static class ChartDataHelper
 
     public static void RefreshAllNoteSec(Chart chart)
     {
-        BpmEvent[] bpmList = chart.BpmList;
+        List<BpmEvent> bpmList = chart.BpmList;
 
         foreach(JudgeLine line in chart.JudgeLineList)
         {
@@ -224,7 +224,7 @@ public static class ChartDataHelper
     /// <param name="chart">需要更新的铺面</param>
     public static void RefreshAllNoteAllDisplacement(Chart chart)
     {
-        BpmEvent[] bpmList = chart.BpmList;
+        List<BpmEvent> bpmList = chart.BpmList;
 
         if(chart.JudgeLineList == null || chart.JudgeLineList.Count == 0) return;
         foreach(JudgeLine line in chart.JudgeLineList)

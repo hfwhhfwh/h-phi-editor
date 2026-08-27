@@ -125,11 +125,11 @@ public partial class StartMenu : Node
     {
         string[] filters = {"*.*;所有文件;"};
         fileDialogManager.ShowOpenDialog(
-            (path) =>
+            async (path) =>
             {
                 if(string.IsNullOrEmpty(path)) return;
 
-                _chartService.ImportChart(path);
+                await _chartService.ImportChart(path);
                 RefreshChartList();
             },
             filters

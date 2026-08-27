@@ -2,6 +2,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -25,6 +26,7 @@ public partial class EditorScene : Node
     [ExportGroup("")]
     [Export] private NoteEditPanel noteEditPanel;
     [Export] private EventEditPanel eventEditPanel;
+    [Export] private BpmEditPanel bpmEditPanel;
     [Export] private BaseChartPlayer chartPlayer;
     [Export] private BaseChartRenderer chartRenderer;
     [Export] private Control chartPlayParent;
@@ -37,6 +39,7 @@ public partial class EditorScene : Node
     [Export] private MenuButton fileMenuButtion;
     [Export] private MenuButton editMenuButtion;
     [Export] private MenuButton helpMenuButtion;
+    [Export] private SettingsPanel _settingsPanel;
 
     [Export] private Label editingLineLabel;
     [Export] private Label fpsLabel;
@@ -90,6 +93,8 @@ public partial class EditorScene : Node
 
     // 皮肤资源包
     private ResourcePack _resourcePack;
+
+    private bool _isReady = false;
 
     #if TOOLS
     // ---- 性能分析 ----
@@ -190,34 +195,40 @@ public partial class EditorScene : Node
 
                 // 设置正在编辑的铺面
                 chartInfo = _chartService.GetChartInfo(editingChartId);
-                editingChart = ChartLoader.LoadChart(chartInfo.ChartPath);
+
+                // 这里 ChartLoader.LoadChart 可能涉及文件读取和 Json 解析，可以改为异步后台
+                var sw = Stopwatch.StartNew();
+                editingChart = await Task.Run(() => ChartLoader.LoadChart(chartInfo.ChartPath));
+                GD.Print($"[{Name}] 读取谱面用时:{sw.ElapsedMilliseconds} ms");
+                //editingChart = ChartLoader.LoadChart(chartInfo.ChartPath);
+
                 noteEditPanel.editingChart = editingChart;
                 eventEditPanel.editingChart = editingChart;
+                bpmEditPanel.editingChart = editingChart;
                 
             }),
             ("正在加载资源包...", async () => {
                 // ================ 加载资源包 ================
-                LoadResourcePack();
+                await Task.Run(() => LoadResourcePack());
                 
             }),
             ("正在加载背景和音乐...", async () => {
                 // 背景图片
-                bgImage = Image.LoadFromFile(chartInfo.PicturePath);
+                // 异步加载图片
+                (bgImage, string _) = await FileUtil.LoadImageFromFileAsync(chartInfo.PicturePath);
+                // await Task.Run(() => bgImage = Image.LoadFromFile(chartInfo.PicturePath));
                 if (bgImage == null)
                 {
-                    GD.PrintErr($"[{this.Name}] 背景图片导入失败");
-                    //return;
+                    GD.PrintErr($"[{this.Name}] 背景图片导入失败: {chartInfo.PicturePath}");
                 }
                 //TODO 图片模糊效果
-                // chartPlayer2.bgImage = bgImage;
 
                 // 音乐
                 // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
-                audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath);
+                await Task.Run(() => audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath));
                 if (audioStream == null)
                 {
                     GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
-                    //return;
                 }
             }),
             ("正在初始化谱面播放器...", async () => {
@@ -228,6 +239,7 @@ public partial class EditorScene : Node
                 chartPlayParent.ClipContents = true;
 
                 SetChartPlayerVisible(false); // 初始不显示
+                
             }),
             ("正在初始化编辑器...", async () => {
                 InitEditor();
@@ -237,6 +249,7 @@ public partial class EditorScene : Node
         await LoadingManager.Instance.RunTasksAsync("正在进入编辑界面", tasks);
         
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
+        _isReady = true;
         
     }
 
@@ -292,6 +305,9 @@ public partial class EditorScene : Node
         eventEditPanel.EventTimeChangeRequested += SetEventTime;
         eventEditPanel.Disabled = false;
 
+        // 设置bpmEditPanel
+        bpmEditPanel.Disabled = false;
+
         SetEditPanelVisible(true); // 初始默认显示
 
         // 设置noteInfoPanel
@@ -331,17 +347,7 @@ public partial class EditorScene : Node
                 new PopupMenuItem { Text = "粘贴", Callback = null},
                 new PopupMenuItem { Text = "剪切", Callback = null},
                 new PopupMenuItem { IsSeparator = true},
-                // new PopupMenuItem { Text = "放置Note", Checkable = true, 
-                //     Toggled = (bool isChecked) =>
-                //     {
-                //         GD.Print($"放置Note 被设置为:{isChecked}");
-                //         // 切换编辑模式
-                //         if(isChecked) editMode = EditMode.PlacingNote;
-                //         else editMode = EditMode.Normal;
-                //     }
-                // },
-                // new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "设置", Callback = null},
+                new PopupMenuItem { Text = "设置", Callback = _settingsPanel.Show},
             };
             PopupMenuHelper.Instance.SetMenuButton(editMenuButtion, items);
         }
@@ -374,6 +380,8 @@ public partial class EditorScene : Node
 
     public override void _Process(double delta)
     {
+        if(!_isReady) return;
+
         #if TOOLS
         ulong t1 = Time.GetTicksUsec();
         #endif
@@ -399,10 +407,13 @@ public partial class EditorScene : Node
         ulong t3 = Time.GetTicksUsec();
         #endif
 
-        (JudgeLineRenderData[] lineData, int lineCount) = chartPlayer.GetLineRenderDatas();
-        (NoteRenderData[] noteData, int noteCount) = chartPlayer.GetNoteRenderDatas();
+        if(!chartPlayer.Disabled && !chartRenderer.Disabled)
+        {
+            (JudgeLineRenderData[] lineData, int lineCount) = chartPlayer.GetLineRenderDatas();
+            (NoteRenderData[] noteData, int noteCount) = chartPlayer.GetNoteRenderDatas();
 
-        chartRenderer.Render(lineData, lineCount, noteData, noteCount);
+            chartRenderer.Render(lineData, lineCount, noteData, noteCount);
+        }
 
         #if TOOLS
         ulong t4 = Time.GetTicksUsec();
@@ -467,6 +478,11 @@ public partial class EditorScene : Node
         eventEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
         eventEditPanel.GroundY = groundY;
         eventEditPanel.UpdateVisuals();
+
+        bpmEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
+        bpmEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
+        bpmEditPanel.GroundY = groundY;
+        bpmEditPanel.UpdateVisuals();
 
         #if TOOLS
         ulong t6 = Time.GetTicksUsec();
@@ -961,6 +977,8 @@ public partial class EditorScene : Node
             chartPlayer.Pack = _resourcePack;
             chartRenderer.Pack = _resourcePack;
         }
+
+        GD.Print($"[{Name}] 成功重新加载资源包!");
     }
 
     private void MoveNote(int lineId, int noteIndex, float chartX)
