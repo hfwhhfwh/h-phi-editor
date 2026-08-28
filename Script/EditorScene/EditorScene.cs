@@ -35,9 +35,11 @@ public partial class EditorScene : Node
     [Export] private ChooseLinePanel chooseLinePanel;
     [Export] private NoteInfoPanel noteInfoPanel;
     [Export] private LineEventInfoPanel eventInfoPanel;
+    [Export] private BpmInfoPanel bpmInfoPanel;
     [Export] private NoteChooser noteChooser;
     [Export] private MenuButton fileMenuButtion;
     [Export] private MenuButton editMenuButtion;
+    [Export] private MenuButton viewMenuButton;
     [Export] private MenuButton helpMenuButtion;
     [Export] private SettingsPanel _settingsPanel;
 
@@ -288,7 +290,7 @@ public partial class EditorScene : Node
             GD.Print($"切换到事件层:{index}");
         };
 
-        editingLineLabel.Text = $"正在编辑:线{0}";
+        editingLineLabel.Text = $"线{0}";
 
         // 设置NoteEditPanel
         noteEditPanel.OnNoteSelected += OnNoteSelected;
@@ -306,6 +308,7 @@ public partial class EditorScene : Node
         eventEditPanel.Disabled = false;
 
         // 设置bpmEditPanel
+        bpmEditPanel.EventSelected += OnBpmSelected;
         bpmEditPanel.Disabled = false;
         bpmEditPanel.EventAddRequested += AddBpm;
         bpmEditPanel.EventDeleteRequested += DeleteBpms;
@@ -320,6 +323,10 @@ public partial class EditorScene : Node
         // 设置eventInfoPanel
         eventInfoPanel.OnConfirmed += () => eventInfoPanel.Visible = false;
         eventInfoPanel.PropertyChanged += SetEventProperty;
+
+        //设置bpmInfoPanel
+        bpmInfoPanel.OnConfirmed += () => bpmInfoPanel.Visible = false;
+        bpmInfoPanel.PropertyChanged += SetBpmProperty;
 
         //设置弹出菜单
         PopupMenuHelper.SetTheme(theme);
@@ -355,6 +362,27 @@ public partial class EditorScene : Node
             PopupMenuHelper.Instance.SetMenuButton(editMenuButtion, items);
         }
 
+        // 设置“视图”选项
+        {
+            // 构建菜单项
+            var items = new List<PopupMenuItem>
+            {
+                new PopupMenuItem { Text = "音符面板", Checkable = true, 
+                    Checked = noteEditPanel.Visible,
+                    Toggled = (bool value) => noteEditPanel.Visible = value
+                },
+                new PopupMenuItem { Text = "事件面板", Checkable = true, 
+                    Checked = eventEditPanel.Visible,
+                    Toggled = (bool value) => eventEditPanel.Visible = value
+                },
+                new PopupMenuItem { Text = "Bpm面板", Checkable = true, 
+                    Checked = bpmEditPanel.Visible,
+                    Toggled = (bool value) => bpmEditPanel.Visible = value
+                },
+            };
+            PopupMenuHelper.Instance.SetMenuButton(viewMenuButton, items);
+        }
+
         //设置NoteChooser
         noteChooser.NoteChoosed += OnNoteChooserNoteChoosed;
         noteChooser.Deselected += OnNoteChooserDeselected;
@@ -364,7 +392,7 @@ public partial class EditorScene : Node
         EditModeManager.SetEditMode(EditModeEnum.Normal);
 
         //设置editModeLabel
-        editModeLabel.Text = "编辑模式：常规模式";
+        editModeLabel.Text = "模式：常规模式";
         EditModeManager.OnEditModeChanged += OnEditModeChanged;
 
         // 设置PlayModeManager
@@ -545,6 +573,10 @@ public partial class EditorScene : Node
 
         //设置eventInfoPanel
         eventInfoPanel.PropertyChanged -= SetEventProperty;
+
+        //设置bpmInfoPanel
+        bpmEditPanel.EventSelected -= OnBpmSelected;
+        bpmInfoPanel.PropertyChanged -= SetBpmProperty;
 
         // 设置 EditModeManager
         EditModeManager.OnEditModeChanged -= OnEditModeChanged;
@@ -728,7 +760,7 @@ public partial class EditorScene : Node
         noteEditPanel.EditingLineId = id;
         eventEditPanel.EditingLineId = id;
 
-        editingLineLabel.Text = $"正在编辑:线{id}";
+        editingLineLabel.Text = $"线{id}";
 
         chooseLinePanel.Visible = false;
         _inputManager.IsEnable = true;
@@ -775,10 +807,10 @@ public partial class EditorScene : Node
     {
         editModeLabel.Text = editMode switch
         {
-            EditModeEnum.Normal => "编辑模式：常规模式",
-            EditModeEnum.Place => "编辑模式：放置模式",
-            EditModeEnum.Delete => "编辑模式：删除模式",
-            _ => "编辑模式：未知",
+            EditModeEnum.Normal => "模式：常规模式",
+            EditModeEnum.Place => "模式：放置模式",
+            EditModeEnum.Delete => "模式：删除模式",
+            _ => "模式：未知",
         };
     }
 
@@ -928,6 +960,60 @@ public partial class EditorScene : Node
     {
         _chartEditService.DeleteEvent(lineId, lineEventEnum, index);
 
+    }
+
+    private void OnBpmSelected(int index, Vector2 popupViewportPos)
+    {
+        if (editingChart?.BpmList == null || index < 0 || index >= editingChart.BpmList.Count)
+        {
+            return;
+        }
+
+        BpmEvent bpmEvent = editingChart.BpmList[index];
+        var items = new List<PopupMenuItem>
+        {
+            new PopupMenuItem { Text = "编辑", Callback = () => OnBpmEdit(bpmEvent) },
+            new PopupMenuItem { Text = "复制", Callback = () => OnBpmCopy(bpmEvent) },
+            new PopupMenuItem { Text = "粘贴", Callback = () => OnBpmPaste(bpmEvent) },
+            new PopupMenuItem { IsSeparator = true },
+            new PopupMenuItem { Text = "删除", Callback = () => OnBpmDelete(bpmEvent) }
+        };
+
+        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
+        popupMenu.PopupHide += bpmEditPanel.DeselectAll;
+    }
+
+    private void OnBpmEdit(BpmEvent bpmEvent)
+    {
+        if (bpmEvent == null || !editingChart.BpmList.Contains(bpmEvent))
+        {
+            return;
+        }
+
+        bpmEditPanel.DeselectAll();
+        bpmInfoPanel.Visible = true;
+        bpmInfoPanel.Edit(bpmEvent, editingChart.BpmList.IndexOf(bpmEvent));
+    }
+
+    private void SetBpmProperty(BpmEvent bpmEvent, string property, object value)
+    {
+        _chartEditService.SetBpmProperty(bpmEvent, property, value);
+    }
+
+    private void OnBpmCopy(BpmEvent bpmEvent)
+    {
+        GD.Print($"[{Name}] 复制 BPM:{bpmEvent?.Bpm}");
+    }
+
+    private void OnBpmPaste(BpmEvent bpmEvent)
+    {
+        GD.Print($"[{Name}] 粘贴 BPM:{bpmEvent?.Bpm}");
+    }
+
+    private void OnBpmDelete(BpmEvent bpmEvent)
+    {
+        _chartEditService.DeleteBpms(new List<BpmEvent> { bpmEvent });
+        bpmEditPanel.DeselectAll();
     }
 
     private void DeleteEvents(int lineId, int layer, List<LineEvent> eventsToDelete)

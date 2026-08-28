@@ -36,14 +36,15 @@
 [ext_resource type="PackedScene" uid="uid://bpkv57wpohu8e" path="res://Scene/event_info_panel.tscn" id="28_605qm"]
 [ext_resource type="Texture2D" uid="uid://bijy1d18kplv7" path="res://向左旋转.png" id="28_r1xvh"]
 [ext_resource type="PackedScene" uid="uid://cuskdub26yo1x" path="res://Scene/settings_panel.tscn" id="34_kheud"]
+[ext_resource type="PackedScene" uid="uid://b1gs6hhvosbih" path="res://Scene/bpm_info_panel.tscn" id="36_lc344"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "helpMenuButtion", "_settingsPanel", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_settingsPanel", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
 theme = ExtResource("3_2bu1g")
-noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Left/NoteEditPanel")
-eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Right/EventEditPanel")
+noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer/NoteEditPanel")
+eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer/EventEditPanel")
 bpmEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/BpmEditPanel")
 chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
 chartRenderer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartRenderer")
@@ -53,9 +54,11 @@ rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPan
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
 noteInfoPanel = NodePath("EditorPanel/SafeArea/NoteInfoPanel")
 eventInfoPanel = NodePath("EditorPanel/SafeArea/EventInfoPanel")
+bpmInfoPanel = NodePath("EditorPanel/SafeArea/BpmInfoPanel")
 noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/NoteChooser")
 fileMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/FileButton")
 editMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/EditButton")
+viewMenuButton = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/ViewButton")
 helpMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/HelpButton")
 _settingsPanel = NodePath("EditorPanel/SafeArea/SettingsPanel")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
@@ -126,6 +129,20 @@ item_count = 1
 popup/item_0/checkable = 1
 popup/item_0/id = 0
 
+[node name="ViewButton" type="MenuButton" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=2064718802]
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "视图"
+item_count = 1
+popup/item_0/checkable = 1
+popup/item_0/id = 0
+
 [node name="UndoButton" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1449821637]
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
@@ -161,16 +178,17 @@ text = "帮助"
 
 [node name="Labels" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer" unique_id=1506452743]
 layout_mode = 2
+theme_override_constants/separation = 16
 
 [node name="EditingLineLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels" unique_id=1946199678]
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
-text = "正在编辑：线123"
+text = "线123"
 
 [node name="EditModeLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels" unique_id=1102036026]
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
-text = "编辑模式：XXXX"
+text = "模式：XXXX"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer" unique_id=1705874636]
 custom_minimum_size = Vector2(0, 70)
@@ -232,21 +250,17 @@ lineTexture = ExtResource("11_khybl")
 
 [node name="EditPanel" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]
 layout_mode = 2
-split_offsets = PackedInt32Array(0, 0)
 touch_dragger_enabled = true
 
-[node name="Left" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=567924052]
+[node name="SplitContainer" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=1525291669]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 4.0
+touch_dragger_enabled = true
 
-[node name="NoteEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Left" unique_id=2038816721]
+[node name="NoteEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer" unique_id=2038816721]
 clip_contents = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("3_gwldl")
 selectedModulate = Color(1, 0.50980395, 0.9764706, 1)
@@ -259,26 +273,17 @@ holdHeadTexture = ExtResource("8_63sjd")
 holdBodyTexture = ExtResource("9_gi1tw")
 holdEndTexture = ExtResource("10_4d80g")
 
-[node name="Right" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=890883041]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/Right" unique_id=825080562]
+[node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer" unique_id=825080562]
 clip_contents = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("12_qdb1r")
 eventHoldTexture = ExtResource("21_605qm")
 
 [node name="BpmEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=1178596112]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.4
 script = ExtResource("20_e4drf")
 _texture = ExtResource("23_fayi4")
 
@@ -467,6 +472,11 @@ z_index = 10
 layout_mode = 2
 
 [node name="EventInfoPanel" parent="EditorPanel/SafeArea" unique_id=1587088222 instance=ExtResource("28_605qm")]
+visible = false
+z_index = 10
+layout_mode = 2
+
+[node name="BpmInfoPanel" parent="EditorPanel/SafeArea" unique_id=818055099 instance=ExtResource("36_lc344")]
 visible = false
 z_index = 10
 layout_mode = 2

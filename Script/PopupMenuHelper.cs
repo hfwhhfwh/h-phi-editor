@@ -93,13 +93,16 @@ public partial class PopupMenuHelper : Node
         popupMenu.Clear();
 
         // 构建菜单项
-        foreach (var item in items)
+        for (int i = 0; i < items.Count; i++)
         {
+            PopupMenuItem item = items[i];
+
             if (item.IsSeparator)
                 popupMenu.AddSeparator();
             else if (item.Checkable)
             {
                 popupMenu.AddCheckItem(item.Text);
+                popupMenu.SetItemChecked(i, item.Checked);
             }
             else
                 popupMenu.AddItem(item.Text);

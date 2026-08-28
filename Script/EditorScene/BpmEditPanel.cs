@@ -6,6 +6,8 @@ using System.Collections.Generic;
 public partial class BpmEditPanel : BaseEditPanel
 {
 	[Export] private float bpmEventScale = 0.1f;
+    [Export] private float bpmTextOffset = 60f;
+    [Export] private int bpmTextFontSize = 24;
     
     /// <summary> 被选中时的颜色滤镜 </summary>
     [Export] private Color selectedModulate = new Color(1f, 0.223f, 0.947f, 1f);
@@ -20,6 +22,7 @@ public partial class BpmEditPanel : BaseEditPanel
 
 	private HashSet<BpmEvent> selectedEvents = new();
     private HashSet<BpmEvent> eventsToDelete = new();
+    private Control _textOverlay; // 显示数值文字
 
 	/// <summary>
 	/// int index, Vector2 clickViewportPos
@@ -49,6 +52,17 @@ public partial class BpmEditPanel : BaseEditPanel
 
 		//设置multiMesh
 		RegisterMultiMesh(MultiMeshKey, _texture, 128, 1);
+
+        // 设置数值文字
+        _textOverlay = new Control
+        {
+            Name = "TextOverlay",
+            MouseFilter = MouseFilterEnum.Ignore,
+            ZIndex = 2,
+        };
+        _textOverlay.SetAnchorsPreset(LayoutPreset.FullRect);
+        _textOverlay.Draw += OnDrawTextOverlay;
+        AddChild(_textOverlay);
 		
         // ---- 订阅拖动事件 ----
         _dragMoveComponent.Moved += OnEventDragMoved;
@@ -57,13 +71,54 @@ public partial class BpmEditPanel : BaseEditPanel
 	public override void _ExitTree()
     {
         _dragMoveComponent.Moved -= OnEventDragMoved;
+        
+        if (_textOverlay != null)
+        {
+            _textOverlay.Draw -= OnDrawTextOverlay;
+        }
 
         base._ExitTree();
+    }
+
+    private void OnDrawTextOverlay()
+    {
+        if (editingChart?.BpmList == null)
+        {
+            return;
+        }
+
+        GetVisibleBeatRange(out float minBeat, out float maxBeat);
+        float textX = VerMargin + bpmTextOffset;
+
+        foreach (BpmEvent bpmEvent in editingChart.BpmList)
+        {
+            float beatValue = bpmEvent.StartTime[0]
+                + bpmEvent.StartTime[1] * 1f / bpmEvent.StartTime[2];
+            if (beatValue < minBeat || beatValue > maxBeat)
+            {
+                continue;
+            }
+
+            float panelPosY = _coordComponent.GetPanelPosY(beatValue);
+            string text = $"{bpmEvent.Bpm:F1}";
+            Vector2 textSize = font.GetStringSize(text, fontSize: bpmTextFontSize);
+            float drawY = panelPosY + (font.GetAscent(bpmTextFontSize) - font.GetDescent(bpmTextFontSize)) / 2;
+
+            _textOverlay.DrawString(
+                font,
+                new Vector2(textX, drawY),
+                text,
+                fontSize: bpmTextFontSize,
+                alignment: HorizontalAlignment.Left,
+                width: textSize.X);
+        }
     }
 
 
     protected override void RenderContent()
     {
+		_textOverlay?.QueueRedraw();
+
         // 如果没有可用的谱面，则隐藏所有池节点
 		if (editingChart == null || editingChart.BpmList == null)
 		{

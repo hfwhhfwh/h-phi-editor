@@ -50,6 +50,55 @@ public partial class ChartEditService : Node
         RefreshBpmDependencies();
     }
 
+    public void SetBpmProperty(BpmEvent bpmEvent, string property, object value)
+    {
+        if (EditingChart?.BpmList == null || bpmEvent == null ||
+            !EditingChart.BpmList.Contains(bpmEvent))
+        {
+            GD.PrintErr($"[{Name}] 修改 BPM 属性失败：事件不存在");
+            return;
+        }
+
+        int index = EditingChart.BpmList.IndexOf(bpmEvent);
+        switch (property)
+        {
+            case "Bpm":
+                float bpm = Convert.ToSingle(value);
+                if (!TimeUtil.IsValidBpm(bpm))
+                {
+                    GD.PrintErr($"[{Name}] 修改 BPM 数值失败: BPM 不合法");
+                    return;
+                }
+
+                bpmEvent.Bpm = bpm;
+                break;
+
+            case "StartTime":
+                if (index == 0)
+                {
+                    GD.Print($"[{Name}] 首个 BPM 是基准事件，不允许移动");
+                    return;
+                }
+
+                Beat startBeat = value as Beat;
+                if (startBeat == null || startBeat.IntegerPart < 0 ||
+                    TimeUtil.GetBeatValue(startBeat) <= 0)
+                {
+                    GD.PrintErr($"[{Name}] 修改 BPM 时间失败：起始拍不合法");
+                    return;
+                }
+
+                bpmEvent.StartTime = startBeat.Duplicate().Values;
+                break;
+
+            default:
+                throw new ArgumentException($"未知的 BPM 属性类型: {property}");
+        }
+
+        SortBpmList();
+        RefreshBpmDependencies();
+    }
+
     public void DeleteBpms(List<BpmEvent> bpmEvents)
     {
         if (EditingChart?.BpmList == null || bpmEvents == null || bpmEvents.Count == 0)
