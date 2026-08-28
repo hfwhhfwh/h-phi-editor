@@ -159,7 +159,7 @@ public partial class ChartEditService : Node
                 break;
 
             case NotePropertyEnum.Alpha:
-                note.Alpha = Convert.ToSingle(value);
+                note.Alpha = Convert.ToInt32(value);
                 break;
 
             case NotePropertyEnum.StartTime:
@@ -391,6 +391,7 @@ public partial class ChartEditService : Node
         LineEvent lineEvent = new()
         {
             Bezier = false,
+            BezierPoints = [0f, 0f, 0f, 0f],
             EasingLeft = 0f,
             EasingRight = 1f,
             EasingType = 1, // fixed/linear

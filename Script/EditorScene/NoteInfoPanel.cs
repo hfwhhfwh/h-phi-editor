@@ -69,6 +69,9 @@ public partial class NoteInfoPanel : Panel
 		//位置
 		data.Properties["PositionX"] = note.PositionX;
 
+		//透明度
+		data.Properties["Alpha"] = note.Alpha;
+
         infoEditPanel.ShowInfos(data);
 	}
 
@@ -99,6 +102,11 @@ public partial class NoteInfoPanel : Panel
 			case "PositionX":
 				propertyType = NotePropertyEnum.PosX;
 				convertedValue = Convert.ToSingle(value);
+				break;
+
+			case "Alpha":
+				propertyType = NotePropertyEnum.Alpha;
+				convertedValue = Convert.ToInt32(value);
 				break;
 
 			default:

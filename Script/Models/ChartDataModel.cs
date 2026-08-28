@@ -361,6 +361,7 @@ namespace QuickType
     public partial class LineEvent
     {
         [JsonProperty("bezier")]
+        [JsonConverter(typeof(NumericBooleanConverter))]
         public bool Bezier { get; set; }
 
         [JsonProperty("bezierPoints")]
@@ -443,6 +444,7 @@ namespace QuickType
     public partial class ColorEvent
     {
         [JsonProperty("bezier")]
+        [JsonConverter(typeof(NumericBooleanConverter))]
         public bool Bezier { get; set; }
 
         [JsonProperty("bezierPoints")]
@@ -515,12 +517,14 @@ namespace QuickType
         public int Above { get; set; } // 音符翻转 1表示上面，2表示下面
 
         [JsonProperty("alpha")]
-        public float Alpha { get; set; }
+        [JsonConverter(typeof(RoundedFloatToIntConverter))]
+        public int Alpha { get; set; }
 
         [JsonProperty("endTime")]
         public int[] EndTime { get; set; }
 
         [JsonProperty("isFake")]
+        [JsonConverter(typeof(NumericBooleanConverter))]
         public bool IsFake { get; set; }
 
         [JsonProperty("positionX")]
@@ -639,7 +643,8 @@ namespace QuickType
         public string Name { get; set; }
 
         [JsonProperty("offset")]
-        public float Offset { get; set; }
+        [JsonConverter(typeof(RoundedFloatToIntConverter))]
+        public int Offset { get; set; }
 
         [JsonProperty("song")]
         public string Song { get; set; }
@@ -663,6 +668,7 @@ namespace QuickType
     {
         public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
+            Formatting = Formatting.Indented,
             MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
             DateParseHandling = DateParseHandling.None,
             Converters =
@@ -672,6 +678,47 @@ namespace QuickType
                 new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
             },
         };
+    }
+
+    public sealed class RoundedFloatToIntConverter : JsonConverter<int>
+    {
+        public override int ReadJson(JsonReader reader, Type objectType, int existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType != JsonToken.Integer && reader.TokenType != JsonToken.Float)
+                throw new JsonSerializationException("数值必须是整数或浮点数");
+
+            double value = Convert.ToDouble(reader.Value, CultureInfo.InvariantCulture);
+            double roundedValue = Math.Round(value, MidpointRounding.AwayFromZero);
+
+            if (double.IsNaN(roundedValue) || double.IsInfinity(roundedValue) || roundedValue < int.MinValue || roundedValue > int.MaxValue)
+                throw new JsonSerializationException("数值超出int范围");
+
+            return (int)roundedValue;
+        }
+
+        public override void WriteJson(JsonWriter writer, int value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value);
+        }
+    }
+
+    public sealed class NumericBooleanConverter : JsonConverter<bool>
+    {
+        public override bool ReadJson(JsonReader reader, Type objectType, bool existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Boolean)
+                return (bool)reader.Value;
+
+            if (reader.TokenType == JsonToken.Integer && (long)reader.Value is 0 or 1)
+                return (long)reader.Value == 1;
+
+            throw new JsonSerializationException("布尔值必须是true、false、0或1");
+        }
+
+        public override void WriteJson(JsonWriter writer, bool value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value ? 1 : 0);
+        }
     }
 
     // internal class NameConverter : JsonConverter

@@ -6,8 +6,6 @@ using Newtonsoft.Json;
 
 public partial class ChartLoader : Node
 {
-    
-    public bool isExtractZip = false;
 
     public override void _Ready()
     {
