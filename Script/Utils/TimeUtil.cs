@@ -131,4 +131,14 @@ public static class TimeUtil
                beat1[1] == beat2[1] && 
                beat1[2] == beat2[2]; 
     }
+
+    public static bool IsValidBpm(float bpm)
+    {
+        return !float.IsNaN(bpm) && !float.IsInfinity(bpm) && bpm > 0;
+    }
+
+    public static float GetBeatValue(Beat beat)
+    {
+        return beat.IntegerPart + beat.Numerator / (float)beat.Denominator;
+    }
 }

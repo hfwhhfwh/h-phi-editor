@@ -7,6 +7,98 @@ public partial class ChartEditService : Node
 {
     public Chart EditingChart{ get; set; }
 
+    public void AddBpm(float bpm, Beat startBeat)
+    {
+        if (!TimeUtil.IsValidBpm(bpm) || startBeat == null || startBeat.IntegerPart < 0 ||
+            TimeUtil.GetBeatValue(startBeat) <= 0)
+        {
+            GD.PrintErr($"[{Name}] 添加 BPM 失败: BPM 或起始拍不合法");
+            return;
+        }
+
+        EnsureBpmList();
+        EditingChart.BpmList.Add(new BpmEvent
+        {
+            Bpm = bpm,
+            StartTime = startBeat.Duplicate().Values
+        });
+        SortBpmList();
+        RefreshBpmDependencies();
+
+        GD.Print($"[{Name}] 成功添加 BPM:{bpm}, startBeat:{startBeat}");
+    }
+
+    public void SetBpmTime(int index, Beat startBeat)
+    {
+        if (EditingChart?.BpmList == null || index < 0 ||
+            index >= EditingChart.BpmList.Count || startBeat == null ||
+            startBeat.IntegerPart < 0 || TimeUtil.GetBeatValue(startBeat) <= 0)
+        {
+            GD.PrintErr($"[{Name}] 修改 BPM 时间失败：索引或起始拍不合法");
+            return;
+        }
+
+        if (index == 0)
+        {
+            GD.Print($"[{Name}] 首个 BPM 是基准事件，不允许移动");
+            return;
+        }
+
+        BpmEvent bpmEvent = EditingChart.BpmList[index];
+        bpmEvent.StartTime = startBeat.Duplicate().Values;
+        SortBpmList();
+        RefreshBpmDependencies();
+    }
+
+    public void DeleteBpms(List<BpmEvent> bpmEvents)
+    {
+        if (EditingChart?.BpmList == null || bpmEvents == null || bpmEvents.Count == 0)
+        {
+            return;
+        }
+
+        BpmEvent baseBpm = EditingChart.BpmList[0];
+        bool changed = false;
+        foreach (BpmEvent bpmEvent in bpmEvents)
+        {
+            if (bpmEvent == null || bpmEvent == baseBpm) continue;
+            changed |= EditingChart.BpmList.Remove(bpmEvent);
+        }
+
+        if (!changed) return;
+
+        EnsureBpmList();
+        SortBpmList();
+        RefreshBpmDependencies();
+        GD.Print($"[{Name}] 成功删除 BPM:{bpmEvents.Count} 个");
+    }
+
+    private void EnsureBpmList()
+    {
+        if (EditingChart.BpmList == null)
+        {
+            EditingChart.BpmList = new List<BpmEvent>();
+        }
+    }
+
+    private void SortBpmList()
+    {
+        EditingChart.BpmList.Sort((left, right) =>
+        {
+            float leftBeat = left.StartTime[0] + left.StartTime[1] / (float)left.StartTime[2];
+            float rightBeat = right.StartTime[0] + right.StartTime[1] / (float)right.StartTime[2];
+            return leftBeat.CompareTo(rightBeat);
+        });
+    }
+
+    private void RefreshBpmDependencies()
+    {
+        ChartDataHelper.RefreshAllEventSec(EditingChart);
+        ChartDataHelper.RefreshAllNoteSec(EditingChart);
+        ChartDataHelper.RefreshAllEventPrefix(EditingChart);
+        ChartDataHelper.RefreshAllNoteAllDisplacement(EditingChart);
+    }
+
     public void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
         Note note = EditingChart.JudgeLineList[lineId].Notes[noteIndex];

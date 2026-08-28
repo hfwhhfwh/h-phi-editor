@@ -307,6 +307,9 @@ public partial class EditorScene : Node
 
         // 设置bpmEditPanel
         bpmEditPanel.Disabled = false;
+        bpmEditPanel.EventAddRequested += AddBpm;
+        bpmEditPanel.EventDeleteRequested += DeleteBpms;
+        bpmEditPanel.EventTimeChanged += SetBpmTime;
 
         SetEditPanelVisible(true); // 初始默认显示
 
@@ -535,6 +538,11 @@ public partial class EditorScene : Node
         eventEditPanel.AddEventRequested -= AddEvent;
         eventEditPanel.EventTimeChangeRequested -= SetEventTime;
 
+        // 设置bpmEditPanel
+        bpmEditPanel.EventAddRequested -= AddBpm;
+        bpmEditPanel.EventDeleteRequested -= DeleteBpms;
+        bpmEditPanel.EventTimeChanged -= SetBpmTime;
+
         //设置eventInfoPanel
         eventInfoPanel.PropertyChanged -= SetEventProperty;
 
@@ -553,6 +561,7 @@ public partial class EditorScene : Node
         editPanel.Visible = value;
         noteEditPanel.Disabled = !value;
         eventEditPanel.Disabled = !value;
+        bpmEditPanel.Disabled = !value;
     }
 
     private void SetChartPlayerVisible(bool value)
@@ -956,6 +965,21 @@ public partial class EditorScene : Node
     private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
     {
         _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
+    }
+
+    private void AddBpm(float bpm, Beat startBeat)
+    {
+        _chartEditService.AddBpm(bpm, startBeat);
+    }
+
+    private void DeleteBpms(List<BpmEvent> bpmEvents)
+    {
+        _chartEditService.DeleteBpms(bpmEvents);
+    }
+
+    private void SetBpmTime(int index, Beat startBeat)
+    {
+        _chartEditService.SetBpmTime(index, startBeat);
     }
 
     private void LoadResourcePack()
