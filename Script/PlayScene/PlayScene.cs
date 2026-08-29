@@ -7,7 +7,7 @@ public partial class PlayScene : Node
 {
     [Export] private string chartId = "45201552814680";
     [Export] private Control parent;
-    [Export] private BaseChartPlayer chartPlayer;
+    [Export] private GameChartPlayer chartPlayer;
     [Export] private BaseChartRenderer chartRenderer;
     [Export] private Label statusLabel;
 
@@ -21,14 +21,6 @@ public partial class PlayScene : Node
 
     public float FlickSpeedThreshold { get; set; } = 500f;
     private double _gameTime;
-
-    private readonly Color _perfectColor = new Color
-    {
-        R8 = 237,
-        G8 = 236,
-        B8 = 175,
-        A8 = 255
-    };
 
     public override void _Ready()
     {
@@ -79,34 +71,8 @@ public partial class PlayScene : Node
         _judge = new ChartJudge();
         AddChild(_judge);
         _judge.Initialize(chartPlayer, parent, _chart);
-        _judge.OnJudgeResult += result =>
-        {
-            if (statusLabel != null)
-            {
-                if(result.Grade != JudgeGrade.Miss)
-                {
-                    statusLabel.Text = $"{result.Grade} {result.TimeDeltaMs:F0}ms";
-                }
-                
-            }
-
-            if (result.Grade == JudgeGrade.Perfect)
-            {
-                chartPlayer.CreateHitEffect(result.HitPosition, _perfectColor);
-            }
-            else if (result.Grade == JudgeGrade.Good)
-            {
-                chartPlayer.CreateHitEffect(result.HitPosition, new Color(0.4f, 0.8f, 1f, 1f));
-            }
-            else if (result.Grade == JudgeGrade.Bad)
-            {
-                // GD.Print($"Bad at {result.TimeDeltaMs}ms");
-            }
-            else
-            {
-                // GD.Print($"Miss at {result.TimeDeltaMs}ms");
-            }
-        };
+        _judge.OnJudgeResult += OnJudgeResult;
+        
 
         chartPlayer.AutoHitEnabled = false;
         chartPlayer.Play(0f);
@@ -114,9 +80,11 @@ public partial class PlayScene : Node
 
     public override void _ExitTree()
     {
-        base._ExitTree();
-
+        _judge.OnJudgeResult -= OnJudgeResult;
         _judge = null;
+
+
+        base._ExitTree();
     }
 
 
@@ -130,7 +98,7 @@ public partial class PlayScene : Node
         if (_isPlaying)
         {
             chartPlayer.UpdateLogic();
-            _judge.Update(chartPlayer.ChartTime);
+            _judge.Update(chartPlayer.ChartTime, delta);
 
             _gameTime = chartPlayer.ChartTime;
 
@@ -153,6 +121,9 @@ public partial class PlayScene : Node
     public override void _Input(InputEvent @event)
     {
         base._Input(@event);
+
+        // 不接受模拟输入
+        if(@event.Device == -1) return;
 
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
@@ -242,6 +213,31 @@ public partial class PlayScene : Node
         {
             GD.PrintErr($"[{Name}] 谱面加载失败: {info.ChartPath}");
             return;
+        }
+    }
+
+    private void OnJudgeResult(JudgeResult result)
+    {
+        if (statusLabel != null)
+        {
+            if(result.Grade != JudgeGrade.Miss)
+            {
+                statusLabel.Text = $"{result.Grade} {result.TimeDeltaMs:F0}ms";
+            }
+            
+        }
+
+        if (result.Grade == JudgeGrade.Perfect || result.Grade == JudgeGrade.Good)
+        {
+            chartPlayer.TriggerHit(result.Note, result);
+        }
+        else if (result.Grade == JudgeGrade.Bad)
+        {
+            // GD.Print($"Bad at {result.TimeDeltaMs}ms");
+        }
+        else
+        {
+            // GD.Print($"Miss at {result.TimeDeltaMs}ms");
         }
     }
 }

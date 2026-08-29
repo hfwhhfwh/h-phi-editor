@@ -48,12 +48,18 @@ public partial class ChartJudge : Node
     private readonly List<NoteCandidate> _sortedAllNotes = new();
     private readonly HashSet<Note> _judgedNotes = new();
     private readonly HashSet<Note> _missedNotes = new();
-    private readonly Dictionary<int, bool> _holdPressed = new();
-    private readonly Dictionary<int, bool> _holdReleased = new();
+
+    /// <summary>
+    /// Drag和Flick如果提前判定，暂存进集合中，在击打时刻再判定
+    /// </summary>
+    private readonly Dictionary<Note, JudgeResult> _judgedNotesBuffer = new();
+    private readonly HashSet<Note> _pressingHold = new();
     private readonly List<JudgeResult> _pendingResults = new();
 
+    private float _holdDetectTimer = 2000; // 单位：ms
+
     public Chart Chart { get; private set; }
-    public BaseChartPlayer Player { get; private set; }
+    public GameChartPlayer Player { get; private set; }
     public Control Parent { get; private set; }
 
     public Action<JudgeResult> OnJudgeResult { get; set; }
@@ -64,7 +70,7 @@ public partial class ChartJudge : Node
     /// <param name="player"></param>
     /// <param name="parent"></param>
     /// <param name="chart"></param>
-    public void Initialize(BaseChartPlayer player, Control parent, Chart chart)
+    public void Initialize(GameChartPlayer player, Control parent, Chart chart)
     {
         Player = player;
         Parent = parent;
@@ -72,9 +78,43 @@ public partial class ChartJudge : Node
         RebuildSortedNotes();
     }
 
-    public void Update(double gameTime)
+    public void Update(double gameTime, double deltaTime)
     {
         if (Chart == null || Player == null) return;
+
+        // 处理缓存的Drag和Flick
+        foreach(KeyValuePair<Note, JudgeResult> kvp in _judgedNotesBuffer)
+        {
+            Note note = kvp.Key;
+            if(gameTime >= note.startSec)
+            {
+                // 触发判定
+                _judgedNotesBuffer.Remove(note);
+                _judgedNotes.Add(note);
+
+                OnJudgeResult?.Invoke(kvp.Value);
+            }
+        }
+        
+        // // 处理正在长按的Hold
+        // _holdDetectTimer -= (float)deltaTime * 1000;
+        // if(_holdDetectTimer < 0)
+        // {
+        //     // 检测所有hold
+        //     foreach(Note hold in _pressingHold)
+        //     {
+        //         // 防御
+        //         if(hold.Type != 2)
+        //         {
+        //             _pressingHold.Remove(hold);
+        //             continue;
+        //         }
+
+        //         if(CanBeJudged())
+        //     }
+
+        //     while(_holdDetectTimer < 0) _holdDetectTimer += 2000;
+        // }
 
         // 处理Miss判定
         foreach (NoteCandidate candidate in _sortedAllNotes)
@@ -142,9 +182,9 @@ public partial class ChartJudge : Node
     public void ResetState()
     {
         _judgedNotes.Clear();
+        _judgedNotesBuffer.Clear();
         _missedNotes.Clear();
-        _holdPressed.Clear();
-        _holdReleased.Clear();
+        _pressingHold.Clear();
         _pendingResults.Clear();
     }
 
@@ -209,9 +249,20 @@ public partial class ChartJudge : Node
             
             JudgeResult result = ResolveJudge(candidate.LineIndex, note, candidate.NoteIndex, gameTime, pos);
             //GD.Print($"Note_{i} 可以判定，判定结果:{result.Grade}, time:{gameTime}");
-            _judgedNotes.Add(note);
 
-            OnJudgeResult?.Invoke(result);
+            if(note.Type == 3 || note.Type == 4 && gameTime < note.startSec)
+            {
+                _judgedNotesBuffer[note] = result;
+            }
+            else if(note.Type == 2)
+            {
+                _pressingHold.Add(note);
+            }
+            else
+            {
+                _judgedNotes.Add(note);
+                OnJudgeResult?.Invoke(result);
+            }
             
             return;
         }
@@ -333,7 +384,7 @@ public partial class ChartJudge : Node
 
     private Vector2 GetCurrentLinePos(int lineIndex)
     {
-        if (Player is not ChartPlayer chartPlayer)
+        if (Player is not GameChartPlayer chartPlayer)
             return Vector2.Zero;
 
         FieldInfo lineMoveX = chartPlayer.GetType().GetField("_lineMoveX", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -348,7 +399,7 @@ public partial class ChartJudge : Node
 
     private float GetCurrentLineRotate(int lineIndex)
     {
-        if (Player is not ChartPlayer chartPlayer)
+        if (Player is not GameChartPlayer chartPlayer)
             return 0f;
 
         var field = chartPlayer.GetType().GetField("_lineRotate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

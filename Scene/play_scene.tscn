@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://b2jpgq2664mr3"]
 
 [ext_resource type="Script" uid="uid://cy2j3ypk7j61c" path="res://Script/PlayScene/PlayScene.cs" id="1_iwabn"]
-[ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="2_f7y2q"]
+[ext_resource type="Script" uid="uid://dqiyhli4wgtyk" path="res://Script/PlayScene/GameChartPlayer.cs" id="2_f7y2q"]
+[ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="3_4mcor"]
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="3_mtp0t"]
 [ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="4_4mcor"]
 [ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="5_swhsl"]
@@ -32,7 +33,7 @@ grow_vertical = 2
 
 [node name="ChartPlayer" type="Node" parent="Parent" unique_id=987867588]
 script = ExtResource("2_f7y2q")
-_defaultTapSound = ExtResource("3_mtp0t")
+_defaultTapSound = ExtResource("3_4mcor")
 _defaultDragSound = ExtResource("4_4mcor")
 _defaultFlickSound = ExtResource("3_mtp0t")
 _defaultHitFrames = ExtResource("5_swhsl")
