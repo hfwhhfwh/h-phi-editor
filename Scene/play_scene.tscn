@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://b2jpgq2664mr3"]
+
+[ext_resource type="Script" uid="uid://cy2j3ypk7j61c" path="res://Script/PlayScene/PlayScene.cs" id="1_iwabn"]
+[ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="2_f7y2q"]
+[ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="3_mtp0t"]
+[ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="4_4mcor"]
+[ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="5_swhsl"]
+[ext_resource type="Script" uid="uid://bctcbmd05picq" path="res://Script/ChartRenderer.cs" id="6_dnk11"]
+[ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="7_mw8h8"]
+[ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="8_w2a2n"]
+[ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="9_vtsto"]
+[ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="10_kqb28"]
+[ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="11_dqi6c"]
+[ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="12_adj2r"]
+[ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="13_ap1vk"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="14_ii6ij"]
+
+[node name="PlayScene" type="Node" unique_id=581511815 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "statusLabel")]
+script = ExtResource("1_iwabn")
+parent = NodePath("Parent")
+chartPlayer = NodePath("Parent/ChartPlayer")
+chartRenderer = NodePath("Parent/ChartRenderer")
+statusLabel = NodePath("Label")
+
+[node name="Parent" type="Control" parent="." unique_id=1797246401]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ChartPlayer" type="Node" parent="Parent" unique_id=987867588]
+script = ExtResource("2_f7y2q")
+_defaultTapSound = ExtResource("3_mtp0t")
+_defaultDragSound = ExtResource("4_4mcor")
+_defaultFlickSound = ExtResource("3_mtp0t")
+_defaultHitFrames = ExtResource("5_swhsl")
+
+[node name="ChartRenderer" type="Node" parent="Parent" unique_id=506447857]
+script = ExtResource("6_dnk11")
+_defaultTapTexture = ExtResource("7_mw8h8")
+_defaultDragTexture = ExtResource("8_w2a2n")
+_defaultFlickTexture = ExtResource("9_vtsto")
+_defaultHoldHeadTexture = ExtResource("10_kqb28")
+_defaultHoldBodyTexture = ExtResource("11_dqi6c")
+_defaultHoldEndTexture = ExtResource("12_adj2r")
+lineTexture = ExtResource("13_ap1vk")
+
+[node name="Label" type="Label" parent="." unique_id=817993002]
+offset_right = 40.0
+offset_bottom = 23.0
+theme = ExtResource("14_ii6ij")
+text = "Status"

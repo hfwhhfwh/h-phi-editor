@@ -89,15 +89,36 @@ public partial class ChartRenderer : BaseChartRenderer
         _holdEndSize = HoldEndTexture.GetSize();
 
         Parent = parent;
+        UpdateNoteScale();
+
         //设置note的宽度缩放
         Parent.Resized += () =>
         {
-            noteScale = Parent.Size.X * 0.16f / TapTexture.GetWidth();
-            GD.Print($"[{this.Name}] parent.Size.X:{Parent.Size.X}, tapTexture.GetWidth():{TapTexture.GetWidth()}, noteScale:{noteScale}");
+            UpdateNoteScale();
         };
 
         // 初始化MultiMesh
         InitMultiMesh();
+    }
+
+    private void UpdateNoteScale()
+    {
+        if (Parent == null || TapTexture == null)
+        {
+            noteScale = 1f;
+            return;
+        }
+
+        float textureWidth = TapTexture.GetWidth();
+        if (textureWidth <= 0f)
+        {
+            noteScale = 1f;
+            return;
+        }
+
+        noteScale = Parent.Size.X * 0.16f / textureWidth;
+        if (float.IsNaN(noteScale) || float.IsInfinity(noteScale) || noteScale <= 0f)
+            noteScale = 1f;
     }
 
 

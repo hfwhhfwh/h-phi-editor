@@ -28,6 +28,7 @@ public abstract partial class BaseChartPlayer : Node
 
     // 开关
     public bool Disabled { get; set; } = false;
+    public bool AutoHitEnabled { get; set; } = false;
 
     // 资源
     protected ResourcePack _resourcePack;
@@ -75,6 +76,14 @@ public abstract partial class BaseChartPlayer : Node
     public virtual void Pause()
     {
         IsPlaying = false;
+    }
+
+    public virtual void CreateHitEffect(Vector2 position)
+    {
+    }
+
+    public virtual void CreateHitEffect(Vector2 position, Color modulate)
+    {
     }
 
 }

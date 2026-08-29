@@ -10,10 +10,10 @@ config_version=5
 
 [application]
 
-config/name="HPhiEditor"
+config/name="HPhiEditorPlayTest"
 config/description="基于 Godot 4 (C#) 开发的移动端音游谱面编辑器"
 config/version="0.1.0-beta3"
-run/main_scene="uid://bfqi2qheha4ul"
+run/main_scene="uid://b2jpgq2664mr3"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="uid://dr5b2hjh04vy8"
 
@@ -38,7 +38,7 @@ LoadingManager="*uid://b57um3paj7g87"
 
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/vsync/vsync_mode=3
+window/vsync/vsync_mode=0
 
 [dotnet]
 
