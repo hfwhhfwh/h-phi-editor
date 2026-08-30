@@ -41,6 +41,7 @@ public partial class EditorScene : Node
     [Export] private MenuButton editMenuButtion;
     [Export] private MenuButton viewMenuButton;
     [Export] private MenuButton helpMenuButtion;
+    [Export] private Button _othersButton;
     [Export] private SettingsPanel _settingsPanel;
 
     [Export] private Label editingLineLabel;
@@ -383,6 +384,20 @@ public partial class EditorScene : Node
             PopupMenuHelper.Instance.SetMenuButton(viewMenuButton, items);
         }
 
+        // 设置左上角“...”按钮
+        _othersButton.Pressed += () =>
+        {
+            // 构建菜单项
+            var items = new List<PopupMenuItem>
+            {
+                new PopupMenuItem { Text = "试玩", Callback = OnTestPlay},
+            };
+
+            PopupMenuHelper.Instance.ShowPopupMenu(this, 
+                GetViewport().GetMousePosition() + new Vector2(30, 30), 
+                items);
+        };
+
         //设置NoteChooser
         noteChooser.NoteChoosed += OnNoteChooserNoteChoosed;
         noteChooser.Deselected += OnNoteChooserDeselected;
@@ -608,7 +623,6 @@ public partial class EditorScene : Node
         isPlaying = value;
         if(value) chartPlayer.Play((float)ChartTime);
         else chartPlayer.Pause();
-        
     }
 
     public void OnPlayButtonClicked()
@@ -1123,6 +1137,12 @@ public partial class EditorScene : Node
         {
             _chartEditService.SetEventProperty(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
         }
+    }
+
+    private void OnTestPlay()
+    {
+        var global = GetNode<Global>("/root/Global");
+        global.GotoScene("res://Scene/play_scene.tscn");
     }
 
 }

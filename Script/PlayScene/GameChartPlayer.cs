@@ -258,6 +258,7 @@ public partial class GameChartPlayer : BaseChartPlayer
             ZIndex = -999
         };
         bgNode.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        bgNode.MouseFilter = Control.MouseFilterEnum.Ignore;
         parent.AddChild(bgNode);
 
         //3. 设置音乐

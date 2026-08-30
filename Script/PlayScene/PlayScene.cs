@@ -5,26 +5,32 @@ using System.Collections.Generic;
 
 public partial class PlayScene : Node
 {
-    [Export] private string chartId = "45201552814680";
-    [Export] private Control parent;
+    [Export] private string chartId = "";
+    [Export] private PlayTestParent parent;
     [Export] private GameChartPlayer chartPlayer;
     [Export] private BaseChartRenderer chartRenderer;
     [Export] private Label statusLabel;
+    [Export] private Button _pauseButton;
+    [Export] private CanvasLayer _pauseLayer;
+    [Export] private Button _quitButton;
+    [Export] private Button _restartButton;
+    [Export] private Button _startButton;
+    private bool _isPauseActive = false;
+    private float _pauseTimer;
 
     private ChartService _chartService;
     private Chart _chart;
     private ChartJudge _judge;
     private bool _isPlaying = true;
-    private bool _mousePressed;
-    private Vector2 _pressedMousePos;
-    private Dictionary<int, Vector2> _pressedTouch = new();
-
-    public float FlickSpeedThreshold { get; set; } = 500f;
     private double _gameTime;
 
     public override void _Ready()
     {
         base._Ready();
+
+        // 从global中同步数据
+        var global = GetNode<Global>("/root/Global");
+        chartId = global.editingChartId;
 
         _chartService = GetNode<ChartService>("/root/ChartService");
         if (_chartService == null)
@@ -45,12 +51,45 @@ public partial class PlayScene : Node
             return;
         }
 
-        if (parent == null)
+        parent.Clicked += OnClickInput;
+        parent.Touched += OnTouchInput;
+        parent.Flicked += OnFlickInput;
+
+        _pauseButton.Pressed += () =>
         {
-            var root = GetNode<Control>("Control/ChartPlayerContainer/ControlParent");
-            if (root != null)
-                parent = root;
-        }
+            if (!_isPauseActive)
+            {
+                _isPauseActive = true;
+                _pauseButton.Modulate = Colors.White;
+                _pauseTimer = 0;
+            }
+            else
+            {
+                if(_pauseTimer <= 0.5f)
+                {
+                    // 触发暂停
+                    Pause();
+
+                    // 重置计时器
+                    _isPauseActive = false;
+                    _pauseButton.Modulate = new Color(1, 1, 1, 0.6f);
+                    _pauseTimer = 0;
+                }
+            }
+        };
+        _pauseButton.Modulate = new Color(1, 1, 1, 0.6f);
+
+        _startButton.Pressed += () =>
+        {
+            Start(); // TODO 倒计时开始
+        };
+
+        _quitButton.Pressed += () =>
+        {
+            // 返回编辑器界面
+            var global = GetNode<Global>("/root/Global");
+            global.GotoScene("res://Scene/editor_scene.tscn");
+        };
 
         LoadChart();
         if (_chart == null) return;
@@ -75,7 +114,7 @@ public partial class PlayScene : Node
         _judge.Initialize(chartPlayer, parent, _chart);
         _judge.OnJudgeResult += OnJudgeResult;
         _judge.OnHoldEndJudgeResult += OnHoldEndJudgeResult;
-        
+
 
         chartPlayer.AutoHitEnabled = false;
         chartPlayer.Play(0f);
@@ -85,8 +124,11 @@ public partial class PlayScene : Node
     {
         _judge.OnJudgeResult -= OnJudgeResult;
         _judge.OnHoldEndJudgeResult -= OnHoldEndJudgeResult;
-        
         _judge = null;
+
+        parent.Clicked -= OnClickInput;
+        parent.Touched -= OnTouchInput;
+        parent.Flicked -= OnFlickInput;
 
 
         base._ExitTree();
@@ -102,18 +144,21 @@ public partial class PlayScene : Node
 
         if (_isPlaying)
         {
+            // 处理暂停按钮计时器
+            if (_isPauseActive)
+            {
+                _pauseTimer += (float)delta;
+                if(_pauseTimer > 2)
+                {
+                    // 超时，取消响应
+                    _isPauseActive = false;
+                    _pauseButton.Modulate = new Color(1, 1, 1, 0.6f);
+                    _pauseTimer = 0;
+                }
+            }
+
             chartPlayer.UpdateLogic(delta);
             _gameTime = chartPlayer.ChartTime;
-
-            // 处理触摸事件
-            if (_mousePressed)
-            {
-                OnTouchInput(_pressedMousePos);
-            }
-            foreach(Vector2 pos in _pressedTouch.Values)
-            {
-                OnTouchInput(pos);
-            }
 
             _judge.Update(chartPlayer.ChartTime, delta);
         }
@@ -123,84 +168,28 @@ public partial class PlayScene : Node
         chartRenderer.Render(lineData, lineCount, noteData, noteCount);
     }
 
-    public override void _Input(InputEvent @event)
+    private void OnClickInput(Vector2 pos)
     {
-        base._Input(@event);
-
-        // 不接受模拟输入
-        if(@event.Device == -1) return;
-
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
 
-        // ---- 1. 鼠标模拟输入 ----
-        if(@event is InputEventMouseButton mouseBtn && mouseBtn.ButtonIndex == MouseButton.Left)
-        {
-            if(mouseBtn.Pressed)
-            {
-                OnClickInput(mouseBtn.Position);
-                _mousePressed = true;
-                _pressedMousePos = mouseBtn.Position;
-            }
-            else
-            {
-                _mousePressed = false;
-            }
-        }
-        else if(@event is InputEventMouseMotion mouseMotion)
-        {
-            if(_mousePressed == true)
-            {
-                _pressedMousePos = mouseMotion.Position;
-
-                if(mouseMotion.Velocity.Length() >= FlickSpeedThreshold)
-                {
-                    OnFlickInput(mouseMotion.Position);
-                }
-            }
-        }
-
-        // ---- 2. 屏幕输入 ----
-        else if(@event is InputEventScreenTouch screenTouch)
-        {
-            if(screenTouch.Pressed)
-            {
-                OnClickInput(screenTouch.Position);
-
-                _pressedTouch[screenTouch.Index] = screenTouch.Position;
-            }
-            else
-            {
-                _pressedTouch.Remove(screenTouch.Index);
-            }
-        }
-        else if(@event is InputEventScreenDrag screenDrag)
-        {
-            if(_pressedTouch.ContainsKey(screenDrag.Index))
-            {
-                _pressedTouch[screenDrag.Index] = screenDrag.Position;
-            }
-
-            if(screenDrag.Velocity.Length() >= FlickSpeedThreshold)
-            {
-                OnFlickInput(screenDrag.Position);
-            }
-        }
-    }
-
-    private void OnClickInput(Vector2 pos)
-    {
         GD.Print($"Click {_gameTime:F2}, {pos}");
         _judge.OnTapInput(pos, _gameTime);
     }
 
     private void OnTouchInput(Vector2 pos)
     {
+        if (_chart == null || chartPlayer == null || _judge == null) return;
+        if (!chartPlayer.IsPlaying) return;
+
         _judge.OnTouchInput(pos, _gameTime);
     }
 
     private void OnFlickInput(Vector2 pos)
     {
+        if (_chart == null || chartPlayer == null || _judge == null) return;
+        if (!chartPlayer.IsPlaying) return;
+
         _judge.OnFlickInput(pos, _gameTime);
     }
 
@@ -260,5 +249,34 @@ public partial class PlayScene : Node
             }
             
         }
+    }
+
+    private void SetIsPlaying(bool value)
+    {
+        _isPlaying = value;
+        if(value) chartPlayer.Play((float)_gameTime);
+        else chartPlayer.Pause();
+    }
+
+    private void Pause()
+    {
+        SetIsPlaying(false);
+        _pauseLayer.Visible = true;
+    }
+
+    private void Start()
+    {
+        SetIsPlaying(true);
+        _pauseLayer.Visible = false;
+    }
+
+    private void Quit()
+    {
+        
+    }
+
+    private void Restart()
+    {
+        
     }
 }

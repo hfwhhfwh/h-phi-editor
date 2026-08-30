@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cy2j3ypk7j61c" path="res://Script/PlayScene/PlayScene.cs" id="1_iwabn"]
 [ext_resource type="Script" uid="uid://dqiyhli4wgtyk" path="res://Script/PlayScene/GameChartPlayer.cs" id="2_f7y2q"]
+[ext_resource type="Script" uid="uid://bwcftn5q6by3r" path="res://Script/PlayScene/PlayTestParent.cs" id="2_swhsl"]
 [ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="3_4mcor"]
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="3_mtp0t"]
 [ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="4_4mcor"]
@@ -15,23 +16,66 @@
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="12_adj2r"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="13_ap1vk"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="14_ii6ij"]
+[ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4mcor"]
+[ext_resource type="Texture2D" uid="uid://dxev5wk8ceda2" path="res://箭头左-02.png" id="18_w2a2n"]
+[ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://刷新.png" id="19_vtsto"]
+[ext_resource type="Texture2D" uid="uid://bprcrbiaou75j" path="res://播放.png" id="20_kqb28"]
 
-[node name="PlayScene" type="Node" unique_id=581511815 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "statusLabel")]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dqi6c"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_adj2r"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ap1vk"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ii6ij"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jp30j"]
+
+[node name="PlayScene" type="Node" unique_id=581511815 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "statusLabel", "_pauseButton", "_pauseLayer", "_quitButton", "_restartButton", "_startButton")]
 script = ExtResource("1_iwabn")
-parent = NodePath("Parent")
-chartPlayer = NodePath("Parent/ChartPlayer")
-chartRenderer = NodePath("Parent/ChartRenderer")
-statusLabel = NodePath("Label")
+parent = NodePath("SafeArea/AspectRatioContainer/Parent")
+chartPlayer = NodePath("SafeArea/AspectRatioContainer/Parent/ChartPlayer")
+chartRenderer = NodePath("SafeArea/AspectRatioContainer/Parent/ChartRenderer")
+statusLabel = NodePath("SafeArea/AspectRatioContainer/Parent/Label")
+_pauseButton = NodePath("SafeArea/AspectRatioContainer/Parent/PauseButton")
+_pauseLayer = NodePath("PauseLayer")
+_quitButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Quit")
+_restartButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Restart")
+_startButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Start")
 
-[node name="Parent" type="Control" parent="." unique_id=1797246401]
-layout_mode = 3
+[node name="SafeArea" type="MarginContainer" parent="." unique_id=978895148]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 53
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 35
+theme_override_constants/margin_bottom = 26
 
-[node name="ChartPlayer" type="Node" parent="Parent" unique_id=987867588]
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="SafeArea" unique_id=1993380992]
+layout_mode = 2
+ratio = 1.5
+
+[node name="Parent" type="Control" parent="SafeArea/AspectRatioContainer" unique_id=1797246401]
+clip_contents = true
+layout_mode = 2
+script = ExtResource("2_swhsl")
+
+[node name="Label" type="Label" parent="SafeArea/AspectRatioContainer/Parent" unique_id=817993002]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -91.0
+offset_bottom = 42.0
+grow_horizontal = 0
+theme = ExtResource("14_ii6ij")
+text = "Status"
+horizontal_alignment = 2
+
+[node name="ChartPlayer" type="Node" parent="SafeArea/AspectRatioContainer/Parent" unique_id=987867588]
 script = ExtResource("2_f7y2q")
 _defaultTapSound = ExtResource("3_4mcor")
 _defaultDragSound = ExtResource("4_4mcor")
@@ -39,7 +83,7 @@ _defaultFlickSound = ExtResource("3_mtp0t")
 _defaultHitFrames = ExtResource("5_swhsl")
 _defaultBadTexture = ExtResource("7_mw8h8")
 
-[node name="ChartRenderer" type="Node" parent="Parent" unique_id=506447857]
+[node name="ChartRenderer" type="Node" parent="SafeArea/AspectRatioContainer/Parent" unique_id=506447857]
 script = ExtResource("6_dnk11")
 _defaultTapTexture = ExtResource("7_mw8h8")
 _defaultDragTexture = ExtResource("8_w2a2n")
@@ -49,8 +93,71 @@ _defaultHoldBodyTexture = ExtResource("11_dqi6c")
 _defaultHoldEndTexture = ExtResource("12_adj2r")
 lineTexture = ExtResource("13_ap1vk")
 
-[node name="Label" type="Label" parent="." unique_id=817993002]
-offset_right = 40.0
-offset_bottom = 23.0
-theme = ExtResource("14_ii6ij")
-text = "Status"
+[node name="PauseButton" type="Button" parent="SafeArea/AspectRatioContainer/Parent" unique_id=157215953]
+z_index = 10
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 1
+offset_right = 8.0
+offset_bottom = 8.0
+icon = ExtResource("16_4mcor")
+icon_alignment = 1
+expand_icon = true
+
+[node name="PauseLayer" type="CanvasLayer" parent="." unique_id=1043612123]
+visible = false
+
+[node name="BackGround" type="ColorRect" parent="PauseLayer" unique_id=910687214]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="CenterContainer" type="CenterContainer" parent="PauseLayer/BackGround" unique_id=642377676]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PauseLayer/BackGround/CenterContainer" unique_id=447148147]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="Quit" type="Button" parent="PauseLayer/BackGround/CenterContainer/HBoxContainer" unique_id=144405291]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dqi6c")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_adj2r")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_ap1vk")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_ii6ij")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_jp30j")
+icon = ExtResource("18_w2a2n")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Restart" type="Button" parent="PauseLayer/BackGround/CenterContainer/HBoxContainer" unique_id=1605715541]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dqi6c")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_adj2r")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_ap1vk")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_ii6ij")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_jp30j")
+icon = ExtResource("19_vtsto")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Start" type="Button" parent="PauseLayer/BackGround/CenterContainer/HBoxContainer" unique_id=584745807]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dqi6c")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_adj2r")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_ap1vk")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_ii6ij")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_jp30j")
+icon = ExtResource("20_kqb28")
+icon_alignment = 1
+expand_icon = true
