@@ -62,13 +62,15 @@ public partial class PlayScene : Node
             return;
         }
 
+        _judge = new ChartJudge();
+
         chartPlayer.UseDefaultResource();
         chartRenderer.UseDefaultResource();
 
         chartPlayer.Initialize(parent, _chart, Image.LoadFromFile(chartInfo.PicturePath), FileUtil.LoadAudioFromFile(chartInfo.SongPath));
         chartRenderer.Initialize(parent);
 
-        _judge = new ChartJudge();
+        
         AddChild(_judge);
         _judge.Initialize(chartPlayer, parent, _chart);
         _judge.OnJudgeResult += OnJudgeResult;
@@ -83,6 +85,7 @@ public partial class PlayScene : Node
     {
         _judge.OnJudgeResult -= OnJudgeResult;
         _judge.OnHoldEndJudgeResult -= OnHoldEndJudgeResult;
+        
         _judge = null;
 
 

@@ -111,13 +111,16 @@ public partial class ChartJudge : Node
         Parent = parent;
         Chart = chart;
         RebuildSortedNotes();
+
+        player.judgedNotes = _judgedNotes;
+        player.missedHold = _missedHold;
     }
 
     public void Update(double gameTime, double deltaTime)
     {
         if (Chart == null || Player == null) return;
 
-        // 处理hold在末尾的miss
+        // 处理hold在末尾的miss判定
         foreach(KeyValuePair<Note, JudgeResult> kvp in _missedHold.ToList())
         {
             Note hold = kvp.Key;
@@ -229,41 +232,61 @@ public partial class ChartJudge : Node
             }
         }
 
-        // 处理Miss判定
+        // 处理Miss判定(Hold只处理未点击导致的Miss)
         foreach (NoteCandidate candidate in _sortedAllNotes)
         {
             Note note = candidate.Note;
-            if (note == null || note.IsFake || _judgedNotes.Contains(note) || _missedNotes.Contains(note)) continue;
+            if (note == null || note.IsFake || 
+                _judgedNotes.Contains(note) || 
+                _missedNotes.Contains(note) || 
+                _pressingHold.ContainsKey(note) || 
+                _missedHold.ContainsKey(note) || 
+                _judgedNotesBuffer.ContainsKey(note)) continue;
 
             float startSec = note.startSec;
             float endSec = note.Type == 2 ? note.endSec : startSec;
             bool shouldMiss = false;
 
-            if (note.Type == 2)
-            {
-                if (gameTime > endSec + GoodMs / 1000f)
-                {
-                    shouldMiss = true;
-                }
-            }
-            else if (gameTime > startSec + GoodMs / 1000f)
+            if (gameTime > startSec + GoodMs / 1000f)
             {
                 shouldMiss = true;
             }
 
             if (shouldMiss)
             {
-                _missedNotes.Add(note);
-                _judgedNotes.Add(note);
-                _pendingResults.Add(new JudgeResult
+                if(note.Type != 2) // 立刻触发miss判定
                 {
-                    Note = note,
-                    LineIndex = candidate.LineIndex,
-                    NoteIndex = candidate.NoteIndex,
-                    Grade = JudgeGrade.Miss,
-                    TimeDeltaMs = (float)((gameTime - startSec) * 1000d),
-                    HitPosition = GetNotePosition(candidate.LineIndex, note)
-                });
+                    _missedNotes.Add(note);
+                    _judgedNotes.Add(note);
+
+                    JudgeResult result = new JudgeResult
+                    {
+                        Note = note,
+                        LineIndex = candidate.LineIndex,
+                        NoteIndex = candidate.NoteIndex,
+                        Grade = JudgeGrade.Miss,
+                        TimeDeltaMs = (float)((gameTime - startSec) * 1000d),
+                        HitPosition = GetNotePosition(candidate.LineIndex, note)
+                    };
+                    OnJudgeResult?.Invoke(result);
+                }
+                else // 记录，在末尾触发Miss判定
+                {
+                    // 准备触发miss
+                    Player.StopHoldHitEffect(note);
+
+                    JudgeResult result = new JudgeResult
+                    {
+                        Note = note,
+                        LineIndex = candidate.LineIndex,
+                        NoteIndex = candidate.NoteIndex,
+                        Grade = JudgeGrade.Miss,
+                        TimeDeltaMs = (float)gameTime - note.startSec, // 不需要
+                        HitPosition = Vector2.Zero // 不需要
+                    };
+                    _missedHold[note] = result;
+
+                }
             }
         }
 
@@ -368,6 +391,7 @@ public partial class ChartJudge : Node
                 //GD.Print($"note不能被判定:{i}");
                 continue;
             }
+            if(_judgedNotesBuffer.ContainsKey(note)) continue; // 避免重复判定
                 
             
             JudgeResult result = ResolveJudge(candidate.LineIndex, note, candidate.NoteIndex, gameTime, pos);

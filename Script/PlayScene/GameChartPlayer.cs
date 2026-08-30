@@ -2,6 +2,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 public partial class GameChartPlayer : BaseChartPlayer
@@ -52,6 +53,13 @@ public partial class GameChartPlayer : BaseChartPlayer
 
     // 判定为Perfect,Good,Bad(Early)的Tap音符需要提前隐藏，暂存在这里，到达实际的打击时间之后从集合中移除
     private readonly HashSet<Note> _earlyHideTap = new();
+
+    /// <summary>
+    /// miss但未触发miss判定的Hold音符，需要渲染成略透明
+    /// </summary
+    public Dictionary<Note, JudgeResult> missedHold;
+
+    public HashSet<Note> judgedNotes;
 
     private class HoldEffectData
     {
@@ -382,10 +390,6 @@ public partial class GameChartPlayer : BaseChartPlayer
         // 按拓扑序更新：父线先于子线
         foreach (int idx in _topologicalOrder)
         {
-            // JudgeLineNode judgeLineNode = judgeLineNodes[idx];
-            // judgeLineNode.UpdateLine(ChartTime, _lineRenderBuffer, ref _lineRenderCount, 
-            //     _noteRenderBuffer, ref _noteRenderCount);
-
             UpdateLine(ChartTime, idx);
         }
 
@@ -486,6 +490,8 @@ public partial class GameChartPlayer : BaseChartPlayer
         bool HeadVisible = false;
         Vector2 Position;
 
+        float missAlpha = 1; // [0,1]，表示note即将miss时alpha乘以的系数
+
         // ------------ 音符到达判定线时播放音效，并生成打击特效 ------------
         if(note.IsFake == false) // 假note不需要击打
         {
@@ -505,16 +511,18 @@ public partial class GameChartPlayer : BaseChartPlayer
             }
         }
 
-        // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
         // ------------ 处理显示和隐藏 ------------
+        // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
         {
             if (_earlyHideTap.Contains(note))
             {
                 if(gameTime >= noteStartSec) _earlyHideTap.Remove(note);
                 
                 return; // 不渲染
-                
             }
+
+            if(judgedNotes.Contains(note)) return;
+
             if(note.Type == 2) // hold需要特殊处理，当head到达判定线时，隐藏head的贴图
             {
                 if(gameTime >= noteStartSec)
@@ -526,19 +534,55 @@ public partial class GameChartPlayer : BaseChartPlayer
                     HeadVisible = true;
                 }
             }
-            float appearSec = noteStartSec - note.VisibleTime; // 出现时刻
-            float disappearSec = noteEndSec; // 消失时刻（如果是长按，Hold尾部）
-            if (gameTime < appearSec || gameTime > disappearSec)
+
+            if(note.Type != 2)
             {
-                // 不在显示区间内，隐藏
-                // Visible = false;
-                return; // 不计算位置，优化性能
+                float appearSec = noteStartSec - note.VisibleTime; // 出现时刻
+                float disappearSec = noteEndSec + 0.16f; // 消失时刻(最后0.16s逐渐消失)
+                if (gameTime < appearSec || gameTime > disappearSec)
+                {
+                    // 不在显示区间内，隐藏
+                    return; // 不计算位置，优化性能
+                }
+                else
+                {
+                    // 在显示区间内，显示
+                    NoteVisible = true;
+                }
+
+                // 决定miss透明度
+                if(gameTime > noteEndSec && gameTime < disappearSec)
+                {
+                    missAlpha = 1 - ((float)gameTime - noteEndSec) / 0.16f;
+                }
             }
-            else
+            else // hold
             {
-                // 在显示区间内，显示
-                NoteVisible = true;
+                float appearSec = noteStartSec - note.VisibleTime; // 出现时刻
+                float disappearSec = noteEndSec; // 消失时刻
+                if (gameTime < appearSec)
+                {
+                    // 不在显示区间内，隐藏
+                    return; // 不计算位置，优化性能
+                }
+                else if(gameTime > disappearSec)
+                {
+                    // 不在显示区间内，隐藏
+                    return;
+                }
+                else
+                {
+                    // 在显示区间内，显示
+                    NoteVisible = true;
+                }
+
+                // 决定miss透明度
+                if (missedHold.ContainsKey(note))
+                {
+                    missAlpha = 0.5f;
+                }
             }
+            
         }
 
         //------------ 计算note位置 ------------     坐标系: 谱面坐标[-675,675] [-450,450]
@@ -553,7 +597,8 @@ public partial class GameChartPlayer : BaseChartPlayer
             //全部位移
             float allDisplacement = note.allDisplacement; 
 
-            localChartY = Math.Max(0, allDisplacement - _lineDisplacement[lineId]);
+            if(note.Type != 2) localChartY = allDisplacement - _lineDisplacement[lineId]; // 允许越过判定线，用于显示miss效果
+            else localChartY = Math.Max(0, allDisplacement - _lineDisplacement[lineId]);
 
             //音符翻转 1表示上面，2表示下面
             if(note.Above == 2)
@@ -650,7 +695,7 @@ public partial class GameChartPlayer : BaseChartPlayer
                 HeadPos = headParentPos,
                 EndPos = endParentPos,
                 Rotate = noteRotation,
-                Alpha = note.Alpha,
+                Alpha = note.Alpha * missAlpha,
                 HeadVisible = HeadVisible,
                 SizeX = note.Size,
             };
@@ -682,7 +727,7 @@ public partial class GameChartPlayer : BaseChartPlayer
                 HeadPos = noteParentPos,
                 EndPos = noteParentPos,
                 Rotate = noteRotation,
-                Alpha = note.Alpha,
+                Alpha = note.Alpha * missAlpha,
                 SizeX = note.Size,
             };
         }
