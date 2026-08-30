@@ -32,6 +32,9 @@ public abstract partial class BaseChartRenderer : Node
         }
     }
 
+    /// <summary>note的宽度大小缩放</summary>
+    public float NoteScale { get; protected set; }
+
     public abstract void UseDefaultResource();
 
     public abstract void Initialize(Control parent);

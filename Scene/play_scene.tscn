@@ -37,6 +37,7 @@ _defaultTapSound = ExtResource("3_4mcor")
 _defaultDragSound = ExtResource("4_4mcor")
 _defaultFlickSound = ExtResource("3_mtp0t")
 _defaultHitFrames = ExtResource("5_swhsl")
+_defaultBadTexture = ExtResource("7_mw8h8")
 
 [node name="ChartRenderer" type="Node" parent="Parent" unique_id=506447857]
 script = ExtResource("6_dnk11")

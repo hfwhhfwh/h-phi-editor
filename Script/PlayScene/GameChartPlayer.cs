@@ -15,13 +15,26 @@ public partial class GameChartPlayer : BaseChartPlayer
     [Export] private AudioStream _defaultDragSound;
     [Export] private AudioStream _defaultFlickSound;
     [Export] private SpriteFrames _defaultHitFrames; // 打击特效
+    [Export] private Texture2D _defaultBadTexture;   // Bad打击特效
+    #endregion
+
+    private Texture2D _badTexture;
 
     [ExportGroup("")]
-    #endregion
+
+    public override ResourcePack Pack { 
+        set
+        {
+            base.Pack = value;
+
+            _badTexture = value.textureDic["click"];
+        }
+    }
 
     public AudioStreamPlayer audioStreamPlayer;
 
-    private HitEffectPool hitEffectPool;
+    private HitEffectPool _hitEffectPool;
+    private BadEffectPool _badEffectPool;
     
     private AudioPool audioPool;
 
@@ -37,7 +50,7 @@ public partial class GameChartPlayer : BaseChartPlayer
     // 只在播放模式下有意义；编辑模式下时间来回拖动时自动清理
     private readonly HashSet<Note> _playedNotes = new();
 
-    // 判定为Perfect,Good(Early)的Tap音符需要提前隐藏，暂存在这里，到达实际的打击时间之后从集合中移除
+    // 判定为Perfect,Good,Bad(Early)的Tap音符需要提前隐藏，暂存在这里，到达实际的打击时间之后从集合中移除
     private readonly HashSet<Note> _earlyHideTap = new();
 
     private class HoldEffectData
@@ -145,11 +158,19 @@ public partial class GameChartPlayer : BaseChartPlayer
         _holdEffectData.Remove(hold);
     }
 
-    public Vector2 GetNoteJudgementPosition(int lineIdx, Note note)
+    public Vector2 GetNoteJudgementPosition(int lineId, Note note)
     {
-        var linePos = new Vector2(_lineMoveX[lineIdx], _lineMoveY[lineIdx]);
+        var linePos = new Vector2(_lineMoveX[lineId], _lineMoveY[lineId]);
         var notePos = new Vector2(note.PositionX, 0);
-        var globalPos = PosUtil.GetChildGlobalPosition(linePos, notePos, _lineRotate[lineIdx]);
+        var globalPos = PosUtil.GetChildGlobalPosition(linePos, notePos, _lineRotate[lineId]);
+        return PosUtil.ChartPosToViewportPos(globalPos, Parent.Size);
+    }
+
+    public Vector2 GetNotePosition(int lineId, Note note, double time)
+    {
+        var linePos = new Vector2(_lineMoveX[lineId], _lineMoveY[lineId]);
+        var notePos = new Vector2(note.PositionX, note.allDisplacement - _lineDisplacement[lineId]);
+        var globalPos = PosUtil.GetChildGlobalPosition(linePos, notePos, _lineRotate[lineId]);
         return PosUtil.ChartPosToViewportPos(globalPos, Parent.Size);
     }
 
@@ -163,8 +184,8 @@ public partial class GameChartPlayer : BaseChartPlayer
 
     public override void CreateHitEffect(Vector2 parentPos, Color modulate)
     {
-        if (hitEffectPool == null) return;
-        hitEffectPool.Spawn(parentPos, modulate);
+        if (_hitEffectPool == null) return;
+        _hitEffectPool.Spawn(parentPos, modulate);
     }
 
     /// <summary>
@@ -188,12 +209,22 @@ public partial class GameChartPlayer : BaseChartPlayer
         player.Play(); // 播放完成后自动回收（通过 Finished 信号）
     }
 
+    public void CreateBadEffect(JudgeResult result, Vector2 scale)
+    {
+        _badEffectPool.Spawn(GetNotePosition(result.LineIndex, result.Note, ChartTime), scale);
+
+        _earlyHideTap.Add(result.Note);
+
+    }
+
     public override void UseDefaultResource()
     {
         TapSound = _defaultTapSound;
         DragSound = _defaultDragSound;
         FlickSound = _defaultFlickSound;
         HitFrames = _defaultHitFrames;
+
+        _badTexture = _defaultBadTexture;
     }
 
 
@@ -246,8 +277,11 @@ public partial class GameChartPlayer : BaseChartPlayer
         Parent = parent;
 
         //设置打击特效
-        hitEffectPool = new HitEffectPool(parent, HitFrames, 50);
-        parent.AddChild(hitEffectPool);
+        _hitEffectPool = new HitEffectPool(parent, HitFrames, 50);
+        parent.AddChild(_hitEffectPool);
+
+        _badEffectPool = new BadEffectPool(parent, _badTexture, 50);
+        parent.AddChild(_badEffectPool);
 
         //设置打击音效
         audioPool = new AudioPool(parent);
@@ -266,9 +300,6 @@ public partial class GameChartPlayer : BaseChartPlayer
         ChartDataHelper.RefreshAllEventPrefix(chart);
         //预计算所有note的累积位移
         ChartDataHelper.RefreshAllNoteAllDisplacement(chart);
-
-        // 初始化所有判定线节点
-        // SetJudgeLineList();
 
         _needsTopologyRebuild = true;
     }

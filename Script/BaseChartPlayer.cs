@@ -36,7 +36,7 @@ public abstract partial class BaseChartPlayer : Node
     public AudioStream DragSound { get; set; }
     public AudioStream FlickSound { get; set; }
     public SpriteFrames HitFrames { get; set; }
-    public ResourcePack Pack
+    public virtual ResourcePack Pack
     {
         set
         {

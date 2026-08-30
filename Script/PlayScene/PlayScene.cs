@@ -221,7 +221,7 @@ public partial class PlayScene : Node
     private void OnJudgeResult(JudgeResult result)
     {
         GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
-        
+
         if (statusLabel != null)
         {
             //if(result.Grade != JudgeGrade.Miss)
@@ -236,7 +236,8 @@ public partial class PlayScene : Node
         }
         else if (result.Grade == JudgeGrade.Bad)
         {
-            // GD.Print($"Bad at {result.TimeDeltaMs}ms");
+            chartPlayer.CreateBadEffect(result, 
+                new Vector2(chartRenderer.NoteScale, chartRenderer.NoteScale));
         }
         else
         {
