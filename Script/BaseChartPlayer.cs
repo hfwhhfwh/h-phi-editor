@@ -58,7 +58,7 @@ public abstract partial class BaseChartPlayer : Node
     /// <summary>
     /// 计算判定线和note的位置
     /// </summary>
-    public abstract void UpdateLogic();
+    public abstract void UpdateLogic(double deltaTime);
 
     /// <summary>
     /// 从指定时间开始播放

@@ -71,7 +71,7 @@ public partial class TestSceneChartPlayer : Node
             chartPlayer.ExternalTime = chartTime;
         }
 
-        chartPlayer.UpdateLogic();
+        chartPlayer.UpdateLogic(delta);
 
         (JudgeLineRenderData[] lineData, int lineCount) = chartPlayer.GetLineRenderDatas();
         (NoteRenderData[] noteData, int noteCount) = chartPlayer.GetNoteRenderDatas();

@@ -13,11 +13,6 @@ public enum JudgeGrade
     Miss = 3,
 }
 
-public enum InputType
-{
-    Click, Touch, Flick
-}
-
 public struct JudgeResult
 {
     public Note Note;
@@ -45,6 +40,34 @@ public partial class ChartJudge : Node
         public Note Note;
     }
 
+    private struct PressingHoldData
+    {
+        // public int LineIndex;
+        // public int NoteIndex;
+        // public Note Note;
+
+        public NoteCandidate CandidateData;
+
+        public bool IsReleased;
+        public float Timer; // 单位：ms
+        public JudgeResult JudgeResult;
+        
+    }
+
+    private enum InputType
+    {
+        Click, Touch, Flick
+    }
+
+    private struct InputData
+    {
+        public Vector2 Position;
+        public InputType Type;
+        public double Time;
+    }
+
+    private readonly Queue<InputData> _inputDataQueue = new();
+
     private readonly List<NoteCandidate> _sortedAllNotes = new();
     private readonly HashSet<Note> _judgedNotes = new();
     private readonly HashSet<Note> _missedNotes = new();
@@ -53,7 +76,18 @@ public partial class ChartJudge : Node
     /// Drag和Flick如果提前判定，暂存进集合中，在击打时刻再判定
     /// </summary>
     private readonly Dictionary<Note, JudgeResult> _judgedNotesBuffer = new();
-    private readonly HashSet<Note> _pressingHold = new();
+
+    /// <summary>
+    /// 正在长按中的Hold音符 值为计时器，初始为
+    /// </summary>
+    private readonly Dictionary<Note, PressingHoldData> _pressingHold = new();
+
+    /// <summary>
+    /// 已经完成miss判定的hold音符
+    /// </summary>
+    private readonly Dictionary<Note, JudgeResult> _missedHold = new();
+    
+
     private readonly List<JudgeResult> _pendingResults = new();
 
     private float _holdDetectTimer = 2000; // 单位：ms
@@ -62,7 +96,8 @@ public partial class ChartJudge : Node
     public GameChartPlayer Player { get; private set; }
     public Control Parent { get; private set; }
 
-    public Action<JudgeResult> OnJudgeResult { get; set; }
+    public event Action<JudgeResult> OnJudgeResult;
+    public event Action<JudgeResult> OnHoldEndJudgeResult;
 
     /// <summary>
     /// 初始化，依赖Note的StartSec，需要提前计算
@@ -82,8 +117,106 @@ public partial class ChartJudge : Node
     {
         if (Chart == null || Player == null) return;
 
+        // 处理hold在末尾的miss
+        foreach(KeyValuePair<Note, JudgeResult> kvp in _missedHold.ToList())
+        {
+            Note hold = kvp.Key;
+            if(gameTime >= hold.endSec)
+            {
+                _missedHold.Remove(hold);
+                _missedNotes.Add(hold);
+                _judgedNotes.Add(hold);
+
+                OnHoldEndJudgeResult?.Invoke(kvp.Value);
+            }
+        }
+        
+
+        // 从队列中的输入进行判定
+        foreach(InputData inputData in _inputDataQueue)
+        {
+            TryHitNote(inputData.Position, inputData.Time, inputData.Type);
+        }
+
+        // 检查所有正在按压的 Hold 是否已到达尾部
+        foreach (var kvp in _pressingHold.ToList())
+        {
+            Note hold = kvp.Key;
+            if (gameTime >= hold.endSec) // endSec 需提前计算
+            {
+                // 正常结束，触发一次判定
+                JudgeResult result = new JudgeResult
+                {
+                    Note = hold,
+                    LineIndex = kvp.Value.CandidateData.LineIndex,
+                    NoteIndex = kvp.Value.CandidateData.NoteIndex,
+                    Grade = kvp.Value.JudgeResult.Grade,
+                    TimeDeltaMs = kvp.Value.JudgeResult.TimeDeltaMs,
+                    HitPosition = GetNotePosition(kvp.Value.CandidateData.LineIndex, hold)
+                };
+                OnHoldEndJudgeResult?.Invoke(result);
+
+                // 停止特效并移除
+                Player.StopHoldHitEffect(hold);
+                _pressingHold.Remove(hold);
+                _judgedNotes.Add(hold);
+            }
+        }
+
+        // 处理Hold中途松手的倒计时和miss
+        foreach(KeyValuePair<Note, PressingHoldData> kvp in _pressingHold.ToList()) // 创建副本
+        {
+            Note hold = kvp.Key;
+            PressingHoldData data = kvp.Value;
+
+            bool isReleased = true;
+
+            // 1. 判断是否依然被按下
+            foreach (InputData inputData in _inputDataQueue)
+            {
+                // 触摸事件用于维持Hold的按下状态 先记录Hold是否被按下
+                if (inputData.Type == InputType.Touch)
+                {
+                    if (CanHoldBePressed(data.CandidateData.LineIndex, hold, inputData.Position, gameTime))
+                    {
+                        isReleased = false;
+                    }
+
+                }
+            }
+
+            if (isReleased == false) continue;
+
+            // 2. 更新计时器
+            data.IsReleased = true;
+            data.Timer -= (float)deltaTime * 1000;
+            _pressingHold[hold] = data;
+
+            // 3. 判断miss
+            if (data.Timer < 0)
+            {
+                // 准备触发miss
+                _pressingHold.Remove(hold);
+                Player.StopHoldHitEffect(hold);
+
+                JudgeResult result = new JudgeResult
+                {
+                    Note = hold,
+                    LineIndex = data.CandidateData.LineIndex,
+                    NoteIndex = data.CandidateData.NoteIndex,
+                    Grade = JudgeGrade.Miss,
+                    TimeDeltaMs = (float)gameTime - hold.startSec, // 不需要
+                    HitPosition = Vector2.Zero // 不需要
+                };
+                _missedHold[hold] = result;
+            }
+
+        }
+
+        _inputDataQueue.Clear();
+
         // 处理缓存的Drag和Flick
-        foreach(KeyValuePair<Note, JudgeResult> kvp in _judgedNotesBuffer)
+        foreach (KeyValuePair<Note, JudgeResult> kvp in _judgedNotesBuffer)
         {
             Note note = kvp.Key;
             if(gameTime >= note.startSec)
@@ -95,26 +228,6 @@ public partial class ChartJudge : Node
                 OnJudgeResult?.Invoke(kvp.Value);
             }
         }
-        
-        // // 处理正在长按的Hold
-        // _holdDetectTimer -= (float)deltaTime * 1000;
-        // if(_holdDetectTimer < 0)
-        // {
-        //     // 检测所有hold
-        //     foreach(Note hold in _pressingHold)
-        //     {
-        //         // 防御
-        //         if(hold.Type != 2)
-        //         {
-        //             _pressingHold.Remove(hold);
-        //             continue;
-        //         }
-
-        //         if(CanBeJudged())
-        //     }
-
-        //     while(_holdDetectTimer < 0) _holdDetectTimer += 2000;
-        // }
 
         // 处理Miss判定
         foreach (NoteCandidate candidate in _sortedAllNotes)
@@ -166,17 +279,36 @@ public partial class ChartJudge : Node
 
     public void OnTapInput(Vector2 screenPos, double gameTime)
     {
-        TryHitNote(screenPos, gameTime, InputType.Click);
+        _inputDataQueue.Enqueue(new InputData
+        {
+            Position = screenPos,
+            Time = gameTime,
+            Type = InputType.Click
+        });
+        // TryHitNote(screenPos, gameTime, InputType.Click);
     }
 
     public void OnTouchInput(Vector2 screenPos, double gameTime)
     {
-        TryHitNote(screenPos, gameTime, InputType.Touch);
+        _inputDataQueue.Enqueue(new InputData
+        {
+            Position = screenPos,
+            Time = gameTime,
+            Type = InputType.Touch
+        });
+        // TryHitNote(screenPos, gameTime, InputType.Touch);
     }
 
     public void OnFlickInput(Vector2 screenPos, double gameTime)
     {
-        TryHitNote(screenPos, gameTime, InputType.Flick);
+        _inputDataQueue.Enqueue(new InputData
+        {
+            Position = screenPos,
+            Time = gameTime,
+            Type = InputType.Flick
+        });
+
+        // TryHitNote(screenPos, gameTime, InputType.Flick);
     }
 
     public void ResetState()
@@ -223,16 +355,7 @@ public partial class ChartJudge : Node
     private void TryHitNote(Vector2 pos, double gameTime, InputType inputType)
     {
         if (Chart == null || Player == null) return;
-
-        // string all = "所有note按照时间顺序排序:";
-        // for (int i = 0; i < _sortedAllNotes.Count; i++)
-        // {
-        //     NoteCandidate candidate = _sortedAllNotes[i];
-        //     all += $"line{candidate.LineIndex}_{candidate.NoteIndex}({candidate.Note.Type}), ";
-        // }
-
-        // GD.Print(all);
-
+        
         for (int i = 0; i < _sortedAllNotes.Count; i++)
         {
             //GD.Print($"遍历Note候选:{i}");
@@ -256,7 +379,17 @@ public partial class ChartJudge : Node
             }
             else if(note.Type == 2)
             {
-                _pressingHold.Add(note);
+                _pressingHold[note] = new PressingHoldData
+                {
+                    CandidateData = candidate,
+                    IsReleased = false,
+                    Timer = 30f,
+                    JudgeResult = result
+                };
+
+                // 调用玩家特效（线索引、位置、是否完美）
+                Player.StartHoldHitEffect(note, GetNotePosition(candidate.LineIndex, note), result.Grade == JudgeGrade.Good, candidate.LineIndex);
+                
             }
             else
             {
@@ -312,6 +445,20 @@ public partial class ChartJudge : Node
         float distanceToLine = DistanceToLine(lineIndex, screenPos, note);
         return distanceToLine <= HitDistancePixels;
         
+    }
+
+    /// <summary>
+    /// 判断Hold音符能否被继续长按(仅考虑位置)
+    /// </summary>
+    /// <param name="lineIndex"></param>
+    /// <param name="note"></param>
+    /// <param name="screenPos"></param>
+    /// <param name="gameTime"></param>
+    /// <returns></returns>
+    private bool CanHoldBePressed(int lineIndex, Note note, Vector2 screenPos, double gameTime)
+    {
+        float distanceToLine = DistanceToLine(lineIndex, screenPos, note);
+        return distanceToLine <= HitDistancePixels;
     }
 
     private JudgeResult ResolveJudge(int lineIndex, Note note, int noteIndex, double gameTime, Vector2 screenPos)

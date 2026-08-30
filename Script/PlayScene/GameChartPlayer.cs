@@ -2,6 +2,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class GameChartPlayer : BaseChartPlayer
 {
@@ -35,6 +36,17 @@ public partial class GameChartPlayer : BaseChartPlayer
     // ---- 打击记录（替代 NoteNode._hasPlayedHitSound）----
     // 只在播放模式下有意义；编辑模式下时间来回拖动时自动清理
     private readonly HashSet<Note> _playedNotes = new();
+
+    // 判定为Perfect,Good(Early)的Tap音符需要提前隐藏，暂存在这里，到达实际的打击时间之后从集合中移除
+    private readonly HashSet<Note> _earlyHideTap = new();
+
+    private class HoldEffectData
+    {
+        public int LineIndex;
+        public float Timer;   // 单位：ms
+        public bool IsGood;
+    }
+    private readonly Dictionary<Note, HoldEffectData> _holdEffectData = new();
 
     // 预分配渲染数据数组，避免 List 扩容
     private JudgeLineRenderData[] _lineRenderBuffer;
@@ -84,8 +96,10 @@ public partial class GameChartPlayer : BaseChartPlayer
         return TimeUtil.BeatToSecond(beat, Chart?.BpmList);
     }
 
-    public void TriggerHit(Note note, JudgeResult result)
+    public void TriggerHit(JudgeResult result)
     {
+        Note note = result.Note;
+
         Color modulate;
         if(result.Grade == JudgeGrade.Perfect) modulate = _perfectColor;
         else if(result.Grade == JudgeGrade.Good) modulate = _goodColor;
@@ -93,15 +107,42 @@ public partial class GameChartPlayer : BaseChartPlayer
 
         CreateHitEffect(result.HitPosition, modulate);
         PlayHitSound((NoteType)note.Type);
+
+        // Tap 打击之后隐藏音符
+        if(note.Type == 1 && result.TimeDeltaMs < 0)
+        {
+            _earlyHideTap.Add(note);
+        }
     }
 
     private void TriggerHit(int lineIdx, Note note)
     {
-        var parentPos = GetNoteJudgementPosition(lineIdx, note);
+        Vector2 parentPos = GetNoteJudgementPosition(lineIdx, note);
 
         // onNoteHited?.Invoke(parentPos);
         CreateHitEffect(parentPos);
         PlayHitSound((NoteType)note.Type);
+    }
+
+    public void StartHoldHitEffect(Note hold, Vector2 position, bool isGood, int lineIdx)
+    {
+        // 存储数据
+        _holdEffectData[hold] = new HoldEffectData
+        {
+            LineIndex = lineIdx,
+            Timer = 150f,
+            IsGood = isGood
+        };
+
+        // 立即生成一次特效和音效
+        Color modulate = isGood ? _goodColor : _perfectColor;
+        CreateHitEffect(position, modulate);
+        PlayHitSound(NoteType.Tap);
+    }
+
+    public void StopHoldHitEffect(Note hold)
+    {
+        _holdEffectData.Remove(hold);
     }
 
     public Vector2 GetNoteJudgementPosition(int lineIdx, Note note)
@@ -262,7 +303,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         _playedNotes.Clear();
     }
 
-    public override void UpdateLogic()
+    public override void UpdateLogic(double deltaTime)
     {
         if(Chart == null) return;
 
@@ -316,6 +357,9 @@ public partial class GameChartPlayer : BaseChartPlayer
 
             UpdateLine(ChartTime, idx);
         }
+
+        // 在更新完所有线之后，更新 Hold 打击特效
+        UpdateHoldEffects(deltaTime);
         
     }
 
@@ -377,6 +421,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         
         // 提前计算累计位移，供note使用（简化计算） // 坐标系: 谱面坐标
         float nowDisplacement = line.GetDisplacementAtTime((float)time); 
+        _lineDisplacement[index] = nowDisplacement;
 
         // 写入LineBuffer
         Vector2 linePos = new Vector2(_lineMoveX[index], _lineMoveY[index]); //坐标系: 谱面坐标
@@ -393,12 +438,12 @@ public partial class GameChartPlayer : BaseChartPlayer
         {
             for (int i = 0; i < line.Notes.Count; i++)
             {
-                UpdateNote(time, index, i, nowDisplacement);
+                UpdateNote(time, index, i);
             }
         }
     }
 
-    private void UpdateNote(double gameTime, int lineId, int noteIndex, float nowDisplacement)
+    private void UpdateNote(double gameTime, int lineId, int noteIndex)
     {
         Note note = Chart.JudgeLineList[lineId].Notes[noteIndex];
         if (note == null) return;
@@ -406,7 +451,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         float noteStartSec = note.startSec;
         float noteEndSec = note.EndTime != null ? note.endSec : noteStartSec;
 
-        bool Visible;
+        bool NoteVisible;
         bool HeadVisible = false;
         Vector2 Position;
 
@@ -432,6 +477,13 @@ public partial class GameChartPlayer : BaseChartPlayer
         // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
         // ------------ 处理显示和隐藏 ------------
         {
+            if (_earlyHideTap.Contains(note))
+            {
+                if(gameTime >= noteStartSec) _earlyHideTap.Remove(note);
+                
+                return; // 不渲染
+                
+            }
             if(note.Type == 2) // hold需要特殊处理，当head到达判定线时，隐藏head的贴图
             {
                 if(gameTime >= noteStartSec)
@@ -454,7 +506,7 @@ public partial class GameChartPlayer : BaseChartPlayer
             else
             {
                 // 在显示区间内，显示
-                Visible = true;
+                NoteVisible = true;
             }
         }
 
@@ -470,7 +522,7 @@ public partial class GameChartPlayer : BaseChartPlayer
             //全部位移
             float allDisplacement = note.allDisplacement; 
 
-            localChartY = Math.Max(0, allDisplacement - nowDisplacement);
+            localChartY = Math.Max(0, allDisplacement - _lineDisplacement[lineId]);
 
             //音符翻转 1表示上面，2表示下面
             if(note.Above == 2)
@@ -507,7 +559,7 @@ public partial class GameChartPlayer : BaseChartPlayer
                 //全部位移 坐标系: 谱面坐标
                 float allDisplacement = note.endAllDisplacement;
 
-                localChartY = Math.Max(0f, allDisplacement - nowDisplacement); // 坐标系: 谱面坐标
+                localChartY = Math.Max(0f, allDisplacement - _lineDisplacement[lineId]); // 坐标系: 谱面坐标
 
                 EndPosition = new Vector2(note.PositionX, localChartY); // 坐标系: 谱面坐标
             }
@@ -525,7 +577,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         }
 
         // ================ 直接生成 NoteRenderData 写入缓冲 ================
-        if(Visible == false) return;
+        if(NoteVisible == false) return;
 
         int noteIdx = _noteRenderCount++;
 
@@ -625,6 +677,29 @@ public partial class GameChartPlayer : BaseChartPlayer
                     _playedNotes.Add(note);
                 else if (ChartTime < hitTime)
                     _playedNotes.Remove(note);
+            }
+        }
+    }
+
+    private void UpdateHoldEffects(double delta)
+    {
+        // 使用 ToList 避免在遍历时修改集合
+        foreach (var kvp in _holdEffectData.ToList())
+        {
+            Note hold = kvp.Key;
+            HoldEffectData data = kvp.Value;
+
+            data.Timer -= (float)delta * 1000f;
+            if (data.Timer <= 0)
+            {
+                // 获取 Hold 头部当前屏幕位置
+                Vector2 pos = GetNoteJudgementPosition(data.LineIndex, hold);
+                Color modulate = data.IsGood ? _goodColor : _perfectColor;
+                CreateHitEffect(pos, modulate);
+
+                // 重置计时器，保留溢出部分（防止累积误差）
+                data.Timer += 150f;
+                _holdEffectData[hold] = data;
             }
         }
     }

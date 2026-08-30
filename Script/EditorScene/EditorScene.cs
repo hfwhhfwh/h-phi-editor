@@ -432,7 +432,7 @@ public partial class EditorScene : Node
         ulong t2 = Time.GetTicksUsec();
         #endif
         
-        chartPlayer.UpdateLogic();
+        chartPlayer.UpdateLogic(delta);
 
         #if TOOLS
         ulong t3 = Time.GetTicksUsec();

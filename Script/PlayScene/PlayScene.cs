@@ -72,6 +72,7 @@ public partial class PlayScene : Node
         AddChild(_judge);
         _judge.Initialize(chartPlayer, parent, _chart);
         _judge.OnJudgeResult += OnJudgeResult;
+        _judge.OnHoldEndJudgeResult += OnHoldEndJudgeResult;
         
 
         chartPlayer.AutoHitEnabled = false;
@@ -81,6 +82,7 @@ public partial class PlayScene : Node
     public override void _ExitTree()
     {
         _judge.OnJudgeResult -= OnJudgeResult;
+        _judge.OnHoldEndJudgeResult -= OnHoldEndJudgeResult;
         _judge = null;
 
 
@@ -97,9 +99,7 @@ public partial class PlayScene : Node
 
         if (_isPlaying)
         {
-            chartPlayer.UpdateLogic();
-            _judge.Update(chartPlayer.ChartTime, delta);
-
+            chartPlayer.UpdateLogic(delta);
             _gameTime = chartPlayer.ChartTime;
 
             // 处理触摸事件
@@ -111,6 +111,8 @@ public partial class PlayScene : Node
             {
                 OnTouchInput(pos);
             }
+
+            _judge.Update(chartPlayer.ChartTime, delta);
         }
 
         var (lineData, lineCount) = chartPlayer.GetLineRenderDatas();
@@ -218,18 +220,19 @@ public partial class PlayScene : Node
 
     private void OnJudgeResult(JudgeResult result)
     {
+        GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        
         if (statusLabel != null)
         {
-            if(result.Grade != JudgeGrade.Miss)
+            //if(result.Grade != JudgeGrade.Miss)
             {
                 statusLabel.Text = $"{result.Grade} {result.TimeDeltaMs:F0}ms";
             }
-            
         }
 
         if (result.Grade == JudgeGrade.Perfect || result.Grade == JudgeGrade.Good)
         {
-            chartPlayer.TriggerHit(result.Note, result);
+            chartPlayer.TriggerHit(result);
         }
         else if (result.Grade == JudgeGrade.Bad)
         {
@@ -238,6 +241,20 @@ public partial class PlayScene : Node
         else
         {
             // GD.Print($"Miss at {result.TimeDeltaMs}ms");
+        }
+    }
+
+    private void OnHoldEndJudgeResult(JudgeResult result)
+    {
+        GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        
+        if (statusLabel != null)
+        {
+            // if(result.Grade != JudgeGrade.Miss)
+            {
+                statusLabel.Text = $"{result.Grade} {result.TimeDeltaMs:F0}ms";
+            }
+            
         }
     }
 }

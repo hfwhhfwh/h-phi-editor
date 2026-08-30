@@ -391,7 +391,7 @@ public partial class ChartPlayer : BaseChartPlayer
     //     }
     // }
 
-    public override void UpdateLogic()
+    public override void UpdateLogic(double deltaTime)
     {
         if(Chart == null) return;
 
