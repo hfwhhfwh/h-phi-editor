@@ -8,7 +8,7 @@ on:
 
 env:
   # ----- project-specific knobs -----
-  GODOT_VERSION: 4.5.2-stable # dont forget update export templates if bumping this version
+  GODOT_VERSION: 4.6-stable # dont forget update export templates if bumping this version
   IOS_PRESET:    iOS          # export-preset name in Godot
   NAME:          ${{ github.event.repository.name }}
   # speed: stop brew from auto-updating every run
@@ -69,10 +69,39 @@ jobs:
         godot/Godot_mono.app/Contents/MacOS/Godot --headless --path . \
           --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
 
-    # 4. Build unsigned archive (mirrors mak448a/build-ios)
+    # ===== 修复 Godot 4.6 iOS 项目 =====
+    - name: Fix iOS project for Swift runtime
+      run: |
+        # 1. 创建 xcconfig 文件覆盖 build settings
+        cat > build/ios/FixSwift.xcconfig << 'EOCC'
+        IPHONEOS_DEPLOYMENT_TARGET = 15.0
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES
+        SWIFT_VERSION = 5.0
+        CLANG_ENABLE_MODULES = YES
+        SWIFT_OBJC_INTERFACE_HEADER_NAME = $(SWIFT_MODULE_NAME)-Swift.h
+        LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks /usr/lib/swift
+        LIBRARY_SEARCH_PATHS = $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(inherited)
+        OTHER_LDFLAGS = $(inherited) -ld_classic
+        ENABLE_BITCODE = NO
+        EOCC
+
+        # 2. 检查 Godot 导出模板是否自带 dummy.swift
+        if [ -f "build/ios/${NAME}/dummy.swift" ]; then
+          echo "Found Godot's dummy.swift"
+        else
+          echo "Godot dummy.swift missing, creating one"
+          echo 'import Foundation' > "build/ios/${NAME}/dummy.swift"
+        fi
+        
+        # 3. 确保 dummy.swift 在编译源中（用 xcodebuild 验证）
+        xcodebuild -project build/ios/${NAME}.xcodeproj \
+          -target "${NAME}" \
+          -showBuildSettings | grep -i swift || true
+
+    # 4. Build unsigned archive
     - name: xcodebuild archive (unsigned)
       run: |
-        set -o pipefail  # 关键：管道中任一命令失败就退出
+        set -o pipefail
         
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
@@ -81,15 +110,13 @@ jobs:
           -destination 'generic/platform=iOS' \
           -archivePath build/ios/App.xcarchive \
           -configuration Release \
+          -xcconfig build/ios/FixSwift.xcconfig \
           CODE_SIGN_STYLE=Manual \
           CODE_SIGN_IDENTITY="" \
           PROVISIONING_PROFILE_SPECIFIER="" \
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
           ARCHS=arm64 \
-          SWIFT_VERSION=5.0 \
-          IPHONEOS_DEPLOYMENT_TARGET=14.0 \
-          OTHER_LDFLAGS="-ld_classic" \
           | xcpretty
 
     - name: Verify archive exists
