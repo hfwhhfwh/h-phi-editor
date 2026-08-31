@@ -68,11 +68,36 @@ jobs:
         mkdir -p build/ios
         godot/Godot_mono.app/Contents/MacOS/Godot --headless --path . \
           --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
+    
+    # ===== 新增：修复 Xcode 16 兼容性问题 =====
+    - name: Fix project.pbxproj for Xcode 16
+      run: |
+        PBX="build/ios/${NAME}.xcodeproj/project.pbxproj"
+        
+        # 1. 移除 Godot 模板硬编码的 -ld_classic
+        sed -i '' 's/-ld_classic//g' "$PBX"
+        sed -i '' 's/-Wl,-ld_classic//g' "$PBX"
+        
+        # 2. 提升部署目标到 iOS 15.0（避免新链接器弱符号 bug）
+        sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 14\.0/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' "$PBX"
+        sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 11\.0/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' "$PBX"
+        sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 12\.0/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' "$PBX"
+        
+        # 3. 添加 Swift 运行时库搜索路径（解决 auto-linked 库找不到的问题）
+        # 检查是否已有 LIBRARY_SEARCH_PATHS，若没有则插入
+        if ! grep -q "LIBRARY_SEARCH_PATHS" "$PBX"; then
+          # 在 buildSettings 块中添加（示例：插入到 Release 配置）
+          sed -i '' '/buildSettings = {/a\\LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)";' "$PBX"
+        fi
+        
+        echo "=== 检查修复后的链接器标志 ==="
+        grep -n "OTHER_LDFLAGS" "$PBX" || true
+        grep -n "IPHONEOS_DEPLOYMENT_TARGET" "$PBX" || true
 
     # 4. Build unsigned archive (mirrors mak448a/build-ios)
     - name: xcodebuild archive (unsigned)
       run: |
-        set -o pipefail  # 关键：管道中任一命令失败就退出
+        set -o pipefail
         
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
@@ -88,8 +113,7 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
-          IPHONEOS_DEPLOYMENT_TARGET=14.0 \
-          OTHER_LDFLAGS="-ld_classic" \
+          IPHONEOS_DEPLOYMENT_TARGET=15.0 \
           | xcpretty
 
     - name: Verify archive exists
