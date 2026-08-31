@@ -2,7 +2,7 @@
 name="PhotoPicker"
 binary="photo_picker.xcframework"
 
-linker_flags="-Wl,-weak-lswiftCompatibility50 -Wl,-weak-lswiftCompatibility51 -Wl,-weak-lswiftCompatibility56 -Wl,-weak-lswiftCompatibilityConcurrency -ObjC"
+linker_flags="-Wl,-weak-lswiftCompatibility50 -Wl,-weak-lswiftCompatibility51 -Wl,-weak-lswiftCompatibility56 -Wl,-weak-lswiftCompatibilityConcurrency -ld_classic"
 frameworks="Photos,PhotosUI,UIKit,Foundation"
 
 initialization="godot_photopicker_init"
