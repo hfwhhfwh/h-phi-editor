@@ -60,19 +60,97 @@ jobs:
         # dotnet build HPhiEditor.csproj
 
     # 3. Export preset -> Xcode project
-    #    TODO: In addition to other mandatory fields (try running the export locally first),
-    #    you need to enable `application/export_project_only=true` and `application/delete_old_export_files_unconditionally=true`.
-    #    You can find these options in Advanced Options.
     - name: Export to Xcode project
       run: |
         mkdir -p build/ios
         godot/Godot_mono.app/Contents/MacOS/Godot --headless --path . \
           --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
 
-    # 4. Build unsigned archive (mirrors mak448a/build-ios)
+    # ===== 修复 Godot 4.6 iOS 项目 Swift 链接问题 =====
+    - name: Fix iOS project for Swift runtime linking
+      run: |
+        python3 << 'EOF'
+        import os, re, uuid, shutil
+
+        name = os.environ['NAME']
+        proj_dir = f"build/ios/{name}.xcodeproj"
+        pbx = f"{proj_dir}/project.pbxproj"
+
+        with open(pbx, 'r') as f:
+            c = f.read()
+
+        # 1. 提升部署目标到 iOS 15.0
+        c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 11.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
+        c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 12.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
+        c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 14.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
+
+        # 2. 强制嵌入 Swift 标准库
+        if 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO' in c:
+            c = c.replace('ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;')
+        elif 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES' not in c:
+            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;\n', c)
+
+        # 3. 添加 Swift 库搜索路径
+        if 'LIBRARY_SEARCH_PATHS' not in c:
+            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tLIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(inherited)";\n', c)
+
+        # 4. 添加 Runpath Search Paths
+        if 'LD_RUNPATH_SEARCH_PATHS' not in c:
+            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tLD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks /usr/lib/swift";\n', c)
+
+        # 5. 添加 SWIFT_VERSION
+        if 'SWIFT_VERSION' not in c:
+            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tSWIFT_VERSION = 5.0;\n', c)
+
+        # 6. 创建 DummySwift.swift（放在与 xcodeproj 同级的 build/ios/ 目录）
+        swift_path = f"build/ios/DummySwift.swift"
+        with open(swift_path, 'w') as f:
+            f.write('import Foundation\n')
+
+        # 7. 将 DummySwift.swift 添加到 project.pbxproj
+        fid = uuid.uuid4().hex[:24].upper()
+        bid = uuid.uuid4().hex[:24].upper()
+
+        # PBXBuildFile
+        bf = f'\t\t{bid} /* DummySwift.swift in Sources */ = {{isa = PBXBuildFile; fileRef = {fid} /* DummySwift.swift */; }};\n'
+        c = c.replace('/* Begin PBXBuildFile section */', f'/* Begin PBXBuildFile section */\n{bf}')
+
+        # PBXFileReference
+        fr = f'\t\t{fid} /* DummySwift.swift */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DummySwift.swift; sourceTree = "<group>"; }};\n'
+        c = c.replace('/* Begin PBXFileReference section */', f'/* Begin PBXFileReference section */\n{fr}')
+
+        # 添加到主 group 的 children（第一个 children = (）
+        c = re.sub(r'(children = \(\n)', rf'\1\t\t\t\t{fid} /* DummySwift.swift */,\n', c, count=1)
+
+        # 添加到 PBXSourcesBuildPhase 的 files
+        c = re.sub(
+            r'(isa = PBXSourcesBuildPhase;.*?files = \(\n)',
+            rf'\1\t\t\t\t\t\t{bid} /* DummySwift.swift in Sources */,\n',
+            c,
+            count=1,
+            flags=re.DOTALL
+        )
+
+        with open(pbx, 'w') as f:
+            f.write(c)
+
+        print("=== 验证修复 ===")
+        for kw in ['OTHER_LDFLAGS', 'IPHONEOS_DEPLOYMENT_TARGET', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES', 'SWIFT_VERSION', 'LIBRARY_SEARCH_PATHS']:
+            found = False
+            for i, line in enumerate(c.split('\n')):
+                if kw in line:
+                    print(f"{i+1}: {line.strip()}")
+                    found = True
+                    break
+            if not found:
+                print(f"{kw}: NOT FOUND")
+        print(f"DummySwift.swift: {os.path.exists(swift_path)}")
+        EOF
+
+    # 4. Build unsigned archive
     - name: xcodebuild archive (unsigned)
       run: |
-        set -o pipefail  # 关键：管道中任一命令失败就退出
+        set -o pipefail
         
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
@@ -88,7 +166,8 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
-          IPHONEOS_DEPLOYMENT_TARGET=14.0 \
+          IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+          ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
           OTHER_LDFLAGS="-ld_classic" \
           | xcpretty
 
