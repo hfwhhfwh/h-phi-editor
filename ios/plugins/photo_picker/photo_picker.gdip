@@ -2,11 +2,13 @@
 name="PhotoPicker"
 binary="photo_picker.xcframework"
 
+linker_flags="-Wl,-weak-lswiftCompatibility50 -Wl,-weak-lswiftCompatibility51 -Wl,-weak-lswiftCompatibility56 -Wl,-weak-lswiftCompatibilityConcurrency -ObjC"
+frameworks="Photos,PhotosUI,UIKit,Foundation"
+
 initialization="godot_photopicker_init"
 deinitialization="godot_photopicker_deinit"
 
-# 添加以下行，解决 Swift 兼容性问题
-linker_flags="-Wl,-weak-lswiftCompatibility50 -Wl,-weak-lswiftCompatibility51 -Wl,-weak-lswiftCompatibility56 -Wl,-weak-lswiftCompatibilityConcurrency"
+
 
 [dependencies]
 linked=[]
