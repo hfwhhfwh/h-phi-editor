@@ -89,7 +89,7 @@ jobs:
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
           IPHONEOS_DEPLOYMENT_TARGET=14.0 \
-          OTHER_LDFLAGS="" \
+          OTHER_LDFLAGS="-ObjC" \
           | xcpretty
 
     - name: Verify archive exists
