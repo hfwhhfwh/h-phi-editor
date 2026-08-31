@@ -51,9 +51,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 53
-theme_override_constants/margin_top = 26
+theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 35
-theme_override_constants/margin_bottom = 26
+theme_override_constants/margin_bottom = 0
 
 [node name="AspectRatioContainer" type="AspectRatioContainer" parent="SafeArea" unique_id=1993380992]
 layout_mode = 2

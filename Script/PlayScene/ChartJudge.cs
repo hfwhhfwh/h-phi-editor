@@ -30,7 +30,7 @@ public partial class ChartJudge : Node
     public float BadMs { get; set; } = 240f;
 
 
-    public float HitDistancePixels { get; set; } = 200f;
+    public float HitDistancePixels { get; set; } = 160f;
     public float FlickSpeedThreshold { get; set; } = 500f;
 
     private sealed class NoteCandidate
@@ -391,110 +391,78 @@ public partial class ChartJudge : Node
 
     private void TryHitNote(Vector2 pos, double gameTime, InputType inputType)
     {
-        if (Chart == null || Player == null) return;
-        
-        for (int i = 0; i < _sortedAllNotes.Count; i++)
+        if (Chart == null || Player == null || _sortedAllNotes.Count == 0) return;
+
+        // 取最大可能的时间扫描窗口（Tap 的负向窗口最大：BadMs）
+        float minStartSec = (float)(gameTime - BadMs / 1000f);
+        float maxStartSec = (float)(gameTime + GoodMs / 1000f);
+
+        int startIdx = FindFirstNoteIndexByTime(minStartSec);
+        if (startIdx >= _sortedAllNotes.Count) return; // 所有音符都太早
+
+        NoteCandidate bestCandidate = null;
+        float bestDistance = float.MaxValue;
+        float bestStartSec = float.MaxValue;
+        const float TIME_EPSILON = 0.0001f; // 0.1ms，用于判定"同时"
+
+        // 只在时间窗口内做局部扫描，通常只有几十个候选
+        for (int i = startIdx; i < _sortedAllNotes.Count; i++)
         {
-            NoteCandidate candidate = _sortedAllNotes[i];
-            Note note = candidate.Note;
+            var candidate = _sortedAllNotes[i];
+            var note = candidate.Note;
 
-            if(note.startSec > gameTime + 0.24f)
-            {
-                break;
-            }
+            // 时间剪枝：startSec 已经超出最大允许值
+            if (note.startSec > maxStartSec) break;
 
-            if (note == null || note.IsFake || 
-                _judgedNotes.Contains(note) || 
-                _missedNotes.Contains(note) || 
-                _pressingHold.ContainsKey(note) || 
-                _missedHold.ContainsKey(note) || 
-                _judgedNotesBuffer.ContainsKey(note)) continue;
-            
-            if (!CanBeJudged(candidate.LineIndex, candidate.Note, pos, gameTime, inputType))
-            {
-                //GD.Print($"note不能被判定:{i}");
+            // 状态剪枝
+            if (note.IsFake ||
+                _judgedNotes.Contains(note) ||
+                _missedNotes.Contains(note) ||
+                _pressingHold.ContainsKey(note) ||
+                _missedHold.ContainsKey(note) ||
+                _judgedNotesBuffer.ContainsKey(note))
                 continue;
-            }
-            
-            
-            JudgeResult result = ResolveJudge(candidate.LineIndex, note, candidate.NoteIndex, gameTime, pos);
-            //GD.Print($"Note_{i} 可以判定，判定结果:{result.Grade}, time:{gameTime}");
 
-            if(note.Type == 3 || note.Type == 4 && gameTime < note.startSec)
-            {
-                // _noteRemoveCashe.Add(candidate);
-                _judgedNotesBuffer[note] = result;
-            }
-            else if(note.Type == 2) // Hold
-            {
-                // _noteRemoveCashe.Add(candidate);
-                _pressingHold[note] = new PressingHoldData
-                {
-                    CandidateData = candidate,
-                    IsReleased = false,
-                    Timer = 30f,
-                    JudgeResult = result
-                };
+            // 综合判定（类型+时间+距离），out 获取距离
+            if (!CanBeJudged(candidate.LineIndex, note, pos, gameTime, inputType, out float distance))
+                continue;
 
-                // 调用玩家特效（线索引、位置、是否完美）
-                Player.StartHoldHitEffect(note, GetNotePosition(candidate.LineIndex, note), result.Grade == JudgeGrade.Good, candidate.LineIndex);
-                
-            }
-            else // tap
+            // 最优候选策略：
+            // 1) startSec 明显更小（更早）→ 替换
+            // 2) startSec 相同（同时）→ 距离更近的替换
+            if (bestCandidate == null ||
+                note.startSec < bestStartSec - TIME_EPSILON ||
+                (Math.Abs(note.startSec - bestStartSec) <= TIME_EPSILON && distance < bestDistance))
             {
-                // _noteRemoveCashe.Add(candidate);
-                _judgedNotes.Add(note);
-                OnJudgeResult?.Invoke(result);
+                bestCandidate = candidate;
+                bestDistance = distance;
+                bestStartSec = note.startSec;
             }
-            
-            break;
+        }
+
+        if (bestCandidate != null)
+        {
+            ProcessHit(bestCandidate, gameTime, pos);
         }
     }
 
-    private bool CanBeJudged(int lineIndex, Note note, Vector2 screenPos, double gameTime, InputType inputType)
+    /// <summary>
+    /// 综合判定：类型 + 时间窗口 + 距离。若可判定，通过 out 返回精确距离。
+    /// </summary>
+    private bool CanBeJudged(int lineIndex, Note note, Vector2 screenPos, double gameTime, InputType inputType, out float distance)
     {
-        float deltaSec = (float)(gameTime - note.startSec);
-        float deltaMs = deltaSec * 1000f;
+        distance = float.MaxValue;
 
-        // 1. 输入类型判定
-        if(note.Type == 1) // Tap
-        {
-            if(inputType != InputType.Click) return false;
-        }
-        else if(note.Type == 2) // Hold
-        {
-            if(inputType != InputType.Click) return false;
-        }
-        else if(note.Type == 3) // Flick
-        {
-            if(inputType != InputType.Flick) return false;
-        }
-        else if(note.Type == 4) // Drag
-        {
-            if(inputType != InputType.Touch) return false;
-        }
+        // 1. 输入类型
+        if (!MatchInputType(note.Type, inputType)) return false;
 
-        // 2. 时间窗口判定
-        if(note.Type == 1) // Tap
-        {
-            if(deltaMs < -BadMs) return false; // 过早
-            else if(deltaMs > GoodMs) return false; // 过晚
-        }
-        else if(note.Type == 2) // Hold
-        {
-            if(deltaMs < -GoodMs) return false; // 过早
-            else if(deltaMs > GoodMs) return false; // 过晚
-        }
-        else if(note.Type == 3 || note.Type == 4) // Flick Drag
-        {
-            if(deltaMs < -GoodMs) return false; // 过早
-            else if(deltaMs > GoodMs) return false; // 过晚
-        }
+        // 2. 时间窗口
+        float deltaMs = (float)((gameTime - note.startSec) * 1000d);
+        if (!IsInTimeWindow(note.Type, deltaMs)) return false;
 
-        // 3. 距离判定
-        float distanceToLine = DistanceToLine(lineIndex, screenPos, note);
-        return distanceToLine <= HitDistancePixels;
-        
+        // 3. 距离
+        distance = DistanceToLine(lineIndex, screenPos, note);
+        return distance <= HitDistancePixels;
     }
 
     /// <summary>
@@ -509,6 +477,92 @@ public partial class ChartJudge : Node
     {
         float distanceToLine = DistanceToLine(lineIndex, screenPos, note);
         return distanceToLine <= HitDistancePixels;
+    }
+
+    /// <summary>
+    /// 判定命中后的统一处理（Tap/Hold/Drag/Flick 分支）
+    /// </summary>
+    private void ProcessHit(NoteCandidate candidate, double gameTime, Vector2 pos)
+    {
+        var note = candidate.Note;
+        var result = ResolveJudge(candidate.LineIndex, note, candidate.NoteIndex, gameTime, pos);
+
+        // Flick 或提前的 Drag → 进缓冲，到击打时刻再触发
+        if (note.Type == 3 || (note.Type == 4 && gameTime < note.startSec))
+        {
+            _judgedNotesBuffer[note] = result;
+        }
+        // Hold → 进入长按状态
+        else if (note.Type == 2)
+        {
+            _pressingHold[note] = new PressingHoldData
+            {
+                CandidateData = candidate,
+                IsReleased = false,
+                Timer = 30f,
+                JudgeResult = result
+            };
+            Player.StartHoldHitEffect(note, GetNotePosition(candidate.LineIndex, note), result.Grade == JudgeGrade.Good, candidate.LineIndex);
+        }
+        // Tap → 立即触发
+        else
+        {
+            _judgedNotes.Add(note);
+            OnJudgeResult?.Invoke(result);
+        }
+    }
+
+    /// <summary>
+    /// 二分查找：返回第一个 startSec >= minTime 的索引
+    /// </summary>
+    private int FindFirstNoteIndexByTime(float minTime)
+    {
+        int left = 0;
+        int right = _sortedAllNotes.Count - 1;
+        int result = _sortedAllNotes.Count;
+
+        while (left <= right)
+        {
+            int mid = (left + right) >> 1;
+            if (_sortedAllNotes[mid].Note.startSec >= minTime)
+            {
+                result = mid;
+                right = mid - 1;
+            }
+            else
+            {
+                left = mid + 1;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 输入类型与音符类型匹配
+    /// </summary>
+    private bool MatchInputType(int noteType, InputType inputType)
+    {
+        return noteType switch
+        {
+            1 or 2 => inputType == InputType.Click,
+            3       => inputType == InputType.Flick,
+            4       => inputType == InputType.Touch,
+            _       => false
+        };
+    }
+
+    /// <summary>
+    /// 时间窗口判定（仅时间，不含距离）
+    /// </summary>
+    private bool IsInTimeWindow(int noteType, float deltaMs)
+    {
+        return noteType switch
+        {
+            1 => deltaMs >= -BadMs && deltaMs <= GoodMs,
+            2 => Math.Abs(deltaMs) <= GoodMs,
+            3 or 4 => Math.Abs(deltaMs) <= GoodMs,
+            _ => false
+        };
     }
 
     private JudgeResult ResolveJudge(int lineIndex, Note note, int noteIndex, double gameTime, Vector2 screenPos)
