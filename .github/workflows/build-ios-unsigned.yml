@@ -68,100 +68,12 @@ jobs:
         mkdir -p build/ios
         godot/Godot_mono.app/Contents/MacOS/Godot --headless --path . \
           --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
-    
-    # ===== 修复 Godot 4.6 + Xcode 16 兼容性问题 =====
-    - name: Fix Xcode project for Godot 4.6 SwiftUI lifecycle
-      run: |
-        python3 << 'EOF'
-        import os, re, uuid
 
-        name = os.environ['NAME']
-        pbx = f"build/ios/{name}.xcodeproj/project.pbxproj"
-
-        with open(pbx, 'r') as f:
-            c = f.read()
-
-        # 1. 彻底移除 ld_classic（包括变量形式）并清理空值
-        c = c.replace('-ld_classic', '').replace('-Wl,-ld_classic', '')
-        c = re.sub(r'\$\(LD_CLASSIC_\$\(XCODE_VERSION_ACTUAL\)\)', '', c)
-        c = re.sub(r'\$\(LD_CLASSIC_\d+\)', '', c)
-        c = re.sub(r'OTHER_LDFLAGS = "\s*";', 'OTHER_LDFLAGS = "";', c)
-
-        # 2. 提升部署目标到 iOS 15.0
-        c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 11.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
-        c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 12.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
-        c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 14.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
-
-        # 3. 强制嵌入 Swift 标准库
-        if 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO' in c:
-            c = c.replace('ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;')
-        elif 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES' not in c:
-            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;\n', c)
-
-        # 4. 添加 Swift 库搜索路径
-        if 'LIBRARY_SEARCH_PATHS' not in c:
-            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tLIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(inherited)";\n', c)
-
-        # 5. 添加 Runpath Search Paths
-        if 'LD_RUNPATH_SEARCH_PATHS' not in c:
-            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tLD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks /usr/lib/swift";\n', c)
-
-        # 6. 创建 DummySwift.swift（放在 build/ios/ 根目录）
-        swift_path = "build/ios/DummySwift.swift"
-        with open(swift_path, 'w') as f:
-            f.write('import Foundation\n')
-
-        fid = uuid.uuid4().hex[:24].upper()
-        bid = uuid.uuid4().hex[:24].upper()
-
-        bf = f'\t\t{bid} /* DummySwift.swift in Sources */ = {{isa = PBXBuildFile; fileRef = {fid} /* DummySwift.swift */; }};\n'
-        c = c.replace('/* Begin PBXBuildFile section */', f'/* Begin PBXBuildFile section */\n{bf}')
-
-        fr = f'\t\t{fid} /* DummySwift.swift */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DummySwift.swift; sourceTree = "<group>"; }};\n'
-        c = c.replace('/* Begin PBXFileReference section */', f'/* Begin PBXFileReference section */\n{fr}')
-
-        c = re.sub(r'(children = \(\n)', rf'\1\t\t\t\t{fid} /* DummySwift.swift */,\n', c, count=1)
-
-        c = re.sub(
-            r'(isa = PBXSourcesBuildPhase;.*?files = \(\n)',
-            rf'\1\t\t\t\t\t\t{bid} /* DummySwift.swift in Sources */,\n',
-            c,
-            count=1,
-            flags=re.DOTALL
-        )
-
-        # 7. 添加 SWIFT_VERSION
-        if 'SWIFT_VERSION' not in c:
-            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tSWIFT_VERSION = 5.0;\n', c)
-
-        # 8. 关键修复：添加链接器标志
-        # -Wl,-undefined,dynamic_lookup : 忽略未定义符号，让 dyld 运行时解析（这些全是系统库）
-        # -weak_framework SwiftUICore    : 弱链接 SwiftUICore，避免 Xcode 16 "not an allowed client" 错误
-        c = re.sub(
-            r'OTHER_LDFLAGS = "([^"]*)";',
-            r'OTHER_LDFLAGS = "\1 -Wl,-undefined,dynamic_lookup -weak_framework SwiftUICore";',
-            c
-        )
-
-        with open(pbx, 'w') as f:
-            f.write(c)
-
-        print("=== 验证修复 ===")
-        for kw in ['OTHER_LDFLAGS', 'IPHONEOS_DEPLOYMENT_TARGET', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES', 'SWIFT_VERSION', 'LIBRARY_SEARCH_PATHS']:
-            found = False
-            for i, line in enumerate(c.split('\n')):
-                if kw in line:
-                    print(f"{i+1}: {line.strip()}")
-                    found = True
-                    break
-            if not found:
-                print(f"{kw}: NOT FOUND")
-        EOF
-
-    # 4. Build unsigned archive（修改参数）
+    # 4. Build unsigned archive (mirrors mak448a/build-ios)
     - name: xcodebuild archive (unsigned)
       run: |
-        set -o pipefail
+        set -o pipefail  # 关键：管道中任一命令失败就退出
+        
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
           -scheme "${NAME}" \
@@ -176,8 +88,8 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
-          IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-          OTHER_LDFLAGS="-Wl,-undefined,dynamic_lookup -weak_framework SwiftUICore" \
+          IPHONEOS_DEPLOYMENT_TARGET=14.0 \
+          OTHER_LDFLAGS="-ld_classic" \
           | xcpretty
 
     - name: Verify archive exists
