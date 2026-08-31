@@ -89,8 +89,8 @@ jobs:
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
           IPHONEOS_DEPLOYMENT_TARGET=14.0 \
-          OTHER_LDFLAGS="-ld_classic" \
-          | xcpretty
+          # OTHER_LDFLAGS="-lswiftCompatibility50 -lswiftCompatibility51 -lswiftCompatibility56 -lswiftCompatibilityConcurrency -ObjC -framework AudioToolbox -framework CoreAudio -framework Photos -framework PhotosUI -lgodot" \
+          # | xcpretty
 
     - name: Verify archive exists
       run: ls -R build/ios/
