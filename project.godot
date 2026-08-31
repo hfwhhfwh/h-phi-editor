@@ -38,7 +38,7 @@ LoadingManager="*uid://b57um3paj7g87"
 
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/vsync/vsync_mode=0
+window/vsync/vsync_mode=3
 
 [dotnet]
 

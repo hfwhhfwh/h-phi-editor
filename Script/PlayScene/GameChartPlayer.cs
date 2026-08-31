@@ -47,6 +47,10 @@ public partial class GameChartPlayer : BaseChartPlayer
     private float[] _lineSpeed;
     private float[] _lineDisplacement;
 
+    public float[] LineMoveX => _lineMoveX;
+    public float[] LineMoveY => _lineMoveY;
+    public float[] LineRotate => _lineRotate;   
+
     // ---- 打击记录（替代 NoteNode._hasPlayedHitSound）----
     // 只在播放模式下有意义；编辑模式下时间来回拖动时自动清理
     private readonly HashSet<Note> _playedNotes = new();

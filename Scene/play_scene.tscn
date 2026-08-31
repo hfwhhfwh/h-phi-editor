@@ -31,13 +31,14 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jp30j"]
 
-[node name="PlayScene" type="Node" unique_id=581511815 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "statusLabel", "_pauseButton", "_pauseLayer", "_quitButton", "_restartButton", "_startButton")]
+[node name="PlayScene" type="Node" unique_id=581511815 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "statusLabel", "_pauseButtonTouch", "_pauseButtonMouse", "_pauseLayer", "_quitButton", "_restartButton", "_startButton")]
 script = ExtResource("1_iwabn")
 parent = NodePath("SafeArea/AspectRatioContainer/Parent")
 chartPlayer = NodePath("SafeArea/AspectRatioContainer/Parent/ChartPlayer")
 chartRenderer = NodePath("SafeArea/AspectRatioContainer/Parent/ChartRenderer")
 statusLabel = NodePath("SafeArea/AspectRatioContainer/Parent/Label")
-_pauseButton = NodePath("SafeArea/AspectRatioContainer/Parent/PauseButton")
+_pauseButtonTouch = NodePath("SafeArea/AspectRatioContainer/Parent/PauseButtonScreen")
+_pauseButtonMouse = NodePath("SafeArea/AspectRatioContainer/Parent/PauseButtonMouse")
 _pauseLayer = NodePath("PauseLayer")
 _quitButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Quit")
 _restartButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Restart")
@@ -93,8 +94,14 @@ _defaultHoldBodyTexture = ExtResource("11_dqi6c")
 _defaultHoldEndTexture = ExtResource("12_adj2r")
 lineTexture = ExtResource("13_ap1vk")
 
-[node name="PauseButton" type="Button" parent="SafeArea/AspectRatioContainer/Parent" unique_id=157215953]
+[node name="PauseButtonScreen" type="TouchScreenButton" parent="SafeArea/AspectRatioContainer/Parent" unique_id=1215563146]
 z_index = 10
+scale = Vector2(0.25, 0.25)
+texture_normal = ExtResource("16_4mcor")
+texture_pressed = ExtResource("16_4mcor")
+
+[node name="PauseButtonMouse" type="Button" parent="SafeArea/AspectRatioContainer/Parent" unique_id=1636628172]
+z_index = 3
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 1
 offset_right = 8.0

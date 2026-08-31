@@ -69,6 +69,7 @@ public partial class ChartJudge : Node
     private readonly Queue<InputData> _inputDataQueue = new();
 
     private readonly List<NoteCandidate> _sortedAllNotes = new();
+    private readonly List<NoteCandidate> _noteRemoveCashe = new();
     private readonly HashSet<Note> _judgedNotes = new();
     private readonly HashSet<Note> _missedNotes = new();
 
@@ -81,16 +82,13 @@ public partial class ChartJudge : Node
     /// 正在长按中的Hold音符 值为计时器，初始为
     /// </summary>
     private readonly Dictionary<Note, PressingHoldData> _pressingHold = new();
+    private readonly List<Note> _removePressingHoldCashe = new();
 
     /// <summary>
     /// 已经完成miss判定的hold音符
     /// </summary>
     private readonly Dictionary<Note, JudgeResult> _missedHold = new();
-    
-
-    private readonly List<JudgeResult> _pendingResults = new();
-
-    private float _holdDetectTimer = 2000; // 单位：ms
+    private readonly List<Note> _removeMissedHoldCashe = new();
 
     public Chart Chart { get; private set; }
     public GameChartPlayer Player { get; private set; }
@@ -121,17 +119,23 @@ public partial class ChartJudge : Node
         if (Chart == null || Player == null) return;
 
         // 处理hold在末尾的miss判定
-        foreach(KeyValuePair<Note, JudgeResult> kvp in _missedHold.ToList())
+        _removeMissedHoldCashe.Clear();
+        foreach(KeyValuePair<Note, JudgeResult> kvp in _missedHold)
         {
             Note hold = kvp.Key;
             if(gameTime >= hold.endSec)
             {
-                _missedHold.Remove(hold);
+                _removeMissedHoldCashe.Add(hold);
                 _missedNotes.Add(hold);
                 _judgedNotes.Add(hold);
 
                 OnHoldEndJudgeResult?.Invoke(kvp.Value);
             }
+        }
+
+        foreach(Note note in _removeMissedHoldCashe)
+        {
+            _missedHold.Remove(note);
         }
         
 
@@ -142,7 +146,7 @@ public partial class ChartJudge : Node
         }
 
         // 检查所有正在按压的 Hold 是否已到达尾部
-        foreach (var kvp in _pressingHold.ToList())
+        foreach (var kvp in _pressingHold)
         {
             Note hold = kvp.Key;
             if (gameTime >= hold.endSec) // endSec 需提前计算
@@ -161,13 +165,18 @@ public partial class ChartJudge : Node
 
                 // 停止特效并移除
                 Player.StopHoldHitEffect(hold);
-                _pressingHold.Remove(hold);
+                _removePressingHoldCashe.Add(hold);
                 _judgedNotes.Add(hold);
             }
         }
+        foreach(Note note in _removePressingHoldCashe)
+        {
+            _pressingHold.Remove(note);
+        }
+        _removePressingHoldCashe.Clear();
 
         // 处理Hold中途松手的倒计时和miss
-        foreach(KeyValuePair<Note, PressingHoldData> kvp in _pressingHold.ToList()) // 创建副本
+        foreach(KeyValuePair<Note, PressingHoldData> kvp in _pressingHold)
         {
             Note hold = kvp.Key;
             PressingHoldData data = kvp.Value;
@@ -198,8 +207,9 @@ public partial class ChartJudge : Node
             // 3. 判断miss
             if (data.Timer < 0)
             {
+                // GD.Print($"Hold中断");
                 // 准备触发miss
-                _pressingHold.Remove(hold);
+                _removePressingHoldCashe.Add(hold);
                 Player.StopHoldHitEffect(hold);
 
                 JudgeResult result = new JudgeResult
@@ -213,8 +223,13 @@ public partial class ChartJudge : Node
                 };
                 _missedHold[hold] = result;
             }
-
         }
+
+        foreach(Note note in _removePressingHoldCashe)
+        {
+            _pressingHold.Remove(note);
+        }
+        _removePressingHoldCashe.Clear();
 
         _inputDataQueue.Clear();
 
@@ -236,6 +251,12 @@ public partial class ChartJudge : Node
         foreach (NoteCandidate candidate in _sortedAllNotes)
         {
             Note note = candidate.Note;
+
+            if(note.startSec > gameTime)
+            {
+                break;
+            }
+
             if (note == null || note.IsFake || 
                 _judgedNotes.Contains(note) || 
                 _missedNotes.Contains(note) || 
@@ -289,26 +310,20 @@ public partial class ChartJudge : Node
                 }
             }
         }
-
-        if (_pendingResults.Count > 0)
-        {
-            foreach (var result in _pendingResults)
-            {
-                OnJudgeResult?.Invoke(result);
-            }
-            _pendingResults.Clear();
-        }
     }
 
     public void OnTapInput(Vector2 screenPos, double gameTime)
     {
-        _inputDataQueue.Enqueue(new InputData
-        {
-            Position = screenPos,
-            Time = gameTime,
-            Type = InputType.Click
-        });
-        // TryHitNote(screenPos, gameTime, InputType.Click);
+        // _inputDataQueue.Enqueue(new InputData
+        // {
+        //     Position = screenPos,
+        //     Time = gameTime,
+        //     Type = InputType.Click
+        // });
+
+        // Tap 直接判定，不入队
+        TryHitNote(screenPos, gameTime, InputType.Click);
+        
     }
 
     public void OnTouchInput(Vector2 screenPos, double gameTime)
@@ -324,14 +339,14 @@ public partial class ChartJudge : Node
 
     public void OnFlickInput(Vector2 screenPos, double gameTime)
     {
-        _inputDataQueue.Enqueue(new InputData
-        {
-            Position = screenPos,
-            Time = gameTime,
-            Type = InputType.Flick
-        });
-
-        // TryHitNote(screenPos, gameTime, InputType.Flick);
+        // _inputDataQueue.Enqueue(new InputData
+        // {
+        //     Position = screenPos,
+        //     Time = gameTime,
+        //     Type = InputType.Flick
+        // });
+        // Flick 也直接判定（或根据你的需求决定是否入队）
+        TryHitNote(screenPos, gameTime, InputType.Flick);
     }
 
     public void ResetState()
@@ -340,7 +355,6 @@ public partial class ChartJudge : Node
         _judgedNotesBuffer.Clear();
         _missedNotes.Clear();
         _pressingHold.Clear();
-        _pendingResults.Clear();
     }
 
     private void RebuildSortedNotes()
@@ -381,28 +395,39 @@ public partial class ChartJudge : Node
         
         for (int i = 0; i < _sortedAllNotes.Count; i++)
         {
-            //GD.Print($"遍历Note候选:{i}");
             NoteCandidate candidate = _sortedAllNotes[i];
-            
             Note note = candidate.Note;
-            if (note == null || note.IsFake || _judgedNotes.Contains(note) || _missedNotes.Contains(note)) continue;
+
+            if(note.startSec > gameTime + 0.24f)
+            {
+                break;
+            }
+
+            if (note == null || note.IsFake || 
+                _judgedNotes.Contains(note) || 
+                _missedNotes.Contains(note) || 
+                _pressingHold.ContainsKey(note) || 
+                _missedHold.ContainsKey(note) || 
+                _judgedNotesBuffer.ContainsKey(note)) continue;
+            
             if (!CanBeJudged(candidate.LineIndex, candidate.Note, pos, gameTime, inputType))
             {
                 //GD.Print($"note不能被判定:{i}");
                 continue;
             }
-            if(_judgedNotesBuffer.ContainsKey(note)) continue; // 避免重复判定
-                
+            
             
             JudgeResult result = ResolveJudge(candidate.LineIndex, note, candidate.NoteIndex, gameTime, pos);
             //GD.Print($"Note_{i} 可以判定，判定结果:{result.Grade}, time:{gameTime}");
 
             if(note.Type == 3 || note.Type == 4 && gameTime < note.startSec)
             {
+                // _noteRemoveCashe.Add(candidate);
                 _judgedNotesBuffer[note] = result;
             }
-            else if(note.Type == 2)
+            else if(note.Type == 2) // Hold
             {
+                // _noteRemoveCashe.Add(candidate);
                 _pressingHold[note] = new PressingHoldData
                 {
                     CandidateData = candidate,
@@ -415,13 +440,14 @@ public partial class ChartJudge : Node
                 Player.StartHoldHitEffect(note, GetNotePosition(candidate.LineIndex, note), result.Grade == JudgeGrade.Good, candidate.LineIndex);
                 
             }
-            else
+            else // tap
             {
+                // _noteRemoveCashe.Add(candidate);
                 _judgedNotes.Add(note);
                 OnJudgeResult?.Invoke(result);
             }
             
-            return;
+            break;
         }
     }
 
@@ -555,28 +581,11 @@ public partial class ChartJudge : Node
 
     private Vector2 GetCurrentLinePos(int lineIndex)
     {
-        if (Player is not GameChartPlayer chartPlayer)
-            return Vector2.Zero;
-
-        FieldInfo lineMoveX = chartPlayer.GetType().GetField("_lineMoveX", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        FieldInfo lineMoveY = chartPlayer.GetType().GetField("_lineMoveY", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (lineMoveX == null || lineMoveY == null) return Vector2.Zero;
-
-        float[] x = (float[])lineMoveX.GetValue(chartPlayer);
-        float[] y = (float[])lineMoveY.GetValue(chartPlayer);
-        if (x == null || y == null || lineIndex >= x.Length || lineIndex >= y.Length) return Vector2.Zero;
-        return new Vector2(x[lineIndex], y[lineIndex]);
+        return new Vector2(Player.LineMoveX[lineIndex], Player.LineMoveY[lineIndex]);
     }
 
     private float GetCurrentLineRotate(int lineIndex)
     {
-        if (Player is not GameChartPlayer chartPlayer)
-            return 0f;
-
-        var field = chartPlayer.GetType().GetField("_lineRotate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (field == null) return 0f;
-        var arr = (float[])field.GetValue(chartPlayer);
-        if (arr == null || lineIndex >= arr.Length) return 0f;
-        return arr[lineIndex];
+        return Player.LineRotate[lineIndex];
     }
 }

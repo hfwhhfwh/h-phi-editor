@@ -10,7 +10,8 @@ public partial class PlayScene : Node
     [Export] private GameChartPlayer chartPlayer;
     [Export] private BaseChartRenderer chartRenderer;
     [Export] private Label statusLabel;
-    [Export] private Button _pauseButton;
+    [Export] private TouchScreenButton _pauseButtonTouch;
+    [Export] private Button _pauseButtonMouse;
     [Export] private CanvasLayer _pauseLayer;
     [Export] private Button _quitButton;
     [Export] private Button _restartButton;
@@ -21,7 +22,7 @@ public partial class PlayScene : Node
     private ChartService _chartService;
     private Chart _chart;
     private ChartJudge _judge;
-    private bool _isPlaying = true;
+    private bool _isPlaying = false;
     private double _gameTime;
 
     public override void _Ready()
@@ -55,12 +56,12 @@ public partial class PlayScene : Node
         parent.Touched += OnTouchInput;
         parent.Flicked += OnFlickInput;
 
-        _pauseButton.Pressed += () =>
+        _pauseButtonTouch.Pressed += () =>
         {
             if (!_isPauseActive)
             {
                 _isPauseActive = true;
-                _pauseButton.Modulate = Colors.White;
+                _pauseButtonTouch.Modulate = Colors.White;
                 _pauseTimer = 0;
             }
             else
@@ -72,12 +73,48 @@ public partial class PlayScene : Node
 
                     // 重置计时器
                     _isPauseActive = false;
-                    _pauseButton.Modulate = new Color(1, 1, 1, 0.6f);
+                    _pauseButtonTouch.Modulate = new Color(1, 1, 1, 0.6f);
                     _pauseTimer = 0;
                 }
             }
         };
-        _pauseButton.Modulate = new Color(1, 1, 1, 0.6f);
+        _pauseButtonTouch.Modulate = new Color(1, 1, 1, 0.6f);
+
+        // _pauseButtonMouse
+        _pauseButtonMouse.Pressed += () =>
+        {
+            if (!_isPauseActive)
+            {
+                _isPauseActive = true;
+                _pauseButtonMouse.Modulate = Colors.White;
+                _pauseTimer = 0;
+            }
+            else
+            {
+                if(_pauseTimer <= 0.5f)
+                {
+                    // 触发暂停
+                    Pause();
+
+                    // 重置计时器
+                    _isPauseActive = false;
+                    _pauseButtonMouse.Modulate = new Color(1, 1, 1, 0.6f);
+                    _pauseTimer = 0;
+                }
+            }
+        };
+        _pauseButtonMouse.Modulate = new Color(1, 1, 1, 0.6f);
+
+        if(Engine.IsEditorHint() || OS.HasFeature("Windows") || OS.HasFeature("windows"))
+        {
+            _pauseButtonMouse.Visible = true;
+            _pauseButtonTouch.Visible = false;
+        }
+        else
+        {
+            _pauseButtonMouse.Visible = false;
+            _pauseButtonTouch.Visible = true;
+        }
 
         _startButton.Pressed += () =>
         {
@@ -117,7 +154,8 @@ public partial class PlayScene : Node
 
 
         chartPlayer.AutoHitEnabled = false;
-        chartPlayer.Play(0f);
+        
+        SetIsPlaying(true);
     }
 
     public override void _ExitTree()
@@ -152,7 +190,7 @@ public partial class PlayScene : Node
                 {
                     // 超时，取消响应
                     _isPauseActive = false;
-                    _pauseButton.Modulate = new Color(1, 1, 1, 0.6f);
+                    _pauseButtonTouch.Modulate = new Color(1, 1, 1, 0.6f);
                     _pauseTimer = 0;
                 }
             }
@@ -173,7 +211,7 @@ public partial class PlayScene : Node
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
 
-        GD.Print($"Click {_gameTime:F2}, {pos}");
+        // GD.Print($"Click {_gameTime:F2}, {pos}");
         _judge.OnTapInput(pos, _gameTime);
     }
 
@@ -212,7 +250,7 @@ public partial class PlayScene : Node
 
     private void OnJudgeResult(JudgeResult result)
     {
-        GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        //GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
 
         if (statusLabel != null)
         {
@@ -239,7 +277,7 @@ public partial class PlayScene : Node
 
     private void OnHoldEndJudgeResult(JudgeResult result)
     {
-        GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        //GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
         
         if (statusLabel != null)
         {
@@ -256,6 +294,8 @@ public partial class PlayScene : Node
         _isPlaying = value;
         if(value) chartPlayer.Play((float)_gameTime);
         else chartPlayer.Pause();
+
+        Input.EmulateMouseFromTouch = !value;
     }
 
     private void Pause()
