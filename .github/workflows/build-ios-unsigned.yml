@@ -92,22 +92,21 @@ jobs:
         c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 12.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
         c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 14.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
 
-        # 3. 强制嵌入 Swift 标准库（如果存在 NO 则替换，否则插入）
+        # 3. 强制嵌入 Swift 标准库
         if 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO' in c:
             c = c.replace('ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;')
         elif 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES' not in c:
             c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;\n', c)
 
-        # 4. 添加 Swift 库搜索路径（如果还没有）
+        # 4. 添加 Swift 库搜索路径
         if 'LIBRARY_SEARCH_PATHS' not in c:
             c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tLIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(inherited)";\n', c)
 
-        # 5. 添加 Runpath Search Paths（如果还没有）
+        # 5. 添加 Runpath Search Paths
         if 'LD_RUNPATH_SEARCH_PATHS' not in c:
             c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tLD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks /usr/lib/swift";\n', c)
 
-        # 6. 创建 DummySwift.swift（放在 build/ios/ 根目录，与 xcodeproj 同级）
-        # Xcode 项目根目录就是 build/ios/，不是 build/ios/h-phi-editor/
+        # 6. 创建 DummySwift.swift（放在 build/ios/ 根目录）
         swift_path = "build/ios/DummySwift.swift"
         with open(swift_path, 'w') as f:
             f.write('import Foundation\n')
@@ -115,18 +114,14 @@ jobs:
         fid = uuid.uuid4().hex[:24].upper()
         bid = uuid.uuid4().hex[:24].upper()
 
-        # PBXBuildFile
         bf = f'\t\t{bid} /* DummySwift.swift in Sources */ = {{isa = PBXBuildFile; fileRef = {fid} /* DummySwift.swift */; }};\n'
         c = c.replace('/* Begin PBXBuildFile section */', f'/* Begin PBXBuildFile section */\n{bf}')
 
-        # PBXFileReference
         fr = f'\t\t{fid} /* DummySwift.swift */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DummySwift.swift; sourceTree = "<group>"; }};\n'
         c = c.replace('/* Begin PBXFileReference section */', f'/* Begin PBXFileReference section */\n{fr}')
 
-        # 添加到主 group 的 children（第一个 children = (）
         c = re.sub(r'(children = \(\n)', rf'\1\t\t\t\t{fid} /* DummySwift.swift */,\n', c, count=1)
 
-        # 添加到 PBXSourcesBuildPhase 的 files（只改 Sources 阶段的第一个 files）
         c = re.sub(
             r'(isa = PBXSourcesBuildPhase;.*?files = \(\n)',
             rf'\1\t\t\t\t\t\t{bid} /* DummySwift.swift in Sources */,\n',
@@ -135,9 +130,18 @@ jobs:
             flags=re.DOTALL
         )
 
-        # 7. 添加 SWIFT_VERSION（如果还没有）
+        # 7. 添加 SWIFT_VERSION
         if 'SWIFT_VERSION' not in c:
             c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tSWIFT_VERSION = 5.0;\n', c)
+
+        # 8. 关键修复：添加链接器标志
+        # -Wl,-undefined,dynamic_lookup : 忽略未定义符号，让 dyld 运行时解析（这些全是系统库）
+        # -weak_framework SwiftUICore    : 弱链接 SwiftUICore，避免 Xcode 16 "not an allowed client" 错误
+        c = re.sub(
+            r'OTHER_LDFLAGS = "([^"]*)";',
+            r'OTHER_LDFLAGS = "\1 -Wl,-undefined,dynamic_lookup -weak_framework SwiftUICore";',
+            c
+        )
 
         with open(pbx, 'w') as f:
             f.write(c)
@@ -152,15 +156,12 @@ jobs:
                     break
             if not found:
                 print(f"{kw}: NOT FOUND")
-        print(f"DummySwift.swift 位置: {swift_path}")
-        print(f"文件存在: {os.path.exists(swift_path)}")
         EOF
 
     # 4. Build unsigned archive（修改参数）
     - name: xcodebuild archive (unsigned)
       run: |
         set -o pipefail
-        
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
           -scheme "${NAME}" \
@@ -176,7 +177,7 @@ jobs:
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
           IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-          ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
+          OTHER_LDFLAGS="-Wl,-undefined,dynamic_lookup -weak_framework SwiftUICore" \
           | xcpretty
 
     - name: Verify archive exists
