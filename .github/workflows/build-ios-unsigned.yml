@@ -92,8 +92,11 @@ jobs:
         c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 12.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
         c = c.replace('IPHONEOS_DEPLOYMENT_TARGET = 14.0;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;')
 
-        # 3. 强制嵌入 Swift 标准库
-        c = c.replace('ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;')
+        # 3. 强制嵌入 Swift 标准库（如果存在 NO 则替换，否则插入）
+        if 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO' in c:
+            c = c.replace('ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;')
+        elif 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES' not in c:
+            c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;\n', c)
 
         # 4. 添加 Swift 库搜索路径（如果还没有）
         if 'LIBRARY_SEARCH_PATHS' not in c:
@@ -103,9 +106,9 @@ jobs:
         if 'LD_RUNPATH_SEARCH_PATHS' not in c:
             c = re.sub(r'(buildSettings = \{\n)', r'\1\t\t\t\tLD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks /usr/lib/swift";\n', c)
 
-        # 6. 创建 DummySwift.swift（强制 Xcode 识别为 Swift 项目）
-        swift_path = f"build/ios/{name}/DummySwift.swift"
-        os.makedirs(os.path.dirname(swift_path), exist_ok=True)
+        # 6. 创建 DummySwift.swift（放在 build/ios/ 根目录，与 xcodeproj 同级）
+        # Xcode 项目根目录就是 build/ios/，不是 build/ios/h-phi-editor/
+        swift_path = "build/ios/DummySwift.swift"
         with open(swift_path, 'w') as f:
             f.write('import Foundation\n')
 
@@ -126,7 +129,7 @@ jobs:
         # 添加到 PBXSourcesBuildPhase 的 files（只改 Sources 阶段的第一个 files）
         c = re.sub(
             r'(isa = PBXSourcesBuildPhase;.*?files = \(\n)',
-            rf'\1\t\t\t\t\t{bid} /* DummySwift.swift in Sources */,\n',
+            rf'\1\t\t\t\t\t\t{bid} /* DummySwift.swift in Sources */,\n',
             c,
             count=1,
             flags=re.DOTALL
@@ -140,11 +143,17 @@ jobs:
             f.write(c)
 
         print("=== 验证修复 ===")
-        for kw in ['OTHER_LDFLAGS', 'IPHONEOS_DEPLOYMENT_TARGET', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES', 'SWIFT_VERSION']:
+        for kw in ['OTHER_LDFLAGS', 'IPHONEOS_DEPLOYMENT_TARGET', 'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES', 'SWIFT_VERSION', 'LIBRARY_SEARCH_PATHS']:
+            found = False
             for i, line in enumerate(c.split('\n')):
                 if kw in line:
                     print(f"{i+1}: {line.strip()}")
+                    found = True
                     break
+            if not found:
+                print(f"{kw}: NOT FOUND")
+        print(f"DummySwift.swift 位置: {swift_path}")
+        print(f"文件存在: {os.path.exists(swift_path)}")
         EOF
 
     # 4. Build unsigned archive（修改参数）
