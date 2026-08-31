@@ -89,7 +89,7 @@ jobs:
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
           IPHONEOS_DEPLOYMENT_TARGET=14.0 \
-          OTHER_LDFLAGS="-ld_classic" \
+          OTHER_LDFLAGS="-lgodot -Wl,-weak-lswiftCompatibility50 -Wl,-weak-lswiftCompatibility51 -Wl,-weak-lswiftCompatibility56 -Wl,-weak-lswiftCompatibilityConcurrency -ObjC" \
           | xcpretty
 
     - name: Verify archive exists
