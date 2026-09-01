@@ -72,8 +72,8 @@ jobs:
     # 4. Build unsigned archive (mirrors mak448a/build-ios)
     - name: xcodebuild archive (unsigned)
       run: |
-        set -o pipefail
-        GODOT_LIB="$PWD/build/ios/h-phi-editor.xcframework/ios-arm64/libgodot.a"
+        set -o pipefail  # 关键：管道中任一命令失败就退出
+        
         xcodebuild archive \
           -project build/ios/${NAME}.xcodeproj \
           -scheme "${NAME}" \
@@ -89,8 +89,8 @@ jobs:
           ARCHS=arm64 \
           SWIFT_VERSION=5.0 \
           IPHONEOS_DEPLOYMENT_TARGET=14.0 \
-          OTHER_LDFLAGS="$(inherited) -ObjC -framework AudioToolbox -framework CoreAudio -framework Photos -framework PhotosUI -framework UIKit -framework Foundation -lc++ -Wl,-force_load,$GODOT_LIB" \
-          | xcpretty
+          # OTHER_LDFLAGS="-lswiftCompatibility50 -lswiftCompatibility51 -lswiftCompatibility56 -lswiftCompatibilityConcurrency -ObjC -framework AudioToolbox -framework CoreAudio -framework Photos -framework PhotosUI -lgodot" \
+          # | xcpretty
 
     - name: Verify archive exists
       run: ls -R build/ios/
