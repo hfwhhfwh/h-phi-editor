@@ -38,7 +38,7 @@
 [ext_resource type="PackedScene" uid="uid://cuskdub26yo1x" path="res://Scene/settings_panel.tscn" id="34_kheud"]
 [ext_resource type="PackedScene" uid="uid://b1gs6hhvosbih" path="res://Scene/bpm_info_panel.tscn" id="36_lc344"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_settingsPanel", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -60,6 +60,7 @@ fileMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContaine
 editMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/EditButton")
 viewMenuButton = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/ViewButton")
 helpMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/HelpButton")
+_othersButton = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/OtherButton")
 _settingsPanel = NodePath("EditorPanel/SafeArea/SettingsPanel")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
 fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/FPSLabel")

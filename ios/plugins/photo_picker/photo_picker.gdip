@@ -1,6 +1,6 @@
 [config]
 name="PhotoPicker"
-binary="photo_picker.xcframework"
+binary="photo_picker.release.xcframework"
 
 initialization="godot_photopicker_init"
 deinitialization="godot_photopicker_deinit"

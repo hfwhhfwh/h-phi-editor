@@ -28,6 +28,7 @@ public abstract partial class BaseChartPlayer : Node
 
     // 开关
     public bool Disabled { get; set; } = false;
+    public bool AutoHitEnabled { get; set; } = false;
 
     // 资源
     protected ResourcePack _resourcePack;
@@ -35,7 +36,7 @@ public abstract partial class BaseChartPlayer : Node
     public AudioStream DragSound { get; set; }
     public AudioStream FlickSound { get; set; }
     public SpriteFrames HitFrames { get; set; }
-    public ResourcePack Pack
+    public virtual ResourcePack Pack
     {
         set
         {
@@ -57,7 +58,7 @@ public abstract partial class BaseChartPlayer : Node
     /// <summary>
     /// 计算判定线和note的位置
     /// </summary>
-    public abstract void UpdateLogic();
+    public abstract void UpdateLogic(double deltaTime);
 
     /// <summary>
     /// 从指定时间开始播放
@@ -75,6 +76,14 @@ public abstract partial class BaseChartPlayer : Node
     public virtual void Pause()
     {
         IsPlaying = false;
+    }
+
+    public virtual void CreateHitEffect(Vector2 position)
+    {
+    }
+
+    public virtual void CreateHitEffect(Vector2 position, Color modulate)
+    {
     }
 
 }

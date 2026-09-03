@@ -33,7 +33,7 @@ public partial class HitEffectPool : Node
 
         for (int i = 0; i < _initSize; i++)
         {
-            CreateNewEffect();
+            _pool.Push(CreateNewEffect());
         }
     }
 
@@ -85,8 +85,14 @@ public partial class HitEffectPool : Node
     /// <param name="position">全局或局部坐标（相对于 _parent）</param>
     public void Spawn(Vector2 position)
     {
+        Spawn(position, _modulate);
+    }
+
+    public void Spawn(Vector2 position, Color modulate)
+    {
         var fx = Get();
         fx.Position = position;
+        fx.Modulate = modulate;
         fx.Visible = true;
         _parent.AddChild(fx);
         fx.Play();

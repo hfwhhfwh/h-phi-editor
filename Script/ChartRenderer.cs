@@ -44,9 +44,6 @@ public partial class ChartRenderer : BaseChartRenderer
     private MultiMeshInstance2D lineMultiMeshInstance;
     private int lineVisibleCount = 0;
 
-    /// <summary>note的宽度大小缩放</summary>
-    public float noteScale;
-
     #if TOOLS
     // ---- 性能优化 ----
     private int _noteCount = 0;
@@ -89,15 +86,36 @@ public partial class ChartRenderer : BaseChartRenderer
         _holdEndSize = HoldEndTexture.GetSize();
 
         Parent = parent;
+        UpdateNoteScale();
+
         //设置note的宽度缩放
         Parent.Resized += () =>
         {
-            noteScale = Parent.Size.X * 0.16f / TapTexture.GetWidth();
-            GD.Print($"[{this.Name}] parent.Size.X:{Parent.Size.X}, tapTexture.GetWidth():{TapTexture.GetWidth()}, noteScale:{noteScale}");
+            UpdateNoteScale();
         };
 
         // 初始化MultiMesh
         InitMultiMesh();
+    }
+
+    private void UpdateNoteScale()
+    {
+        if (Parent == null || TapTexture == null)
+        {
+            NoteScale = 1f;
+            return;
+        }
+
+        float textureWidth = TapTexture.GetWidth();
+        if (textureWidth <= 0f)
+        {
+            NoteScale = 1f;
+            return;
+        }
+
+        NoteScale = Parent.Size.X * 0.16f / textureWidth;
+        if (float.IsNaN(NoteScale) || float.IsInfinity(NoteScale) || NoteScale <= 0f)
+            NoteScale = 1f;
     }
 
 
@@ -322,7 +340,7 @@ public partial class ChartRenderer : BaseChartRenderer
 
                 //Transform2D transform = new Transform2D(rad, position);
                 Transform2D transform = Transform2D.Identity
-                    .Scaled(new Vector2(noteScale * sizeX, noteScale))          // 缩放
+                    .Scaled(new Vector2(NoteScale * sizeX, NoteScale))          // 缩放
                     .Rotated(rad)           // 旋转
                     .Translated(position);  // 平移
 
@@ -369,7 +387,7 @@ public partial class ChartRenderer : BaseChartRenderer
 
                     Transform2D transform = Transform2D.Identity
                         .Translated(new Vector2(0, _holdHeadSize.Y / 2f)) // 让上边对齐
-                        .Scaled(new Vector2(noteScale * sizeX, noteScale))          // 缩放
+                        .Scaled(new Vector2(NoteScale * sizeX, NoteScale))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(headPos);  // 平移
                     
@@ -407,7 +425,7 @@ public partial class ChartRenderer : BaseChartRenderer
 					float scaleY = bodyLength / _holdBodySize.Y;
 
 					Transform2D transform = Transform2D.Identity
-                        .Scaled(new Vector2(noteScale * sizeX, scaleY))          // 缩放
+                        .Scaled(new Vector2(NoteScale * sizeX, scaleY))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(bodyPos);  // 平移
 
@@ -440,7 +458,7 @@ public partial class ChartRenderer : BaseChartRenderer
 
                     Transform2D transform = Transform2D.Identity
                         .Translated(new Vector2(0, -_holdEndSize.Y / 2f)) // 让下边对齐
-                        .Scaled(new Vector2(noteScale * sizeX, noteScale))          // 缩放
+                        .Scaled(new Vector2(NoteScale * sizeX, NoteScale))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(endPos);  // 平移
                     

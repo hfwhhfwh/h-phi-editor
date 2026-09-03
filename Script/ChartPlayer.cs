@@ -108,22 +108,33 @@ public partial class ChartPlayer : BaseChartPlayer
 
     private void TriggerHit(int lineIdx, Note note)
     {
-        var linePos = new Vector2(_lineMoveX[lineIdx], _lineMoveY[lineIdx]);
-        var notePos = new Vector2(note.PositionX, 0);
-        var globalPos = PosUtil.GetChildGlobalPosition(linePos, notePos, _lineRotate[lineIdx]);
-        var parentPos = PosUtil.ChartPosToViewportPos(globalPos, Parent.Size);
+        var parentPos = GetNoteJudgementPosition(lineIdx, note);
 
         // onNoteHited?.Invoke(parentPos);
         CreateHitEffect(parentPos);
         PlayHitSound((NoteType)note.Type);
     }
 
+    public Vector2 GetNoteJudgementPosition(int lineIdx, Note note)
+    {
+        var linePos = new Vector2(_lineMoveX[lineIdx], _lineMoveY[lineIdx]);
+        var notePos = new Vector2(note.PositionX, 0);
+        var globalPos = PosUtil.GetChildGlobalPosition(linePos, notePos, _lineRotate[lineIdx]);
+        return PosUtil.ChartPosToViewportPos(globalPos, Parent.Size);
+    }
+
     /// <summary>
     /// 在指定位置创建一个打击特效
     /// </summary>
-    public void CreateHitEffect(Vector2 parentPos)
+    public override void CreateHitEffect(Vector2 parentPos)
     {
-        hitEffectPool.Spawn(parentPos);
+        CreateHitEffect(parentPos, new Color(0.93f, 0.92f, 0.69f, 1f));
+    }
+
+    public override void CreateHitEffect(Vector2 parentPos, Color modulate)
+    {
+        if (hitEffectPool == null) return;
+        hitEffectPool.Spawn(parentPos, modulate);
     }
 
     /// <summary>
@@ -380,7 +391,7 @@ public partial class ChartPlayer : BaseChartPlayer
     //     }
     // }
 
-    public override void UpdateLogic()
+    public override void UpdateLogic(double deltaTime)
     {
         if(Chart == null) return;
 
@@ -532,42 +543,17 @@ public partial class ChartPlayer : BaseChartPlayer
         if(note.IsFake == false) // 假note不需要击打
         {
             float hitTime = noteStartSec; // 头部到达判定线的时间
-            if (gameTime >= hitTime && !_playedNotes.Contains(note))
+            if (AutoHitEnabled && gameTime >= hitTime && !_playedNotes.Contains(note))
             {
                 if (IsPlaying) // 只有播放状态下显示特效，编辑器滚动时不显示
                 {
-                    // 播放音效并生成打击特效
-                    //PlayHitSound();
-
-                    //显示打击特效
-                    //理论上此时note应该在的位置，防止note速度过快导致的误差
-                    // Vector2 calculatedLocalChartPos = new Vector2(note.PositionX, 0); 
-                    // Vector2 globalChartPos = PosUtil.GetChildGlobalPosition(
-                    //     new Vector2(_lineMoveX[lineId], _lineMoveY[lineId]),
-                    //     calculatedLocalChartPos,
-                    //     _lineRotate[lineId]
-                    // );
-
-                    // Vector2 parentPos = PosUtil.ChartPosToViewportPos(
-                    //     globalChartPos,
-                    //     Parent.Size
-                    // );
-
-                    // onNoteHited?.Invoke(parentPos);
-
-                    // CreateHitEffect(globalChartPos); // 坐标系：谱面坐标
-                    // PlayHitSound();
-
                     TriggerHit(lineId, note);
                 }
                 
-                // _hasPlayedHitSound = true;
                 _playedNotes.Add(note);
             }
             else if (gameTime < hitTime)
             {
-                // 时间回退到击中点之前，重置标记，允许再次触发
-                // _hasPlayedHitSound = false;
                 _playedNotes.Remove(note);
             }
         }
