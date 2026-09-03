@@ -350,6 +350,43 @@ public static class FileUtil
         DirAccess.RemoveAbsolute(path);
     }
 
+    public static void ClearDir(string path)
+    {
+        // 打开目录
+        using DirAccess dir = DirAccess.Open(path);
+        if (dir == null)
+        {
+            GD.PrintErr($"无法打开目录: {path}");
+            return;
+        }
+
+        // 遍历目录内容
+        dir.ListDirBegin();  // 开始列出目录
+        string fileName = dir.GetNext();
+        while (!string.IsNullOrEmpty(fileName))
+        {
+            if (fileName == "." || fileName == "..")  // 跳过特殊目录
+            {
+                fileName = dir.GetNext();
+                continue;
+            }
+
+            string fullPath = path + "/" + fileName;
+            if (dir.CurrentIsDir())
+            {
+                // 递归删除子目录
+                DeleteDirectoryRecursive(fullPath);
+            }
+            else
+            {
+                // 删除文件
+                DirAccess.RemoveAbsolute(fullPath);  // 静态方法删除文件
+            }
+            fileName = dir.GetNext();
+        }
+        dir.ListDirEnd();  // 结束列出目录
+    }
+
     /// <summary>
     /// 将多个文件打包进一个 ZIP 压缩包。
     /// </summary>

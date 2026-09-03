@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_packOverview")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_packOverview")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -23,13 +23,15 @@ _exportPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitCo
 _deletePackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/DeletePack")
 _applyBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Apply")
 _confirmBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Confirm")
+_clearCasheBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer2/ClearCashe")
 _packOverview = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/ResourcePackOverview")
 
 [node name="TabManager" type="Node" parent="." unique_id=1686546388 node_paths=PackedStringArray("TabMap", "defaultButton")]
 script = ExtResource("3_j4nhx")
 TabMap = {
 NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Display"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display"),
-NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Pack"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack")
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Pack"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack"),
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Storage"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage")
 }
 defaultButton = NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Display")
 
@@ -125,6 +127,10 @@ text = "显示"
 layout_mode = 2
 text = "资源包"
 
+[node name="Storage" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section" unique_id=885977721]
+layout_mode = 2
+text = "存储空间"
+
 [node name="Properties" type="PanelContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer" unique_id=924282429]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -175,6 +181,7 @@ allow_greater = true
 allow_lesser = true
 
 [node name="Pack" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=2146774469]
+visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack" unique_id=868202544]
@@ -215,6 +222,34 @@ size_flags_horizontal = 3
 [node name="ResourcePackOverview" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer" unique_id=1063507614 instance=ExtResource("5_yruwn")]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="Storage" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=913838793]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage" unique_id=781547910]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer" unique_id=1693687767]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer" unique_id=1398667408]
+layout_mode = 2
+theme = ExtResource("1_ykn2r")
+text = "缓存占用"
+
+[node name="Label2" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer" unique_id=322223273]
+layout_mode = 2
+text = "XXX MB"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer" unique_id=1867994998]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ClearCashe" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer2" unique_id=1109733814]
+self_modulate = Color(1, 0.39999998, 0.39999998, 1)
+layout_mode = 2
+text = "清空缓存"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=240990376]
 layout_mode = 2

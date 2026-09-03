@@ -19,6 +19,7 @@ public partial class SettingsPanel : Control
 
     [Export] private Button _applyBtn;
     [Export] private Button _confirmBtn;
+    [Export] private Button _clearCasheBtn;
 
     [Export] private ResourcePackOverview _packOverview;
     // [Export] private Button _resetBtn;
@@ -52,6 +53,15 @@ public partial class SettingsPanel : Control
 
         _importPackBtn.Pressed += OnImportClicked;
         _deletePackBtn.Pressed += OnDeletePackClicked;
+        _clearCasheBtn.Pressed += () =>
+        {
+            FileUtil.ClearDir("user://temp_import");
+            FileUtil.ClearDir("user://temp_pack");
+
+            GD.Print($"成功清除缓存");
+
+            PopupHelper.Instance.ShowAlert("提示", "成功清除缓存");
+        };
 
         VisibilityChanged += () =>
         {
