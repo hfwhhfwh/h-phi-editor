@@ -780,7 +780,6 @@ public partial class GameChartPlayer : BaseChartPlayer
 
                 // 重置计时器，保留溢出部分（防止累积误差）
                 data.Timer += 150f;
-                _holdEffectData[hold] = data;
             }
         }
     }

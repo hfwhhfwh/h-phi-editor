@@ -3,6 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 public partial class ChartPlayer : BaseChartPlayer
@@ -42,6 +43,30 @@ public partial class ChartPlayer : BaseChartPlayer
     // ---- 打击记录（替代 NoteNode._hasPlayedHitSound）----
     // 只在播放模式下有意义；编辑模式下时间来回拖动时自动清理
     private readonly HashSet<Note> _playedNotes = new();
+
+    private class HoldEffectData
+    {
+        public int LineIndex;
+        public float Timer;   // 单位：ms
+        public bool IsGood;
+    }
+    private readonly Dictionary<Note, HoldEffectData> _holdEffectData = new();
+
+    private readonly Color _perfectColor = new Color
+    {
+        R8 = 254,
+        G8 = 255,
+        B8 = 169,
+        A8 = 255
+    };
+
+    private readonly Color _goodColor = new Color
+    {
+        R8 = 162,
+        G8 = 238,
+        B8 = 255,
+        A8 = 255
+    };
 
     // 预分配渲染数据数组，避免 List 扩容
     private JudgeLineRenderData[] _lineRenderBuffer;
@@ -113,6 +138,25 @@ public partial class ChartPlayer : BaseChartPlayer
         // onNoteHited?.Invoke(parentPos);
         CreateHitEffect(parentPos);
         PlayHitSound((NoteType)note.Type);
+    }
+
+    public void StartHoldHitEffect(Note hold, Vector2 position, bool isGood, int lineIdx)
+    {
+        _holdEffectData[hold] = new HoldEffectData
+        {
+            LineIndex = lineIdx,
+            Timer = 150f,
+            IsGood = isGood
+        };
+
+        Color modulate = isGood ? _goodColor : _perfectColor;
+        CreateHitEffect(position, modulate);
+        PlayHitSound(NoteType.Tap);
+    }
+
+    public void StopHoldHitEffect(Note hold)
+    {
+        _holdEffectData.Remove(hold);
     }
 
     public Vector2 GetNoteJudgementPosition(int lineIdx, Note note)
@@ -244,9 +288,19 @@ public partial class ChartPlayer : BaseChartPlayer
         _needsTopologyRebuild = true;
     }
 
+    public override void _Ready()
+    {
+        base._Ready();
+
+        AutoHitEnabled = true;
+    }
+
+
     public override void _ExitTree()
     {
         base._ExitTree();
+
+        _holdEffectData.Clear();
 
         //取消订阅事件，防止内存泄漏
         // ChartEventBus.ChartStructureChanged -= OnChartStructureChanged;
@@ -428,6 +482,7 @@ public partial class ChartPlayer : BaseChartPlayer
 
         if (Disabled)
         {
+            _holdEffectData.Clear();
             // 仅更新打击记录（时间回退时允许重新触发）
             UpdateHitRecordsOnly();
             return;
@@ -445,6 +500,9 @@ public partial class ChartPlayer : BaseChartPlayer
 
             UpdateLine(ChartTime, idx);
         }
+        
+        // 更新所有Hold音符的长按特效
+        UpdateHoldEffects(deltaTime);
         
     }
 
@@ -547,7 +605,14 @@ public partial class ChartPlayer : BaseChartPlayer
             {
                 if (IsPlaying) // 只有播放状态下显示特效，编辑器滚动时不显示
                 {
-                    TriggerHit(lineId, note);
+                    if (note.Type == 2)
+                    {
+                        StartHoldHitEffect(note, GetNoteJudgementPosition(lineId, note), false, lineId);
+                    }
+                    else
+                    {
+                        TriggerHit(lineId, note);
+                    }
                 }
                 
                 _playedNotes.Add(note);
@@ -556,6 +621,11 @@ public partial class ChartPlayer : BaseChartPlayer
             {
                 _playedNotes.Remove(note);
             }
+        }
+
+        if (note.Type == 2 && (!IsPlaying || gameTime < noteStartSec || gameTime >= noteEndSec))
+        {
+            StopHoldHitEffect(note);
         }
 
         // _data.VisibleTime 音符可视时间（打击前多少秒开始显现，默认99999.0）
@@ -769,6 +839,27 @@ public partial class ChartPlayer : BaseChartPlayer
         }
     }
 
+    private void UpdateHoldEffects(double delta)
+    {
+        foreach (var kvp in _holdEffectData)
+        {
+            Note hold = kvp.Key;
+            HoldEffectData data = kvp.Value;
+
+            data.Timer -= (float)delta * 1000f;
+            if (data.Timer <= 0)
+            {
+                // 获取 Hold 头部当前屏幕位置
+                Vector2 position = GetNoteJudgementPosition(data.LineIndex, hold);
+                Color modulate = data.IsGood ? _goodColor : _perfectColor;
+                CreateHitEffect(position, modulate);
+
+                // 重置计时器，保留溢出部分（防止累积误差）
+                data.Timer += 150f;
+            }
+        }
+    }
+
 
     // ==================== 缓冲区 & 拓扑管理 ====================
 
@@ -865,6 +956,7 @@ public partial class ChartPlayer : BaseChartPlayer
     public override void Play(float time)
     {
         base.Play(time);
+        _holdEffectData.Clear();
         audioStreamPlayer.Play(time);
 
         _startMusicTime = audioStreamPlayer.GetPlaybackPosition();
@@ -875,6 +967,7 @@ public partial class ChartPlayer : BaseChartPlayer
     public override void Pause()
     {
         base.Pause();
+        _holdEffectData.Clear();
 
         audioStreamPlayer.Stop();
     }
