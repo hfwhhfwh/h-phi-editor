@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_packOverview")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_casheSizeLabel", "_packOverview")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -24,6 +24,7 @@ _deletePackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitCo
 _applyBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Apply")
 _confirmBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Confirm")
 _clearCasheBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer2/ClearCashe")
+_casheSizeLabel = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer/Label2")
 _packOverview = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/ResourcePackOverview")
 
 [node name="TabManager" type="Node" parent="." unique_id=1686546388 node_paths=PackedStringArray("TabMap", "defaultButton")]
