@@ -213,9 +213,50 @@ public static class ChartDataHelper
                 }
             }
         }
+
     }
 
-    // public static void RefreshNoteSec
+    /// <summary>
+    /// 根据 StartTime 更新所有音符的多押状态。
+    /// 多押判断跨越整张谱面，且使用 Beat 数组值而不是换算后的秒数。
+    /// </summary>
+    public static void RefreshAllNoteMultiHold(Chart chart)
+    {
+        if (chart?.JudgeLineList == null) return;
+
+        var notesByStartTime = new Dictionary<string, List<Note>>();
+
+        foreach (JudgeLine line in chart.JudgeLineList)
+        {
+            if (line?.Notes == null) continue;
+
+            foreach (Note note in line.Notes)
+            {
+                if (note == null) continue;
+
+                note.isMultiHold = false;
+                string key = note.StartTime == null
+                    ? string.Empty
+                    : string.Join(",", note.StartTime);
+
+                if (!notesByStartTime.TryGetValue(key, out List<Note> notes))
+                {
+                    notes = new List<Note>();
+                    notesByStartTime[key] = notes;
+                }
+
+                notes.Add(note);
+            }
+        }
+
+        foreach (List<Note> notes in notesByStartTime.Values)
+        {
+            if (notes.Count < 2) continue;
+
+            foreach (Note note in notes)
+                note.isMultiHold = true;
+        }
+    }
 
     /// <summary>
     /// 更新所有note的累积位移

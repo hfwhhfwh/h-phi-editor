@@ -24,8 +24,11 @@
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4d80g"]
 [ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
+[ext_resource type="Texture2D" uid="uid://4su3gb6l6dku" path="res://Sprite/TapHL.png" id="18_6lh21"]
+[ext_resource type="Texture2D" uid="uid://ckavuu86r8dl6" path="res://Sprite/DragHL.png" id="19_o1jq3"]
 [ext_resource type="Script" uid="uid://cw2e853w0lxl2" path="res://Script/EditorScene/BpmEditPanel.cs" id="20_e4drf"]
 [ext_resource type="PackedScene" uid="uid://d0fwusqj7g1he" path="res://Scene/note_info_panel.tscn" id="20_mm2kl"]
+[ext_resource type="Texture2D" uid="uid://ce2i2r1d6so0" path="res://Sprite/FlickHL.png" id="20_tmsq3"]
 [ext_resource type="Texture2D" uid="uid://btdnpjcck36nd" path="res://Sprite/EventHold_2.png" id="21_605qm"]
 [ext_resource type="Texture2D" uid="uid://6bbwrp8sf7n8" path="res://Sprite/BpmEvent2.png" id="23_fayi4"]
 [ext_resource type="Texture2D" uid="uid://cqkci055pm5cs" path="res://播放_间距.png" id="24_5asy7"]
@@ -247,6 +250,12 @@ _defaultFlickTexture = ExtResource("7_wq0mf")
 _defaultHoldHeadTexture = ExtResource("8_63sjd")
 _defaultHoldBodyTexture = ExtResource("9_gi1tw")
 _defaultHoldEndTexture = ExtResource("10_4d80g")
+_defaultTapTextureMh = ExtResource("18_6lh21")
+_defaultDragTextureMh = ExtResource("19_o1jq3")
+_defaultFlickTextureMh = ExtResource("20_tmsq3")
+_defaultHoldHeadTextureMh = ExtResource("8_63sjd")
+_defaultHoldBodyTextureMh = ExtResource("9_gi1tw")
+_defaultHoldEndTextureMh = ExtResource("10_4d80g")
 lineTexture = ExtResource("11_khybl")
 
 [node name="EditPanel" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]

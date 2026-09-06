@@ -183,6 +183,8 @@ namespace QuickType
         /// </summary>
         [JsonIgnore] public float endAllDisplacement;
 
+        [JsonIgnore] public bool isMultiHold;
+
         public void SetStartTime(int[] newStartTime, List<BpmEvent> bpmList, JudgeLine line)
         {
             StartTime = newStartTime;

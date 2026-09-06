@@ -6,7 +6,8 @@ public partial class ChartRenderer : BaseChartRenderer
 {
     private enum NoteSpriteType
 	{
-		Tap, Drag, Flick, HoldHead, HoldBody, HoldEnd
+        Tap, Drag, Flick, HoldHead, HoldBody, HoldEnd,
+        TapMh, DragMh, FlickMh, HoldHeadMh, HoldBodyMh, HoldEndMh
 	}
 	private readonly NoteSpriteType[] allNoteSpriteTypes = (NoteSpriteType[])Enum.GetValues(typeof(NoteSpriteType));
 
@@ -18,6 +19,13 @@ public partial class ChartRenderer : BaseChartRenderer
     [Export] private Texture2D _defaultHoldHeadTexture;
     [Export] private Texture2D _defaultHoldBodyTexture;
     [Export] private Texture2D _defaultHoldEndTexture;
+
+    [Export] private Texture2D _defaultTapTextureMh;
+    [Export] private Texture2D _defaultDragTextureMh;
+    [Export] private Texture2D _defaultFlickTextureMh;
+    [Export] private Texture2D _defaultHoldHeadTextureMh;
+    [Export] private Texture2D _defaultHoldBodyTextureMh;
+    [Export] private Texture2D _defaultHoldEndTextureMh;
 
     #endregion
 
@@ -75,6 +83,13 @@ public partial class ChartRenderer : BaseChartRenderer
         HoldHeadTexture = _defaultHoldHeadTexture;
         HoldBodyTexture = _defaultHoldBodyTexture;
         HoldEndTexture = _defaultHoldEndTexture;
+
+        TapMhTexture = _defaultTapTextureMh;
+        DragMhTexture = _defaultDragTextureMh;
+        FlickMhTexture = _defaultFlickTextureMh;
+        HoldHeadMhTexture = _defaultHoldHeadTextureMh;
+        HoldBodyMhTexture = _defaultHoldBodyTextureMh;
+        HoldEndMhTexture = _defaultHoldEndTextureMh;
     }
 
 
@@ -167,6 +182,12 @@ public partial class ChartRenderer : BaseChartRenderer
 				NoteSpriteType.HoldHead => HoldHeadTexture,
 				NoteSpriteType.HoldBody => HoldBodyTexture,
 				NoteSpriteType.HoldEnd => HoldEndTexture,
+                NoteSpriteType.TapMh => TapMhTexture,
+                NoteSpriteType.DragMh => DragMhTexture,
+                NoteSpriteType.FlickMh => FlickMhTexture,
+                NoteSpriteType.HoldHeadMh => HoldHeadMhTexture,
+                NoteSpriteType.HoldBodyMh => HoldBodyMhTexture,
+                NoteSpriteType.HoldEndMh => HoldEndMhTexture,
 				_ => TapTexture
 			};
 
@@ -315,10 +336,10 @@ public partial class ChartRenderer : BaseChartRenderer
                 //选择SpriteType
                 NoteSpriteType spriteType = type switch
                 {
-                    NoteType.Tap => NoteSpriteType.Tap,
-                    NoteType.Drag => NoteSpriteType.Drag,
-                    NoteType.Flick => NoteSpriteType.Flick,
-                    _ => NoteSpriteType.Tap
+                    NoteType.Tap => noteRenderData.IsMultiHold ? NoteSpriteType.TapMh : NoteSpriteType.Tap,
+                    NoteType.Drag => noteRenderData.IsMultiHold ? NoteSpriteType.DragMh : NoteSpriteType.Drag,
+                    NoteType.Flick => noteRenderData.IsMultiHold ? NoteSpriteType.FlickMh : NoteSpriteType.Flick,
+                    _ => noteRenderData.IsMultiHold ? NoteSpriteType.TapMh : NoteSpriteType.Tap
                 };
 
                 // 动态扩容
@@ -376,13 +397,22 @@ public partial class ChartRenderer : BaseChartRenderer
                 float rad = Mathf.DegToRad(rotate);
                 float alpha = noteRenderData.Alpha; // [0, 255]
                 float sizeX = noteRenderData.SizeX;
+                NoteSpriteType holdHeadType = noteRenderData.IsMultiHold
+                    ? NoteSpriteType.HoldHeadMh
+                    : NoteSpriteType.HoldHead;
+                NoteSpriteType holdBodyType = noteRenderData.IsMultiHold
+                    ? NoteSpriteType.HoldBodyMh
+                    : NoteSpriteType.HoldBody;
+                NoteSpriteType holdEndType = noteRenderData.IsMultiHold
+                    ? NoteSpriteType.HoldEndMh
+                    : NoteSpriteType.HoldEnd;
 
                 // ---- 1. 渲染 Hold 头部 ----
                 if(noteRenderData.HeadVisible){
                     // 动态扩容
-                    if(visibleCounts[NoteSpriteType.HoldHead] + 1 > multiMeshes[NoteSpriteType.HoldHead].InstanceCount)
+                    if(visibleCounts[holdHeadType] + 1 > multiMeshes[holdHeadType].InstanceCount)
                     {
-                        EnsureNoteMultiMeshCapacity(NoteSpriteType.HoldHead, visibleCounts[NoteSpriteType.HoldHead] + 1);
+                        EnsureNoteMultiMeshCapacity(holdHeadType, visibleCounts[holdHeadType] + 1);
                     }
 
                     Transform2D transform = Transform2D.Identity
@@ -391,8 +421,8 @@ public partial class ChartRenderer : BaseChartRenderer
                         .Rotated(rad)           // 旋转
                         .Translated(headPos);  // 平移
                     
-                    multiMeshes[NoteSpriteType.HoldHead].SetInstanceTransform2D(
-						visibleCounts[NoteSpriteType.HoldHead],
+                    multiMeshes[holdHeadType].SetInstanceTransform2D(
+                        visibleCounts[holdHeadType],
 						transform
 					);
 
@@ -405,17 +435,17 @@ public partial class ChartRenderer : BaseChartRenderer
                     //     B8 = 255,
                     //     A8 = Mathf.FloorToInt(alpha)
                     // };
-                    multiMeshes[NoteSpriteType.HoldHead].SetInstanceColor(visibleCounts[NoteSpriteType.HoldHead], color);
+                    multiMeshes[holdHeadType].SetInstanceColor(visibleCounts[holdHeadType], color);
                     
-                    visibleCounts[NoteSpriteType.HoldHead]++;
+                    visibleCounts[holdHeadType]++;
                 }
 
                 // ---- 2. 渲染 Hold 身体（拉伸条） ----
                 {
                     // 动态扩容
-                    if(visibleCounts[NoteSpriteType.HoldBody] + 1 > multiMeshes[NoteSpriteType.HoldBody].InstanceCount)
+                    if(visibleCounts[holdBodyType] + 1 > multiMeshes[holdBodyType].InstanceCount)
                     {
-                        EnsureNoteMultiMeshCapacity(NoteSpriteType.HoldBody, visibleCounts[NoteSpriteType.HoldBody] + 1);
+                        EnsureNoteMultiMeshCapacity(holdBodyType, visibleCounts[holdBodyType] + 1);
                     }
 
                     Vector2 bodyPos = (headPos + endPos) / 2f;
@@ -429,8 +459,8 @@ public partial class ChartRenderer : BaseChartRenderer
                         .Rotated(rad)           // 旋转
                         .Translated(bodyPos);  // 平移
 
-					multiMeshes[NoteSpriteType.HoldBody].SetInstanceTransform2D(
-						visibleCounts[NoteSpriteType.HoldBody], transform
+                    multiMeshes[holdBodyType].SetInstanceTransform2D(
+                        visibleCounts[holdBodyType], transform
 					);
 
                     //设置颜色和透明度
@@ -442,18 +472,18 @@ public partial class ChartRenderer : BaseChartRenderer
                     //     B8 = 255,
                     //     A8 = Mathf.FloorToInt(alpha)
                     // };
-                    multiMeshes[NoteSpriteType.HoldBody].SetInstanceColor(visibleCounts[NoteSpriteType.HoldBody], color);
+                    multiMeshes[holdBodyType].SetInstanceColor(visibleCounts[holdBodyType], color);
 
-					visibleCounts[NoteSpriteType.HoldBody]++;
+					visibleCounts[holdBodyType]++;
                     
                 }
 
                 // ---- 3. 渲染 Hold 尾部 ----
                 {
                     // 动态扩容
-                    if(visibleCounts[NoteSpriteType.HoldEnd] + 1 > multiMeshes[NoteSpriteType.HoldEnd].InstanceCount)
+                    if(visibleCounts[holdEndType] + 1 > multiMeshes[holdEndType].InstanceCount)
                     {
-                        EnsureNoteMultiMeshCapacity(NoteSpriteType.HoldEnd, visibleCounts[NoteSpriteType.HoldEnd] + 1);
+                        EnsureNoteMultiMeshCapacity(holdEndType, visibleCounts[holdEndType] + 1);
                     }
 
                     Transform2D transform = Transform2D.Identity
@@ -462,8 +492,8 @@ public partial class ChartRenderer : BaseChartRenderer
                         .Rotated(rad)           // 旋转
                         .Translated(endPos);  // 平移
                     
-                    multiMeshes[NoteSpriteType.HoldEnd].SetInstanceTransform2D(
-						visibleCounts[NoteSpriteType.HoldEnd], transform
+                    multiMeshes[holdEndType].SetInstanceTransform2D(
+                        visibleCounts[holdEndType], transform
 					);
 
                     //设置颜色和透明度
@@ -475,9 +505,9 @@ public partial class ChartRenderer : BaseChartRenderer
                     //     B8 = 255,
                     //     A8 = Mathf.FloorToInt(alpha)
                     // };
-                    multiMeshes[NoteSpriteType.HoldEnd].SetInstanceColor(visibleCounts[NoteSpriteType.HoldEnd], color);
+                    multiMeshes[holdEndType].SetInstanceColor(visibleCounts[holdEndType], color);
 
-                    visibleCounts[NoteSpriteType.HoldEnd]++;
+                    visibleCounts[holdEndType]++;
                 }
             }
         }

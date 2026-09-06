@@ -17,6 +17,12 @@ public abstract partial class BaseChartRenderer : Node
     public Texture2D HoldHeadTexture { get; set; }
     public Texture2D HoldBodyTexture { get; set; }
     public Texture2D HoldEndTexture { get; set; }
+    public Texture2D TapMhTexture { get; set; }
+    public Texture2D DragMhTexture { get; set; }
+    public Texture2D FlickMhTexture { get; set; }
+    public Texture2D HoldHeadMhTexture { get; set; }
+    public Texture2D HoldBodyMhTexture { get; set; }
+    public Texture2D HoldEndMhTexture { get; set; }
     [Export] protected Texture2D lineTexture;
     public ResourcePack Pack
     {
@@ -29,6 +35,13 @@ public abstract partial class BaseChartRenderer : Node
             HoldHeadTexture = value.holdHeadTexture;
             HoldBodyTexture = value.holdBodyTexture;
             HoldEndTexture = value.holdEndTexture;
+
+            TapMhTexture = value.textureDic["click_mh"];
+            DragMhTexture = value.textureDic["drag_mh"];
+            FlickMhTexture = value.textureDic["flick_mh"];
+            HoldHeadMhTexture = value.holdHeadTextureMh;
+            HoldBodyMhTexture = value.holdBodyTextureMh;
+            HoldEndMhTexture = value.holdEndTextureMh;
         }
     }
 

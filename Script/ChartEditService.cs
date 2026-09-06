@@ -165,6 +165,7 @@ public partial class ChartEditService : Node
             case NotePropertyEnum.StartTime:
                 note.SetStartTime(((Beat)value).Values, EditingChart.BpmList, 
                     EditingChart.JudgeLineList[lineId]);
+                ChartDataHelper.RefreshAllNoteMultiHold(EditingChart);
                 break;
 
             case NotePropertyEnum.EndTime:
@@ -213,6 +214,8 @@ public partial class ChartEditService : Node
     {
         DeleteNoteWithoutSignal(lineId, note);
 
+        ChartDataHelper.RefreshAllNoteMultiHold(EditingChart);
+
         GD.Print($"[{this.Name}] 删除note(line{lineId}_{note})");
 
         ChartEventBus.NotifyNoteCountChanged(lineId);  // 广播
@@ -259,6 +262,8 @@ public partial class ChartEditService : Node
         notes.Add(note);
         line.SortNotes();
 
+        ChartDataHelper.RefreshAllNoteMultiHold(EditingChart);
+
         ChartEventBus.NotifyNoteCountChanged(lineId);  // 广播
 
         GD.Print($"[{this.Name}] 成功添加note:{lineId}_{notes.IndexOf(note)}");
@@ -286,6 +291,8 @@ public partial class ChartEditService : Node
         {
             DeleteNoteWithoutSignal(lineId, note);
         }
+
+        ChartDataHelper.RefreshAllNoteMultiHold(EditingChart);
 
         //发出信号
         ChartEventBus.NotifyNoteCountChanged(lineId);  // 广播
@@ -357,6 +364,8 @@ public partial class ChartEditService : Node
     {
         DeleteLineWithoutSignal(judgeLines, lineId);
 
+        ChartDataHelper.RefreshAllNoteMultiHold(EditingChart);
+
         ChartEventBus.NotifyLineCountChanged();
 
         GD.Print($"[{this.Name}] 成功删除判定线:{lineId}");
@@ -376,6 +385,8 @@ public partial class ChartEditService : Node
         {
             DeleteLineWithoutSignal(judgeLines, i);
         }
+
+        ChartDataHelper.RefreshAllNoteMultiHold(EditingChart);
 
         ChartEventBus.NotifyLineCountChanged();
 

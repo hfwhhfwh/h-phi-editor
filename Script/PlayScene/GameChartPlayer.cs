@@ -314,6 +314,8 @@ public partial class GameChartPlayer : BaseChartPlayer
         //预计算所有note的累积位移
         ChartDataHelper.RefreshAllNoteAllDisplacement(chart);
 
+        ChartDataHelper.RefreshAllNoteMultiHold(chart);
+
         _needsTopologyRebuild = true;
     }
 
@@ -697,6 +699,7 @@ public partial class GameChartPlayer : BaseChartPlayer
             _noteRenderBuffer[noteIdx] = new NoteRenderData
             {
                 Type = NoteType.Hold,
+                IsMultiHold = note.isMultiHold,
                 HeadPos = headParentPos,
                 EndPos = endParentPos,
                 Rotate = noteRotation,
@@ -729,6 +732,7 @@ public partial class GameChartPlayer : BaseChartPlayer
             _noteRenderBuffer[noteIdx] = new NoteRenderData
             {
                 Type = (NoteType)note.Type,
+                IsMultiHold = note.isMultiHold,
                 HeadPos = noteParentPos,
                 EndPos = noteParentPos,
                 Rotate = noteRotation,

@@ -282,6 +282,8 @@ public partial class ChartPlayer : BaseChartPlayer
         //预计算所有note的累积位移
         ChartDataHelper.RefreshAllNoteAllDisplacement(chart);
 
+        ChartDataHelper.RefreshAllNoteMultiHold(chart);
+
         // 初始化所有判定线节点
         // SetJudgeLineList();
 
@@ -774,6 +776,7 @@ public partial class ChartPlayer : BaseChartPlayer
             _noteRenderBuffer[noteIdx] = new NoteRenderData
             {
                 Type = NoteType.Hold,
+                IsMultiHold = note.isMultiHold,
                 HeadPos = headParentPos,
                 EndPos = endParentPos,
                 Rotate = noteRotation,
@@ -806,6 +809,7 @@ public partial class ChartPlayer : BaseChartPlayer
             _noteRenderBuffer[noteIdx] = new NoteRenderData
             {
                 Type = (NoteType)note.Type,
+                IsMultiHold = note.isMultiHold,
                 HeadPos = noteParentPos,
                 EndPos = noteParentPos,
                 Rotate = noteRotation,
@@ -1517,6 +1521,7 @@ public struct NoteRenderData
 {
     public Vector2 HeadPos { get; set; }
     public NoteType Type { get; set; }
+    public bool IsMultiHold { get; set; }
     public float Rotate { get; set; }
     public float Alpha { get; set; }
     public float SizeX { get; set; }
