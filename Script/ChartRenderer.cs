@@ -41,6 +41,10 @@ public partial class ChartRenderer : BaseChartRenderer
     private Vector2 _holdHeadSize;
     private Vector2 _holdBodySize;
     private Vector2 _holdEndSize;
+    private Vector2 _holdHeadMhSize;
+    private Vector2 _holdBodyMhSize;
+    private Vector2 _holdEndMhSize;
+    
 
 
     // ---- Multimesh ---- 
@@ -99,6 +103,10 @@ public partial class ChartRenderer : BaseChartRenderer
         _holdHeadSize = HoldHeadTexture.GetSize();
         _holdBodySize = HoldBodyTexture.GetSize();
         _holdEndSize = HoldEndTexture.GetSize();
+
+        _holdHeadMhSize = HoldHeadMhTexture.GetSize();
+        _holdBodyMhSize = HoldBodyMhTexture.GetSize();
+        _holdEndMhSize = HoldEndMhTexture.GetSize();
 
         Parent = parent;
         UpdateNoteScale();
@@ -397,6 +405,7 @@ public partial class ChartRenderer : BaseChartRenderer
                 float rad = Mathf.DegToRad(rotate);
                 float alpha = noteRenderData.Alpha; // [0, 255]
                 float sizeX = noteRenderData.SizeX;
+
                 NoteSpriteType holdHeadType = noteRenderData.IsMultiHold
                     ? NoteSpriteType.HoldHeadMh
                     : NoteSpriteType.HoldHead;
@@ -406,6 +415,16 @@ public partial class ChartRenderer : BaseChartRenderer
                 NoteSpriteType holdEndType = noteRenderData.IsMultiHold
                     ? NoteSpriteType.HoldEndMh
                     : NoteSpriteType.HoldEnd;
+                
+                float headSizeY = noteRenderData.IsMultiHold
+                    ? _holdHeadSize.Y
+                    : _holdHeadMhSize.Y;
+                float bodySizeY = noteRenderData.IsMultiHold
+                    ? _holdBodySize.Y
+                    : _holdBodyMhSize.Y;
+                float endSizeY = noteRenderData.IsMultiHold
+                    ? _holdEndSize.Y
+                    : _holdEndMhSize.Y;
 
                 // ---- 1. 渲染 Hold 头部 ----
                 if(noteRenderData.HeadVisible){
@@ -416,7 +435,7 @@ public partial class ChartRenderer : BaseChartRenderer
                     }
 
                     Transform2D transform = Transform2D.Identity
-                        .Translated(new Vector2(0, _holdHeadSize.Y / 2f)) // 让上边对齐
+                        .Translated(new Vector2(0, headSizeY / 2f)) // 让上边对齐
                         .Scaled(new Vector2(NoteScale * sizeX, NoteScale))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(headPos);  // 平移
@@ -452,7 +471,7 @@ public partial class ChartRenderer : BaseChartRenderer
                     
                     float bodyLength = headPos.DistanceTo(endPos);   // 正数表示向下延伸
                     // 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
-					float scaleY = bodyLength / _holdBodySize.Y;
+					float scaleY = bodyLength / bodySizeY;
 
 					Transform2D transform = Transform2D.Identity
                         .Scaled(new Vector2(NoteScale * sizeX, scaleY))          // 缩放
@@ -487,7 +506,7 @@ public partial class ChartRenderer : BaseChartRenderer
                     }
 
                     Transform2D transform = Transform2D.Identity
-                        .Translated(new Vector2(0, -_holdEndSize.Y / 2f)) // 让下边对齐
+                        .Translated(new Vector2(0, -endSizeY / 2f)) // 让下边对齐
                         .Scaled(new Vector2(NoteScale * sizeX, NoteScale))          // 缩放
                         .Rotated(rad)           // 旋转
                         .Translated(endPos);  // 平移
