@@ -30,6 +30,8 @@ public partial class SettingsPanel : Control
     [Export] private Label _casheSizeLabel;
 
     [Export] private ResourcePackOverview _packOverview;
+
+    [Export] private CheckButton _mhHighlightBtn;
     // [Export] private Button _resetBtn;
 
     // 分辨率预设
@@ -121,12 +123,19 @@ public partial class SettingsPanel : Control
             GameSettings.Instance.Set(nameof(SettingsData.MaxFps), intValue);
         };
 
+        _mhHighlightBtn.Toggled += (bool value) =>
+        {
+            GameSettings.Instance.Set(nameof(SettingsData.UseMultiholdHighlight), value);
+        };
+
         _applyBtn.Pressed += () => GameSettings.Instance.Save();
         _confirmBtn.Pressed += () =>
         {
             GameSettings.Instance.Save();
             Visible = false;
         };
+
+        
         // _resetBtn.Pressed += () => GameSettings.Instance.ResetToDefault();
     }
 
@@ -157,6 +166,10 @@ public partial class SettingsPanel : Control
             
             case nameof(SettingsData.UseDefaultResource):
                 _useDefaultResourceBtn.SetPressedNoSignal(GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
+                break;
+            
+            case nameof(SettingsData.UseMultiholdHighlight):
+                _mhHighlightBtn.ButtonPressed = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseMultiholdHighlight));
                 break;
         }
     }
@@ -229,6 +242,9 @@ public partial class SettingsPanel : Control
 
             // 最大帧率
             _maxFpsEdit.Value = settings.MaxFps;
+
+            // 播放设置
+            _mhHighlightBtn.ButtonPressed = settings.UseMultiholdHighlight;
 
             // 存储空间
             // 取消之前的扫描任务（如果有）

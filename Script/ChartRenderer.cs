@@ -137,6 +137,8 @@ public partial class ChartRenderer : BaseChartRenderer
         }
 
         NoteScale = Parent.Size.X * 0.16f / textureWidth;
+        // NoteScale = Parent.Size.X * 0.7f / textureWidth;
+
         if (float.IsNaN(NoteScale) || float.IsInfinity(NoteScale) || NoteScale <= 0f)
             NoteScale = 1f;
     }
@@ -417,14 +419,14 @@ public partial class ChartRenderer : BaseChartRenderer
                     : NoteSpriteType.HoldEnd;
                 
                 float headSizeY = noteRenderData.IsMultiHold
-                    ? _holdHeadSize.Y
-                    : _holdHeadMhSize.Y;
+                    ? _holdHeadMhSize.Y
+                    : _holdHeadSize.Y;
                 float bodySizeY = noteRenderData.IsMultiHold
-                    ? _holdBodySize.Y
-                    : _holdBodyMhSize.Y;
+                    ? _holdBodyMhSize.Y
+                    : _holdBodySize.Y;
                 float endSizeY = noteRenderData.IsMultiHold
-                    ? _holdEndSize.Y
-                    : _holdEndMhSize.Y;
+                    ? _holdEndMhSize.Y
+                    : _holdEndSize.Y;
 
                 // ---- 1. 渲染 Hold 头部 ----
                 if(noteRenderData.HeadVisible){

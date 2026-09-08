@@ -22,6 +22,9 @@ public partial class SettingsData : Resource
     [Export] public string ResourcePackId { get; set; } = "";
     [Export] public bool UseDefaultResource { get; set; } = true;
 
+    // 谱面播放
+    [Export] public bool UseMultiholdHighlight { get; set; } = true;
+
     // 深拷贝，避免引用问题
     public SettingsData Clone()
     {
