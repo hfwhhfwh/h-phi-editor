@@ -56,6 +56,7 @@ public partial class EditorScene : Node
     private InputManager _inputManager;
     private ChartService _chartService;
     private ChartEditService _chartEditService;
+    private EditorSettings _editorSettings;
 
     [Export] private float horOffset;
 	[Export] private float horSeparation = 100f;
@@ -176,6 +177,12 @@ public partial class EditorScene : Node
             GD.PrintErr($"[{this.Name}] ChartEditService is null");
         }
 
+        _editorSettings = GetNode<EditorSettings>("/root/EditorSettings");
+        if (_editorSettings == null)
+        {
+            GD.PrintErr($"[{this.Name}] EditorSettings is null");
+        }
+
 		//绑定事件
 		_inputManager.Slide += (float x) =>
         {
@@ -196,6 +203,9 @@ public partial class EditorScene : Node
                 var global = GetNode<Global>("/root/Global");
                 editingChartId = global.editingChartId;
 
+                // 谱面加载完成前先恢复该谱面的编辑器布局设置。
+                _editorSettings.Load(editingChartId);
+
                 // 设置正在编辑的铺面
                 chartInfo = _chartService.GetChartInfo(editingChartId);
 
@@ -208,6 +218,8 @@ public partial class EditorScene : Node
                 noteEditPanel.editingChart = editingChart;
                 eventEditPanel.editingChart = editingChart;
                 bpmEditPanel.editingChart = editingChart;
+                // 将持久化设置应用到所有使用同一网格的编辑面板。
+                ApplyEditorSettings();
                 
             }),
             ("正在加载资源包...", async () => {
@@ -859,14 +871,40 @@ public partial class EditorScene : Node
     private void SaveChart()
     {
         _chartService.SaveChart(editingChartId, editingChart);
+        // 谱面和编辑器视图设置一起保存，避免退出后丢失网格状态。
+        SaveEditorSettings();
         // TODO 保存成功后弹出Toast提示
     }
 
     private void Quit()
     {
+        SaveEditorSettings();
         var global = GetNode<Global>("/root/Global");
         global.editingChartId = "";
         global.GotoScene("res://Scene/start_menu.tscn");
+    }
+
+    private void ApplyEditorSettings()
+    {
+        int verLineCount = _editorSettings.Current.verLineCount;
+        int subBeatCount = _editorSettings.Current.subBeatCount;
+
+        noteEditPanel.VerLineCount = verLineCount;
+        noteEditPanel.SubBeatCount = subBeatCount;
+        eventEditPanel.VerLineCount = verLineCount;
+        eventEditPanel.SubBeatCount = subBeatCount;
+        bpmEditPanel.VerLineCount = verLineCount;
+        bpmEditPanel.SubBeatCount = subBeatCount;
+    }
+
+    private void SaveEditorSettings()
+    {
+        if (_editorSettings == null || string.IsNullOrEmpty(editingChartId)) return;
+
+        // 以主编辑面板的当前值作为唯一来源，确保三个面板保持一致。
+        _editorSettings.Current.verLineCount = noteEditPanel.VerLineCount;
+        _editorSettings.Current.subBeatCount = noteEditPanel.SubBeatCount;
+        _editorSettings.Save();
     }
 
     private void OnQuitPressed()

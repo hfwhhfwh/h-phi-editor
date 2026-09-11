@@ -144,6 +144,8 @@ public partial class ChartService : Node
     /// <param name="chartId">谱面id</param>
     public void DeleteChart(string chartId)
     {
+        // 编辑器配置属于谱面资源，删除谱面时一并清理。
+        EditorSettings.Instance?.Delete(chartId);
         chartRepository.DeleteChart(chartId);
     }
 

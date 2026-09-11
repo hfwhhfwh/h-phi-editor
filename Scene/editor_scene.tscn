@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://6ls0iiql2pg" path="res://Scene/virtual_joystick.tscn" id="3_fkvcd"]
 [ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/EditorScene/NoteEditPanel.cs" id="3_gwldl"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
+[ext_resource type="Texture2D" uid="uid://dalp4p7ib5coy" path="res://网格_无间距.png" id="6_c8bod"]
 [ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="6_p0vr8"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
 [ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="7_75obp"]
@@ -218,6 +219,14 @@ layout_mode = 2
 MaxRadius = 80.0
 joystickDir = 2
 
+[node name="Tools" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=345827684]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+icon = ExtResource("6_c8bod")
+icon_alignment = 1
+expand_icon = true
+
 [node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -304,6 +313,53 @@ _texture = ExtResource("23_fayi4")
 visible = false
 z_index = 10
 layout_mode = 2
+
+[node name="ToolsPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1074437693]
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+theme_override_styles/panel = ExtResource("1_7k27q")
+
+[node name="MarginContainer" type="MarginContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel" unique_id=640421563]
+layout_mode = 2
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer" unique_id=620970614]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer" unique_id=588577172]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Row" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=320015854]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row" unique_id=549361536]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer" unique_id=2139839819]
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+text = "横线数量"
+
+[node name="SpinBox" type="SpinBox" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer" unique_id=1882768528]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row" unique_id=1365459251]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer2" unique_id=1457392222]
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+text = "竖线数量"
+
+[node name="SpinBox" type="SpinBox" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer2" unique_id=192523891]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="RightPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=254800668 node_paths=PackedStringArray("normalPanel", "playingPanel", "dragPlayPanel", "tabContainer")]
 custom_minimum_size = Vector2(80, 0)
