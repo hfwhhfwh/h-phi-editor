@@ -42,10 +42,12 @@
 [ext_resource type="Texture2D" uid="uid://cwwb6dl8anq1i" path="res://停止.png" id="26_utcux"]
 [ext_resource type="PackedScene" uid="uid://bpkv57wpohu8e" path="res://Scene/event_info_panel.tscn" id="28_605qm"]
 [ext_resource type="Texture2D" uid="uid://bijy1d18kplv7" path="res://向左旋转.png" id="28_r1xvh"]
+[ext_resource type="StyleBox" uid="uid://dk22qdwdr2nns" path="res://PanelTransparent.tres" id="32_k7bmn"]
 [ext_resource type="PackedScene" uid="uid://cuskdub26yo1x" path="res://Scene/settings_panel.tscn" id="34_kheud"]
+[ext_resource type="PackedScene" uid="uid://dammma3ce4ykd" path="res://Scene/editor_settings_panel.tscn" id="35_editor_settings"]
 [ext_resource type="PackedScene" uid="uid://b1gs6hhvosbih" path="res://Scene/bpm_info_panel.tscn" id="36_lc344"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -69,6 +71,7 @@ viewMenuButton = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer
 helpMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/HelpButton")
 _othersButton = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/OtherButton")
 _settingsPanel = NodePath("EditorPanel/SafeArea/SettingsPanel")
+_editorSettingsPanel = NodePath("EditorPanel/SafeArea/EditorSettingsPanel")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
 fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/FPSLabel")
 editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
@@ -315,13 +318,16 @@ z_index = 10
 layout_mode = 2
 
 [node name="ToolsPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1074437693]
+visible = false
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
-theme_override_styles/panel = ExtResource("1_7k27q")
+theme_override_styles/panel = ExtResource("32_k7bmn")
 
 [node name="MarginContainer" type="MarginContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel" unique_id=640421563]
 layout_mode = 2
+theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
 [node name="ScrollContainer" type="ScrollContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer" unique_id=620970614]
@@ -331,35 +337,6 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-
-[node name="Row" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=320015854]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row" unique_id=549361536]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer" unique_id=2139839819]
-layout_mode = 2
-theme = ExtResource("3_2bu1g")
-text = "横线数量"
-
-[node name="SpinBox" type="SpinBox" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer" unique_id=1882768528]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row" unique_id=1365459251]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Label" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer2" unique_id=1457392222]
-layout_mode = 2
-theme = ExtResource("3_2bu1g")
-text = "竖线数量"
-
-[node name="SpinBox" type="SpinBox" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer/VBoxContainer/Row/HBoxContainer2" unique_id=192523891]
-layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="RightPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=254800668 node_paths=PackedStringArray("normalPanel", "playingPanel", "dragPlayPanel", "tabContainer")]
 custom_minimum_size = Vector2(80, 0)
@@ -554,6 +531,12 @@ layout_mode = 2
 visible = false
 z_index = 10
 layout_mode = 2
+
+[node name="EditorSettingsPanel" parent="EditorPanel/SafeArea" unique_id=1607786030 instance=ExtResource("35_editor_settings")]
+visible = false
+z_index = 11
+layout_mode = 2
+theme_override_styles/panel = ExtResource("32_k7bmn")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=424155361]
 visible = false

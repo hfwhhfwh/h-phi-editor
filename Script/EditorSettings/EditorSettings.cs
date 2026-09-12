@@ -62,11 +62,6 @@ public partial class EditorSettings : Node
         ValidateChartId(chartId);
 
         if (CurrentChartId == chartId && Current != null) return;
-        if (!string.IsNullOrEmpty(CurrentChartId))
-        {
-            GD.PrintErr($"[{Name}] ChartId为空");
-            return;
-        }
 
         CurrentChartId = chartId;
         Current = _defaultSettings.Clone();

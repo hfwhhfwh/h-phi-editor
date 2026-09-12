@@ -43,6 +43,7 @@ public partial class EditorScene : Node
     [Export] private MenuButton helpMenuButtion;
     [Export] private Button _othersButton;
     [Export] private SettingsPanel _settingsPanel;
+    [Export] private EditorSettingsPanel _editorSettingsPanel;
 
     [Export] private Label editingLineLabel;
     [Export] private Label fpsLabel;
@@ -181,6 +182,11 @@ public partial class EditorScene : Node
         if (_editorSettings == null)
         {
             GD.PrintErr($"[{this.Name}] EditorSettings is null");
+        }
+        else
+        {
+            // 监听编辑器设置变化事件
+            _editorSettings.SettingChanged += OnEditorSettingChanged;
         }
 
 		//绑定事件
@@ -370,7 +376,8 @@ public partial class EditorScene : Node
                 new PopupMenuItem { Text = "粘贴", Callback = null},
                 new PopupMenuItem { Text = "剪切", Callback = null},
                 new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "设置", Callback = _settingsPanel.Show},
+                new PopupMenuItem { Text = "全局设置", Callback = _settingsPanel.Show},
+                new PopupMenuItem { Text = "编辑器设置", Callback = _editorSettingsPanel.Show},
             };
             PopupMenuHelper.Instance.SetMenuButton(editMenuButtion, items);
         }
@@ -571,6 +578,11 @@ public partial class EditorScene : Node
     public override void _ExitTree()
     {
         base._ExitTree();
+
+        if (_editorSettings != null)
+        {
+            _editorSettings.SettingChanged -= OnEditorSettingChanged;
+        }
 
         #if TOOLS
         // 取消注册自定义监视器 小心lambda诡异的生命周期问题
@@ -886,24 +898,57 @@ public partial class EditorScene : Node
 
     private void ApplyEditorSettings()
     {
-        int verLineCount = _editorSettings.Current.verLineCount;
-        int subBeatCount = _editorSettings.Current.subBeatCount;
+        if(_editorSettings == null)
+        {
+            GD.PrintErr($"[{this.Name}] EditorSettings is null");
+            return;
+        }
+        
+        int verLineCount = _editorSettings.Current.VerLineCount;
+        int subBeatCount = _editorSettings.Current.SubBeatCount;
 
         noteEditPanel.VerLineCount = verLineCount;
         noteEditPanel.SubBeatCount = subBeatCount;
-        eventEditPanel.VerLineCount = verLineCount;
+        
         eventEditPanel.SubBeatCount = subBeatCount;
-        bpmEditPanel.VerLineCount = verLineCount;
+        
         bpmEditPanel.SubBeatCount = subBeatCount;
+    }
+
+    private void OnEditorSettingChanged(string key, Variant value)
+    {
+        if(_editorSettings == null)
+        {
+            GD.PrintErr($"[{this.Name}] EditorSettings is null");
+            return;
+        }
+
+        switch (key)
+        {
+            case nameof(EditorSettingsData.VerLineCount):
+                int verLineCount = _editorSettings.Current.VerLineCount;
+                noteEditPanel.VerLineCount = verLineCount;
+                
+                break;
+            
+            case nameof(EditorSettingsData.SubBeatCount):
+                int subBeatCount = _editorSettings.Current.SubBeatCount;
+                noteEditPanel.SubBeatCount = subBeatCount;
+                eventEditPanel.SubBeatCount = subBeatCount;
+                bpmEditPanel.SubBeatCount = subBeatCount;
+                break;
+            
+            default:
+                GD.PrintErr($"[{this.Name}] 未知的EditorSettings设置项:{key}");
+                ApplyEditorSettings();
+                break;
+        }
     }
 
     private void SaveEditorSettings()
     {
         if (_editorSettings == null || string.IsNullOrEmpty(editingChartId)) return;
 
-        // 以主编辑面板的当前值作为唯一来源，确保三个面板保持一致。
-        _editorSettings.Current.verLineCount = noteEditPanel.VerLineCount;
-        _editorSettings.Current.subBeatCount = noteEditPanel.SubBeatCount;
         _editorSettings.Save();
     }
 

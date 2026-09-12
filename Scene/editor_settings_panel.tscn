@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://dammma3ce4ykd"]
+
+[ext_resource type="Script" uid="uid://f6kk1ya33g3w" path="res://Script/EditorSettings/EditorSettingsPanel.cs" id="1_editor_settings"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="2_theme"]
+
+[node name="EditorSettingsPanel" type="PanelContainer" unique_id=414673566 node_paths=PackedStringArray("_subBeatCountEdit", "_verLineCountEdit", "_applyButton", "_confirmButton", "_closeButton")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_editor_settings")
+_subBeatCountEdit = NodePath("MarginContainer/VBoxContainer/Properties/HBoxContainer/SubBeatCount/SpinBox")
+_verLineCountEdit = NodePath("MarginContainer/VBoxContainer/Properties/HBoxContainer/VerLineCount/SpinBox")
+_applyButton = NodePath("MarginContainer/VBoxContainer/Buttons/Apply")
+_confirmButton = NodePath("MarginContainer/VBoxContainer/Buttons/Confirm")
+_closeButton = NodePath("MarginContainer/VBoxContainer/Header/Close")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1388876307]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1687624658]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=901905292]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer/Header" unique_id=1081841617]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "编辑器设置"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Close" type="Button" parent="MarginContainer/VBoxContainer/Header" unique_id=1308776552]
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "返回"
+
+[node name="Properties" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1406895765]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Properties" unique_id=1476948361]
+layout_mode = 2
+
+[node name="VerLineCount" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Properties/HBoxContainer" unique_id=2085802037]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/Properties/HBoxContainer/VerLineCount" unique_id=733872237]
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "竖线数量"
+
+[node name="SpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/Properties/HBoxContainer/VerLineCount" unique_id=668792455]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_theme")
+
+[node name="SubBeatCount" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Properties/HBoxContainer" unique_id=1652061279]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/Properties/HBoxContainer/SubBeatCount" unique_id=1730339355]
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "每拍子横线数"
+
+[node name="SpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/Properties/HBoxContainer/SubBeatCount" unique_id=848471736]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_theme")
+
+[node name="Buttons" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1873306093]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 2
+
+[node name="Apply" type="Button" parent="MarginContainer/VBoxContainer/Buttons" unique_id=101816195]
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "应用"
+
+[node name="Confirm" type="Button" parent="MarginContainer/VBoxContainer/Buttons" unique_id=486882566]
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "确定"
