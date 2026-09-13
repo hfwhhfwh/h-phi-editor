@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO.Compression;
 
 public static class FileUtil
 {
@@ -88,49 +89,176 @@ public static class FileUtil
     /// <param name="extractBasePath">解压基础路径，例如 "user://ChartImport/"</param>
     public static void UnzipFileTo(string zipPath, string extractBasePath)
     {
-        var zipReader = new ZipReader();
-        Error error = zipReader.Open(zipPath);
-
-        if (error != Error.Ok)
+        // 方案1
         {
-            GD.PrintErr($"无法打开ZIP文件: {zipPath}, 错误码: {error}");
+            // var zipReader = new ZipReader();
+            // Error error = zipReader.Open(zipPath);
+
+            // if (error != Error.Ok)
+            // {
+            //     GD.PrintErr($"无法打开ZIP文件: {zipPath}, 错误码: {error}");
+            //     return;
+            // }
+
+            // // 遍历ZIP内的所有文件
+            // string[] files = zipReader.GetFiles();
+            // foreach (string filePath in files)// 例如 Chart.json
+            // {
+            //     // 计算文件的完整输出路径
+            //     string fullOutputPath = Path.Combine(extractBasePath, filePath); // 例如 user://ChartImport/Chart.json
+            //     string outputDirectory = extractBasePath; // 例如 user://ChartImport/
+
+            //     // 确保文件的子目录存在
+            //     DirAccess.MakeDirRecursiveAbsolute(outputDirectory);
+
+            //     // 读取ZIP中的文件数据并写入磁盘
+            //     byte[] fileData = zipReader.ReadFile(filePath);
+            //     if (fileData != null)
+            //     {
+            //         using var file = Godot.FileAccess.Open(fullOutputPath, Godot.FileAccess.ModeFlags.Write);
+            //         if (file != null)
+            //         {
+            //             file.StoreBuffer(fileData);
+            //             GD.Print($"已解压: {filePath}");
+            //         }
+            //         else
+            //         {
+            //             GD.PrintErr($"无法创建输出文件: {fullOutputPath}");
+            //         }
+            //     }
+            //     else
+            //     {
+            //         GD.PrintErr($"无法从ZIP读取文件: {filePath}");
+            //     }
+            // }
+
+            // zipReader.Close();
+        }
+
+        // 方案2
+        {
+            // // 1. 将 Godot 虚拟路径转换为系统绝对路径，供 .NET 库使用
+            // string absoluteZipPath = ProjectSettings.GlobalizePath(zipPath);
+            // string absoluteExtractPath = ProjectSettings.GlobalizePath(extractBasePath);
+
+            // // 2. 确保目标目录存在
+            // if (!Directory.Exists(absoluteExtractPath))
+            // {
+            //     Directory.CreateDirectory(absoluteExtractPath);
+            // }
+
+            // // 3. 注册代码页编码提供程序（.NET Core/5+ 需要）
+            // Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Encoding shiftJis = Encoding.GetEncoding(932); // 日文 Shift-JIS
+
+            // try
+            // {
+            //     // 4. 以指定编码打开 ZIP 归档
+            //     using (ZipArchive archive = ZipFile.Open(absoluteZipPath, ZipArchiveMode.Read, shiftJis))
+            //     {
+            //         foreach (ZipArchiveEntry entry in archive.Entries)
+            //         {
+            //             // 跳过目录条目（名称通常以 / 结尾，或名称为空）
+            //             if (string.IsNullOrEmpty(entry.Name))
+            //                 continue;
+
+            //             // 5. 计算目标文件的完整路径
+            //             string destinationPath = Path.Combine(absoluteExtractPath, entry.FullName);
+            //             string destinationDir = Path.GetDirectoryName(destinationPath);
+
+            //             // 确保子目录存在
+            //             if (!string.IsNullOrEmpty(destinationDir) && !Directory.Exists(destinationDir))
+            //             {
+            //                 Directory.CreateDirectory(destinationDir);
+            //             }
+
+            //             // 6. 解压文件（true 表示覆盖已存在的文件）
+            //             entry.ExtractToFile(destinationPath, true);
+            //             GD.Print($"已解压: {entry.FullName}");
+            //         }
+            //     }
+            //     GD.Print($"解压完成:{zipPath} -> {extractBasePath}");
+            // }
+            // catch (Exception e)
+            // {
+            //     GD.PrintErr($"解压失败:{zipPath} -> {extractBasePath}, 错误:\n{e}");
+            // }
+        }
+        
+        // 方案3
+        {
+            // string absoluteZipPath = ProjectSettings.GlobalizePath(zipPath);
+            // string absoluteExtractPath = ProjectSettings.GlobalizePath(extractBasePath);
+
+            // ZipFile.ExtractToDirectory(absoluteZipPath, absoluteExtractPath);
+        }
+        
+
+        string absoluteZipPath = ProjectSettings.GlobalizePath(zipPath);
+        string absoluteExtractPath = ProjectSettings.GlobalizePath(extractBasePath);
+
+        List<ZipNameDecoder.RawEntryInfo> rawEntries = null;
+        try
+        {
+            rawEntries = ZipNameDecoder.ReadCentralDirectory(absoluteZipPath);
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr($"解析 ZIP 目录失败: {zipPath}, {e.Message}");
             return;
         }
 
-        // 遍历ZIP内的所有文件
-        string[] files = zipReader.GetFiles();
-        foreach (string filePath in files)// 例如 Chart.json
+        Directory.CreateDirectory(absoluteExtractPath);
+        string extractRoot = Path.GetFullPath(absoluteExtractPath);
+        if (!extractRoot.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+            extractRoot += Path.DirectorySeparatorChar;
+
+        using var archive = ZipFile.OpenRead(absoluteZipPath);
+
+        for (int i = 0; i < archive.Entries.Count; i++)
         {
-            // 计算文件的完整输出路径
-            string fullOutputPath = Path.Combine(extractBasePath, filePath); // 例如 user://ChartImport/Chart.json
-            string outputDirectory = extractBasePath; // 例如 user://ChartImport/
+            var entry = archive.Entries[i];
+            if (string.IsNullOrEmpty(entry.Name) || entry.FullName.EndsWith("/", StringComparison.Ordinal) || entry.FullName.EndsWith("\\", StringComparison.Ordinal))
+                continue; // 目录条目，跳过
 
-            // 确保文件的子目录存在
-            DirAccess.MakeDirRecursiveAbsolute(outputDirectory);
-
-            // 读取ZIP中的文件数据并写入磁盘
-            byte[] fileData = zipReader.ReadFile(filePath);
-            if (fileData != null)
-            {
-                using var file = Godot.FileAccess.Open(fullOutputPath, Godot.FileAccess.ModeFlags.Write);
-                if (file != null)
-                {
-                    file.StoreBuffer(fileData);
-                    GD.Print($"已解压: {filePath}");
-                }
-                else
-                {
-                    GD.PrintErr($"无法创建输出文件: {fullOutputPath}");
-                }
-            }
+            string decodedName;
+            if (rawEntries != null && i < rawEntries.Count && rawEntries[i] != null)
+                decodedName = ZipNameDecoder.DecodeEntryName(rawEntries[i]);
             else
+                decodedName = entry.Name;
+
+            if (string.IsNullOrWhiteSpace(decodedName))
+                decodedName = entry.Name;
+
+            decodedName = decodedName.Replace('\\', '/').TrimStart('/');
+            if (string.IsNullOrEmpty(decodedName))
+                continue;
+
+            // 防止 zip-slip 路径穿越攻击
+            string destPath = Path.GetFullPath(Path.Combine(absoluteExtractPath, decodedName));
+            if (!destPath.StartsWith(extractRoot, StringComparison.Ordinal))
             {
-                GD.PrintErr($"无法从ZIP读取文件: {filePath}");
+                GD.PrintErr($"跳过不安全路径: {decodedName}");
+                continue;
+            }
+
+            string destDir = Path.GetDirectoryName(destPath);
+            if (!string.IsNullOrEmpty(destDir)) Directory.CreateDirectory(destDir);
+
+            try
+            {
+                using var input = entry.Open();
+                using var output = new FileStream(destPath, System.IO.FileMode.Create, System.IO.FileAccess.Write);
+                input.CopyTo(output);
+                GD.Print($"已解压: {decodedName}");
+            }
+            catch (Exception e)
+            {
+                GD.PrintErr($"解压条目失败: {decodedName}, {e.Message}");
             }
         }
 
-        zipReader.Close();
-        GD.Print("解压完成！");
+        GD.Print($"解压完成: {zipPath} -> {extractBasePath}");
     }
 
     /// <summary>

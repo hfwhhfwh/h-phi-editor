@@ -386,11 +386,13 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 
 [node name="Label" type="Label" parent="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer" unique_id=1612663454]
+custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
 size_flags_vertical = 6
 theme_override_font_sizes/font_size = 45
 text = "确定要删除谱面吗？（无法撤回）"
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/SafeArea/DeletePanel/MarginContainer/VBoxContainer" unique_id=852187556]
 layout_mode = 2
