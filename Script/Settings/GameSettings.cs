@@ -94,6 +94,7 @@ public partial class GameSettings : Node
                     // object typedValue = Convert.ChangeType(value.Obj, prop.PropertyType);
                     // prop.SetValue(Current, typedValue);
                     Current.Set(prop.Name, value);
+                    // GD.Print($"加载属性{prop.Name}: {value}");
                 }
                 catch (Exception e)
                 {

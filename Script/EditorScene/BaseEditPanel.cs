@@ -73,6 +73,18 @@ public abstract partial class BaseEditPanel : Panel
 		set { if (_gridDrawer != null) _gridDrawer.HorSubWidth = value; }
 	}
 
+	public Color GroundLineColor
+	{
+		get => _gridDrawer.GroundLineColor;
+		set { if (_gridDrawer != null) _gridDrawer.GroundLineColor = value; }
+	}
+
+	public float GroundLineWidth
+	{
+		get => _gridDrawer.GroundLineWidth;
+		set { if (_gridDrawer != null) _gridDrawer.GroundLineWidth = value; }
+	}
+
 	#endregion
 
 	// ---- 滚动/缩放 ----

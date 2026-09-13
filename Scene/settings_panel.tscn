@@ -5,8 +5,9 @@
 [ext_resource type="StyleBox" uid="uid://2eir3yfwt18w" path="res://PanelGrey.tres" id="3_bnfmk"]
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
+[ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://刷新.png" id="6_iis6y"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -27,6 +28,14 @@ _clearCasheBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitCo
 _casheSizeLabel = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer/Label2")
 _packOverview = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/ResourcePackOverview")
 _mhHighlightBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight")
+_verLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Color/ColorPickerButton")
+_horSubLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Color/ColorPickerButton")
+_horLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Color/ColorPickerButton")
+_groundLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Color/ColorPickerButton")
+_verLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Width/SpinBox")
+_horSubLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Width/SpinBox")
+_horLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Width/SpinBox")
+_groundLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Width/SpinBox")
 
 [node name="TabManager" type="Node" parent="." unique_id=1686546388 node_paths=PackedStringArray("TabMap", "defaultButton")]
 script = ExtResource("3_j4nhx")
@@ -34,7 +43,8 @@ TabMap = {
 NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Display"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display"),
 NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Pack"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack"),
 NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Storage"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage"),
-NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Play"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play")
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Play"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play"),
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Editor"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor")
 }
 defaultButton = NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Display")
 
@@ -137,6 +147,10 @@ text = "存储空间"
 [node name="Play" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section" unique_id=1274066479]
 layout_mode = 2
 text = "谱面播放"
+
+[node name="Editor" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section" unique_id=1858156545]
+layout_mode = 2
+text = "编辑器"
 
 [node name="Properties" type="PanelContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer" unique_id=924282429]
 layout_mode = 2
@@ -260,6 +274,7 @@ layout_mode = 2
 text = "清空缓存"
 
 [node name="Play" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=10732044]
+visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play" unique_id=1553095705]
@@ -269,6 +284,200 @@ layout_mode = 2
 layout_mode = 2
 theme = ExtResource("1_ykn2r")
 text = "多押提示"
+
+[node name="Editor" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1495793183]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor" unique_id=179680598]
+layout_mode = 2
+
+[node name="HorLine" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer" unique_id=1313255021]
+layout_mode = 2
+
+[node name="Color" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine" unique_id=660639813]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Color" unique_id=830170386]
+layout_mode = 2
+text = "横线颜色"
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Color" unique_id=402427712]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "横线颜色"
+alignment = 0
+color = Color(0.0037039549, 0.0016771684, 0.0011153867, 1)
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Color" unique_id=1254317215]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Width" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine" unique_id=1700287664]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Width" unique_id=941012527]
+layout_mode = 2
+text = "横线宽度"
+
+[node name="SpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Width" unique_id=579388045]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 10.0
+step = 0.1
+allow_greater = true
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Width" unique_id=573513427]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
+[node name="HorSubLine" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer" unique_id=2053350385]
+layout_mode = 2
+
+[node name="Color" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine" unique_id=1336273656]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Color" unique_id=1334203013]
+layout_mode = 2
+text = "次横线颜色"
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Color" unique_id=1541452316]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "横线颜色"
+alignment = 0
+color = Color(0.0037039549, 0.0016771684, 0.0011153867, 1)
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Color" unique_id=1322278809]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Width" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine" unique_id=1255861210]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Width" unique_id=958894041]
+layout_mode = 2
+text = "次横线宽度"
+
+[node name="SpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Width" unique_id=1962059276]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 10.0
+step = 0.1
+allow_greater = true
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Width" unique_id=1466429504]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
+[node name="VerLine" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer" unique_id=1320018966]
+layout_mode = 2
+
+[node name="Color" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine" unique_id=1891487765]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Color" unique_id=1986436496]
+layout_mode = 2
+text = "竖横线颜色"
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Color" unique_id=1996367958]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "横线颜色"
+alignment = 0
+color = Color(0.0037039549, 0.0016771684, 0.0011153867, 1)
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Color" unique_id=66713996]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Width" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine" unique_id=305274579]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Width" unique_id=1119397256]
+layout_mode = 2
+text = "竖线宽度"
+
+[node name="SpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Width" unique_id=54980860]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 10.0
+step = 0.1
+allow_greater = true
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Width" unique_id=1227158867]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
+[node name="GroundLine" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer" unique_id=213023005]
+layout_mode = 2
+
+[node name="Color" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine" unique_id=980916324]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Color" unique_id=1642074136]
+layout_mode = 2
+text = "基准线颜色"
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Color" unique_id=104105021]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "横线颜色"
+alignment = 0
+color = Color(0.0037039549, 0.0016771684, 0.0011153867, 1)
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Color" unique_id=1555384338]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Width" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine" unique_id=847098755]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Width" unique_id=417532535]
+layout_mode = 2
+text = "基准线宽度"
+
+[node name="SpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Width" unique_id=865273720]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 10.0
+step = 0.1
+allow_greater = true
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Width" unique_id=1950922488]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=240990376]
 layout_mode = 2

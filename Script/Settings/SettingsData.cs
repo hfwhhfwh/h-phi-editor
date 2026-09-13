@@ -25,6 +25,16 @@ public partial class SettingsData : Resource
     // 谱面播放
     [Export] public bool UseMultiholdHighlight { get; set; } = true;
 
+    // ---------------- 编辑器设置 ----------------
+    [Export] public Color HorColor { get; set; } = new Color(1f, 0, 0, 0.686f);
+    [Export] public float HorWidth { get; set; } = 1;
+    [Export] public Color HorSubColor { get; set; } = new Color(1f, 1f, 0, 0.588f);
+    [Export] public float HorSubWidth { get; set; } = 1;
+    [Export] public Color VerColor { get; set; } = new Color(0, 1f, 0, 0.588f);
+    [Export] public float VerWidth { get; set; } = 1;
+	[Export] public Color GroundLineColor { get; set; } = new Color(0.7f, 0.7f, 0.7f, 0.9f);
+	[Export] public float GroundLineWidth { get; set; } = 3;
+
     // 深拷贝，避免引用问题
     public SettingsData Clone()
     {

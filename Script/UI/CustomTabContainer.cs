@@ -22,6 +22,12 @@ public partial class CustomTabContainer : Node
             return;
         }
 
+        if(defaultButton == null)
+        {
+            GD.PrintErr($"[{Name}] defaultButton 为空，请在编辑器中配置默认界面。");
+            return;
+        }
+
         _buttonGroup = new ButtonGroup();
 
         foreach (KeyValuePair<Button, Control> pair in TabMap)

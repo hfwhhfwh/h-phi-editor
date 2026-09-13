@@ -435,9 +435,22 @@ public partial class EditorScene : Node
 
         GameSettings.Instance.SettingChanged += (string key, Variant value) =>
         {
-            if(key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
+            if (key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
             {
                 LoadResourcePack();
+                return;
+            }
+
+            if (key == nameof(SettingsData.HorColor)
+                || key == nameof(SettingsData.HorWidth)
+                || key == nameof(SettingsData.HorSubColor)
+                || key == nameof(SettingsData.HorSubWidth)
+                || key == nameof(SettingsData.VerColor)
+                || key == nameof(SettingsData.VerWidth)
+                || key == nameof(SettingsData.GroundLineColor)
+                || key == nameof(SettingsData.GroundLineWidth))
+            {
+                ApplyGridAppearanceSettings();
             }
         };
         
@@ -896,6 +909,43 @@ public partial class EditorScene : Node
         global.GotoScene("res://Scene/start_menu.tscn");
     }
 
+    private void ApplyGridAppearanceSettings()
+    {
+        if (GameSettings.Instance == null || GameSettings.Instance.Current == null)
+        {
+            return;
+        }
+
+        SettingsData settings = GameSettings.Instance.Current;
+
+        noteEditPanel.HorColor = settings.HorColor;
+        noteEditPanel.HorWidth = settings.HorWidth;
+        noteEditPanel.HorSubColor = settings.HorSubColor;
+        noteEditPanel.HorSubWidth = settings.HorSubWidth;
+        noteEditPanel.VerColor = settings.VerColor;
+        noteEditPanel.VerWidth = settings.VerWidth;
+        noteEditPanel.GroundLineColor = settings.GroundLineColor;
+        noteEditPanel.GroundLineWidth = settings.GroundLineWidth;
+
+        eventEditPanel.HorColor = settings.HorColor;
+        eventEditPanel.HorWidth = settings.HorWidth;
+        eventEditPanel.HorSubColor = settings.HorSubColor;
+        eventEditPanel.HorSubWidth = settings.HorSubWidth;
+        eventEditPanel.VerColor = settings.VerColor;
+        eventEditPanel.VerWidth = settings.VerWidth;
+        eventEditPanel.GroundLineColor = settings.GroundLineColor;
+        eventEditPanel.GroundLineWidth = settings.GroundLineWidth;
+
+        bpmEditPanel.HorColor = settings.HorColor;
+        bpmEditPanel.HorWidth = settings.HorWidth;
+        bpmEditPanel.HorSubColor = settings.HorSubColor;
+        bpmEditPanel.HorSubWidth = settings.HorSubWidth;
+        bpmEditPanel.VerColor = settings.VerColor;
+        bpmEditPanel.VerWidth = settings.VerWidth;
+        bpmEditPanel.GroundLineColor = settings.GroundLineColor;
+        bpmEditPanel.GroundLineWidth = settings.GroundLineWidth;
+    }
+
     private void ApplyEditorSettings()
     {
         if(_editorSettings == null)
@@ -913,6 +963,8 @@ public partial class EditorScene : Node
         eventEditPanel.SubBeatCount = subBeatCount;
         
         bpmEditPanel.SubBeatCount = subBeatCount;
+
+        ApplyGridAppearanceSettings();
     }
 
     private void OnEditorSettingChanged(string key, Variant value)
@@ -928,7 +980,6 @@ public partial class EditorScene : Node
             case nameof(EditorSettingsData.VerLineCount):
                 int verLineCount = _editorSettings.Current.VerLineCount;
                 noteEditPanel.VerLineCount = verLineCount;
-                
                 break;
             
             case nameof(EditorSettingsData.SubBeatCount):

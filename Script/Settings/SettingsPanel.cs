@@ -32,16 +32,17 @@ public partial class SettingsPanel : Control
     [Export] private ResourcePackOverview _packOverview;
 
     [Export] private CheckButton _mhHighlightBtn;
-    // [Export] private Button _resetBtn;
 
-    // 分辨率预设
-    // private readonly (string Name, Vector2I Size)[] _resolutions = new[]
-    // {
-    //     ("1280 x 720",  new Vector2I(1280, 720)),
-    //     ("1920 x 1080", new Vector2I(1920, 1080)),
-    //     ("2560 x 1440", new Vector2I(2560, 1440)),
-    //     ("3840 x 2160", new Vector2I(3840, 2160)),
-    // };
+    // ---------------- 编辑器设置 ----------------
+    [Export] private ColorPickerButton _verLineColorPicker;
+    [Export] private ColorPickerButton _horSubLineColorPicker;
+    [Export] private ColorPickerButton _horLineColorPicker;
+    [Export] private ColorPickerButton _groundLineColorPicker;
+
+    [Export] private SpinBox _verLineWidthEdit;
+    [Export] private SpinBox _horSubLineWidthEdit;
+    [Export] private SpinBox _horLineWidthEdit;
+    [Export] private SpinBox _groundLineWidthEdit;
 
     public override void _Ready()
     {
@@ -56,10 +57,11 @@ public partial class SettingsPanel : Control
         // RefreshUI();        // 从 Settings 读取初始值
 
         // UI → Settings
-        BindEvents();       
+        BindEvents();
+        
         // Settings → UI
         GameSettings.Instance.SettingChanged += OnSettingChanged;
-        GameSettings.Instance.SettingsApplied += OnSettingsApplied;      
+        GameSettings.Instance.SettingsApplied += OnSettingsApplied;
 
         _importPackBtn.Pressed += OnImportClicked;
         _deletePackBtn.Pressed += OnDeletePackClicked;
@@ -95,6 +97,15 @@ public partial class SettingsPanel : Control
             GameSettings.Instance.SettingChanged -= OnSettingChanged;
             GameSettings.Instance.SettingsApplied -= OnSettingsApplied;
         }
+
+        if (_verLineColorPicker != null) _verLineColorPicker.ColorChanged -= OnVerLineColorChanged;
+        if (_horSubLineColorPicker != null) _horSubLineColorPicker.ColorChanged -= OnHorSubLineColorChanged;
+        if (_horLineColorPicker != null) _horLineColorPicker.ColorChanged -= OnHorLineColorChanged;
+        if (_groundLineColorPicker != null) _groundLineColorPicker.ColorChanged -= OnGroundLineColorChanged;
+        if (_verLineWidthEdit != null) _verLineWidthEdit.ValueChanged -= OnVerLineWidthChanged;
+        if (_horSubLineWidthEdit != null) _horSubLineWidthEdit.ValueChanged -= OnHorSubLineWidthChanged;
+        if (_horLineWidthEdit != null) _horLineWidthEdit.ValueChanged -= OnHorLineWidthChanged;
+        if (_groundLineWidthEdit != null) _groundLineWidthEdit.ValueChanged -= OnGroundLineWidthChanged;
     }
 
     // ---------- 绑定：UI 修改 → Settings ----------
@@ -128,6 +139,15 @@ public partial class SettingsPanel : Control
             GameSettings.Instance.Set(nameof(SettingsData.UseMultiholdHighlight), value);
         };
 
+        _verLineColorPicker.ColorChanged += OnVerLineColorChanged;
+        _horSubLineColorPicker.ColorChanged += OnHorSubLineColorChanged;
+        _horLineColorPicker.ColorChanged += OnHorLineColorChanged;
+        _groundLineColorPicker.ColorChanged += OnGroundLineColorChanged;
+        _verLineWidthEdit.ValueChanged += OnVerLineWidthChanged;
+        _horSubLineWidthEdit.ValueChanged += OnHorSubLineWidthChanged;
+        _horLineWidthEdit.ValueChanged += OnHorLineWidthChanged;
+        _groundLineWidthEdit.ValueChanged += OnGroundLineWidthChanged;
+
         _applyBtn.Pressed += () => GameSettings.Instance.Save();
         _confirmBtn.Pressed += () =>
         {
@@ -138,6 +158,30 @@ public partial class SettingsPanel : Control
         
         // _resetBtn.Pressed += () => GameSettings.Instance.ResetToDefault();
     }
+
+    private void OnVerLineColorChanged(Color value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.VerColor), value);
+
+    private void OnHorSubLineColorChanged(Color value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.HorSubColor), value);
+
+    private void OnHorLineColorChanged(Color value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.HorColor), value);
+
+    private void OnGroundLineColorChanged(Color value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.GroundLineColor), value);
+
+    private void OnVerLineWidthChanged(double value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.VerWidth), Mathf.Max(0.1f, (float)value));
+
+    private void OnHorSubLineWidthChanged(double value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.HorSubWidth), Mathf.Max(0.1f, (float)value));
+
+    private void OnHorLineWidthChanged(double value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.HorWidth), Mathf.Max(0.1f, (float)value));
+
+    private void OnGroundLineWidthChanged(double value) =>
+        GameSettings.Instance.Set(nameof(SettingsData.GroundLineWidth), Mathf.Max(0.1f, (float)value));
 
     // // ---------- 绑定：Settings 变化 → UI ----------
     // private void BindSignals()
@@ -170,6 +214,38 @@ public partial class SettingsPanel : Control
             
             case nameof(SettingsData.UseMultiholdHighlight):
                 _mhHighlightBtn.ButtonPressed = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseMultiholdHighlight));
+                break;
+
+            case nameof(SettingsData.VerColor):
+                _verLineColorPicker.Color = value.AsColor();
+                break;
+
+            case nameof(SettingsData.HorSubColor):
+                _horSubLineColorPicker.Color = value.AsColor();
+                break;
+
+            case nameof(SettingsData.HorColor):
+                _horLineColorPicker.Color = value.AsColor();
+                break;
+
+            case nameof(SettingsData.GroundLineColor):
+                _groundLineColorPicker.Color = value.AsColor();
+                break;
+
+            case nameof(SettingsData.VerWidth):
+                _verLineWidthEdit.SetValueNoSignal(value.AsDouble());
+                break;
+
+            case nameof(SettingsData.HorSubWidth):
+                _horSubLineWidthEdit.SetValueNoSignal(value.AsDouble());
+                break;
+
+            case nameof(SettingsData.HorWidth):
+                _horLineWidthEdit.SetValueNoSignal(value.AsDouble());
+                break;
+
+            case nameof(SettingsData.GroundLineWidth):
+                _groundLineWidthEdit.SetValueNoSignal(value.AsDouble());
                 break;
         }
     }
@@ -245,6 +321,17 @@ public partial class SettingsPanel : Control
 
             // 播放设置
             _mhHighlightBtn.ButtonPressed = settings.UseMultiholdHighlight;
+
+            // 网格设置
+            _verLineColorPicker.Color = settings.VerColor;
+            _horSubLineColorPicker.Color = settings.HorSubColor;
+            _horLineColorPicker.Color = settings.HorColor;
+            _groundLineColorPicker.Color = settings.GroundLineColor;
+
+            _verLineWidthEdit.SetValueNoSignal(settings.VerWidth);
+            _horSubLineWidthEdit.SetValueNoSignal(settings.HorSubWidth);
+            _horLineWidthEdit.SetValueNoSignal(settings.HorWidth);
+            _groundLineWidthEdit.SetValueNoSignal(settings.GroundLineWidth);
 
             // 存储空间
             // 取消之前的扫描任务（如果有）
