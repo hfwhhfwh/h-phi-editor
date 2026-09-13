@@ -56,6 +56,42 @@ public partial class GameSettings : Node
         SaveDeferred();
     }
 
+    public void ResetProperty(string key)
+    {
+        PropertyInfo property = Current.GetType().GetProperty(
+            key,
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        if (property == null || !property.CanWrite || !property.CanRead)
+        {
+            GD.PushWarning($"[{Name}] 无法恢复未知或只读设置: {key}");
+            return;
+        }
+
+        Variant defaultValue = _defaultSettings.Get(key);
+        Variant currentValue = Current.Get(key);
+        if (currentValue.Equals(defaultValue)) return;
+
+        Current.Set(key, defaultValue);
+        EmitSignal(SignalName.SettingChanged, key, defaultValue);
+        GD.Print($"[{Name}] 成功将属性 {key} 恢复为默认值:{defaultValue}");
+
+        SaveDeferred();
+    }
+
+    public bool IsPropertyDefault(string key)
+    {
+        PropertyInfo property = Current.GetType().GetProperty(
+            key,
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        if (property == null || !property.CanRead)
+        {
+            GD.PushWarning($"[{Name}] 无法检查未知或不可读设置: {key}");
+            return true;
+        }
+
+        return Current.Get(key).Equals(_defaultSettings.Get(key));
+    }
+
     // 为常用设置提供强类型属性，兼顾便利性和类型安全
     public string ResourcePackId
     {

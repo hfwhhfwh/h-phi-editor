@@ -433,26 +433,7 @@ public partial class EditorScene : Node
         PlayModeManager.PlayModeChanged += OnPlayModeChanged;
         PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
 
-        GameSettings.Instance.SettingChanged += (string key, Variant value) =>
-        {
-            if (key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
-            {
-                LoadResourcePack();
-                return;
-            }
-
-            if (key == nameof(SettingsData.HorColor)
-                || key == nameof(SettingsData.HorWidth)
-                || key == nameof(SettingsData.HorSubColor)
-                || key == nameof(SettingsData.HorSubWidth)
-                || key == nameof(SettingsData.VerColor)
-                || key == nameof(SettingsData.VerWidth)
-                || key == nameof(SettingsData.GroundLineColor)
-                || key == nameof(SettingsData.GroundLineWidth))
-            {
-                ApplyGridAppearanceSettings();
-            }
-        };
+        GameSettings.Instance.SettingChanged += OnSettingsChanged;
         
     }
 
@@ -1001,6 +982,27 @@ public partial class EditorScene : Node
         if (_editorSettings == null || string.IsNullOrEmpty(editingChartId)) return;
 
         _editorSettings.Save();
+    }
+
+    private void OnSettingsChanged(string key, Variant value)
+    {
+        if (key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
+        {
+            LoadResourcePack();
+            return;
+        }
+
+        if (key == nameof(SettingsData.HorColor)
+            || key == nameof(SettingsData.HorWidth)
+            || key == nameof(SettingsData.HorSubColor)
+            || key == nameof(SettingsData.HorSubWidth)
+            || key == nameof(SettingsData.VerColor)
+            || key == nameof(SettingsData.VerWidth)
+            || key == nameof(SettingsData.GroundLineColor)
+            || key == nameof(SettingsData.GroundLineWidth))
+        {
+            ApplyGridAppearanceSettings();
+        }
     }
 
     private void OnQuitPressed()

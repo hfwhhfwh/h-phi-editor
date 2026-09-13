@@ -16,10 +16,14 @@ public partial class SettingsPanel : Control
 
     // ---------- 控件引用 ----------
     [Export] private OptionButton _vSyncOptionBtn;
+    [Export] private Button _resetVSyncBtn;
     [Export] private SpinBox _maxFpsEdit;
+    [Export] private Button _resetMaxFpsBtn;
 
     [Export] private OptionButton _packOptionBtn;
+    [Export] private Button _resetPackBtn;
     [Export] private CheckButton _useDefaultResourceBtn;
+    [Export] private Button _resetUseDefaultResourceBtn;
     [Export] private Button _importPackBtn;
     [Export] private Button _exportPackBtn;
     [Export] private Button _deletePackBtn;
@@ -32,6 +36,7 @@ public partial class SettingsPanel : Control
     [Export] private ResourcePackOverview _packOverview;
 
     [Export] private CheckButton _mhHighlightBtn;
+    [Export] private Button _resetMhHighlightBtn;
 
     // ---------------- 编辑器设置 ----------------
     [Export] private ColorPickerButton _verLineColorPicker;
@@ -43,6 +48,15 @@ public partial class SettingsPanel : Control
     [Export] private SpinBox _horSubLineWidthEdit;
     [Export] private SpinBox _horLineWidthEdit;
     [Export] private SpinBox _groundLineWidthEdit;
+
+    [Export] private Button _resetVerLineColorBtn;
+    [Export] private Button _resetVerLineWidthBtn;
+    [Export] private Button _resetHorSubLineColorBtn;
+    [Export] private Button _resetHorSubLineWidthBtn;
+    [Export] private Button _resetHorLineColorBtn;
+    [Export] private Button _resetHorLineWidthBtn;
+    [Export] private Button _resetGroundLineColorBtn;
+    [Export] private Button _resetGroundLineWidthBtn;
 
     public override void _Ready()
     {
@@ -62,6 +76,7 @@ public partial class SettingsPanel : Control
         // Settings → UI
         GameSettings.Instance.SettingChanged += OnSettingChanged;
         GameSettings.Instance.SettingsApplied += OnSettingsApplied;
+        _ = RefreshUI();
 
         _importPackBtn.Pressed += OnImportClicked;
         _deletePackBtn.Pressed += OnDeletePackClicked;
@@ -139,6 +154,20 @@ public partial class SettingsPanel : Control
             GameSettings.Instance.Set(nameof(SettingsData.UseMultiholdHighlight), value);
         };
 
+        _resetVSyncBtn.Pressed += () => ResetProperty(nameof(SettingsData.VSync));
+        _resetMaxFpsBtn.Pressed += () => ResetProperty(nameof(SettingsData.MaxFps));
+        _resetPackBtn.Pressed += () => ResetProperty(nameof(SettingsData.ResourcePackId));
+        _resetUseDefaultResourceBtn.Pressed += () => ResetProperty(nameof(SettingsData.UseDefaultResource));
+        _resetMhHighlightBtn.Pressed += () => ResetProperty(nameof(SettingsData.UseMultiholdHighlight));
+        _resetVerLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.VerColor));
+        _resetVerLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.VerWidth));
+        _resetHorSubLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorSubColor));
+        _resetHorSubLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorSubWidth));
+        _resetHorLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorColor));
+        _resetHorLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorWidth));
+        _resetGroundLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.GroundLineColor));
+        _resetGroundLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.GroundLineWidth));
+
         _verLineColorPicker.ColorChanged += OnVerLineColorChanged;
         _horSubLineColorPicker.ColorChanged += OnHorSubLineColorChanged;
         _horLineColorPicker.ColorChanged += OnHorLineColorChanged;
@@ -156,8 +185,9 @@ public partial class SettingsPanel : Control
         };
 
         
-        // _resetBtn.Pressed += () => GameSettings.Instance.ResetToDefault();
     }
+
+    private static void ResetProperty(string key) => GameSettings.Instance.ResetProperty(key);
 
     private void OnVerLineColorChanged(Color value) =>
         GameSettings.Instance.Set(nameof(SettingsData.VerColor), value);
@@ -192,6 +222,8 @@ public partial class SettingsPanel : Control
 
     private void OnSettingChanged(string key, Variant value)
     {
+        UpdateResetButton(key);
+
         switch (key)
         {
             case nameof(SettingsData.VSync):
@@ -248,6 +280,49 @@ public partial class SettingsPanel : Control
                 _groundLineWidthEdit.SetValueNoSignal(value.AsDouble());
                 break;
         }
+    }
+
+    private void UpdateResetButton(string key)
+    {
+        Button button = key switch
+        {
+            nameof(SettingsData.VSync) => _resetVSyncBtn,
+            nameof(SettingsData.MaxFps) => _resetMaxFpsBtn,
+            nameof(SettingsData.ResourcePackId) => _resetPackBtn,
+            nameof(SettingsData.UseDefaultResource) => _resetUseDefaultResourceBtn,
+            nameof(SettingsData.UseMultiholdHighlight) => _resetMhHighlightBtn,
+            nameof(SettingsData.VerColor) => _resetVerLineColorBtn,
+            nameof(SettingsData.VerWidth) => _resetVerLineWidthBtn,
+            nameof(SettingsData.HorSubColor) => _resetHorSubLineColorBtn,
+            nameof(SettingsData.HorSubWidth) => _resetHorSubLineWidthBtn,
+            nameof(SettingsData.HorColor) => _resetHorLineColorBtn,
+            nameof(SettingsData.HorWidth) => _resetHorLineWidthBtn,
+            nameof(SettingsData.GroundLineColor) => _resetGroundLineColorBtn,
+            nameof(SettingsData.GroundLineWidth) => _resetGroundLineWidthBtn,
+            _ => null
+        };
+
+        if (button != null)
+        {
+            button.Visible = !GameSettings.Instance.IsPropertyDefault(key);
+        }
+    }
+
+    private void UpdateAllResetButtons()
+    {
+        UpdateResetButton(nameof(SettingsData.VSync));
+        UpdateResetButton(nameof(SettingsData.MaxFps));
+        UpdateResetButton(nameof(SettingsData.ResourcePackId));
+        UpdateResetButton(nameof(SettingsData.UseDefaultResource));
+        UpdateResetButton(nameof(SettingsData.UseMultiholdHighlight));
+        UpdateResetButton(nameof(SettingsData.VerColor));
+        UpdateResetButton(nameof(SettingsData.VerWidth));
+        UpdateResetButton(nameof(SettingsData.HorSubColor));
+        UpdateResetButton(nameof(SettingsData.HorSubWidth));
+        UpdateResetButton(nameof(SettingsData.HorColor));
+        UpdateResetButton(nameof(SettingsData.HorWidth));
+        UpdateResetButton(nameof(SettingsData.GroundLineColor));
+        UpdateResetButton(nameof(SettingsData.GroundLineWidth));
     }
 
     private void OnSettingsApplied() => _ = RefreshUI();
@@ -332,6 +407,8 @@ public partial class SettingsPanel : Control
             _horSubLineWidthEdit.SetValueNoSignal(settings.HorSubWidth);
             _horLineWidthEdit.SetValueNoSignal(settings.HorWidth);
             _groundLineWidthEdit.SetValueNoSignal(settings.GroundLineWidth);
+
+            UpdateAllResetButtons();
 
             // 存储空间
             // 取消之前的扫描任务（如果有）

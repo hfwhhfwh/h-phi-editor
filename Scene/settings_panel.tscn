@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 [ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://刷新.png" id="6_iis6y"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_resetVSyncBtn", "_maxFpsEdit", "_resetMaxFpsBtn", "_packOptionBtn", "_resetPackBtn", "_useDefaultResourceBtn", "_resetUseDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_resetMhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit", "_resetVerLineColorBtn", "_resetVerLineWidthBtn", "_resetHorSubLineColorBtn", "_resetHorSubLineWidthBtn", "_resetHorLineColorBtn", "_resetHorLineWidthBtn", "_resetGroundLineColorBtn", "_resetGroundLineWidthBtn")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -16,9 +16,13 @@ grow_vertical = 2
 theme = ExtResource("1_ykn2r")
 script = ExtResource("1_ivhfp")
 _vSyncOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync/OptionButton")
+_resetVSyncBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync/Reset")
 _maxFpsEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/MaxFps/SpinBox")
+_resetMaxFpsBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/MaxFps/Reset")
 _packOptionBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row/OptionButton")
+_resetPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row/Reset")
 _useDefaultResourceBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/UseDefault")
+_resetUseDefaultResourceBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/ResetUseDefault")
 _importPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Import")
 _exportPackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/Export")
 _deletePackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer/DeletePack")
@@ -27,7 +31,8 @@ _confirmBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Confirm")
 _clearCasheBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer2/ClearCashe")
 _casheSizeLabel = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer/Label2")
 _packOverview = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/ResourcePackOverview")
-_mhHighlightBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight")
+_mhHighlightBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight/CheckButton")
+_resetMhHighlightBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight/Reset")
 _verLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Color/ColorPickerButton")
 _horSubLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Color/ColorPickerButton")
 _horLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Color/ColorPickerButton")
@@ -36,6 +41,14 @@ _verLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/Spli
 _horSubLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Width/SpinBox")
 _horLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Width/SpinBox")
 _groundLineWidthEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Width/SpinBox")
+_resetVerLineColorBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Color/Reset")
+_resetVerLineWidthBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Width/Reset")
+_resetHorSubLineColorBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Color/Reset")
+_resetHorSubLineWidthBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Width/Reset")
+_resetHorLineColorBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Color/Reset")
+_resetHorLineWidthBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Width/Reset")
+_resetGroundLineColorBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Color/Reset")
+_resetGroundLineWidthBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Width/Reset")
 
 [node name="TabManager" type="Node" parent="." unique_id=1686546388 node_paths=PackedStringArray("TabMap", "defaultButton")]
 script = ExtResource("3_j4nhx")
@@ -187,6 +200,13 @@ text = "垂直同步"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/VSync" unique_id=210000001]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
 [node name="MaxFps" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox" unique_id=1382748134]
 layout_mode = 2
 
@@ -200,6 +220,13 @@ layout_mode = 2
 size_flags_horizontal = 3
 allow_greater = true
 allow_lesser = true
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Display/Vbox/MaxFps" unique_id=210000002]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
 
 [node name="Pack" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=2146774469]
 visible = false
@@ -223,6 +250,13 @@ text = "导出"
 layout_mode = 2
 text = "使用默认资源包"
 
+[node name="ResetUseDefault" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer" unique_id=210000004]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
+
 [node name="DeletePack" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/HBoxContainer" unique_id=1913891980]
 self_modulate = Color(1, 0.39999998, 0.39999998, 1)
 layout_mode = 2
@@ -239,6 +273,13 @@ text = "选择"
 [node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row" unique_id=144567733]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/Row" unique_id=210000003]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
 
 [node name="ResourcePackOverview" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer" unique_id=1063507614 instance=ExtResource("5_yruwn")]
 layout_mode = 2
@@ -280,10 +321,21 @@ layout_mode = 2
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play" unique_id=1553095705]
 layout_mode = 2
 
-[node name="MhHighlight" type="CheckButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer" unique_id=841308162]
+[node name="MhHighlight" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer" unique_id=841308162]
 layout_mode = 2
+
+[node name="CheckButton" type="CheckButton" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight" unique_id=210000005]
+layout_mode = 2
+size_flags_horizontal = 3
 theme = ExtResource("1_ykn2r")
 text = "多押提示"
+
+[node name="Reset" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight" unique_id=210000006]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+icon = ExtResource("6_iis6y")
+icon_alignment = 1
+expand_icon = true
 
 [node name="Editor" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1495793183]
 layout_mode = 2
