@@ -218,14 +218,18 @@ public static class FileUtil
         for (int i = 0; i < archive.Entries.Count; i++)
         {
             var entry = archive.Entries[i];
-            if (string.IsNullOrEmpty(entry.Name) || entry.FullName.EndsWith("/", StringComparison.Ordinal) || entry.FullName.EndsWith("\\", StringComparison.Ordinal))
+            if (string.IsNullOrEmpty(entry.Name) || 
+                entry.FullName.EndsWith("/", StringComparison.Ordinal) || 
+                entry.FullName.EndsWith("\\", StringComparison.Ordinal))
                 continue; // 目录条目，跳过
 
             string decodedName;
             if (rawEntries != null && i < rawEntries.Count && rawEntries[i] != null)
+                // 优先用自己解析出的原始字节解码
                 decodedName = ZipNameDecoder.DecodeEntryName(rawEntries[i]);
             else
-                decodedName = entry.Name;
+                // 如果失败，才用 entry.Name 兜底
+                decodedName = entry.FullName;
 
             if (string.IsNullOrWhiteSpace(decodedName))
                 decodedName = entry.Name;

@@ -44,6 +44,9 @@ public partial class EditorScene : Node
     [Export] private Button _othersButton;
     [Export] private SettingsPanel _settingsPanel;
     [Export] private EditorSettingsPanel _editorSettingsPanel;
+    [Export] private Button _undoBtn;
+    [Export] private Button _redoBtn;
+
 
     [Export] private Label editingLineLabel;
     [Export] private Label fpsLabel;
@@ -434,6 +437,10 @@ public partial class EditorScene : Node
         PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
 
         GameSettings.Instance.SettingChanged += OnSettingsChanged;
+
+        // 设置撤销重做按钮
+        _undoBtn.Pressed += OnUndo;
+        _redoBtn.Pressed += OnRedo;
         
     }
 
@@ -1279,6 +1286,36 @@ public partial class EditorScene : Node
     {
         var global = GetNode<Global>("/root/Global");
         global.GotoScene("res://Scene/play_scene.tscn");
+    }
+
+    private void OnUndo()
+    {
+        _chartEditService.Undo();
+    }
+
+    private void OnRedo()
+    {
+        _chartEditService.Redo();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is InputEventKey { Pressed: true, Echo: false } key)
+        {
+            bool ctrl = key.CtrlPressed || key.MetaPressed;
+
+            if (ctrl && key.Keycode == Key.Z)
+            {
+                if (key.ShiftPressed) _chartEditService.Redo();
+                else                  _chartEditService.Undo();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (ctrl && key.Keycode == Key.Y)
+            {
+                _chartEditService.Redo();
+                GetViewport().SetInputAsHandled();
+            }
+        }
     }
 
 }
