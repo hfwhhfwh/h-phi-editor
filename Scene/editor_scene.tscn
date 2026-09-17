@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/EditorScene/NoteEditPanel.cs" id="3_gwldl"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
 [ext_resource type="Texture2D" uid="uid://dalp4p7ib5coy" path="res://网格_无间距.png" id="6_c8bod"]
+[ext_resource type="Texture2D" uid="uid://dy2hh4v6wew26" path="res://向右旋转.png" id="6_j0di7"]
 [ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="6_p0vr8"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
 [ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="7_75obp"]
@@ -157,6 +158,7 @@ popup/item_0/checkable = 1
 popup/item_0/id = 0
 
 [node name="UndoButton" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1449821637]
+custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
@@ -165,9 +167,12 @@ theme_override_styles/pressed = ExtResource("1_7k27q")
 theme_override_styles/hover = ExtResource("1_7k27q")
 theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
-text = "撤销"
+icon = ExtResource("28_r1xvh")
+icon_alignment = 1
+expand_icon = true
 
 [node name="RedoButton" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1466604910]
+custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
@@ -176,7 +181,9 @@ theme_override_styles/pressed = ExtResource("1_7k27q")
 theme_override_styles/hover = ExtResource("1_7k27q")
 theme_override_styles/disabled = ExtResource("1_7k27q")
 theme_override_styles/focus = ExtResource("1_7k27q")
-text = "重做"
+icon = ExtResource("6_j0di7")
+icon_alignment = 1
+expand_icon = true
 
 [node name="HelpButton" type="MenuButton" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1510335431]
 layout_mode = 2

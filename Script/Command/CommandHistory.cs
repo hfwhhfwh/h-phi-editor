@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Godot;
 
 public class CommandHistory
 {
@@ -18,16 +19,18 @@ public class CommandHistory
         _undoStack.Add(cmd);
         _redoStack.Clear();          // 新操作让重做栈失效
         TrimUndoStack();
+        GD.Print($"执行命令：{cmd.Name}");
         Changed?.Invoke();
     }
 
     public void Undo(ChartEditService service)
     {
         if (_undoStack.Count == 0) return;
-        var cmd = _undoStack[^1];
+        IEditCommand cmd = _undoStack[^1];
         _undoStack.RemoveAt(_undoStack.Count - 1);
         cmd.Undo(service);
         _redoStack.Add(cmd);
+        GD.Print($"撤销命令：{cmd.Name}");
         Changed?.Invoke();
     }
 
@@ -38,6 +41,7 @@ public class CommandHistory
         _redoStack.RemoveAt(_redoStack.Count - 1);
         cmd.Execute(service);
         _undoStack.Add(cmd);
+        GD.Print($"重做命令：{cmd.Name}");
         Changed?.Invoke();
     }
 

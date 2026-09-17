@@ -51,6 +51,11 @@ public partial class NoteEditPanel : BaseEditPanel
     /// </summary>
     public event Action<int, List<Note> > NoteDeleteRequested;
     /// <summary>
+    /// 拖动开始/结束时触发，参数:(判定线编号，note对象)
+    /// </summary>
+    public event Action<int, Note> NoteDragStarted;
+    public event Action<int, Note> NoteDragEnded;
+    /// <summary>
     /// 当Note被移动时触发，参数:(判定线编号，note索引，ChartX)
     /// </summary>
     public event Action<int, int, float> NoteMoved;
@@ -119,13 +124,16 @@ public partial class NoteEditPanel : BaseEditPanel
 
         // ---- 订阅拖动事件 ----
         _dragMoveComponent.Moved += OnNoteDragMoved;
-        // _dragMoveComponent.Ended += (_, _) => { /* 可选：播放音效或撤销分组 */ };
+        _dragMoveComponent.Started += OnNoteDragStarted;
+        _dragMoveComponent.Ended += OnNoteDragEnded;
 
     }
 
     public override void _ExitTree()
     {
         _dragMoveComponent.Moved -= OnNoteDragMoved;
+        _dragMoveComponent.Started -= OnNoteDragStarted;
+        _dragMoveComponent.Ended -= OnNoteDragEnded;
 
         base._ExitTree();
     }
@@ -479,7 +487,7 @@ public partial class NoteEditPanel : BaseEditPanel
                     // _draggingNoteIndex = -1;
 
                     // 没点头尾，不启动拖动
-                    GD.Print($"未选中Hold头尾, 不滑动Hold音符:{noteIndex}");
+                    //GD.Print($"未选中Hold头尾, 不滑动Hold音符:{noteIndex}");
                     return;
                 }
             }
@@ -700,6 +708,18 @@ public partial class NoteEditPanel : BaseEditPanel
         {
             GD.PrintErr($"[{this.Name}] 未设置的选择模式:{selectMode}");
         }
+    }
+
+    private void OnNoteDragStarted(object targetId, DragMoveComponent.DragMode mode)
+    {
+        if (targetId is not Note note) return;
+        NoteDragStarted?.Invoke(editingLineId, note);
+    }
+
+    private void OnNoteDragEnded(object targetId, DragMoveComponent.DragMode mode)
+    {
+        if (targetId is not Note note) return;
+        NoteDragEnded?.Invoke(editingLineId, note);
     }
 
     // -------- 拖动响应 --------

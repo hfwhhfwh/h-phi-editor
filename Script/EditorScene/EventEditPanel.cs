@@ -46,6 +46,8 @@ public partial class EventEditPanel : BaseEditPanel
     /// 请求修改 Event 时间，参数:(判定线编号, 事件层, 事件类型, 事件索引, 新StartTime, 新EndTime)
     /// </summary>
     public event Action<int, int, LineEventEnum, int, Beat, Beat> EventTimeChangeRequested;
+    public event Action<int, int, LineEventEnum, LineEvent> EventDragStarted;
+    public event Action<int, int, LineEventEnum, LineEvent> EventDragEnded;
 
 	/// <summary>
 	/// 字典：每一种事件类型对应的竖线编号
@@ -112,11 +114,15 @@ public partial class EventEditPanel : BaseEditPanel
 		AddChild(_textOverlay);
 
 		_dragMoveComponent.Moved += OnEventDragMoved;
+        _dragMoveComponent.Started += OnEventDragStarted;
+        _dragMoveComponent.Ended += OnEventDragEnded;
     }
 
     public override void _ExitTree()
     {
 		_dragMoveComponent.Moved -= OnEventDragMoved;
+        _dragMoveComponent.Started -= OnEventDragStarted;
+        _dragMoveComponent.Ended -= OnEventDragEnded;
 
         base._ExitTree();
     }
@@ -530,6 +536,18 @@ public partial class EventEditPanel : BaseEditPanel
         }
     }
 
+    private void OnEventDragStarted(object targetId, DragMoveComponent.DragMode mode)
+    {
+        if (targetId is not ValueTuple<LineEventEnum, LineEvent> tuple) return;
+        EventDragStarted?.Invoke(editingLineId, EditingLayer, tuple.Item1, tuple.Item2);
+    }
+
+    private void OnEventDragEnded(object targetId, DragMoveComponent.DragMode mode)
+    {
+        if (targetId is not ValueTuple<LineEventEnum, LineEvent> tuple) return;
+        EventDragEnded?.Invoke(editingLineId, EditingLayer, tuple.Item1, tuple.Item2);
+    }
+
 	// -------- 拖动响应 --------
     private void OnEventDragMoved(object targetId, DragMoveComponent.DragMode mode,
                                   float newChartX, Beat newBeat)
@@ -659,7 +677,7 @@ public partial class EventEditPanel : BaseEditPanel
             return new (null, -1);
         }
 
-        GD.Print($"[{this.Name}] 点击位置:{pos} 最近的event:{nearestEventType}-{nearestEventIndex}, 距离:{distance}");
+        // GD.Print($"[{this.Name}] 点击位置:{pos} 最近的event:{nearestEventType}-{nearestEventIndex}, 距离:{distance}");
         return new(nearestEventType, nearestEventIndex);
 	}
 

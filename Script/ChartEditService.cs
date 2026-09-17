@@ -22,6 +22,12 @@ public partial class ChartEditService : Node
 
     private readonly CommandHistory _history = new();
 
+    // 拖动事务的临时命令：
+    // 1) 拖动开始时记录原始快照；
+    // 2) 拖动过程中直接修改共享 Chart，保证 ChartPlayer/Renderer 能实时显示；
+    // 3) 拖动结束时再统一提交一次撤销命令，避免每次吸附都压栈。
+    private IEditCommand _pendingDragCommand;
+
     public event Action HistoryChanged
     {
         add => _history.Changed += value;
@@ -39,6 +45,64 @@ public partial class ChartEditService : Node
     public void Undo() => _history.Undo(this);
     public void Redo() => _history.Redo(this);
     public void ClearHistory() => _history.Clear();
+    public void ExecuteCommand(IEditCommand cmd) => _history.Execute(cmd, this);
+
+    // ------------- 拖动事务开始 / 结束 -------------
+    // 设计目标：
+    // - 拖动中仍然同步写入同一份 Chart 数据，因此 ChartPlayer / Renderer / 预览都能实时刷新；
+    // - 但撤销栈只在一次拖动结束时压入一条命令，从而实现“拖动一次，撤销一次”。
+    public void BeginNoteDrag(int lineId, Note note)
+    {
+        if (note == null) return;
+        // 只记录原始快照，不立即写入历史栈；后续移动完全直接修改对象。
+        _pendingDragCommand = new NoteDragCommand(lineId, note, NoteSnapshot.Capture(note));
+    }
+
+    public void EndNoteDrag(int lineId, Note note)
+    {
+        if (_pendingDragCommand is not NoteDragCommand dragCommand) return;
+        if (note == null) { _pendingDragCommand = null; return; }
+
+        // 拖动结束时记录最终状态；如果确实发生了变化，再压入一个统一命令。
+        dragCommand.CaptureAfter();
+        if (dragCommand.HasChanged())
+            _history.Execute(dragCommand, this);
+        _pendingDragCommand = null;
+    }
+
+    public void BeginEventDrag(int lineId, int layer, LineEventEnum type, LineEvent evt)
+    {
+        if (evt == null) return;
+        _pendingDragCommand = new EventDragCommand(lineId, layer, type, evt, LineEventSnapshot.Capture(evt));
+    }
+
+    public void EndEventDrag(int lineId, int layer, LineEventEnum type, LineEvent evt)
+    {
+        if (_pendingDragCommand is not EventDragCommand dragCommand) return;
+        if (evt == null) { _pendingDragCommand = null; return; }
+
+        dragCommand.CaptureAfter();
+        if (dragCommand.HasChanged())
+            _history.Execute(dragCommand, this);
+        _pendingDragCommand = null;
+    }
+
+    public void BeginBpmDrag(BpmEvent bpmEvent)
+    {
+        if (bpmEvent == null) return;
+        _pendingDragCommand = new BpmDragCommand(bpmEvent, BpmEventSnapshot.Capture(bpmEvent));
+    }
+
+    public void EndBpmDrag(BpmEvent bpmEvent)
+    {
+        if (_pendingDragCommand is not BpmDragCommand dragCommand) return;
+        if (bpmEvent == null) { _pendingDragCommand = null; return; }
+
+        dragCommand.CaptureAfter();
+        if (dragCommand.HasChanged())
+            _history.Execute(dragCommand, this);
+        _pendingDragCommand = null;
+    }
 
     // ============== 公开 API（全部走命令） ==============
 
@@ -71,6 +135,20 @@ public partial class ChartEditService : Node
         }
 
         _history.Execute(new SetBpmTimeCommand(EditingChart.BpmList[index], startBeat), this);
+    }
+
+    public void ApplyBpmTimeDirect(int index, Beat startBeat)
+    {
+        if (EditingChart?.BpmList == null || index < 0 || index >= EditingChart.BpmList.Count || startBeat == null)
+            return;
+
+        var bpmEvent = EditingChart.BpmList[index];
+        if (index == 0)
+            return;
+
+        bpmEvent.StartTime = startBeat.Duplicate().Values;
+        SortBpmList();
+        RefreshBpmDependencies();
     }
 
     public void SetBpmProperty(BpmEvent bpmEvent, string property, object value)
@@ -120,6 +198,40 @@ public partial class ChartEditService : Node
         GD.Print($"[{Name}] 修改note(line{lineId}_{noteIndex})属性 {property} : {value}");
     }
 
+    // 直接修改属性：
+    // 这个方法用于拖动中“实时预览”阶段，避免在每次吸附时新建一条历史命令。
+    // 只有拖动结束时，才会统一提交一个 DragCommand 到 CommandHistory。
+    public void ApplyNotePropertyDirect(int lineId, int noteIndex, NotePropertyEnum property, object value)
+    {
+        var line = EditingChart.JudgeLineList[lineId];
+        if (line?.Notes == null || noteIndex < 0 || noteIndex >= line.Notes.Count)
+            return;
+
+        var target = line.Notes[noteIndex];
+        switch (property)
+        {
+            case NotePropertyEnum.Above: target.Above = (int)value; break;
+            case NotePropertyEnum.Alpha: target.Alpha = Convert.ToInt32(value); break;
+            case NotePropertyEnum.IsFake: target.IsFake = (bool)value; break;
+            case NotePropertyEnum.PosX: target.PositionX = Convert.ToSingle(value); break;
+            case NotePropertyEnum.Size: target.Size = Convert.ToSingle(value); break;
+            case NotePropertyEnum.Type: target.Type = Convert.ToInt32(value); break;
+            case NotePropertyEnum.VisibleTime: target.VisibleTime = Convert.ToSingle(value); break;
+            case NotePropertyEnum.YOffset: target.YOffset = Convert.ToSingle(value); break;
+            case NotePropertyEnum.StartTime:
+                target.SetStartTime(((Beat)value).Duplicate().Values, EditingChart.BpmList, line);
+                break;
+            case NotePropertyEnum.EndTime:
+                target.SetEndTime(((Beat)value).Duplicate().Values, EditingChart.BpmList, line);
+                break;
+            default:
+                throw new ArgumentException($"未知的属性: {property}");
+        }
+
+        if (property == NotePropertyEnum.StartTime || property == NotePropertyEnum.EndTime)
+            RefreshNoteMultiHold();
+    }
+
     public void DeleteNote(int lineId, Note note)
     {
         _history.Execute(new DeleteNotesCommand(lineId, new[] { note }), this);
@@ -165,6 +277,45 @@ public partial class ChartEditService : Node
         var list = EditingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
         var target = list[index];
         _history.Execute(new SetEventPropertyCommand(lineId, layer, lineEventEnum, target, property, value), this);
+    }
+
+    // Event 的拖动过程中也走这里，不写历史，保证“拖动中实时更新”。
+    // 只有拖动结束时再做一次命令提交，避免一拖动就塞满撤销栈。
+    public void ApplyEventPropertyDirect(int lineId, int layer, LineEventEnum lineEventEnum, int index,
+                                        LineEventPropertyType property, object value)
+    {
+        var list = EditingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
+        if (list == null || index < 0 || index >= list.Count)
+            return;
+
+        var target = list[index];
+        switch (property)
+        {
+            case LineEventPropertyType.StartTime:
+                target.SetStartTime(((Beat)value).Duplicate().Values, EditingChart.BpmList);
+                break;
+            case LineEventPropertyType.EndTime:
+                target.SetEndTime(((Beat)value).Duplicate().Values, EditingChart.BpmList);
+                break;
+            case LineEventPropertyType.Start: target.Start = (float)value; break;
+            case LineEventPropertyType.End: target.End = (float)value; break;
+            case LineEventPropertyType.EasingType: target.EasingType = (int)value; break;
+            case LineEventPropertyType.EasingLeft: target.EasingLeft = (float)value; break;
+            case LineEventPropertyType.EasingRight: target.EasingRight = (float)value; break;
+            case LineEventPropertyType.Bezier: target.Bezier = (bool)value; break;
+            default: throw new ArgumentException($"未知属性: {property}");
+        }
+
+        if (property == LineEventPropertyType.StartTime || property == LineEventPropertyType.EndTime)
+        {
+            var line = EditingChart.JudgeLineList[lineId];
+            var typeList = line.EventLayers[layer].GetLineEvents(lineEventEnum);
+            typeList.Remove(target);
+            InsertLineEventSorted(typeList, target);
+        }
+
+        if (lineEventEnum == LineEventEnum.Speed)
+            RefreshSpeedDependencies(lineId);
     }
 
     public void DeleteEvent(int lineId, LineEventEnum lineEventEnum, int index)

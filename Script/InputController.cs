@@ -83,7 +83,7 @@ public partial class InputController
             {
                 // 视为滑动
                 IsDragging = true;
-                GD.Print($"开始滑动");
+                //GD.Print($"开始滑动");
             }
         }
         PointerDrag?.Invoke(pos, relative);
