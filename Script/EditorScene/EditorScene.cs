@@ -44,6 +44,9 @@ public partial class EditorScene : Node
     [Export] private Button _othersButton;
     [Export] private SettingsPanel _settingsPanel;
     [Export] private EditorSettingsPanel _editorSettingsPanel;
+    [Export] private Button _undoBtn;
+    [Export] private Button _redoBtn;
+
 
     [Export] private Label editingLineLabel;
     [Export] private Label fpsLabel;
@@ -315,6 +318,8 @@ public partial class EditorScene : Node
         noteEditPanel.OnNoteSelected += OnNoteSelected;
         noteEditPanel.NoteAddRequested += AddNote;
         noteEditPanel.NoteDeleteRequested += OnNotesDelete;
+        noteEditPanel.NoteDragStarted += BeginNoteDrag;
+        noteEditPanel.NoteDragEnded += EndNoteDrag;
         noteEditPanel.NoteMoved += MoveNote;
         noteEditPanel.NoteTimeChanged += SetNoteTime;
         noteEditPanel.Disabled = false;
@@ -323,12 +328,16 @@ public partial class EditorScene : Node
         eventEditPanel.EventSelected += OnEventSelected;
         eventEditPanel.EventsDeleteRequested += DeleteEvents;
         eventEditPanel.AddEventRequested += AddEvent;
+        eventEditPanel.EventDragStarted += BeginEventDrag;
+        eventEditPanel.EventDragEnded += EndEventDrag;
         eventEditPanel.EventTimeChangeRequested += SetEventTime;
         eventEditPanel.Disabled = false;
 
         // 设置bpmEditPanel
         bpmEditPanel.EventSelected += OnBpmSelected;
         bpmEditPanel.Disabled = false;
+        bpmEditPanel.BpmDragStarted += BeginBpmDrag;
+        bpmEditPanel.BpmDragEnded += EndBpmDrag;
         bpmEditPanel.EventAddRequested += AddBpm;
         bpmEditPanel.EventDeleteRequested += DeleteBpms;
         bpmEditPanel.EventTimeChanged += SetBpmTime;
@@ -434,6 +443,10 @@ public partial class EditorScene : Node
         PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
 
         GameSettings.Instance.SettingChanged += OnSettingsChanged;
+
+        // 设置撤销重做按钮
+        _undoBtn.Pressed += OnUndo;
+        _redoBtn.Pressed += OnRedo;
         
     }
 
@@ -1241,9 +1254,23 @@ public partial class EditorScene : Node
         GD.Print($"[{Name}] 成功重新加载资源包!");
     }
 
+    // 注意：这里不直接执行命令，而是把拖动过程包装成一个事务。
+    // 拖动中仅直接修改共享 Chart，拖动结束时统一压入一条撤销命令。
+    private void BeginNoteDrag(int lineId, Note note)
+    {
+        if (note == null) return;
+        _chartEditService.BeginNoteDrag(lineId, note);
+    }
+
+    private void EndNoteDrag(int lineId, Note note)
+    {
+        if (note == null) return;
+        _chartEditService.EndNoteDrag(lineId, note);
+    }
+
     private void MoveNote(int lineId, int noteIndex, float chartX)
     {
-        _chartEditService.SetNoteProperty(lineId, noteIndex, NotePropertyEnum.PosX, chartX);
+        _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.PosX, chartX);
     }
 
     private void SetNoteTime(int lineId, int noteIndex, Beat startBeat, Beat endBeat)
@@ -1251,34 +1278,87 @@ public partial class EditorScene : Node
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
         if(!TimeUtil.IsBeatEqual(note.StartTime, startBeat.Values))
         {
-            _chartEditService.SetNoteProperty(lineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
+            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
         }
         if(!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
         {
-            _chartEditService.SetNoteProperty(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
+            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
         }
+    }
+
+    private void BeginEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
+    {
+        if (lineEvent == null) return;
+        _chartEditService.BeginEventDrag(lineId, layer, type, lineEvent);
+    }
+
+    private void EndEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
+    {
+        if (lineEvent == null) return;
+        _chartEditService.EndEventDrag(lineId, layer, type, lineEvent);
     }
 
     private void SetEventTime(int lineId, int layer, LineEventEnum type, int index, Beat startBeat, Beat endBeat)
     {
-        List<LineEvent> lineEvents = editingChart.JudgeLineList[editingLineId].EventLayers[layer].GetLineEvents(type);
+        List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(type);
         LineEvent lineEvent = lineEvents[index];
-
 
         if(!TimeUtil.IsBeatEqual(lineEvent.StartTime, startBeat.Values))
         {
-            _chartEditService.SetEventProperty(lineId, layer, type, index, LineEventPropertyType.StartTime, startBeat);
+            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.StartTime, startBeat);
         }
         if(!TimeUtil.IsBeatEqual(lineEvent.EndTime, endBeat.Values))
         {
-            _chartEditService.SetEventProperty(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
+            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
         }
+    }
+
+    private void BeginBpmDrag(BpmEvent bpmEvent)
+    {
+        if (bpmEvent == null) return;
+        _chartEditService.BeginBpmDrag(bpmEvent);
+    }
+
+    private void EndBpmDrag(BpmEvent bpmEvent)
+    {
+        if (bpmEvent == null) return;
+        _chartEditService.EndBpmDrag(bpmEvent);
     }
 
     private void OnTestPlay()
     {
         var global = GetNode<Global>("/root/Global");
         global.GotoScene("res://Scene/play_scene.tscn");
+    }
+
+    private void OnUndo()
+    {
+        _chartEditService.Undo();
+    }
+
+    private void OnRedo()
+    {
+        _chartEditService.Redo();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is InputEventKey { Pressed: true, Echo: false } key)
+        {
+            bool ctrl = key.CtrlPressed || key.MetaPressed;
+
+            if (ctrl && key.Keycode == Key.Z)
+            {
+                if (key.ShiftPressed) _chartEditService.Redo();
+                else                  _chartEditService.Undo();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (ctrl && key.Keycode == Key.Y)
+            {
+                _chartEditService.Redo();
+                GetViewport().SetInputAsHandled();
+            }
+        }
     }
 
 }

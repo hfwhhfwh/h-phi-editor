@@ -28,10 +28,8 @@ public partial class BpmEditPanel : BaseEditPanel
 	/// int index, Vector2 clickViewportPos
 	/// </summary>
 	public event Action<int, Vector2> EventSelected;
-    
-    /// <summary>
-    /// 请求添加一个BPM事件，参数为(BPM值，起始Beat)
-    /// </summary>
+    public event Action<BpmEvent> BpmDragStarted;
+    public event Action<BpmEvent> BpmDragEnded;
     public event Action<float, Beat> EventAddRequested;
     
     /// <summary>
@@ -66,11 +64,15 @@ public partial class BpmEditPanel : BaseEditPanel
 		
         // ---- 订阅拖动事件 ----
         _dragMoveComponent.Moved += OnEventDragMoved;
+        _dragMoveComponent.Started += OnBpmDragStarted;
+        _dragMoveComponent.Ended += OnBpmDragEnded;
     }
 
 	public override void _ExitTree()
     {
         _dragMoveComponent.Moved -= OnEventDragMoved;
+        _dragMoveComponent.Started -= OnBpmDragStarted;
+        _dragMoveComponent.Ended -= OnBpmDragEnded;
         
         if (_textOverlay != null)
         {
@@ -365,6 +367,16 @@ public partial class BpmEditPanel : BaseEditPanel
         {
             GD.PrintErr($"[{this.Name}] 未设置的选择模式:{selectMode}");
         }
+    }
+
+    private void OnBpmDragStarted(object targetId, DragMoveComponent.DragMode mode)
+    {
+        if (targetId is BpmEvent bpmEvent) BpmDragStarted?.Invoke(bpmEvent);
+    }
+
+    private void OnBpmDragEnded(object targetId, DragMoveComponent.DragMode mode)
+    {
+        if (targetId is BpmEvent bpmEvent) BpmDragEnded?.Invoke(bpmEvent);
     }
 
     // -------- 拖动响应 --------

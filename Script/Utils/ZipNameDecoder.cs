@@ -82,6 +82,7 @@ public static class ZipNameDecoder
             entries.Add(new RawEntryInfo
             {
                 RawName = rawName,
+                // 0x0800 就是 bit 11。gpFlag & 0x0800 不为 0，说明 EFS 标志存在，文件名是 UTF-8
                 Utf8Flag = (gpFlag & 0x0800) != 0,
                 Extra = extra
             });
@@ -98,8 +99,9 @@ public static class ZipNameDecoder
 
         for (int i = tail.Length - 22; i >= 0; i--)
         {
+            // EOCD 签名 50 4B 05 06
             if (tail[i] == 0x50 && tail[i + 1] == 0x4B && tail[i + 2] == 0x05 && tail[i + 3] == 0x06)
-                return fs.Length - tailLen + i;
+                return fs.Length - tailLen + i; // 找到后返回绝对位置
         }
         throw new InvalidDataException("找不到 ZIP 结尾目录记录 (EOCD)");
     }
