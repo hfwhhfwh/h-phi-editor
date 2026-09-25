@@ -104,12 +104,14 @@ public abstract partial class BaseEditPanel : Panel
     // ---- 字体 ----
     protected Font font = ThemeDB.FallbackFont;
 
-	protected enum SelectMode
+	public enum SelectModeEnum
     {
         Single, // 单选
         Multi // 多选
     }
-    protected SelectMode selectMode = SelectMode.Single;
+    public SelectModeEnum SelectMode { get; set; } = SelectModeEnum.Single;
+
+	protected bool _isPasteMode = false;
 
 	/// <summary>选择时点击位置与实际位置的最大距离</summary>
     [Export] protected float distanceThreshold = 40f;

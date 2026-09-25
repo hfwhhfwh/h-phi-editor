@@ -363,12 +363,12 @@ public partial class EventEditPanel : BaseEditPanel
 		Vector2 popupPos = viewportPos + new Vector2(30, 30);
 		// GD.Print($"pos:{localPos}, viewportPos:{GetGlobalTransformWithCanvas() * localPos}, ab em pos:{GetScreenTransform() * localPos} screenPos:{screenPos}");
         
-        if(selectMode == SelectMode.Single)
+        if(SelectMode == SelectMode.Single)
         {
             selectedEvents = [lineEvent];
             EventSelected?.Invoke(editingLineId, EditingLayer, lineEventEnum, index, popupPos);
         }
-        else if(selectMode == SelectMode.Multi)
+        else if(SelectMode == SelectMode.Multi)
         {
             if (selectedEvents.Contains(lineEvent))
             {
@@ -381,7 +381,7 @@ public partial class EventEditPanel : BaseEditPanel
         }
         else
         {
-            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{selectMode}");
+            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
         }
 	}
 

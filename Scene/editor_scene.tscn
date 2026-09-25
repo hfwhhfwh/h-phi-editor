@@ -7,7 +7,6 @@
 [ext_resource type="PackedScene" uid="uid://6ls0iiql2pg" path="res://Scene/virtual_joystick.tscn" id="3_fkvcd"]
 [ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/EditorScene/NoteEditPanel.cs" id="3_gwldl"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
-[ext_resource type="Texture2D" uid="uid://dalp4p7ib5coy" path="res://网格_无间距.png" id="6_c8bod"]
 [ext_resource type="Texture2D" uid="uid://dy2hh4v6wew26" path="res://向右旋转.png" id="6_j0di7"]
 [ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="6_p0vr8"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
@@ -48,7 +47,7 @@
 [ext_resource type="PackedScene" uid="uid://dammma3ce4ykd" path="res://Scene/editor_settings_panel.tscn" id="35_editor_settings"]
 [ext_resource type="PackedScene" uid="uid://b1gs6hhvosbih" path="res://Scene/bpm_info_panel.tscn" id="36_lc344"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -75,6 +74,8 @@ _settingsPanel = NodePath("EditorPanel/SafeArea/SettingsPanel")
 _editorSettingsPanel = NodePath("EditorPanel/SafeArea/EditorSettingsPanel")
 _undoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/UndoButton")
 _redoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/RedoButton")
+_copyBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Copy")
+_pasteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Paste")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
 fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/FPSLabel")
 editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
@@ -185,6 +186,34 @@ icon = ExtResource("6_j0di7")
 icon_alignment = 1
 expand_icon = true
 
+[node name="Copy" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1714293365]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "复"
+icon_alignment = 1
+expand_icon = true
+
+[node name="Paste" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=834362532]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("1_7k27q")
+theme_override_styles/pressed = ExtResource("1_7k27q")
+theme_override_styles/hover = ExtResource("1_7k27q")
+theme_override_styles/disabled = ExtResource("1_7k27q")
+theme_override_styles/focus = ExtResource("1_7k27q")
+text = "粘"
+icon_alignment = 1
+expand_icon = true
+
 [node name="HelpButton" type="MenuButton" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1510335431]
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
@@ -230,14 +259,6 @@ custom_minimum_size = Vector2(60, 120)
 layout_mode = 2
 MaxRadius = 80.0
 joystickDir = 2
-
-[node name="Tools" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=345827684]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme = ExtResource("3_2bu1g")
-icon = ExtResource("6_c8bod")
-icon_alignment = 1
-expand_icon = true
 
 [node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
 layout_mode = 2

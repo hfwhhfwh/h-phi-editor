@@ -6,6 +6,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
+public enum EditPanelType
+{
+    NoteEdit,
+    LineEventEdit,
+    BpmEventEdit
+}
 
 public partial class EditorScene : Node
 {
@@ -46,6 +52,9 @@ public partial class EditorScene : Node
     [Export] private EditorSettingsPanel _editorSettingsPanel;
     [Export] private Button _undoBtn;
     [Export] private Button _redoBtn;
+    [Export] private Button _copyBtn;
+    [Export] private Button _pasteBtn;
+    [Export] private Button _multiSelectBtn;
 
 
     [Export] private Label editingLineLabel;
@@ -103,6 +112,14 @@ public partial class EditorScene : Node
     private ResourcePack _resourcePack;
 
     private bool _isReady = false;
+
+    // 剪切板
+    private EditorClipboard _editorClipboard = new();
+
+    /// <summary>
+    /// 当前哪一个面板正在进行多选
+    /// </summary>
+    private EditPanelType _selectFocusPanel;
 
     #if TOOLS
     // ---- 性能分析 ----
@@ -322,6 +339,7 @@ public partial class EditorScene : Node
         noteEditPanel.NoteDragEnded += EndNoteDrag;
         noteEditPanel.NoteMoved += MoveNote;
         noteEditPanel.NoteTimeChanged += SetNoteTime;
+        noteEditPanel.NoteMultiSelected += OnNoteMultiSelected;
         noteEditPanel.Disabled = false;
 
         // 设置eventEditPanel
@@ -447,6 +465,21 @@ public partial class EditorScene : Node
         // 设置撤销重做按钮
         _undoBtn.Pressed += OnUndo;
         _redoBtn.Pressed += OnRedo;
+
+        // 设置复制粘贴按钮
+        _copyBtn.Pressed += OnCopyPressed;
+        _pasteBtn.Pressed += OnPastePressed;
+
+        // 设置多选按钮
+        _multiSelectBtn.Toggled += (bool value) =>
+        {
+            BaseEditPanel.SelectModeEnum mode = value ? 
+                BaseEditPanel.SelectModeEnum.Multi : BaseEditPanel.SelectModeEnum.Single;
+            
+            noteEditPanel.SelectMode = mode;
+            eventEditPanel.SelectMode = mode;
+            bpmEditPanel.SelectMode = mode;
+        };
         
     }
 
@@ -605,6 +638,7 @@ public partial class EditorScene : Node
         noteEditPanel.NoteDeleteRequested -= OnNotesDelete;
         noteEditPanel.NoteMoved -= MoveNote;
         noteEditPanel.NoteTimeChanged -= SetNoteTime;
+        noteEditPanel.NoteMultiSelected -= OnNoteMultiSelected;
 
         // 设置eventEditPanel
         eventEditPanel.EventSelected -= OnEventSelected;
@@ -829,7 +863,6 @@ public partial class EditorScene : Node
         {
             new PopupMenuItem { Text = "编辑", Callback = () => OnNoteEdit(lineId, noteIndex) },
             new PopupMenuItem { Text = "复制", Callback = () => OnNoteCopy(lineId, noteIndex) },
-            new PopupMenuItem { Text = "粘贴", Callback = () => OnNotePaste(lineId, noteIndex) },
             new PopupMenuItem { IsSeparator = true },
             new PopupMenuItem { Text = "删除", Callback = () => OnNoteDelete(lineId, noteIndex) }
         };
@@ -868,12 +901,16 @@ public partial class EditorScene : Node
 
     private void OnNoteCopy(int lineId, int noteIndex)
     {
-        throw new NotImplementedException();
-    }
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
 
-    private void OnNotePaste(int lineId, int noteIndex)
-    {
-        throw new NotImplementedException();
+        _editorClipboard.noteClipBoard.Notes = [NoteSnapshot.Capture(note)];
+        _editorClipboard.noteClipBoard.SourceLineId = lineId;
+        _editorClipboard.noteClipBoard.SourceStartBeat = new Beat(note.StartTime);
+        _editorClipboard.noteClipBoard.SourcePosX = note.PositionX;
+
+        _editorClipboard.LatestClipBoard = EditPanelType.NoteEdit;
+
+        GD.Print($"[{Name}] 复制Note: Line{lineId}_{noteIndex} {(NoteType)note.Type}");
     }
 
     private void OnNoteDelete(int lineId, int noteIndex)
@@ -885,6 +922,11 @@ public partial class EditorScene : Node
     private void OnNotesDelete(int lineId, List<Note> notes)
     {
         _chartEditService.DeleteNotes(lineId, notes);
+    }
+
+    private void OnNoteMultiSelected()
+    {
+        _selectFocusPanel = EditPanelType.NoteEdit;
     }
 
     private void SaveChart()
@@ -1339,6 +1381,27 @@ public partial class EditorScene : Node
     private void OnRedo()
     {
         _chartEditService.Redo();
+    }
+
+    private void OnCopyPressed()
+    {
+        
+    }
+
+    private void OnPastePressed()
+    {
+        switch (_editorClipboard.LatestClipBoard)
+        {
+            case EditPanelType.NoteEdit:
+                noteEditPanel.StartPaste(_editorClipboard.noteClipBoard);
+                break;
+            case EditPanelType.LineEventEdit:
+                break;
+            case EditPanelType.BpmEventEdit:
+                break;
+            default:
+                break;
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)

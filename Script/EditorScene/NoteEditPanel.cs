@@ -38,10 +38,21 @@ public partial class NoteEditPanel : BaseEditPanel
     // private List<Note> selectedNotes = new();
     // private List<Note> notesToDelete = new();
 
-    private HashSet<Note> selectedNotes = new();
-    private HashSet<Note> notesToDelete = new();
+    private readonly HashSet<Note> selectedNotes = new();
+    private readonly HashSet<Note> notesToDelete = new();
+
+    /// <summary>
+    /// 只读暴露给外部遍历，外部无法修改集合内容
+    /// </summary>
+    public IReadOnlyCollection<Note> SelectedNotes => selectedNotes;
 
     [Signal] public delegate void OnNoteSelectedEventHandler(int lineId, int noteIndex, Vector2 clickViewportPos);
+
+    /// <summary>
+    /// 用于通知有Note被多选了
+    /// </summary>
+    public event Action NoteMultiSelected;
+
     /// <summary>
     /// 请求添加一个note的事件，参数为(音符类型，起始Beat，结束Beat，谱面X坐标)
     /// </summary>
@@ -67,17 +78,11 @@ public partial class NoteEditPanel : BaseEditPanel
 
     public NoteType PlacingNote { get; set; } // 正在放置的note
 
-    // // 拖动note位置的属性
-    // // 注：当用户触发点击时存储这些变量，但是不会真的拖动，而是在滑动事件中判断是否大于阈值再执行拖动
-    // private bool _isDraggingNote;
-    // private int _draggingNoteIndex;
-    // private bool _draggingHoldEnd; // true/false表示正在拖动hold的尾/头
-    // private float _draggingNoteX;
-    // private Beat _draggingNoteStartBeat, _draggingNoteEndBeat;
-    // private float _lastChartX;
-    // private Beat _lastBeat;
-    // private float _lastSnappedDeltaChartX = 0;
-    // private Beat _lastSnappedDeltaBeat = new Beat(0, 0, 1);
+    private NoteClipBoard _noteClipBoard;
+    private Beat _pasteTargetBeat;
+    private Beat _pasteBeatDelta;
+    private float _pasteTargetPosX;
+    private float _pastePosXDelta;
 
     public override void _Ready()
     {
@@ -138,7 +143,18 @@ public partial class NoteEditPanel : BaseEditPanel
         base._ExitTree();
     }
 
+    // ================ 公开方法 ================
 
+    public void StartPaste(NoteClipBoard noteClipBoard)
+    {
+        _isPasteMode = true;
+
+        _noteClipBoard = noteClipBoard;
+
+        GD.Print($"[{Name}] 粘贴Note: Line{noteClipBoard.SourceLineId} Beat:{noteClipBoard.SourceStartBeat}");
+    }
+
+    // ================ 私有方法 ================
 
     protected override void RenderContent()
     {
@@ -154,20 +170,9 @@ public partial class NoteEditPanel : BaseEditPanel
 
 		List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
 
-        // // ========== 2. 动态扩容 ==========
-        // // 最坏情况：所有 note 都是同一类型，或全是 Hold（拆成3部分）
-        // // 因此每个 key 的容量下限设为 notes.Count 即可
-        // {
-        //     int count = notes.Count;
-        //     EnsureMultiMeshCapacity("Tap",      count);
-        //     EnsureMultiMeshCapacity("Drag",     count);
-        //     EnsureMultiMeshCapacity("Flick",    count);
-        //     EnsureMultiMeshCapacity("HoldHead", count);
-        //     EnsureMultiMeshCapacity("HoldBody", count);
-        //     EnsureMultiMeshCapacity("HoldEnd",  count);
-        // }
+        
 
-		// ============= 3. 渲染视口范围内的 note ============= 
+		// ============= 2. 渲染视口范围内的 note ============= 
         GetVisibleBeatRange(out float minBeat, out float maxBeat);
 
         // 额外绘制即将创建的Note
@@ -190,6 +195,23 @@ public partial class NoteEditPanel : BaseEditPanel
                     startBeat: _dragPlaceComponent.EndBeat,
                     endBeat: _dragPlaceComponent.EndBeat,
                     chartPosX: chartPosX,
+                    renderEffect: NoteToAddRender
+                );
+            }
+        }
+
+        // 绘制即将粘贴的note
+        if(_isPasteMode && _noteClipBoard != null && _noteClipBoard.Notes != null && _noteClipBoard.Notes.Count != 0)
+        {
+            foreach(NoteSnapshot snapshot in _noteClipBoard.Notes)
+            {
+                if(_pasteBeatDelta == null) break;
+
+                MultiMeshRenderNote(
+                    noteType: (NoteType)snapshot.Type,
+                    startBeat: new Beat(snapshot.StartTime) + _pasteBeatDelta,
+                    endBeat: new Beat(snapshot.EndTime) + _pasteBeatDelta,
+                    chartPosX: snapshot.PositionX + _pastePosXDelta,
                     renderEffect: NoteToAddRender
                 );
             }
@@ -249,25 +271,8 @@ public partial class NoteEditPanel : BaseEditPanel
             MultiMeshRenderHold(startBeat, endBeat, chartPosX, renderEffect);
             return;
         }
-        
-        // 计算起始拍数
-        //float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
-        //Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
-        //float panelX = panelPos.X;
-        //float startY = panelPos.Y;
 
         float localX = _coordComponent.GetPanelPosX(chartPosX);
-
-        // 裁切：超出面板范围则不渲染
-        // if (panelX < 0 || panelX > Size.X || startY < 0 || startY > Size.Y) return;
-
-        // SpriteType type = noteType switch
-        // {
-        //     NoteType.Tap => SpriteType.Tap,
-        //     NoteType.Flick => SpriteType.Flick,
-        //     NoteType.Drag => SpriteType.Drag,
-        //     _ => SpriteType.Tap
-        // };
 
         string key = noteType switch
         {
@@ -285,36 +290,10 @@ public partial class NoteEditPanel : BaseEditPanel
             scale: noteScale,
             renderEffect: renderEffect
         );
-
-        // // 构建变换：位置 + 固定缩放
-        // Transform2D transform = Transform2D.Identity;
-        // transform.Origin = new Vector2(panelX, startY);
-        // transform.X = new Vector2(noteScale, 0);
-        // transform.Y = new Vector2(0, noteScale);
-
-        // multiMeshes[type].SetInstanceTransform2D(visibleCounts[type], transform);
-        // multiMeshes[type].SetInstanceColor(visibleCounts[type], Colors.White);
-
-        // // 渲染效果
-        // renderEffect?.Invoke(multiMeshes[type], visibleCounts[type]);
-
-        // visibleCounts[type]++;
     }
 
     private void MultiMeshRenderHold(Beat startBeat, Beat endBeat, float chartPosX, Action<MultiMesh, int> renderEffect)
     {
-        // // 计算起始拍数
-        // float startBeatValue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
-        // Vector2 panelPos = _coordComponent.GetPanelPosition(chartPosX, startBeatValue);
-        // float panelX = panelPos.X;
-        // float startY = panelPos.Y;
-
-        // // 计算结束拍数和结束 Y 坐标
-        // float endBeatValue = endBeat[0] + endBeat[1] * 1f / endBeat[2];
-        // float endY = _coordComponent.GetPanelPosY(endBeatValue);
-
-        // 裁切：若头部和尾部都在面板外且不可见，则跳过（但若部分可见仍渲染）
-        // if (panelX < 0 || panelX > Size.X || startY < 0f || endY > Size.Y) return;
 
         float localX = _coordComponent.GetPanelPosX(chartPosX);
 
@@ -327,22 +306,6 @@ public partial class NoteEditPanel : BaseEditPanel
             scale: noteScale,
             renderEffect: renderEffect
         );
-        {
-            // Transform2D transform = Transform2D.Identity;
-            // transform.Origin = new Vector2(panelX, startY);
-            // transform.X = new Vector2(noteScale, 0);
-            // transform.Y = new Vector2(0, noteScale);
-            // multiMeshes[SpriteType.HoldHead].SetInstanceTransform2D(
-            //     visibleCounts[SpriteType.HoldHead],
-            //     transform
-            // );
-            // multiMeshes[SpriteType.HoldHead].SetInstanceColor(visibleCounts[SpriteType.HoldHead], Colors.White);
-            
-            // // 渲染效果
-            // renderEffect?.Invoke(multiMeshes[SpriteType.HoldHead], visibleCounts[SpriteType.HoldEnd]);
-            
-            // visibleCounts[SpriteType.HoldHead]++;
-        }
 
         // ---- 2. 渲染 Hold 身体（拉伸条） ----
         RenderLongObject(
@@ -354,28 +317,6 @@ public partial class NoteEditPanel : BaseEditPanel
             scale: noteScale,
             renderEffect: renderEffect
         );
-        {
-            // float bodyLength = startY - endY;   // 正数表示向下延伸
-            
-            // float midY = (startY + endY) / 2f;
-            // // 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
-            // float scaleY = bodyLength / holdBodyTexture.GetSize().Y;
-
-            // Transform2D transform = Transform2D.Identity;
-            // transform.Origin = new Vector2(panelX, midY);
-            // transform.X = new Vector2(noteScale, 0);
-            // transform.Y = new Vector2(0, scaleY);
-            // multiMeshes[SpriteType.HoldBody].SetInstanceTransform2D(
-            //     visibleCounts[SpriteType.HoldBody], transform
-            // );
-            // multiMeshes[SpriteType.HoldBody].SetInstanceColor(visibleCounts[SpriteType.HoldBody], Colors.White);
-            
-            // // 渲染效果
-            // renderEffect?.Invoke(multiMeshes[SpriteType.HoldBody], visibleCounts[SpriteType.HoldBody]);
-
-            // visibleCounts[SpriteType.HoldBody]++;
-            
-        }
 
         // ---- 3. 渲染 Hold 尾部 ----
         RenderObject(
@@ -386,21 +327,6 @@ public partial class NoteEditPanel : BaseEditPanel
             scale: noteScale,
             renderEffect: renderEffect
         );
-        {
-            // Transform2D transform = Transform2D.Identity;
-            // transform.Origin = new Vector2(panelX, endY);
-            // transform.X = new Vector2(noteScale, 0);
-            // transform.Y = new Vector2(0, noteScale);
-            // multiMeshes[SpriteType.HoldEnd].SetInstanceTransform2D(
-            //     visibleCounts[SpriteType.HoldEnd], transform
-            // );
-            // multiMeshes[SpriteType.HoldEnd].SetInstanceColor(visibleCounts[SpriteType.HoldEnd], Colors.White);
-            
-            // // 渲染效果
-            // renderEffect?.Invoke(multiMeshes[SpriteType.HoldEnd], visibleCounts[SpriteType.HoldEnd]);
-
-            // visibleCounts[SpriteType.HoldEnd]++;
-        }
     }
 
 
@@ -421,6 +347,23 @@ public partial class NoteEditPanel : BaseEditPanel
     
     protected override void OnButtonDown(Vector2 pos)
     {
+        if (_isPasteMode)
+        {
+            // 将点击位置吸附到网格点
+            float beatValue = _coordComponent.GetBeatValue(pos.Y);
+            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+            _pasteTargetBeat = snappedBeat;
+            _pasteBeatDelta = _pasteTargetBeat - _noteClipBoard.SourceStartBeat;
+
+            float chartX = _coordComponent.GetChartPosX(pos.X);
+            float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
+            _pasteTargetPosX = snappedChartX;
+            _pastePosXDelta = _pasteTargetPosX - _noteClipBoard.SourcePosX;
+
+            return;
+        }
+
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             int noteIndex = FindNearestNoteIndex(pos);
@@ -459,19 +402,6 @@ public partial class NoteEditPanel : BaseEditPanel
                     distToEndSquared < distanceThreshold * distanceThreshold)
                 {
                     // // 成功开始拖动
-                    // _draggingHoldEnd = distToEndSquared < distToHeadSquared;
-                    // _isDraggingNote = true;
-                    // _draggingNoteIndex = noteIndex;
-                    
-                    // // 重置上次吸附位置，确保增量计算正确
-                    // // _lastSnappedDeltaChartX = 0;
-                    // // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
-                    // _lastChartX = note.PositionX;
-                    // _lastBeat = _draggingHoldEnd ? new Beat(note.EndTime) : new Beat(note.StartTime);
-
-                    // _draggingNoteX = note.PositionX;
-                    // _draggingNoteStartBeat = new Beat(note.StartTime);
-                    // _draggingNoteEndBeat = new Beat(note.EndTime);
 
                     bool dragTail = distToEndSquared < distToHeadSquared;
                     mode = dragTail ? DragMoveComponent.DragMode.Tail
@@ -491,25 +421,6 @@ public partial class NoteEditPanel : BaseEditPanel
                     return;
                 }
             }
-            // else
-            // {
-            //     // 普通音符，点到即判定为开始拖动
-            //     _draggingHoldEnd = false;
-            //     _isDraggingNote = true;
-            //     _draggingNoteIndex = noteIndex;
-                
-            //     // 重置上次吸附位置
-            //     // _lastSnappedDeltaChartX = 0;
-            //     // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
-            //     _lastChartX = note.PositionX;
-            //     _lastBeat = new Beat(note.StartTime);
-
-            //     _draggingNoteX = note.PositionX;
-            //     _draggingNoteStartBeat = new Beat(note.StartTime);
-            //     _draggingNoteEndBeat = new Beat(note.EndTime);
-
-            //     GD.Print($"开始滑动普通音符:{noteIndex}");
-            // }
 
             _dragMoveComponent.Start(note, mode, initialChartX, initialBeat);
         }
@@ -541,72 +452,48 @@ public partial class NoteEditPanel : BaseEditPanel
         }
     }
 
-    protected override void OnMotionInput(Vector2 position, Vector2 relative)
+    protected override void OnMotionInput(Vector2 pos, Vector2 relative)
     {
+        if (_isPasteMode)
+        {
+            // 将点击位置吸附到网格点
+            float beatValue = _coordComponent.GetBeatValue(pos.Y);
+            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+            if(snappedBeat != _pasteTargetBeat)
+            {
+                _pasteTargetBeat = snappedBeat;
+                _pasteBeatDelta = _pasteTargetBeat - _noteClipBoard.SourceStartBeat;
+            }
+
+            float chartX = _coordComponent.GetChartPosX(pos.X);
+            float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
+
+            if(snappedChartX != _pasteTargetPosX)
+            {
+                _pasteTargetPosX = snappedChartX;
+                _pastePosXDelta = _pasteTargetPosX - _noteClipBoard.SourcePosX;
+            }
+
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-            // // 只有真正点击到可拖动的音符时才处理拖动
-
-            // if (_isDraggingNote)
-            // {
-            //     // ================ 1. 检查是否大于阈值 ================
-            //     if(!_inputController.IsDragging) return;
-
-            //     // ================ 2. 检测note是否被移动 ================
-            //     // TODO 安全检查：防止拖动过程中数据被外部修改导致越界
-
-            //     List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
-            //     Note note = notes[_draggingNoteIndex];
-
-            //     float chartX = _coordComponent.GetChartPosX(position.X);
-            //     float snappedChartX = _coordComponent.SnapChartXToGrid(chartX);
-
-            //     float beatValue = _coordComponent.GetBeatValue(position.Y);
-            //     Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
-
-            //     if(snappedChartX != _lastChartX)
-            //     {
-            //         // 触发移动事件
-            //         NoteMoved?.Invoke(editingLineId, _draggingNoteIndex, snappedChartX);
-
-            //         // 记录新的值
-            //         _lastChartX = snappedChartX;
-            //     }
-            //     if(snappedBeat != _lastBeat)
-            //     {
-            //         if(note.Type == 2)
-            //         {
-            //             if (_draggingHoldEnd)
-            //             {
-            //                 NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, _draggingNoteStartBeat, snappedBeat);
-            //             }
-            //             else
-            //             {
-            //                 NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, snappedBeat, _draggingNoteEndBeat);
-            //             }
-            //         }
-            //         else
-            //         {
-            //             NoteTimeChanged?.Invoke(editingLineId, _draggingNoteIndex, snappedBeat, snappedBeat);
-            //         }
-
-            //         _lastBeat = snappedBeat;
-            //     }
-            // }
 
             // InputController 负责阈值判断；超过阈值后 IsDragging 才为 true
             if (!_inputController.IsDragging || !_dragMoveComponent.IsDragging)
                 return;
 
             // Note 允许 X + Y 同时移动
-            _dragMoveComponent.Update(position, _coordComponent, allowX: true, allowY: true);
+            _dragMoveComponent.Update(pos, _coordComponent, allowX: true, allowY: true);
         }
         else if(EditModeManager.EditMode == EditModeEnum.Place)
         {
-            float chartX = _coordComponent.GetChartPosX(position.X);
+            float chartX = _coordComponent.GetChartPosX(pos.X);
             int verLineIndex = _coordComponent.SnapChartXToVerLine(chartX);
 
-            float beatValue = _coordComponent.GetBeatValue(position.Y);
+            float beatValue = _coordComponent.GetBeatValue(pos.Y);
             Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
 
             _dragPlaceComponent.Move(verLineIndex, snappedBeat);
@@ -615,8 +502,8 @@ public partial class NoteEditPanel : BaseEditPanel
         else if(EditModeManager.EditMode == EditModeEnum.Delete)
         {
             Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(position.X),
-                _coordComponent.GetBeatValue(position.Y)
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
             );
             _boxSelectController.Move(dataPos);
         }
@@ -626,27 +513,6 @@ public partial class NoteEditPanel : BaseEditPanel
     {
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
-            // if (_inputController.IsDragging)
-            // {
-            //     // 结束拖动，重置状态
-            //     _isDraggingNote = false;
-            //     _draggingNoteIndex = -1;
-            //     // _lastSnappedDeltaChartX = 0;
-            //     // _lastSnappedDeltaBeat = new Beat(0, 0, 1);
-            // }
-            // else
-            // {
-            //     int noteIndex = FindNearestNoteIndex(pos);
-            //     if(noteIndex == -1) // -1代表没有选中
-            //     {
-            //         DeselectAll();
-            //     }
-            //     else
-            //     {
-            //         OnNoteTapped(noteIndex, pos);
-            //     }
-            // }
-
 
             if (_inputController.IsDragging)
             {
@@ -685,15 +551,17 @@ public partial class NoteEditPanel : BaseEditPanel
         List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
         Note note = notes[noteIndex];
         
-        if(selectMode == SelectMode.Single)
+        if(SelectMode == SelectModeEnum.Single)
         {
-            selectedNotes = [note];
+            selectedNotes.Clear();
+            selectedNotes.Add(note);
+
             //坐标转换 本地坐标 -> viewport坐标
             Vector2 viewportPos = GetGlobalTransformWithCanvas() * localPos;
 		    Vector2 popupPos = viewportPos + new Vector2(30, 30);
             EmitSignal(SignalName.OnNoteSelected, EditingLineId, noteIndex, popupPos);
         }
-        else if(selectMode == SelectMode.Multi)
+        else if(SelectMode == SelectModeEnum.Multi)
         {
             if (selectedNotes.Contains(note))
             {
@@ -703,10 +571,12 @@ public partial class NoteEditPanel : BaseEditPanel
             {
                 selectedNotes.Add(note);
             }
+
+            NoteMultiSelected?.Invoke();
         }
         else
         {
-            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{selectMode}");
+            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
         }
     }
 
@@ -751,26 +621,6 @@ public partial class NoteEditPanel : BaseEditPanel
         {
             NoteTimeChanged?.Invoke(editingLineId, noteIndex, newBeat, newBeat);
         }
-    }
-
-
-    /// <summary>
-    /// 找到距离点击位置最近的note，若未找到返回null
-    /// </summary>
-    /// <param name="pos">点击位置，坐标系：Control本地坐标</param>
-    /// <returns>距离点击位置最近的note</returns>
-    private Note FindNearestNote(Vector2 pos)
-    {
-        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
-
-        int index = FindNearestNoteIndex(pos);
-
-        if(index == -1)
-        {
-            return null;
-        }
-
-        return notes[index];
     }
 
     /// <summary>
@@ -925,7 +775,5 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         
     }
-
-    
 
 }
