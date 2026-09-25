@@ -344,7 +344,7 @@ public partial class BpmEditPanel : BaseEditPanel
         List<BpmEvent> bpmEvents = editingChart.BpmList;
         BpmEvent bpmEvent = bpmEvents[eventIndex];
         
-        if(SelectMode == SelectMode.Single)
+        if(SelectMode == SelectModeEnum.Single)
         {
             selectedEvents = [bpmEvent];
             //坐标转换 本地坐标 -> viewport坐标
@@ -352,7 +352,7 @@ public partial class BpmEditPanel : BaseEditPanel
 		    Vector2 popupPos = viewportPos + new Vector2(30, 30);
             EventSelected?.Invoke(eventIndex, popupPos);
         }
-        else if(SelectMode == SelectMode.Multi)
+        else if(SelectMode == SelectModeEnum.Multi)
         {
             if (selectedEvents.Contains(bpmEvent))
             {

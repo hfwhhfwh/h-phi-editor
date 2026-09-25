@@ -363,12 +363,12 @@ public partial class EventEditPanel : BaseEditPanel
 		Vector2 popupPos = viewportPos + new Vector2(30, 30);
 		// GD.Print($"pos:{localPos}, viewportPos:{GetGlobalTransformWithCanvas() * localPos}, ab em pos:{GetScreenTransform() * localPos} screenPos:{screenPos}");
         
-        if(SelectMode == SelectMode.Single)
+        if(SelectMode == SelectModeEnum.Single)
         {
             selectedEvents = [lineEvent];
             EventSelected?.Invoke(editingLineId, EditingLayer, lineEventEnum, index, popupPos);
         }
-        else if(SelectMode == SelectMode.Multi)
+        else if(SelectMode == SelectModeEnum.Multi)
         {
             if (selectedEvents.Contains(lineEvent))
             {

@@ -14,6 +14,7 @@
 [ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="7_r1xvh"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
 [ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="8_63sjd"]
+[ext_resource type="Texture2D" uid="uid://ca618m0sqq0pd" path="res://对勾_check-correct.svg" id="8_j0di7"]
 [ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="8_wx7m8"]
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="9_3s8ev"]
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="9_gi1tw"]
@@ -47,7 +48,7 @@
 [ext_resource type="PackedScene" uid="uid://dammma3ce4ykd" path="res://Scene/editor_settings_panel.tscn" id="35_editor_settings"]
 [ext_resource type="PackedScene" uid="uid://b1gs6hhvosbih" path="res://Scene/bpm_info_panel.tscn" id="36_lc344"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -76,6 +77,7 @@ _undoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuB
 _redoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/RedoButton")
 _copyBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Copy")
 _pasteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Paste")
+_multiSelectBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/MultiSelect")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
 fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/FPSLabel")
 editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
@@ -259,6 +261,13 @@ custom_minimum_size = Vector2(60, 120)
 layout_mode = 2
 MaxRadius = 80.0
 joystickDir = 2
+
+[node name="MultiSelect" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1012652481]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+toggle_mode = true
+icon = ExtResource("8_j0di7")
 
 [node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
 layout_mode = 2
