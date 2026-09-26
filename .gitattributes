@@ -1,3 +1,4 @@
 # Normalize EOL for all files that Git considers text files.
 * text=auto eol=lf
 *.zip filter=lfs diff=lfs merge=lfs -text
+export_templates/4.6.3.stable.mono/ios.zip filter=lfs diff=lfs merge=lfs -text
