@@ -8,7 +8,7 @@ on:
 
 env:
   # ----- project-specific knobs -----
-  GODOT_VERSION: 4.6-stable # dont forget update export templates if bumping this version
+  GODOT_VERSION: 4.6.3-stable # dont forget update export templates if bumping this version
   IOS_PRESET:    iOS          # export-preset name in Godot
   NAME:          ${{ github.event.repository.name }}
   # speed: stop brew from auto-updating every run
