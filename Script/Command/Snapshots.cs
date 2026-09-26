@@ -66,6 +66,13 @@ public struct NoteSnapshot
         n.endAllDisplacement = endAllDisplacement;
         n.isMultiHold = isMultiHold;
     }
+
+    public Note Create()
+    {
+        var n = new Note();
+        ApplyTo(n);
+        return n;
+    }
 }
 
 public struct LineEventSnapshot

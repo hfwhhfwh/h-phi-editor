@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 public enum EditPanelType
@@ -55,6 +56,9 @@ public partial class EditorScene : Node
     [Export] private Button _copyBtn;
     [Export] private Button _pasteBtn;
     [Export] private Button _multiSelectBtn;
+    [Export] private Button _pasteConfirmBtn;
+    [Export] private Button _pasteCancelBtn;
+
 
 
     [Export] private Label editingLineLabel;
@@ -120,6 +124,11 @@ public partial class EditorScene : Node
     /// 当前哪一个面板正在进行多选
     /// </summary>
     private EditPanelType _selectFocusPanel;
+
+    /// <summary>
+    /// 对当前哪一个面板正在进行粘贴操作
+    /// </summary>
+    private EditPanelType _pasteFocusPanel;
 
     #if TOOLS
     // ---- 性能分析 ----
@@ -469,6 +478,8 @@ public partial class EditorScene : Node
         // 设置复制粘贴按钮
         _copyBtn.Pressed += OnCopyPressed;
         _pasteBtn.Pressed += OnPastePressed;
+        _pasteConfirmBtn.Pressed += OnPasteConfirm;
+        _pasteCancelBtn.Pressed += OnPasteCancelPressed;
 
         // 设置多选按钮
         _multiSelectBtn.Toggled += (bool value) =>
@@ -1385,15 +1396,20 @@ public partial class EditorScene : Node
 
     private void OnCopyPressed()
     {
-        
-    }
-
-    private void OnPastePressed()
-    {
-        switch (_editorClipboard.LatestClipBoard)
+        switch (_selectFocusPanel)
         {
             case EditPanelType.NoteEdit:
-                noteEditPanel.StartPaste(_editorClipboard.noteClipBoard);
+                _editorClipboard.noteClipBoard.SourceLineId = noteEditPanel.EditingLineId;
+                _editorClipboard.noteClipBoard.SourceStartBeat = new Beat(noteEditPanel.SelectedNotes.First().StartTime);
+                _editorClipboard.noteClipBoard.SourcePosX = noteEditPanel.SelectedNotes.First().PositionX;
+                _editorClipboard.noteClipBoard.Notes.Clear();
+
+                foreach(Note note in noteEditPanel.SelectedNotes)
+                {
+                    _editorClipboard.noteClipBoard.Notes.Add(NoteSnapshot.Capture(note));
+                }
+
+                GD.Print($"[{Name}] 成功复制{noteEditPanel.SelectedNotes.Count}个Note");
                 break;
             case EditPanelType.LineEventEdit:
                 break;
@@ -1402,6 +1418,73 @@ public partial class EditorScene : Node
             default:
                 break;
         }
+    }
+
+    private void OnPastePressed()
+    {
+        bool isSuccess = true;
+        switch (_editorClipboard.LatestClipBoard)
+        {
+            case EditPanelType.NoteEdit:
+                noteEditPanel.StartPaste(_editorClipboard.noteClipBoard);
+                _pasteFocusPanel = EditPanelType.NoteEdit;
+                break;
+            case EditPanelType.LineEventEdit:
+                // lineEventEditPanel.StartPaste(_editorClipboard.lineEventClipBoard);
+                _pasteFocusPanel = EditPanelType.LineEventEdit;
+                break;
+            case EditPanelType.BpmEventEdit:
+                // bpmEventEditPanel.StartPaste(_editorClipboard.bpmEventClipBoard);
+                _pasteFocusPanel = EditPanelType.BpmEventEdit;
+                break;
+            default:
+                isSuccess = false;
+                break;
+        }
+
+        if (isSuccess)
+        {
+            _pasteBtn.Visible = false;
+            _copyBtn.Visible = false;
+
+            _pasteConfirmBtn.Visible = true;
+            _pasteCancelBtn.Visible = true;
+        }
+    }
+
+    private void OnPasteConfirm()
+    {
+        CancelPaste();
+
+        // 应用粘贴
+        switch (_pasteFocusPanel)
+        {
+            case EditPanelType.NoteEdit:
+                
+                break;
+            case EditPanelType.LineEventEdit:
+                break;
+            case EditPanelType.BpmEventEdit:
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void OnPasteCancelPressed()
+    {
+        CancelPaste();
+    }
+
+    private void CancelPaste()
+    {
+        _pasteBtn.Visible = true;
+        _copyBtn.Visible = true;
+
+        _pasteConfirmBtn.Visible = false;
+        _pasteCancelBtn.Visible = false;
+
+        noteEditPanel.CancelPaste();
     }
 
     public override void _UnhandledInput(InputEvent @event)

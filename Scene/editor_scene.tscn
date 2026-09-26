@@ -11,8 +11,10 @@
 [ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="6_p0vr8"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
 [ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="7_75obp"]
+[ext_resource type="Texture2D" uid="uid://2dp5nsakmk5y" path="res://对勾.svg" id="7_j3vvy"]
 [ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="7_r1xvh"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
+[ext_resource type="Texture2D" uid="uid://b7gn6bnblipyo" path="res://叉号.svg" id="7_x7a0t"]
 [ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="8_63sjd"]
 [ext_resource type="Texture2D" uid="uid://ca618m0sqq0pd" path="res://对勾_check-correct.svg" id="8_j0di7"]
 [ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="8_wx7m8"]
@@ -48,7 +50,7 @@
 [ext_resource type="PackedScene" uid="uid://dammma3ce4ykd" path="res://Scene/editor_settings_panel.tscn" id="35_editor_settings"]
 [ext_resource type="PackedScene" uid="uid://b1gs6hhvosbih" path="res://Scene/bpm_info_panel.tscn" id="36_lc344"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -75,9 +77,11 @@ _settingsPanel = NodePath("EditorPanel/SafeArea/SettingsPanel")
 _editorSettingsPanel = NodePath("EditorPanel/SafeArea/EditorSettingsPanel")
 _undoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/UndoButton")
 _redoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/RedoButton")
-_copyBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Copy")
-_pasteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Paste")
+_copyBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control/Copy")
+_pasteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control2/Paste")
 _multiSelectBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/MultiSelect")
+_pasteConfirmBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control2/PasteApply")
+_pasteCancelBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control/PasteCancel")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
 fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/FPSLabel")
 editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
@@ -165,11 +169,6 @@ custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_7k27q")
-theme_override_styles/pressed = ExtResource("1_7k27q")
-theme_override_styles/hover = ExtResource("1_7k27q")
-theme_override_styles/disabled = ExtResource("1_7k27q")
-theme_override_styles/focus = ExtResource("1_7k27q")
 icon = ExtResource("28_r1xvh")
 icon_alignment = 1
 expand_icon = true
@@ -179,40 +178,55 @@ custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_7k27q")
-theme_override_styles/pressed = ExtResource("1_7k27q")
-theme_override_styles/hover = ExtResource("1_7k27q")
-theme_override_styles/disabled = ExtResource("1_7k27q")
-theme_override_styles/focus = ExtResource("1_7k27q")
 icon = ExtResource("6_j0di7")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Copy" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1714293365]
+[node name="Control" type="MarginContainer" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1445465882]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+
+[node name="Copy" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control" unique_id=1714293365]
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_7k27q")
-theme_override_styles/pressed = ExtResource("1_7k27q")
-theme_override_styles/hover = ExtResource("1_7k27q")
-theme_override_styles/disabled = ExtResource("1_7k27q")
-theme_override_styles/focus = ExtResource("1_7k27q")
 text = "复"
 icon_alignment = 1
 expand_icon = true
 
-[node name="Paste" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=834362532]
+[node name="PasteCancel" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control" unique_id=461667762]
+visible = false
+modulate = Color(1, 0.49, 0.49, 1)
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = ExtResource("1_7k27q")
-theme_override_styles/pressed = ExtResource("1_7k27q")
-theme_override_styles/hover = ExtResource("1_7k27q")
-theme_override_styles/disabled = ExtResource("1_7k27q")
-theme_override_styles/focus = ExtResource("1_7k27q")
+icon = ExtResource("7_x7a0t")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Control2" type="MarginContainer" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=1759929687]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+
+[node name="Paste" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control2" unique_id=1122530035]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+theme_override_font_sizes/font_size = 30
 text = "粘"
+icon_alignment = 1
+expand_icon = true
+
+[node name="PasteApply" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control2" unique_id=2004866600]
+visible = false
+modulate = Color(0.49, 1, 0.5835, 1)
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme = ExtResource("3_2bu1g")
+theme_override_font_sizes/font_size = 30
+icon = ExtResource("7_j3vvy")
 icon_alignment = 1
 expand_icon = true
 

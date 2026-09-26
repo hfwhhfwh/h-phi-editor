@@ -67,6 +67,84 @@ public class AddNoteCommand : IEditCommand
     }
 }
 
+public class PasteNotesCommand : IEditCommand
+{
+    public string Name => "粘贴音符";
+
+    private Beat _sourceStartBeat;
+    private float _sourcePosX;
+    private int _sourceLineId;
+    private readonly List<NoteSnapshot> _noteSnapshots = new();
+
+    private int _targetLineId;
+    private Beat _targetBeat;
+    private float _targetPosX;
+
+    private List<Note> _created;
+
+    public PasteNotesCommand(NoteClipBoard noteClipBoard, int targetLineId, Beat targetBeat, float targetPosX)
+    {
+        _sourceStartBeat = noteClipBoard.SourceStartBeat;
+        _sourcePosX = noteClipBoard.SourcePosX;
+        _sourceLineId = noteClipBoard.SourceLineId;
+        
+        for(int i = 0; i < noteClipBoard.Notes.Count; i++)
+        {
+            _noteSnapshots[i] = noteClipBoard.Notes[i];
+        }
+
+
+        _targetLineId = targetLineId;
+        _targetBeat = targetBeat.Duplicate();
+        _targetPosX = targetPosX;
+
+    }
+
+    public void Execute(ChartEditService service)
+    {
+        var chart = service.EditingChart;
+        var line = chart.JudgeLineList[_targetLineId];
+
+        if (line.Notes == null) line.Notes = new List<Note>();
+
+        Beat deltaBeat = _targetBeat - _sourceStartBeat;
+        float deltaPosX = _targetPosX - _sourcePosX;
+
+        foreach(NoteSnapshot snapshot in _noteSnapshots)
+        {
+            Note note = snapshot.Create();
+
+            // 保持相对位置
+            Beat startBeat = new Beat(note.StartTime) + deltaBeat;
+            Beat endBeat = new Beat(note.EndTime) + deltaBeat;
+            float posX = note.PositionX + deltaPosX;
+
+            note.SetStartTime(startBeat.Duplicate().Values, chart.BpmList, line);
+            note.SetEndTime(endBeat.Duplicate().Values, chart.BpmList, line);
+            note.PositionX = posX;
+
+            note.RefreshDisplacement(line);
+
+            line.Notes.Add(note);
+
+        }
+
+        line.SortNotes();
+        service.RefreshNoteMultiHold();
+        ChartEventBus.NotifyNoteCountChanged(_targetLineId);
+    }
+
+    public void Undo(ChartEditService service)
+    {
+        JudgeLine line = service.EditingChart.JudgeLineList[_targetLineId];
+
+
+
+        
+    }
+
+}
+
 public class DeleteNotesCommand : IEditCommand
 {
     private readonly int _lineId;

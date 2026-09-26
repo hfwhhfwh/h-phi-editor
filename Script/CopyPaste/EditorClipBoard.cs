@@ -26,6 +26,11 @@ public sealed class NoteClipBoard
 
     public int SourceLineId { get; set; }
     public List<NoteSnapshot> Notes { get; set; }
+
+    public NoteClipBoard()
+    {
+        Notes = new List<NoteSnapshot>();
+    }
 }
 
 public sealed class LineEventClipBoard
@@ -37,6 +42,11 @@ public sealed class LineEventClipBoard
     public LineEventEnum SourceEventType { get; set; }
 
     public List<LineEventSnapshot> Events { get; set; }
+
+    public LineEventClipBoard()
+    {
+        Events = new List<LineEventSnapshot>();
+    }
 }
 
 public sealed class BpmEventClipBoard
@@ -44,4 +54,9 @@ public sealed class BpmEventClipBoard
     public Beat SourceStartBeat { get; set; }
 
     public List<BpmEventSnapshot> Bpms { get; set; }
+
+    public BpmEventClipBoard()
+    {
+        Bpms = new List<BpmEventSnapshot>();
+    }
 }

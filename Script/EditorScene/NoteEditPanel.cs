@@ -144,15 +144,31 @@ public partial class NoteEditPanel : BaseEditPanel
     }
 
     // ================ 公开方法 ================
-
+    #region 公开方法
+    public void DeselectAll()
+    {
+        selectedNotes.Clear();
+    }
+    
     public void StartPaste(NoteClipBoard noteClipBoard)
     {
         _isPasteMode = true;
 
         _noteClipBoard = noteClipBoard;
 
-        GD.Print($"[{Name}] 粘贴Note: Line{noteClipBoard.SourceLineId} Beat:{noteClipBoard.SourceStartBeat}");
+        GD.Print($"[{Name}] 正在粘贴Note: Line{noteClipBoard.SourceLineId} Beat:{noteClipBoard.SourceStartBeat}");
     }
+
+    public void CancelPaste()
+    {
+        if(_isPasteMode == false) return;
+
+        _isPasteMode = false;
+
+        GD.Print($"[{Name}] 用户取消了粘贴");
+    }
+
+    #endregion
 
     // ================ 私有方法 ================
 
@@ -694,12 +710,6 @@ public partial class NoteEditPanel : BaseEditPanel
         return nearestNoteIndex;
 
         
-    }
-
-
-    public void DeselectAll()
-    {
-        selectedNotes.Clear();
     }
 
 

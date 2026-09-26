@@ -17,9 +17,15 @@
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="13_ap1vk"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="14_ii6ij"]
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4mcor"]
+[ext_resource type="Texture2D" uid="uid://4su3gb6l6dku" path="res://Sprite/TapHL.png" id="16_ii6ij"]
+[ext_resource type="Texture2D" uid="uid://ckavuu86r8dl6" path="res://Sprite/DragHL.png" id="17_jp30j"]
+[ext_resource type="Texture2D" uid="uid://ce2i2r1d6so0" path="res://Sprite/FlickHL.png" id="18_ikskq"]
 [ext_resource type="Texture2D" uid="uid://dxev5wk8ceda2" path="res://箭头左-02.png" id="18_w2a2n"]
+[ext_resource type="Texture2D" uid="uid://ira5jjrtm3d4" path="res://Sprite/HoldHeadMh.png" id="19_fhsrd"]
 [ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://刷新.png" id="19_vtsto"]
+[ext_resource type="Texture2D" uid="uid://bxibwjcib4p6l" path="res://Sprite/HoldBodyMh.png" id="20_6txkt"]
 [ext_resource type="Texture2D" uid="uid://bprcrbiaou75j" path="res://播放.png" id="20_kqb28"]
+[ext_resource type="Texture2D" uid="uid://ceqs11llnv1mi" path="res://Sprite/HoldEndMh.png" id="21_qptvg"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dqi6c"]
 
@@ -92,6 +98,12 @@ _defaultFlickTexture = ExtResource("9_vtsto")
 _defaultHoldHeadTexture = ExtResource("10_kqb28")
 _defaultHoldBodyTexture = ExtResource("11_dqi6c")
 _defaultHoldEndTexture = ExtResource("12_adj2r")
+_defaultTapTextureMh = ExtResource("16_ii6ij")
+_defaultDragTextureMh = ExtResource("17_jp30j")
+_defaultFlickTextureMh = ExtResource("18_ikskq")
+_defaultHoldHeadTextureMh = ExtResource("19_fhsrd")
+_defaultHoldBodyTextureMh = ExtResource("20_6txkt")
+_defaultHoldEndTextureMh = ExtResource("21_qptvg")
 lineTexture = ExtResource("13_ap1vk")
 
 [node name="PauseButtonScreen" type="TouchScreenButton" parent="SafeArea/AspectRatioContainer/Parent" unique_id=1215563146]
