@@ -80,7 +80,7 @@ public class PasteNotesCommand : IEditCommand
     private Beat _targetBeat;
     private float _targetPosX;
 
-    private List<Note> _created;
+    private readonly List<Note> _created = new();
 
     public PasteNotesCommand(NoteClipBoard noteClipBoard, int targetLineId, Beat targetBeat, float targetPosX)
     {
@@ -90,7 +90,7 @@ public class PasteNotesCommand : IEditCommand
         
         for(int i = 0; i < noteClipBoard.Notes.Count; i++)
         {
-            _noteSnapshots[i] = noteClipBoard.Notes[i];
+            _noteSnapshots.Add(noteClipBoard.Notes[i]);
         }
 
 
@@ -106,6 +106,7 @@ public class PasteNotesCommand : IEditCommand
         var line = chart.JudgeLineList[_targetLineId];
 
         if (line.Notes == null) line.Notes = new List<Note>();
+        _created.Clear();
 
         Beat deltaBeat = _targetBeat - _sourceStartBeat;
         float deltaPosX = _targetPosX - _sourcePosX;
@@ -126,6 +127,7 @@ public class PasteNotesCommand : IEditCommand
             note.RefreshDisplacement(line);
 
             line.Notes.Add(note);
+            _created.Add(note);
 
         }
 
@@ -137,10 +139,14 @@ public class PasteNotesCommand : IEditCommand
     public void Undo(ChartEditService service)
     {
         JudgeLine line = service.EditingChart.JudgeLineList[_targetLineId];
+        if (line.Notes != null)
+        {
+            foreach (var note in _created)
+                line.Notes.Remove(note);
+        }
 
-
-
-        
+        service.RefreshNoteMultiHold();
+        ChartEventBus.NotifyNoteCountChanged(_targetLineId);
     }
 
 }

@@ -44,6 +44,57 @@ public class AddBpmCommand : IEditCommand
     }
 }
 
+public class PasteBpmEventsCommand : IEditCommand
+{
+    private readonly Beat _sourceStartBeat;
+    private readonly Beat _targetBeat;
+    private readonly List<BpmEventSnapshot> _bpmSnapshots = new();
+    private readonly List<BpmEvent> _created = new();
+
+    public string Name => "粘贴 BPM";
+
+    public PasteBpmEventsCommand(BpmEventClipBoard clipBoard, Beat targetBeat)
+    {
+        if (clipBoard == null) throw new System.ArgumentNullException(nameof(clipBoard));
+        if (clipBoard.SourceStartBeat == null) throw new System.ArgumentException("剪贴板缺少源起始拍", nameof(clipBoard));
+        if (targetBeat == null) throw new System.ArgumentNullException(nameof(targetBeat));
+
+        _sourceStartBeat = clipBoard.SourceStartBeat.Duplicate();
+        _targetBeat = targetBeat.Duplicate();
+        _bpmSnapshots.AddRange(clipBoard.Bpms);
+    }
+
+    public void Execute(ChartEditService service)
+    {
+        var chart = service.EditingChart;
+        service.EnsureBpmList();
+        Beat deltaBeat = _targetBeat - _sourceStartBeat;
+        _created.Clear();
+
+        foreach (var snapshot in _bpmSnapshots)
+        {
+            BpmEvent bpmEvent = snapshot.Create();
+            Beat startBeat = new Beat(bpmEvent.StartTime) + deltaBeat;
+            bpmEvent.StartTime = startBeat.Values;
+            chart.BpmList.Add(bpmEvent);
+            _created.Add(bpmEvent);
+        }
+
+        service.SortBpmList();
+        service.RefreshBpmDependencies();
+    }
+
+    public void Undo(ChartEditService service)
+    {
+        service.EnsureBpmList();
+        foreach (var bpmEvent in _created)
+            service.EditingChart.BpmList.Remove(bpmEvent);
+
+        service.SortBpmList();
+        service.RefreshBpmDependencies();
+    }
+}
+
 public class SetBpmPropertyCommand : IEditCommand
 {
     private readonly BpmEvent _target;

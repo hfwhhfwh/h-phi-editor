@@ -39,13 +39,24 @@ public sealed class LineEventClipBoard
 
     public int SourceLineId { get; set; }
     public int SourceLayer { get; set; }
-    public LineEventEnum SourceEventType { get; set; }
 
-    public List<LineEventSnapshot> Events { get; set; }
+    public List<LineEventClipBoardItem> Events { get; set; }
 
     public LineEventClipBoard()
     {
-        Events = new List<LineEventSnapshot>();
+        Events = new List<LineEventClipBoardItem>();
+    }
+}
+
+public sealed class LineEventClipBoardItem
+{
+    public LineEventEnum Type { get; }
+    public LineEventSnapshot Snapshot { get; }
+
+    public LineEventClipBoardItem(LineEventEnum type, LineEventSnapshot snapshot)
+    {
+        Type = type;
+        Snapshot = snapshot;
     }
 }
 

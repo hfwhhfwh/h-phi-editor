@@ -250,6 +250,19 @@ public partial class ChartEditService : Node
         _history.Execute(new AddNoteCommand(lineId, noteType, startBeat, endBeat, posX), this);
     }
 
+    public void PasteNotes(NoteClipBoard noteClipBoard, int targetLineId, Beat targetBeat, float targetPosX)
+    {
+        // 执行粘贴命令
+        IEditCommand editCommand = new PasteNotesCommand(
+            noteClipBoard,
+            targetLineId,
+            targetBeat,
+            targetPosX
+        );
+
+        _history.Execute(editCommand, this);
+    }
+
     public void AddLine(List<JudgeLine> judgeLines, int id = -1)
     {
         _history.Execute(new AddLineCommand(id), this);

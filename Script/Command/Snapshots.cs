@@ -16,6 +16,13 @@ public struct BpmEventSnapshot
         e.Bpm = Bpm;
         e.StartTime = StartTime == null ? null : (int[])StartTime.Clone();
     }
+
+    public BpmEvent Create()
+    {
+        var bpmEvent = new BpmEvent();
+        ApplyTo(bpmEvent);
+        return bpmEvent;
+    }
 }
 
 public struct NoteSnapshot
@@ -116,5 +123,12 @@ public struct LineEventSnapshot
         e.startSec = startSec;
         e.endSec = endSec;
         e.prefixX = prefixX;
+    }
+
+    public LineEvent Create()
+    {
+        var lineEvent = new LineEvent();
+        ApplyTo(lineEvent);
+        return lineEvent;
     }
 }

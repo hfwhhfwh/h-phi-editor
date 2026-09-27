@@ -84,6 +84,9 @@ public partial class NoteEditPanel : BaseEditPanel
     private float _pasteTargetPosX;
     private float _pastePosXDelta;
 
+    public Beat PasteTargetBeat => _pasteTargetBeat;
+    public float PasteTargetPosX => _pasteTargetPosX;
+
     public override void _Ready()
     {
         base._Ready();
@@ -159,13 +162,16 @@ public partial class NoteEditPanel : BaseEditPanel
         GD.Print($"[{Name}] 正在粘贴Note: Line{noteClipBoard.SourceLineId} Beat:{noteClipBoard.SourceStartBeat}");
     }
 
-    public void CancelPaste()
+    /// <summary>
+    /// 用户取消粘贴或应用粘贴时调用
+    /// </summary>
+    public void ExitPasteMode()
     {
         if(_isPasteMode == false) return;
 
         _isPasteMode = false;
 
-        GD.Print($"[{Name}] 用户取消了粘贴");
+        GD.Print($"[{Name}] 用户退出了粘贴模式");
     }
 
     #endregion

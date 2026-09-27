@@ -1444,22 +1444,27 @@ public partial class EditorScene : Node
 
         if (isSuccess)
         {
-            _pasteBtn.Visible = false;
-            _copyBtn.Visible = false;
-
-            _pasteConfirmBtn.Visible = true;
-            _pasteCancelBtn.Visible = true;
+            SetPasteApplyButtonVisibility(true);
         }
     }
 
     private void OnPasteConfirm()
     {
-        CancelPaste();
+        SetPasteApplyButtonVisibility(false);
 
         // 应用粘贴
         switch (_pasteFocusPanel)
         {
             case EditPanelType.NoteEdit:
+                noteEditPanel.ExitPasteMode();
+
+                // 执行粘贴
+                _chartEditService.PasteNotes(
+                    _editorClipboard.noteClipBoard,
+                    editingLineId,
+                    noteEditPanel.PasteTargetBeat,
+                    noteEditPanel.PasteTargetPosX
+                );
                 
                 break;
             case EditPanelType.LineEventEdit:
@@ -1473,18 +1478,18 @@ public partial class EditorScene : Node
 
     private void OnPasteCancelPressed()
     {
-        CancelPaste();
+        SetPasteApplyButtonVisibility(false);
+
+        noteEditPanel.ExitPasteMode();
     }
 
-    private void CancelPaste()
+    private void SetPasteApplyButtonVisibility(bool value)
     {
-        _pasteBtn.Visible = true;
-        _copyBtn.Visible = true;
+        _pasteBtn.Visible = !value;
+        _copyBtn.Visible = !value;
 
-        _pasteConfirmBtn.Visible = false;
-        _pasteCancelBtn.Visible = false;
-
-        noteEditPanel.CancelPaste();
+        _pasteConfirmBtn.Visible = value;
+        _pasteCancelBtn.Visible = value;
     }
 
     public override void _UnhandledInput(InputEvent @event)

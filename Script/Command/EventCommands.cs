@@ -85,6 +85,101 @@ public class AddEventCommand : IEditCommand
     }
 }
 
+public class PasteEventsCommand : IEditCommand
+{
+    private readonly int _targetLineId;
+    private readonly int _targetLayer;
+    private readonly Beat _sourceStartBeat;
+    private readonly Beat _targetBeat;
+    private readonly List<LineEventClipBoardItem> _eventItems = new();
+    private readonly List<(LineEventEnum Type, LineEvent Event)> _created = new();
+
+    public string Name => "粘贴事件";
+
+    public PasteEventsCommand(LineEventClipBoard clipBoard, int targetLineId, int targetLayer, Beat targetBeat)
+    {
+        if (clipBoard == null) throw new ArgumentNullException(nameof(clipBoard));
+        if (clipBoard.SourceStartBeat == null) throw new ArgumentException("剪贴板缺少源起始拍", nameof(clipBoard));
+        if (targetBeat == null) throw new ArgumentNullException(nameof(targetBeat));
+        if (!IsCompatibleLayer(clipBoard.SourceLayer, targetLayer))
+            throw new ArgumentException("目标事件层与源事件层不兼容", nameof(targetLayer));
+
+        _targetLineId = targetLineId;
+        _targetLayer = targetLayer;
+        _sourceStartBeat = clipBoard.SourceStartBeat.Duplicate();
+        _targetBeat = targetBeat.Duplicate();
+        _eventItems.AddRange(clipBoard.Events);
+    }
+
+    public void Execute(ChartEditService service)
+    {
+        var chart = service.EditingChart;
+        if (chart?.JudgeLineList == null || _targetLineId < 0 || _targetLineId >= chart.JudgeLineList.Count)
+            throw new ArgumentOutOfRangeException(nameof(_targetLineId));
+
+        var line = chart.JudgeLineList[_targetLineId];
+        if (line.EventLayers == null || _targetLayer < 0 || _targetLayer >= line.EventLayers.Count)
+            throw new ArgumentOutOfRangeException(nameof(_targetLayer));
+
+        Beat deltaBeat = _targetBeat - _sourceStartBeat;
+        _created.Clear();
+        bool containsSpeedEvents = false;
+
+        foreach (var item in _eventItems)
+        {
+            if (!Enum.IsDefined(typeof(LineEventEnum), item.Type))
+                throw new ArgumentOutOfRangeException(nameof(item.Type));
+
+            LineEvent lineEvent = item.Snapshot.Create();
+            Beat startBeat = new Beat(lineEvent.StartTime) + deltaBeat;
+            Beat endBeat = new Beat(lineEvent.EndTime) + deltaBeat;
+            lineEvent.SetStartTime(startBeat.Values, chart.BpmList);
+            lineEvent.SetEndTime(endBeat.Values, chart.BpmList);
+
+            List<LineEvent> events = line.EventLayers[_targetLayer].GetLineEvents(item.Type);
+            if (events.Count == 0)
+                events.Add(lineEvent);
+            else
+                service.InsertLineEventSorted(events, lineEvent);
+
+            _created.Add((item.Type, lineEvent));
+            containsSpeedEvents |= item.Type == LineEventEnum.Speed;
+        }
+
+        if (containsSpeedEvents)
+            RefreshSpeedDependencies(service, line);
+    }
+
+    public void Undo(ChartEditService service)
+    {
+        var line = service.EditingChart.JudgeLineList[_targetLineId];
+        bool containsSpeedEvents = false;
+
+        foreach (var created in _created)
+        {
+            line.EventLayers[_targetLayer].GetLineEvents(created.Type).Remove(created.Event);
+            containsSpeedEvents |= created.Type == LineEventEnum.Speed;
+        }
+
+        if (containsSpeedEvents)
+            RefreshSpeedDependencies(service, line);
+    }
+
+    private void RefreshSpeedDependencies(ChartEditService service, JudgeLine line)
+    {
+        if (_targetLayer == 0)
+            service.RefreshSpeedDependencies(_targetLineId);
+        else
+            line.EventLayers[_targetLayer].RefreshSpeedEventsPrefix();
+    }
+
+    private static bool IsCompatibleLayer(int sourceLayer, int targetLayer)
+    {
+        if (sourceLayer == 4) return targetLayer == 4;
+        return sourceLayer >= 0 && sourceLayer <= 3 && targetLayer >= 0 && targetLayer <= 3;
+    }
+}
+
 public class DeleteEventsCommand : IEditCommand
 {
     private readonly int _lineId;
