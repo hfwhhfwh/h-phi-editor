@@ -263,6 +263,18 @@ public partial class ChartEditService : Node
         _history.Execute(editCommand, this);
     }
 
+    public void PasteEvents(LineEventClipBoard clipBoard, int targetLineId, int targetLayer, Beat targetBeat)
+    {
+        IEditCommand editCommand = new PasteEventsCommand(clipBoard, targetLineId, targetLayer, targetBeat);
+        _history.Execute(editCommand, this);
+    }
+
+    public void PasteBpmEvents(BpmEventClipBoard clipBoard, Beat targetBeat)
+    {
+        IEditCommand editCommand = new PasteBpmEventsCommand(clipBoard, targetBeat);
+        _history.Execute(editCommand, this);
+    }
+
     public void AddLine(List<JudgeLine> judgeLines, int id = -1)
     {
         _history.Execute(new AddLineCommand(id), this);

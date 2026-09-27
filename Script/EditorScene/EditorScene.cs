@@ -358,6 +358,7 @@ public partial class EditorScene : Node
         eventEditPanel.EventDragStarted += BeginEventDrag;
         eventEditPanel.EventDragEnded += EndEventDrag;
         eventEditPanel.EventTimeChangeRequested += SetEventTime;
+        eventEditPanel.EventMultiSelected += OnEventMultiSelected;
         eventEditPanel.Disabled = false;
 
         // 设置bpmEditPanel
@@ -656,6 +657,7 @@ public partial class EditorScene : Node
         eventEditPanel.EventsDeleteRequested -= DeleteEvents;
         eventEditPanel.AddEventRequested -= AddEvent;
         eventEditPanel.EventTimeChangeRequested -= SetEventTime;
+        eventEditPanel.EventMultiSelected -= OnEventMultiSelected;
 
         // 设置bpmEditPanel
         bpmEditPanel.EventAddRequested -= AddBpm;
@@ -1131,7 +1133,6 @@ public partial class EditorScene : Node
         {
             new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, editingLayer, lineEventEnum, eventIndex) },
             new PopupMenuItem { Text = "复制", Callback = () => OnEventCopy(lineId, lineEventEnum, eventIndex) },
-            new PopupMenuItem { Text = "粘贴", Callback = () => OnEventPaste(lineId, lineEventEnum, eventIndex) },
             new PopupMenuItem { IsSeparator = true },
             new PopupMenuItem { Text = "删除", Callback = () => OnEventDelete(lineId, lineEventEnum, eventIndex) }
         };
@@ -1164,18 +1165,29 @@ public partial class EditorScene : Node
 
     private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
     {
+        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[editingLayer].GetLineEvents(lineEventEnum)[index];
+
+        _editorClipboard.lineEventClipBoard = new LineEventClipBoard
+        {
+            SourceLineId = lineId,
+            SourceLayer = editingLayer,
+            SourceStartBeat = new Beat(lineEvent.StartTime),
+            Events = [ new LineEventClipBoardItem(lineEventEnum, LineEventSnapshot.Capture(lineEvent)) ]
+        };
+
+        _editorClipboard.LatestClipBoard = EditPanelType.LineEventEdit;
         GD.Print($"[{this.Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        //throw new NotImplementedException();
     }
-    private void OnEventPaste(int lineId, LineEventEnum lineEventEnum, int index)
-    {
-        GD.Print($"[{this.Name}] 粘贴事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        //throw new NotImplementedException();
-    }
+
     private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
     {
         _chartEditService.DeleteEvent(lineId, lineEventEnum, index);
 
+    }
+
+    private void OnEventMultiSelected()
+    {
+        _selectFocusPanel = EditPanelType.LineEventEdit;
     }
 
     private void OnBpmSelected(int index, Vector2 popupViewportPos)
@@ -1190,7 +1202,6 @@ public partial class EditorScene : Node
         {
             new PopupMenuItem { Text = "编辑", Callback = () => OnBpmEdit(bpmEvent) },
             new PopupMenuItem { Text = "复制", Callback = () => OnBpmCopy(bpmEvent) },
-            new PopupMenuItem { Text = "粘贴", Callback = () => OnBpmPaste(bpmEvent) },
             new PopupMenuItem { IsSeparator = true },
             new PopupMenuItem { Text = "删除", Callback = () => OnBpmDelete(bpmEvent) }
         };
@@ -1218,12 +1229,13 @@ public partial class EditorScene : Node
 
     private void OnBpmCopy(BpmEvent bpmEvent)
     {
+        _editorClipboard.bpmEventClipBoard = new BpmEventClipBoard
+        {
+            SourceStartBeat = new Beat(bpmEvent.StartTime),
+            Bpms = [ BpmEventSnapshot.Capture(bpmEvent) ]
+        };
+        _editorClipboard.LatestClipBoard = EditPanelType.BpmEventEdit;
         GD.Print($"[{Name}] 复制 BPM:{bpmEvent?.Bpm}");
-    }
-
-    private void OnBpmPaste(BpmEvent bpmEvent)
-    {
-        GD.Print($"[{Name}] 粘贴 BPM:{bpmEvent?.Bpm}");
     }
 
     private void OnBpmDelete(BpmEvent bpmEvent)
@@ -1399,6 +1411,9 @@ public partial class EditorScene : Node
         switch (_selectFocusPanel)
         {
             case EditPanelType.NoteEdit:
+
+                if(noteEditPanel.SelectedNotes == null || noteEditPanel.SelectedNotes.Count == 0) break;
+                
                 _editorClipboard.noteClipBoard.SourceLineId = noteEditPanel.EditingLineId;
                 _editorClipboard.noteClipBoard.SourceStartBeat = new Beat(noteEditPanel.SelectedNotes.First().StartTime);
                 _editorClipboard.noteClipBoard.SourcePosX = noteEditPanel.SelectedNotes.First().PositionX;
@@ -1409,10 +1424,40 @@ public partial class EditorScene : Node
                     _editorClipboard.noteClipBoard.Notes.Add(NoteSnapshot.Capture(note));
                 }
 
+                _editorClipboard.LatestClipBoard = EditPanelType.NoteEdit;
+
                 GD.Print($"[{Name}] 成功复制{noteEditPanel.SelectedNotes.Count}个Note");
                 break;
+
             case EditPanelType.LineEventEdit:
+                if (eventEditPanel.SelectedEventsWithType == null || eventEditPanel.SelectedEventsWithType.Count == 0)
+                    break;
+
+                var eventList = eventEditPanel.SelectedEventsWithType;
+
+                ValueTuple<LineEventEnum, LineEvent> earliestEvent = eventList
+                    .OrderBy((ValueTuple<LineEventEnum, LineEvent> kvp) => kvp.Item2.StartTime[0] + kvp.Item2.StartTime[1] * 1f / kvp.Item2.StartTime[2])
+                    .First();
+
+                _editorClipboard.lineEventClipBoard = new LineEventClipBoard
+                {
+                    SourceLineId = editingLineId,
+                    SourceLayer = editingLayer,
+                    SourceStartBeat = new Beat(earliestEvent.Item2.StartTime),
+                    Events = new List<LineEventClipBoardItem>()
+                };
+                
+                // 将事件添加到剪切板
+                foreach ((LineEventEnum type, LineEvent evt) in eventList)
+                {
+                    _editorClipboard.lineEventClipBoard.Events.Add(
+                        new LineEventClipBoardItem(type, LineEventSnapshot.Capture(evt)));
+                }
+
+                _editorClipboard.LatestClipBoard = EditPanelType.LineEventEdit;
+                GD.Print($"[{Name}] 成功复制{eventList.Count}个Event");
                 break;
+
             case EditPanelType.BpmEventEdit:
                 break;
             default:
@@ -1430,7 +1475,7 @@ public partial class EditorScene : Node
                 _pasteFocusPanel = EditPanelType.NoteEdit;
                 break;
             case EditPanelType.LineEventEdit:
-                // lineEventEditPanel.StartPaste(_editorClipboard.lineEventClipBoard);
+                eventEditPanel.StartPaste(_editorClipboard.lineEventClipBoard);
                 _pasteFocusPanel = EditPanelType.LineEventEdit;
                 break;
             case EditPanelType.BpmEventEdit:
@@ -1467,9 +1512,22 @@ public partial class EditorScene : Node
                 );
                 
                 break;
+
             case EditPanelType.LineEventEdit:
+                eventEditPanel.ExitPasteMode();
+                _chartEditService.PasteEvents(
+                    _editorClipboard.lineEventClipBoard,
+                    editingLineId,
+                    editingLayer,
+                    eventEditPanel.PasteTargetBeat
+                );
                 break;
+
             case EditPanelType.BpmEventEdit:
+                if (_editorClipboard.bpmEventClipBoard != null && _editorClipboard.bpmEventClipBoard.Bpms.Count > 0)
+                {
+                    _chartEditService.PasteBpmEvents(_editorClipboard.bpmEventClipBoard, new Beat(_editorClipboard.bpmEventClipBoard.SourceStartBeat.Values));
+                }
                 break;
             default:
                 break;
@@ -1481,6 +1539,7 @@ public partial class EditorScene : Node
         SetPasteApplyButtonVisibility(false);
 
         noteEditPanel.ExitPasteMode();
+        eventEditPanel.ExitPasteMode();
     }
 
     private void SetPasteApplyButtonVisibility(bool value)

@@ -25,8 +25,10 @@ public partial class EventEditPanel : BaseEditPanel
 	public int EditingLayer { get; set; } = 0;
 
 
-	private HashSet<LineEvent> selectedEvents = new();
-    private HashSet<LineEvent> eventsToDelete = new();
+	private readonly HashSet<LineEvent> selectedEvents = new();
+    private readonly HashSet<LineEvent> eventsToDelete = new();
+
+	private readonly List<(LineEventEnum Type, LineEvent Evt)> _selectedEventsWithType = new();
 
 	/// <summary>
 	/// 当事件被选择时发出，参数:(判定线编号，事件层，事件类型，事件索引，弹窗位置（坐标系：viewportCoord）)
@@ -48,6 +50,20 @@ public partial class EventEditPanel : BaseEditPanel
     public event Action<int, int, LineEventEnum, int, Beat, Beat> EventTimeChangeRequested;
     public event Action<int, int, LineEventEnum, LineEvent> EventDragStarted;
     public event Action<int, int, LineEventEnum, LineEvent> EventDragEnded;
+
+	/// <summary>
+	/// 当有事件被多选时触发
+	/// </summary>
+	public event Action EventMultiSelected;
+
+	private LineEventClipBoard _lineEventClipBoard;
+	private Beat _pasteTargetBeat;
+	private Beat _pasteBeatDelta;
+
+	public Beat PasteTargetBeat => _pasteTargetBeat;
+
+	public IReadOnlyCollection<(LineEventEnum Type, LineEvent Evt)> SelectedEventsWithType 
+		=> _selectedEventsWithType;
 
 	/// <summary>
 	/// 字典：每一种事件类型对应的竖线编号
@@ -294,24 +310,9 @@ public partial class EventEditPanel : BaseEditPanel
 					scale: widthScale,
 					renderEffect: renderEffect
 				);
-				// Transform2D transform = Transform2D.Identity;
-				// transform.X = new Vector2(widthScale, 0);
-				// transform.Y = new Vector2(0, scaleY);
-				// transform.Origin = new Vector2(panelX, panelY);
-				
-				// multiMesh.SetInstanceTransform2D(visibleCount, transform);
-				// visibleCount++;
 				
 			}
 		}
-
-		// multiMesh.VisibleInstanceCount = visibleCount;
-
-		// // 剩余的池节点隐藏
-		// for (int i = visibleCount; i < poolSize; i++)
-		// {
-		// 	nodePool[i].Visible = false;
-		// }
 		
 		// 额外绘制即将创建的Event
         if(_dragPlaceComponent.IsDragging){
@@ -328,6 +329,26 @@ public partial class EventEditPanel : BaseEditPanel
 				renderEffect: ToAddRender
             );
         }
+
+		if (_isPasteMode && _lineEventClipBoard != null && _lineEventClipBoard.Events != null && _lineEventClipBoard.Events.Count != 0)
+		{
+			foreach (var item in _lineEventClipBoard.Events)
+			{
+				if (_pasteBeatDelta == null) break;
+				float localX = VerMargin + EventTypeToRatioX(item.Type) * (Size.X - 2 * VerMargin);
+				Beat startBeat = new Beat(item.Snapshot.StartTime) + _pasteBeatDelta;
+				Beat endBeat = new Beat(item.Snapshot.EndTime) + _pasteBeatDelta;
+				RenderLongObject(
+					key: "Event",
+					localX: localX,
+					startBeat: startBeat,
+					endBeat: endBeat,
+					offset: Vector2.Zero,
+					scale: widthScale,
+					renderEffect: ToAddRender
+				);
+			}
+		}
 
 		// ============== 绘制事件值提示文本 ==============
 		_textOverlay.QueueRedraw();
@@ -351,6 +372,24 @@ public partial class EventEditPanel : BaseEditPanel
 	public void DeselectAll()
 	{
 		selectedEvents.Clear();
+
+		_selectedEventsWithType.Clear();
+	}
+
+	public void StartPaste(LineEventClipBoard lineEventClipBoard)
+	{
+		_isPasteMode = true;
+		_lineEventClipBoard = lineEventClipBoard;
+
+		GD.Print($"[{Name}] 正在粘贴事件: Line{lineEventClipBoard.SourceLineId} Layer{lineEventClipBoard.SourceLayer} Beat:{lineEventClipBoard.SourceStartBeat}");
+	}
+
+	public void ExitPasteMode()
+	{
+		if (!_isPasteMode) return;
+		_isPasteMode = false;
+
+		GD.Print($"[{Name}] 用户退出了事件粘贴模式");
 	}
 
 	private void OnEventTapped(LineEventEnum lineEventEnum, int index, Vector2 localPos)
@@ -358,14 +397,18 @@ public partial class EventEditPanel : BaseEditPanel
 		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
 		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[index];
 
-		Vector2 screenPos = GetScreenPosition(localPos); // debug
 		Vector2 viewportPos = GetGlobalTransformWithCanvas() * localPos;
 		Vector2 popupPos = viewportPos + new Vector2(30, 30);
 		// GD.Print($"pos:{localPos}, viewportPos:{GetGlobalTransformWithCanvas() * localPos}, ab em pos:{GetScreenTransform() * localPos} screenPos:{screenPos}");
         
         if(SelectMode == SelectModeEnum.Single)
         {
-            selectedEvents = [lineEvent];
+			selectedEvents.Clear();
+			selectedEvents.Add(lineEvent);
+
+			_selectedEventsWithType.Clear();
+			_selectedEventsWithType.Add((lineEventEnum, lineEvent));
+
             EventSelected?.Invoke(editingLineId, EditingLayer, lineEventEnum, index, popupPos);
         }
         else if(SelectMode == SelectModeEnum.Multi)
@@ -373,11 +416,17 @@ public partial class EventEditPanel : BaseEditPanel
             if (selectedEvents.Contains(lineEvent))
             {
                 selectedEvents.Remove(lineEvent);
+
+				_selectedEventsWithType.Remove((lineEventEnum, lineEvent));
             }
             else
             {
                 selectedEvents.Add(lineEvent);
+
+				_selectedEventsWithType.Add((lineEventEnum, lineEvent));
             }
+
+			EventMultiSelected?.Invoke();
         }
         else
         {
@@ -387,6 +436,17 @@ public partial class EventEditPanel : BaseEditPanel
 
     protected override void OnButtonDown(Vector2 pos)
     {
+        if (_isPasteMode)
+        {
+			// Event 不允许 X 移动，只允许 Y（时间）移动
+            float beatValue = _coordComponent.GetBeatValue(pos.Y);
+            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+            _pasteTargetBeat = snappedBeat;
+            _pasteBeatDelta = _pasteTargetBeat - _lineEventClipBoard.SourceStartBeat;
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             (LineEventEnum?, int) hit = FindNearestEvent(pos);
@@ -466,6 +526,21 @@ public partial class EventEditPanel : BaseEditPanel
 
     protected override void OnMotionInput(Vector2 position, Vector2 relative)
     {
+        if (_isPasteMode)
+        {
+			// Event 不允许 X 移动，只允许 Y（时间）移动
+            float beatValue = _coordComponent.GetBeatValue(position.Y);
+            Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+
+            if (snappedBeat != _pasteTargetBeat)
+            {
+                _pasteTargetBeat = snappedBeat;
+                _pasteBeatDelta = _pasteTargetBeat - _lineEventClipBoard.SourceStartBeat;
+            }
+
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             if (!_inputController.IsDragging || !_dragMoveComponent.IsDragging) return;
