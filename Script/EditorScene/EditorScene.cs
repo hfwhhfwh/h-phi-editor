@@ -363,6 +363,7 @@ public partial class EditorScene : Node
 
         // 设置bpmEditPanel
         bpmEditPanel.EventSelected += OnBpmSelected;
+        bpmEditPanel.BpmMultiSelected += OnBpmMultiSelected;
         bpmEditPanel.Disabled = false;
         bpmEditPanel.BpmDragStarted += BeginBpmDrag;
         bpmEditPanel.BpmDragEnded += EndBpmDrag;
@@ -669,6 +670,7 @@ public partial class EditorScene : Node
 
         //设置bpmInfoPanel
         bpmEditPanel.EventSelected -= OnBpmSelected;
+        bpmEditPanel.BpmMultiSelected -= OnBpmMultiSelected;
         bpmInfoPanel.PropertyChanged -= SetBpmProperty;
 
         // 设置 EditModeManager
@@ -865,6 +867,7 @@ public partial class EditorScene : Node
 
     private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
     {
+        _selectFocusPanel = EditPanelType.NoteEdit;
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
 
         float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
@@ -1125,6 +1128,8 @@ public partial class EditorScene : Node
 
     private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
     {
+        _selectFocusPanel = EditPanelType.LineEventEdit;
+        
         EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
 		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
 
@@ -1197,6 +1202,7 @@ public partial class EditorScene : Node
             return;
         }
 
+        _selectFocusPanel = EditPanelType.BpmEventEdit;
         BpmEvent bpmEvent = editingChart.BpmList[index];
         var items = new List<PopupMenuItem>
         {
@@ -1208,6 +1214,11 @@ public partial class EditorScene : Node
 
         PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
         popupMenu.PopupHide += bpmEditPanel.DeselectAll;
+    }
+
+    private void OnBpmMultiSelected()
+    {
+        _selectFocusPanel = EditPanelType.BpmEventEdit;
     }
 
     private void OnBpmEdit(BpmEvent bpmEvent)
@@ -1459,6 +1470,27 @@ public partial class EditorScene : Node
                 break;
 
             case EditPanelType.BpmEventEdit:
+                IReadOnlyCollection<BpmEvent> selectedBpms = bpmEditPanel.SelectedEvents;
+                if (selectedBpms == null || selectedBpms.Count == 0)
+                    break;
+
+                BpmEvent earliestBpm = selectedBpms
+                    .OrderBy(bpm => bpm.StartTime[0] + bpm.StartTime[1] * 1f / bpm.StartTime[2])
+                    .First();
+
+                _editorClipboard.bpmEventClipBoard = new BpmEventClipBoard
+                {
+                    SourceStartBeat = new Beat(earliestBpm.StartTime),
+                    Bpms = new List<BpmEventSnapshot>()
+                };
+
+                foreach (BpmEvent bpmEvent in selectedBpms)
+                {
+                    _editorClipboard.bpmEventClipBoard.Bpms.Add(BpmEventSnapshot.Capture(bpmEvent));
+                }
+
+                _editorClipboard.LatestClipBoard = EditPanelType.BpmEventEdit;
+                GD.Print($"[{Name}] 成功复制{selectedBpms.Count}个BPM事件");
                 break;
             default:
                 break;
@@ -1479,7 +1511,13 @@ public partial class EditorScene : Node
                 _pasteFocusPanel = EditPanelType.LineEventEdit;
                 break;
             case EditPanelType.BpmEventEdit:
-                // bpmEventEditPanel.StartPaste(_editorClipboard.bpmEventClipBoard);
+                if (_editorClipboard.bpmEventClipBoard?.Bpms == null || _editorClipboard.bpmEventClipBoard.Bpms.Count == 0)
+                {
+                    isSuccess = false;
+                    break;
+                }
+
+                bpmEditPanel.StartPaste(_editorClipboard.bpmEventClipBoard);
                 _pasteFocusPanel = EditPanelType.BpmEventEdit;
                 break;
             default:
@@ -1524,9 +1562,10 @@ public partial class EditorScene : Node
                 break;
 
             case EditPanelType.BpmEventEdit:
+                bpmEditPanel.ExitPasteMode();
                 if (_editorClipboard.bpmEventClipBoard != null && _editorClipboard.bpmEventClipBoard.Bpms.Count > 0)
                 {
-                    _chartEditService.PasteBpmEvents(_editorClipboard.bpmEventClipBoard, new Beat(_editorClipboard.bpmEventClipBoard.SourceStartBeat.Values));
+                    _chartEditService.PasteBpmEvents(_editorClipboard.bpmEventClipBoard, bpmEditPanel.PasteTargetBeat);
                 }
                 break;
             default:
@@ -1540,6 +1579,7 @@ public partial class EditorScene : Node
 
         noteEditPanel.ExitPasteMode();
         eventEditPanel.ExitPasteMode();
+        bpmEditPanel.ExitPasteMode();
     }
 
     private void SetPasteApplyButtonVisibility(bool value)

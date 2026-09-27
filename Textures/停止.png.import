@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ca618m0sqq0pd"
-path.s3tc="res://.godot/imported/对勾_check-correct.svg-4819d6a3b57f50a0af5f7653dd786760.s3tc.ctex"
-path.etc2="res://.godot/imported/对勾_check-correct.svg-4819d6a3b57f50a0af5f7653dd786760.etc2.ctex"
+uid="uid://cwwb6dl8anq1i"
+path.s3tc="res://.godot/imported/停止.png-da3d2f09ab2ca961d468d6cd34ded812.s3tc.ctex"
+path.etc2="res://.godot/imported/停止.png-da3d2f09ab2ca961d468d6cd34ded812.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://对勾_check-correct.svg"
-dest_files=["res://.godot/imported/对勾_check-correct.svg-4819d6a3b57f50a0af5f7653dd786760.s3tc.ctex", "res://.godot/imported/对勾_check-correct.svg-4819d6a3b57f50a0af5f7653dd786760.etc2.ctex"]
+source_file="res://Textures/停止.png"
+dest_files=["res://.godot/imported/停止.png-da3d2f09ab2ca961d468d6cd34ded812.s3tc.ctex", "res://.godot/imported/停止.png-da3d2f09ab2ca961d468d6cd34ded812.etc2.ctex"]
 
 [params]
 
@@ -40,6 +40,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

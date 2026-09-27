@@ -1,11 +1,11 @@
-[gd_resource type="Theme" format=4 uid="uid://lnn5ylm7q1oc"]
+[gd_resource type="Theme" format=4 uid="uid://b7j0twhkd1g6h"]
 
-[ext_resource type="StyleBox" path="res://ButtonDisabled.tres" id="1_muhb7"]
-[ext_resource type="StyleBox" path="res://ButtonHover.tres" id="2_5mx2u"]
-[ext_resource type="StyleBox" path="res://ButtonHoverPressed.tres" id="3_eqpgp"]
-[ext_resource type="StyleBox" path="res://ButtonNormal.tres" id="3_lnahn"]
-[ext_resource type="StyleBox" path="res://ButtonPressed.tres" id="4_eqpgp"]
-[ext_resource type="StyleBox" path="res://Panel.tres" id="5_5mx2u"]
+[ext_resource type="StyleBox" uid="uid://c3tkjvuuu5qsn" path="res://Themes/ButtonDisabled.tres" id="1_muhb7"]
+[ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://Themes/ButtonHover.tres" id="2_5mx2u"]
+[ext_resource type="StyleBox" uid="uid://cbi3e3614jw73" path="res://Themes/ButtonHoverPressed.tres" id="3_eqpgp"]
+[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://Themes/ButtonNormal.tres" id="3_lnahn"]
+[ext_resource type="StyleBox" uid="uid://c3x4gv1lx5uwq" path="res://Themes/ButtonPressed.tres" id="4_eqpgp"]
+[ext_resource type="StyleBox" uid="uid://dx6dd4bb0sw41" path="res://Themes/Panel.tres" id="5_5mx2u"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_lnahn"]
 thickness = 40

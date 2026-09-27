@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://tfio8umpc4od"
-path.s3tc="res://.godot/imported/电影.png-8705901c0ebd535a30965a05031a4733.s3tc.ctex"
-path.etc2="res://.godot/imported/电影.png-8705901c0ebd535a30965a05031a4733.etc2.ctex"
+uid="uid://bprcrbiaou75j"
+path.s3tc="res://.godot/imported/播放.png-85aa8576ef56adbd513928e716cfa45b.s3tc.ctex"
+path.etc2="res://.godot/imported/播放.png-85aa8576ef56adbd513928e716cfa45b.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://电影.png"
-dest_files=["res://.godot/imported/电影.png-8705901c0ebd535a30965a05031a4733.s3tc.ctex", "res://.godot/imported/电影.png-8705901c0ebd535a30965a05031a4733.etc2.ctex"]
+source_file="res://Textures/播放.png"
+dest_files=["res://.godot/imported/播放.png-85aa8576ef56adbd513928e716cfa45b.s3tc.ctex", "res://.godot/imported/播放.png-85aa8576ef56adbd513928e716cfa45b.etc2.ctex"]
 
 [params]
 

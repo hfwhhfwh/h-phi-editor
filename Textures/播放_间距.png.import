@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bprcrbiaou75j"
-path.s3tc="res://.godot/imported/播放.png-922ed54ca15125051e7a8c835d28ec2d.s3tc.ctex"
-path.etc2="res://.godot/imported/播放.png-922ed54ca15125051e7a8c835d28ec2d.etc2.ctex"
+uid="uid://cqkci055pm5cs"
+path.s3tc="res://.godot/imported/播放_间距.png-a82f235293e1cf65d9803f5ee0ab206b.s3tc.ctex"
+path.etc2="res://.godot/imported/播放_间距.png-a82f235293e1cf65d9803f5ee0ab206b.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://播放.png"
-dest_files=["res://.godot/imported/播放.png-922ed54ca15125051e7a8c835d28ec2d.s3tc.ctex", "res://.godot/imported/播放.png-922ed54ca15125051e7a8c835d28ec2d.etc2.ctex"]
+source_file="res://Textures/播放_间距.png"
+dest_files=["res://.godot/imported/播放_间距.png-a82f235293e1cf65d9803f5ee0ab206b.s3tc.ctex", "res://.godot/imported/播放_间距.png-a82f235293e1cf65d9803f5ee0ab206b.etc2.ctex"]
 
 [params]
 

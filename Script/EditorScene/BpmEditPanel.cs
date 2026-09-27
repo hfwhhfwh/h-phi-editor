@@ -22,12 +22,19 @@ public partial class BpmEditPanel : BaseEditPanel
 
 	private HashSet<BpmEvent> selectedEvents = new();
     private HashSet<BpmEvent> eventsToDelete = new();
+    private BpmEventClipBoard _bpmEventClipBoard;
+    private Beat _pasteTargetBeat;
+    private Beat _pasteBeatDelta;
     private Control _textOverlay; // 显示数值文字
+
+    public IReadOnlyCollection<BpmEvent> SelectedEvents => selectedEvents;
+    public Beat PasteTargetBeat => _pasteTargetBeat;
 
 	/// <summary>
 	/// int index, Vector2 clickViewportPos
 	/// </summary>
 	public event Action<int, Vector2> EventSelected;
+    public event Action BpmMultiSelected;
     public event Action<BpmEvent> BpmDragStarted;
     public event Action<BpmEvent> BpmDragEnded;
     public event Action<float, Beat> EventAddRequested;
@@ -144,6 +151,21 @@ public partial class BpmEditPanel : BaseEditPanel
             );
         }
 
+        if (_isPasteMode && _bpmEventClipBoard?.Bpms != null && _pasteBeatDelta != null)
+        {
+            foreach (BpmEventSnapshot snapshot in _bpmEventClipBoard.Bpms)
+            {
+                RenderObject(
+                    key: MultiMeshKey,
+                    localX: VerMargin,
+                    beat: new Beat(snapshot.StartTime) + _pasteBeatDelta,
+                    offset: Vector2.Zero,
+                    scale: bpmEventScale,
+                    renderEffect: ToAddRender
+                );
+            }
+        }
+
         //绘制谱面中的bpmEvent 
         if(bpmEvents != null)
         {
@@ -237,6 +259,12 @@ public partial class BpmEditPanel : BaseEditPanel
 
     protected override void OnButtonDown(Vector2 pos)
     {
+        if (_isPasteMode)
+        {
+            UpdatePasteTarget(pos.Y);
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             int eventIndex = FindNearestEventIndex(pos);
@@ -277,6 +305,12 @@ public partial class BpmEditPanel : BaseEditPanel
 
 	protected override void OnMotionInput(Vector2 position, Vector2 relative)
     {
+        if (_isPasteMode)
+        {
+            UpdatePasteTarget(position.Y);
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             if (!_inputController.IsDragging || !_dragMoveComponent.IsDragging) return;
@@ -303,6 +337,11 @@ public partial class BpmEditPanel : BaseEditPanel
 
     protected override void OnButtonUp(Vector2 pos)
     {
+        if (_isPasteMode)
+        {
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             if (_inputController.IsDragging)
@@ -362,6 +401,8 @@ public partial class BpmEditPanel : BaseEditPanel
             {
                 selectedEvents.Add(bpmEvent);
             }
+
+            BpmMultiSelected?.Invoke();
         }
         else
         {
@@ -402,6 +443,41 @@ public partial class BpmEditPanel : BaseEditPanel
     public void DeselectAll()
     {
         selectedEvents.Clear();
+    }
+
+    public void StartPaste(BpmEventClipBoard bpmEventClipBoard)
+    {
+        if (bpmEventClipBoard?.SourceStartBeat == null || bpmEventClipBoard.Bpms == null || bpmEventClipBoard.Bpms.Count == 0)
+        {
+            return;
+        }
+
+        _isPasteMode = true;
+        _bpmEventClipBoard = bpmEventClipBoard;
+        _pasteTargetBeat = bpmEventClipBoard.SourceStartBeat.Duplicate();
+        _pasteBeatDelta = _pasteTargetBeat - bpmEventClipBoard.SourceStartBeat;
+    }
+
+    public void ExitPasteMode()
+    {
+        if (!_isPasteMode)
+        {
+            return;
+        }
+
+        _isPasteMode = false;
+    }
+
+    private void UpdatePasteTarget(float localY)
+    {
+        if (_bpmEventClipBoard?.SourceStartBeat == null)
+        {
+            return;
+        }
+
+        float beatValue = _coordComponent.GetBeatValue(localY);
+        _pasteTargetBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
+        _pasteBeatDelta = _pasteTargetBeat - _bpmEventClipBoard.SourceStartBeat;
     }
 
     protected override void OnBoxUpdated(Vector2 startDataPos, Vector2 endDataPos)

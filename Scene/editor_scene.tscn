@@ -1,31 +1,33 @@
 [gd_scene format=3 uid="uid://dcefdc3pkxlp7"]
 
-[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_7k27q"]
+[ext_resource type="StyleBox" path="res://ButtonNormal.tres" id="1_7k27q"]
 [ext_resource type="Script" uid="uid://db0kx1087xbqx" path="res://Script/EditorScene/EditorScene.cs" id="1_hg1x2"]
-[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="3_2bu1g"]
+[ext_resource type="Theme" uid="uid://lnn5ylm7q1oc" path="res://theme_gray.tres" id="3_2bu1g"]
 [ext_resource type="Script" uid="uid://b0vsjcw8n3bn0" path="res://Script/EditorScene/MenuBar.cs" id="3_75obp"]
 [ext_resource type="PackedScene" uid="uid://6ls0iiql2pg" path="res://Scene/virtual_joystick.tscn" id="3_fkvcd"]
 [ext_resource type="Script" uid="uid://bxga5vr0f47ai" path="res://Script/EditorScene/NoteEditPanel.cs" id="3_gwldl"]
 [ext_resource type="Texture2D" uid="uid://cmyoqdnjegfbg" path="res://Sprite/Tap.png" id="5_57v2d"]
-[ext_resource type="Texture2D" uid="uid://dy2hh4v6wew26" path="res://向右旋转.png" id="6_j0di7"]
+[ext_resource type="Texture2D" path="res://向右旋转.png" id="6_j0di7"]
 [ext_resource type="PackedScene" uid="uid://cpw4wh57xojh6" path="res://Scene/note_chooser.tscn" id="6_p0vr8"]
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="6_qdb1r"]
 [ext_resource type="Script" uid="uid://umegbw5otwxq" path="res://Script/ChartPlayer.cs" id="7_75obp"]
-[ext_resource type="Texture2D" uid="uid://2dp5nsakmk5y" path="res://对勾.svg" id="7_j3vvy"]
+[ext_resource type="Texture2D" path="res://对勾.svg" id="7_j3vvy"]
+[ext_resource type="Texture2D" uid="uid://mx1v6asoxgfk" path="res://Textures/复制.svg" id="7_m6rsv"]
 [ext_resource type="AudioStream" uid="uid://bq0y6v2hdm7rn" path="res://Sound/tap.mp3" id="7_r1xvh"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="7_wq0mf"]
-[ext_resource type="Texture2D" uid="uid://b7gn6bnblipyo" path="res://叉号.svg" id="7_x7a0t"]
+[ext_resource type="Texture2D" path="res://叉号.svg" id="7_x7a0t"]
 [ext_resource type="Texture2D" uid="uid://bvrux81oagnlk" path="res://Sprite/HoldHead.png" id="8_63sjd"]
-[ext_resource type="Texture2D" uid="uid://ca618m0sqq0pd" path="res://对勾_check-correct.svg" id="8_j0di7"]
+[ext_resource type="Texture2D" path="res://对勾_check-correct.svg" id="8_j0di7"]
 [ext_resource type="AudioStream" uid="uid://80hbbvwdlueq" path="res://Sound/drag.mp3" id="8_wx7m8"]
 [ext_resource type="AudioStream" uid="uid://dsgptcddyixmw" path="res://Sound/flick.mp3" id="9_3s8ev"]
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="9_gi1tw"]
+[ext_resource type="Texture2D" uid="uid://dyfcobkm1lp82" path="res://Textures/粘贴.svg" id="9_u2jci"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="10_4d80g"]
 [ext_resource type="SpriteFrames" uid="uid://cmw078fhm0nmn" path="res://Sprite/HitEffect/hit_effect_sprite_frames.tres" id="10_wx7m8"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="11_khybl"]
 [ext_resource type="Script" uid="uid://cta1n0lcd63sh" path="res://Script/EditorScene/EventEditPanel.cs" id="12_qdb1r"]
 [ext_resource type="Script" uid="uid://bctcbmd05picq" path="res://Script/ChartRenderer.cs" id="12_roijs"]
-[ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4d80g"]
+[ext_resource type="Texture2D" path="res://暂停_256px.png" id="16_4d80g"]
 [ext_resource type="Script" uid="uid://bsyjbk2cljq2g" path="res://Script/EditorScene/RightPanel.cs" id="16_khybl"]
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="16_qrq2u"]
 [ext_resource type="Texture2D" uid="uid://4su3gb6l6dku" path="res://Sprite/TapHL.png" id="18_6lh21"]
@@ -38,14 +40,14 @@
 [ext_resource type="Texture2D" uid="uid://bxibwjcib4p6l" path="res://Sprite/HoldBodyMh.png" id="22_c8bod"]
 [ext_resource type="Texture2D" uid="uid://ceqs11llnv1mi" path="res://Sprite/HoldEndMh.png" id="23_d50ot"]
 [ext_resource type="Texture2D" uid="uid://6bbwrp8sf7n8" path="res://Sprite/BpmEvent2.png" id="23_fayi4"]
-[ext_resource type="Texture2D" uid="uid://cqkci055pm5cs" path="res://播放_间距.png" id="24_5asy7"]
-[ext_resource type="Texture2D" uid="uid://tfio8umpc4od" path="res://电影.png" id="25_3s8ev"]
-[ext_resource type="Texture2D" uid="uid://dc5hmif77j15m" path="res://菜单-07.png" id="25_wx7m8"]
-[ext_resource type="Texture2D" uid="uid://8esm21xk43li" path="res://菜单-02.png" id="26_3s8ev"]
-[ext_resource type="Texture2D" uid="uid://cwwb6dl8anq1i" path="res://停止.png" id="26_utcux"]
+[ext_resource type="Texture2D" path="res://播放_间距.png" id="24_5asy7"]
+[ext_resource type="Texture2D" path="res://电影.png" id="25_3s8ev"]
+[ext_resource type="Texture2D" path="res://菜单-07.png" id="25_wx7m8"]
+[ext_resource type="Texture2D" path="res://菜单-02.png" id="26_3s8ev"]
+[ext_resource type="Texture2D" path="res://停止.png" id="26_utcux"]
 [ext_resource type="PackedScene" uid="uid://bpkv57wpohu8e" path="res://Scene/event_info_panel.tscn" id="28_605qm"]
-[ext_resource type="Texture2D" uid="uid://bijy1d18kplv7" path="res://向左旋转.png" id="28_r1xvh"]
-[ext_resource type="StyleBox" uid="uid://dk22qdwdr2nns" path="res://PanelTransparent.tres" id="32_k7bmn"]
+[ext_resource type="Texture2D" path="res://向左旋转.png" id="28_r1xvh"]
+[ext_resource type="StyleBox" path="res://PanelTransparent.tres" id="32_k7bmn"]
 [ext_resource type="PackedScene" uid="uid://cuskdub26yo1x" path="res://Scene/settings_panel.tscn" id="34_kheud"]
 [ext_resource type="PackedScene" uid="uid://dammma3ce4ykd" path="res://Scene/editor_settings_panel.tscn" id="35_editor_settings"]
 [ext_resource type="PackedScene" uid="uid://b1gs6hhvosbih" path="res://Scene/bpm_info_panel.tscn" id="36_lc344"]
@@ -191,7 +193,7 @@ custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
-text = "复"
+icon = ExtResource("7_m6rsv")
 icon_alignment = 1
 expand_icon = true
 
@@ -215,7 +217,7 @@ custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
 theme = ExtResource("3_2bu1g")
 theme_override_font_sizes/font_size = 30
-text = "粘"
+icon = ExtResource("9_u2jci")
 icon_alignment = 1
 expand_icon = true
 

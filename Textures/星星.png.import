@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0jp8xmb4vru6"
-path.s3tc="res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.s3tc.ctex"
-path.etc2="res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.etc2.ctex"
+uid="uid://ckyw5ugnyg5ll"
+path.s3tc="res://.godot/imported/星星.png-b9b0262d3071e4a28282bdc6f756baa8.s3tc.ctex"
+path.etc2="res://.godot/imported/星星.png-b9b0262d3071e4a28282bdc6f756baa8.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://暂停_256px.png"
-dest_files=["res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.s3tc.ctex", "res://.godot/imported/暂停_256px.png-84cff71540ee9388aa1cfb7e8b89df94.etc2.ctex"]
+source_file="res://Textures/星星.png"
+dest_files=["res://.godot/imported/星星.png-b9b0262d3071e4a28282bdc6f756baa8.s3tc.ctex", "res://.godot/imported/星星.png-b9b0262d3071e4a28282bdc6f756baa8.etc2.ctex"]
 
 [params]
 

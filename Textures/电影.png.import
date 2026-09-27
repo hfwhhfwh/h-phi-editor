@@ -2,9 +2,9 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://8esm21xk43li"
-path.s3tc="res://.godot/imported/菜单-02.png-e88f1cf1095070ced2987216a1cba74a.s3tc.ctex"
-path.etc2="res://.godot/imported/菜单-02.png-e88f1cf1095070ced2987216a1cba74a.etc2.ctex"
+uid="uid://tfio8umpc4od"
+path.s3tc="res://.godot/imported/电影.png-e28ef59741e936334890035aeda1f15f.s3tc.ctex"
+path.etc2="res://.godot/imported/电影.png-e28ef59741e936334890035aeda1f15f.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://菜单-02.png"
-dest_files=["res://.godot/imported/菜单-02.png-e88f1cf1095070ced2987216a1cba74a.s3tc.ctex", "res://.godot/imported/菜单-02.png-e88f1cf1095070ced2987216a1cba74a.etc2.ctex"]
+source_file="res://Textures/电影.png"
+dest_files=["res://.godot/imported/电影.png-e28ef59741e936334890035aeda1f15f.s3tc.ctex", "res://.godot/imported/电影.png-e28ef59741e936334890035aeda1f15f.etc2.ctex"]
 
 [params]
 
