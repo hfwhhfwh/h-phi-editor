@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dnc3t1mokox2y"]
 
 [ext_resource type="Script" uid="uid://cva6dcnxn0kwn" path="res://Script/LoadingBar/LoadingBar.cs" id="1_68ys5"]
-[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_e7ab3"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_e7ab3"]
 
 [node name="LoadingBar" type="CanvasLayer" unique_id=1615410586 node_paths=PackedStringArray("_titleLabel", "_progressBar", "_numLabel", "_descriptionLabel")]
 script = ExtResource("1_68ys5")

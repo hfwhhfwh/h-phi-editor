@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://dfr65wjbfr35f" path="res://Scene/choose_line_panel.tscn" id="1_pwh32"]
 [ext_resource type="Script" uid="uid://ch1jgktudu5kj" path="res://Script/TestSceneScripts/TestSceneChooseLinePanel.cs" id="1_q5e2n"]
-[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="2_5mpg1"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="2_5mpg1"]
 
 [node name="TestSceneChooseLinePanel" type="Node" unique_id=1969081231 node_paths=PackedStringArray("chooseLinePanel")]
 script = ExtResource("1_q5e2n")

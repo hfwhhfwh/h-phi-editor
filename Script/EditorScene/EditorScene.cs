@@ -93,6 +93,10 @@ public partial class EditorScene : Node
         }
         set
         {
+            // 谱面还没加载完成时，先只更新 beat 偏移，等加载完再由 _Process 同步时间
+            if (editingChart?.BpmList == null)
+                return;
+
             _horBeatOffset = value;
             _chartTime = TimeUtil.BeatToSecond(_horBeatOffset, editingChart.BpmList);
         }
@@ -106,6 +110,10 @@ public partial class EditorScene : Node
         }
         set
         {
+            // 谱面还没加载完成时，先只更新 beat 偏移，等加载完再由 _Process 同步时间
+            if (editingChart?.BpmList == null)
+                return;
+
             _chartTime = value;
             _horBeatOffset = TimeUtil.SecondToBeat((float)_chartTime, editingChart.BpmList);
             horOffset = _horBeatOffset * horSeparation;

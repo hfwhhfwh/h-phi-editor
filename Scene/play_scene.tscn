@@ -15,7 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="11_dqi6c"]
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="12_adj2r"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="13_ap1vk"]
-[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="14_ii6ij"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="14_ii6ij"]
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4mcor"]
 [ext_resource type="Texture2D" uid="uid://4su3gb6l6dku" path="res://Sprite/TapHL.png" id="16_ii6ij"]
 [ext_resource type="Texture2D" uid="uid://ckavuu86r8dl6" path="res://Sprite/DragHL.png" id="17_jp30j"]

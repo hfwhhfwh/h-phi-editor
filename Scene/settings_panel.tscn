@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cuskdub26yo1x"]
 
 [ext_resource type="Script" uid="uid://7kr1x7y3sa1v" path="res://Script/Settings/SettingsPanel.cs" id="1_ivhfp"]
-[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_ykn2r"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_ykn2r"]
 [ext_resource type="StyleBox" uid="uid://2eir3yfwt18w" path="res://PanelGrey.tres" id="3_bnfmk"]
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]

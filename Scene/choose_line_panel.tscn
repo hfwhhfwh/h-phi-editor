@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://dfr65wjbfr35f"]
 
-[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://ButtonNormal.tres" id="1_73dy3"]
+[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://Themes/ButtonNormal.tres" id="1_73dy3"]
 [ext_resource type="Script" uid="uid://ddflgrjtrybjh" path="res://Script/EditorScene/ChooseLinePanel.cs" id="2_ecstf"]
-[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="3_ecstf"]
-[ext_resource type="Texture2D" uid="uid://ckyw5ugnyg5ll" path="res://星星.png" id="4_2883p"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="3_ecstf"]
+[ext_resource type="Texture2D" uid="uid://ckyw5ugnyg5ll" path="res://Textures/星星.png" id="4_2883p"]
 
 [node name="ChooseLinePanel" type="Panel" unique_id=143035431 node_paths=PackedStringArray("vBoxContainer", "scrollContainer", "addButton", "closeButton", "selectButton", "layerButtons")]
 anchors_preset = 15
@@ -13,6 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = ExtResource("1_73dy3")
 script = ExtResource("2_ecstf")
+_theme = ExtResource("3_ecstf")
 vBoxContainer = NodePath("MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer")
 scrollContainer = NodePath("MarginContainer/VBoxContainer/ScrollContainer")
 addButton = NodePath("MarginContainer/VBoxContainer/Head/Right/Add")

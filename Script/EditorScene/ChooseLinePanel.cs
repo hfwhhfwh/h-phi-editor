@@ -12,7 +12,7 @@ public partial class ChooseLinePanel : Panel
 		public float NextEventTime { get; set; } 
 	}
 
-	private Theme theme;
+	[Export] private Theme _theme;
 	[Export] private VBoxContainer vBoxContainer;
 	[Export] private ScrollContainer scrollContainer;
 	private bool isDragging = false;
@@ -34,7 +34,6 @@ public partial class ChooseLinePanel : Panel
     public override void _Ready()
     {
         base._Ready();
-		theme = GD.Load<Theme>("res://theme_gray.tres");
 
 		scrollContainer.ScrollStarted += () => isDragging = true;
 		scrollContainer.ScrollEnded += () => isDragging = false;
@@ -95,7 +94,7 @@ public partial class ChooseLinePanel : Panel
 
 		// 创建主按钮
 		Button button = new Button();
-		button.Theme = theme;
+		button.Theme = _theme;
 		button.Text = $"id:{info.Id} 音符数量:{info.NoteCount} 下一个事件:{info.NextEventTime}";
 		button.MouseFilter = MouseFilterEnum.Pass;
 		button.SetMeta("id", info.Id);
@@ -110,7 +109,7 @@ public partial class ChooseLinePanel : Panel
 		//右侧...按钮
 		{
 			Button otherButton = new Button();
-			otherButton.Theme = GD.Load<Theme>("res://theme_gray.tres");
+			otherButton.Theme = _theme;
 			otherButton.Text = "···";
 			otherButton.MouseFilter = MouseFilterEnum.Pass;
 			otherButton.SetMeta("id", info.Id);

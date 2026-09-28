@@ -22,7 +22,7 @@ public partial class PopupHelper : Node
         Instance = this;
         // =============================
 
-        _theme = GD.Load<Theme>("res://theme_gray.tres");
+        _theme = GD.Load<Theme>("res://Themes/theme_gray.tres");
     }
 
     public override void _ExitTree()

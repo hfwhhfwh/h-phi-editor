@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://benf33fckpxs7"]
 
-[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://theme_gray.tres" id="1_g1hfy"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_g1hfy"]
 [ext_resource type="Script" uid="uid://bknfsbmsops4k" path="res://Script/EditorScene/InfoEditPanel.cs" id="2_r5llj"]
 
 [node name="InfoEditPanel" type="Control" unique_id=296322886 node_paths=PackedStringArray("_vBoxContainer", "_nameLabel", "_confirmButton")]

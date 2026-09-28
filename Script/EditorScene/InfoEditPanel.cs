@@ -13,7 +13,7 @@ public partial class InfoEditPanel : Control
 	}
 
 	private Data _data;
-	private Theme _theme;
+	[Export] private Theme _theme;
 	[Export] private VBoxContainer _vBoxContainer;
 	[Export] private Label _nameLabel;
 	[Export] private Button _confirmButton;
@@ -25,8 +25,7 @@ public partial class InfoEditPanel : Control
     public override void _Ready()
     {
         base._Ready();
-
-		_theme = GD.Load<Theme>("res://theme_gray.tres");
+		
 		// _vBoxContainer = GetNode<VBoxContainer>(
 		// 	"MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer");
 		// _nameLabel = GetNode<Label>("MarginContainer/VBoxContainer/Label");

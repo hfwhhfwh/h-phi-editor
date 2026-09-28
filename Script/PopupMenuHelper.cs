@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 public partial class PopupMenuHelper : Node
 {
     public static PopupMenuHelper Instance;
-    private static Theme theme;
+    private static Theme _theme;
 
     public override void _Ready()
     {
@@ -21,7 +21,7 @@ public partial class PopupMenuHelper : Node
         Instance = this;
         // =============================
 
-        theme = GD.Load<Theme>("res://theme_gray.tres");
+        _theme = GD.Load<Theme>("res://Themes/theme_gray.tres");
     }
 
     public override void _ExitTree()
@@ -37,7 +37,7 @@ public partial class PopupMenuHelper : Node
 
     public static void SetTheme(Theme theme)
     {
-        PopupMenuHelper.theme = theme;
+        PopupMenuHelper._theme = theme;
     }
 
     /// <summary>
@@ -52,7 +52,7 @@ public partial class PopupMenuHelper : Node
         PopupMenu menu = new PopupMenu();
         menu.InitialPosition = Window.WindowInitialPosition.Absolute; // 确保位置生效
         parent.AddChild(menu); // 添加到场景树
-        menu.Theme = theme; // 设置样式
+        menu.Theme = _theme; // 设置样式
 
         SetPopupMenu(menu, items);
 
