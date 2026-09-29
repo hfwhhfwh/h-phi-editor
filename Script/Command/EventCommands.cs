@@ -1,6 +1,7 @@
 // File: Editor/Commands/EventCommands.cs
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
 using QuickType;
 
 public class AddEventCommand : IEditCommand
@@ -184,48 +185,58 @@ public class DeleteEventsCommand : IEditCommand
 {
     private readonly int _lineId;
     private readonly int _layer;
-    private readonly LineEventEnum _type;
-    private readonly List<LineEvent> _removed = new();
-    private readonly List<LineEventSnapshot> _snapshots = new();
+    private readonly List<(LineEventEnum Type, LineEvent Evt)> _removed = new();
+    private readonly List<(LineEventEnum Type, LineEventSnapshot Snapshot)> _snapshots = new();
 
     public string Name => "删除事件";
 
-    public DeleteEventsCommand(int lineId, int layer, LineEventEnum type, IEnumerable<LineEvent> events)
+    public DeleteEventsCommand(int lineId, int layer, IEnumerable<(LineEventEnum Type, LineEvent Evt)> events)
     {
         _lineId = lineId;
         _layer = layer;
-        _type = type;
         foreach (var e in events)
         {
-            if (e == null) continue;
+            if (e.Evt == null) continue;
             _removed.Add(e);
-            _snapshots.Add(LineEventSnapshot.Capture(e));
+            _snapshots.Add((e.Type, LineEventSnapshot.Capture(e.Evt)));
         }
     }
 
     public void Execute(ChartEditService service)
     {
         var line = service.EditingChart.JudgeLineList[_lineId];
-        var list = line.EventLayers[_layer].GetLineEvents(_type);
+        // var list = line.EventLayers[_layer].GetLineEvents(_type);
 
-        foreach (var e in _removed) list.Remove(e);
+        bool hasSpeedEvent = false;
+        foreach (var e in _removed)
+        {
+            line.EventLayers[_layer].GetLineEvents(e.Type).Remove(e.Evt);
+            // list.Remove(e);
 
-        if (_type == LineEventEnum.Speed)
+            if(e.Type == LineEventEnum.Speed) hasSpeedEvent = true;
+        }
+
+        if (hasSpeedEvent)
             service.RefreshSpeedDependencies(_lineId);
     }
 
     public void Undo(ChartEditService service)
     {
         var line = service.EditingChart.JudgeLineList[_lineId];
-        var list = line.EventLayers[_layer].GetLineEvents(_type);
+        
+        bool hasSpeedEvent = false;
 
         for (int i = 0; i < _removed.Count; i++)
         {
-            _snapshots[i].ApplyTo(_removed[i]);
-            service.InsertLineEventSorted(list, _removed[i]);
+            (LineEventEnum type, LineEvent lineEvent) = _removed[i];
+            
+            _snapshots[i].Snapshot.ApplyTo(lineEvent);
+            service.InsertLineEventSorted(line.EventLayers[_layer].GetLineEvents(type), lineEvent);
+
+            if(type == LineEventEnum.Speed) hasSpeedEvent = true;
         }
 
-        if (_type == LineEventEnum.Speed)
+        if (hasSpeedEvent)
             service.RefreshSpeedDependencies(_lineId);
     }
 }

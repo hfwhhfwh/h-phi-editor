@@ -6,7 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://dwe0jlwqlbgt8" path="res://Sprite/Drag.png" id="4_6iklk"]
 [ext_resource type="Texture2D" uid="uid://7pcf4yi33iri" path="res://Sprite/Flick.png" id="5_j6fmh"]
 [ext_resource type="Texture2D" uid="uid://obf2ulutdpwt" path="res://Sprite/Hold.png" id="6_djjuu"]
-[ext_resource type="Texture2D" uid="uid://dimsw7fkr8jmj" path="res://Textures/删除5_delete-five.svg" id="7_leg7f"]
 
 [node name="NoteChooser" type="VBoxContainer" unique_id=1507138121 node_paths=PackedStringArray("tapButton", "dragButton", "flickButton", "holdButton", "deleteButton")]
 offset_right = 295.0
@@ -16,7 +15,7 @@ tapButton = NodePath("Button")
 dragButton = NodePath("Button2")
 flickButton = NodePath("Button3")
 holdButton = NodePath("Button4")
-deleteButton = NodePath("Button5")
+deleteButton = NodePath("")
 
 [node name="Button" type="Button" parent="." unique_id=277347817]
 custom_minimum_size = Vector2(0, 60)
@@ -51,14 +50,5 @@ layout_mode = 2
 theme = ExtResource("2_leg7f")
 toggle_mode = true
 icon = ExtResource("6_djjuu")
-icon_alignment = 1
-expand_icon = true
-
-[node name="Button5" type="Button" parent="." unique_id=217215461]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme = ExtResource("2_leg7f")
-toggle_mode = true
-icon = ExtResource("7_leg7f")
 icon_alignment = 1
 expand_icon = true

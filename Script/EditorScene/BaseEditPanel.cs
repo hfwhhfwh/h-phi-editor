@@ -144,6 +144,16 @@ public abstract partial class BaseEditPanel : Panel
 	public bool GridDisabled { get; set; } = false; // 禁用渲染网格
 	public bool ContentDisabled { get; set; } = false; // 禁用渲染物体
 
+	/// <summary>
+	/// 当用户点击空白处取消选择所有对象时发出
+	/// </summary>
+	public event Action AllDeselected;
+
+	protected void EmitAllDeselected()
+	{
+		AllDeselected?.Invoke();
+	}
+
 	protected void RegisterMultiMesh(string key, Texture2D texture, int instanceCount, int zIndex = 1)
 	{
 		//设置Multimesh

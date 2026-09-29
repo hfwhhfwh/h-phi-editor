@@ -58,6 +58,7 @@ public partial class EditorScene : Node
     [Export] private Button _multiSelectBtn;
     [Export] private Button _pasteConfirmBtn;
     [Export] private Button _pasteCancelBtn;
+    [Export] private Button _deleteBtn;
 
 
 
@@ -138,6 +139,24 @@ public partial class EditorScene : Node
     /// </summary>
     private EditPanelType _pasteFocusPanel;
 
+
+    private bool _isSelecting = false;
+
+    /// <summary>
+    /// 是否正在选择某些对象（Note、Event等），单选多选都算
+    /// </summary>
+    private bool IsSelecting
+    {
+        get => _isSelecting;
+        set
+        {
+            _isSelecting = value;
+            _deleteBtn.Visible = value;
+        }
+    }
+
+    private readonly List<Action> _unsubscribes = new();
+
     #if TOOLS
     // ---- 性能分析 ----
     private double _setChartTimeTimeUs = 0;
@@ -181,6 +200,21 @@ public partial class EditorScene : Node
 
         // 此时BeatValue收到牵连改变，需要更新horOffset
         horOffset = BeatValue * horSeparation;
+    }
+
+    private void Subscribe<THandler>(THandler handler,
+                                     Action<THandler> add,
+                                     Action<THandler> remove)
+        where THandler : Delegate
+    {
+        add(handler);
+        _unsubscribes.Add(() => remove(handler));
+    }
+
+    private void UnsubscribeAll()
+    {
+        foreach (var u in _unsubscribes) u();
+        _unsubscribes.Clear();
     }
 
 
@@ -350,48 +384,120 @@ public partial class EditorScene : Node
 
         // 设置NoteEditPanel
         noteEditPanel.OnNoteSelected += OnNoteSelected;
-        noteEditPanel.NoteAddRequested += AddNote;
-        noteEditPanel.NoteDeleteRequested += OnNotesDelete;
-        noteEditPanel.NoteDragStarted += BeginNoteDrag;
-        noteEditPanel.NoteDragEnded += EndNoteDrag;
-        noteEditPanel.NoteMoved += MoveNote;
-        noteEditPanel.NoteTimeChanged += SetNoteTime;
-        noteEditPanel.NoteMultiSelected += OnNoteMultiSelected;
+        Subscribe(
+            AddNote,
+            h => noteEditPanel.NoteAddRequested += h,
+            h => noteEditPanel.NoteAddRequested -= h);
+        Subscribe(
+            OnNotesDelete,
+            h => noteEditPanel.NoteDeleteRequested += h,
+            h => noteEditPanel.NoteDeleteRequested -= h);
+        Subscribe(
+            BeginNoteDrag,
+            h => noteEditPanel.NoteDragStarted += h,
+            h => noteEditPanel.NoteDragStarted -= h);
+        Subscribe(
+            EndNoteDrag,
+            h => noteEditPanel.NoteDragEnded += h,
+            h => noteEditPanel.NoteDragEnded -= h);
+        Subscribe(
+            MoveNote,
+            h => noteEditPanel.NoteMoved += h,
+            h => noteEditPanel.NoteMoved -= h);
+        Subscribe(
+            SetNoteTime,
+            h => noteEditPanel.NoteTimeChanged += h,
+            h => noteEditPanel.NoteTimeChanged -= h);
+        Subscribe(
+            OnNoteMultiSelected,
+            h => noteEditPanel.NoteMultiSelected += h,
+            h => noteEditPanel.NoteMultiSelected -= h);
         noteEditPanel.Disabled = false;
 
         // 设置eventEditPanel
-        eventEditPanel.EventSelected += OnEventSelected;
-        eventEditPanel.EventsDeleteRequested += DeleteEvents;
-        eventEditPanel.AddEventRequested += AddEvent;
-        eventEditPanel.EventDragStarted += BeginEventDrag;
-        eventEditPanel.EventDragEnded += EndEventDrag;
-        eventEditPanel.EventTimeChangeRequested += SetEventTime;
-        eventEditPanel.EventMultiSelected += OnEventMultiSelected;
+        Subscribe(
+            OnEventSelected,
+            h => eventEditPanel.EventSelected += h,
+            h => eventEditPanel.EventSelected -= h);
+        Subscribe(
+            DeleteEvents,
+            h => eventEditPanel.EventsDeleteRequested += h,
+            h => eventEditPanel.EventsDeleteRequested -= h);
+        Subscribe(
+            AddEvent,
+            h => eventEditPanel.AddEventRequested += h,
+            h => eventEditPanel.AddEventRequested -= h);
+        Subscribe(
+            BeginEventDrag,
+            h => eventEditPanel.EventDragStarted += h,
+            h => eventEditPanel.EventDragStarted -= h);
+        Subscribe(
+            EndEventDrag,
+            h => eventEditPanel.EventDragEnded += h,
+            h => eventEditPanel.EventDragEnded -= h);
+        Subscribe(
+            SetEventTime,
+            h => eventEditPanel.EventTimeChangeRequested += h,
+            h => eventEditPanel.EventTimeChangeRequested -= h);
+        Subscribe(
+            OnEventMultiSelected,
+            h => eventEditPanel.EventMultiSelected += h,
+            h => eventEditPanel.EventMultiSelected -= h);
         eventEditPanel.Disabled = false;
 
         // 设置bpmEditPanel
-        bpmEditPanel.EventSelected += OnBpmSelected;
-        bpmEditPanel.BpmMultiSelected += OnBpmMultiSelected;
+        Subscribe(
+            OnBpmSelected,
+            h => bpmEditPanel.EventSelected += h,
+            h => bpmEditPanel.EventSelected -= h);
+        Subscribe(
+            OnBpmMultiSelected,
+            h => bpmEditPanel.BpmMultiSelected += h,
+            h => bpmEditPanel.BpmMultiSelected -= h);
         bpmEditPanel.Disabled = false;
-        bpmEditPanel.BpmDragStarted += BeginBpmDrag;
-        bpmEditPanel.BpmDragEnded += EndBpmDrag;
-        bpmEditPanel.EventAddRequested += AddBpm;
-        bpmEditPanel.EventDeleteRequested += DeleteBpms;
-        bpmEditPanel.EventTimeChanged += SetBpmTime;
+        Subscribe(
+            BeginBpmDrag,
+            h => bpmEditPanel.BpmDragStarted += h,
+            h => bpmEditPanel.BpmDragStarted -= h);
+        Subscribe(
+            EndBpmDrag,
+            h => bpmEditPanel.BpmDragEnded += h,
+            h => bpmEditPanel.BpmDragEnded -= h);
+        Subscribe(
+            AddBpm,
+            h => bpmEditPanel.EventAddRequested += h,
+            h => bpmEditPanel.EventAddRequested -= h);
+        Subscribe(
+            DeleteBpms,
+            h => bpmEditPanel.EventDeleteRequested += h,
+            h => bpmEditPanel.EventDeleteRequested -= h);
+        Subscribe(
+            SetBpmTime,
+            h => bpmEditPanel.EventTimeChanged += h,
+            h => bpmEditPanel.EventTimeChanged -= h);
 
         SetEditPanelVisible(true); // 初始默认显示
 
         // 设置noteInfoPanel
         noteInfoPanel.OnConfirmed += () => noteInfoPanel.Visible = false;
-        noteInfoPanel.OnNotePropertyChanged += SetNoteProperty;
+        Subscribe(
+            SetNoteProperty,
+            h => noteInfoPanel.OnNotePropertyChanged += h,
+            h => noteInfoPanel.OnNotePropertyChanged -= h);
 
         // 设置eventInfoPanel
         eventInfoPanel.OnConfirmed += () => eventInfoPanel.Visible = false;
-        eventInfoPanel.PropertyChanged += SetEventProperty;
+        Subscribe(
+            SetEventProperty,
+            h => eventInfoPanel.PropertyChanged += h,
+            h => eventInfoPanel.PropertyChanged -= h);
 
         //设置bpmInfoPanel
         bpmInfoPanel.OnConfirmed += () => bpmInfoPanel.Visible = false;
-        bpmInfoPanel.PropertyChanged += SetBpmProperty;
+        Subscribe(
+            SetBpmProperty,
+            h => bpmInfoPanel.PropertyChanged += h,
+            h => bpmInfoPanel.PropertyChanged -= h);
 
         //设置弹出菜单
         PopupMenuHelper.SetTheme(theme);
@@ -464,19 +570,42 @@ public partial class EditorScene : Node
         };
 
         //设置NoteChooser
-        noteChooser.NoteChoosed += OnNoteChooserNoteChoosed;
-        noteChooser.Deselected += OnNoteChooserDeselected;
-        noteChooser.DeleteButtonChoosed += OnNoteChooserDeleteChoosed;
+        Subscribe(
+            OnNoteChooserNoteChoosed,
+            h => noteChooser.NoteChoosed += h,
+            h => noteChooser.NoteChoosed -= h
+        );
+
+        Subscribe(
+            OnNoteChooserDeselected,
+            h => noteChooser.Deselected += h,
+            h => noteChooser.Deselected -= h
+        );
+        // noteChooser.DeleteButtonChoosed += OnNoteChooserDeleteChoosed;
+
+        // 设置_deleteBtn
+        _deleteBtn.Visible = false; // 默认不显示
+        Subscribe(
+            OnDeletePressed,
+            h => _deleteBtn.Pressed += h,
+            h => _deleteBtn.Pressed -= h
+        );
 
         //设置EditModeManager 初始状态默认为常规模式
         EditModeManager.SetEditMode(EditModeEnum.Normal);
 
         //设置editModeLabel
         editModeLabel.Text = "模式：常规模式";
-        EditModeManager.OnEditModeChanged += OnEditModeChanged;
+        Subscribe(
+            OnEditModeChanged,
+            h => EditModeManager.OnEditModeChanged += h,
+            h => EditModeManager.OnEditModeChanged -= h);
 
         // 设置PlayModeManager
-        PlayModeManager.PlayModeChanged += OnPlayModeChanged;
+        Subscribe(
+            OnPlayModeChanged,
+            h => PlayModeManager.PlayModeChanged += h,
+            h => PlayModeManager.PlayModeChanged -= h);
         PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
 
         GameSettings.Instance.SettingChanged += OnSettingsChanged;
@@ -501,6 +630,23 @@ public partial class EditorScene : Node
             eventEditPanel.SelectMode = mode;
             bpmEditPanel.SelectMode = mode;
         };
+
+        // 统一设置面板取消选择的事件
+        Subscribe(
+            () => {IsSelecting = false;},
+            h => noteEditPanel.AllDeselected += h,
+            h => noteEditPanel.AllDeselected -= h
+        );
+        Subscribe(
+            () => {IsSelecting = false;},
+            h => eventEditPanel.AllDeselected += h,
+            h => eventEditPanel.AllDeselected -= h
+        );
+        Subscribe(
+            () => {IsSelecting = false;},
+            h => bpmEditPanel.AllDeselected += h,
+            h => bpmEditPanel.AllDeselected -= h
+        );
         
     }
 
@@ -640,10 +786,10 @@ public partial class EditorScene : Node
     {
         base._ExitTree();
 
-        if (_editorSettings != null)
-        {
-            _editorSettings.SettingChanged -= OnEditorSettingChanged;
-        }
+        // if (_editorSettings != null)
+        // {
+        //     _editorSettings.SettingChanged -= OnEditorSettingChanged;
+        // }
 
         #if TOOLS
         // 取消注册自定义监视器 小心lambda诡异的生命周期问题
@@ -654,38 +800,7 @@ public partial class EditorScene : Node
         Performance.RemoveCustomMonitor("EditorScene/DrawEditPanelTimeUs");
         #endif
 
-        // 设置NoteEditPanel
-        noteEditPanel.NoteAddRequested -= AddNote;
-        noteEditPanel.NoteDeleteRequested -= OnNotesDelete;
-        noteEditPanel.NoteMoved -= MoveNote;
-        noteEditPanel.NoteTimeChanged -= SetNoteTime;
-        noteEditPanel.NoteMultiSelected -= OnNoteMultiSelected;
-
-        // 设置eventEditPanel
-        eventEditPanel.EventSelected -= OnEventSelected;
-        eventEditPanel.EventsDeleteRequested -= DeleteEvents;
-        eventEditPanel.AddEventRequested -= AddEvent;
-        eventEditPanel.EventTimeChangeRequested -= SetEventTime;
-        eventEditPanel.EventMultiSelected -= OnEventMultiSelected;
-
-        // 设置bpmEditPanel
-        bpmEditPanel.EventAddRequested -= AddBpm;
-        bpmEditPanel.EventDeleteRequested -= DeleteBpms;
-        bpmEditPanel.EventTimeChanged -= SetBpmTime;
-
-        //设置eventInfoPanel
-        eventInfoPanel.PropertyChanged -= SetEventProperty;
-
-        //设置bpmInfoPanel
-        bpmEditPanel.EventSelected -= OnBpmSelected;
-        bpmEditPanel.BpmMultiSelected -= OnBpmMultiSelected;
-        bpmInfoPanel.PropertyChanged -= SetBpmProperty;
-
-        // 设置 EditModeManager
-        EditModeManager.OnEditModeChanged -= OnEditModeChanged;
-
-        // 设置PlayModeManager
-        PlayModeManager.PlayModeChanged -= OnPlayModeChanged;
+        UnsubscribeAll();
 
         GD.Print($"[{Name}] 成功退出EditorScene");
         
@@ -876,6 +991,8 @@ public partial class EditorScene : Node
     private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
     {
         _selectFocusPanel = EditPanelType.NoteEdit;
+        IsSelecting = true;
+
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
 
         float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
@@ -893,10 +1010,11 @@ public partial class EditorScene : Node
 
         // 弹出菜单
         PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        popupMenu.PopupHide += () =>
-        {
-            noteEditPanel.DeselectAll();
-        };
+        // popupMenu.PopupHide += () =>
+        // {
+        //     noteEditPanel.DeselectAll();
+        //     IsSelecting = false;
+        // };
     }
 
     private void OnNoteChooserDeselected()
@@ -951,6 +1069,7 @@ public partial class EditorScene : Node
     private void OnNoteMultiSelected()
     {
         _selectFocusPanel = EditPanelType.NoteEdit;
+        IsSelecting = true;
     }
 
     private void SaveChart()
@@ -1137,6 +1256,7 @@ public partial class EditorScene : Node
     private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
     {
         _selectFocusPanel = EditPanelType.LineEventEdit;
+        IsSelecting = true;
         
         EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
 		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
@@ -1152,10 +1272,11 @@ public partial class EditorScene : Node
 
         // 弹出菜单
         PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        popupMenu.PopupHide += () =>
-        {
-            eventEditPanel.DeselectAll();
-        };
+        // popupMenu.PopupHide += () =>
+        // {
+        //     eventEditPanel.DeselectAll();
+        //     IsSelecting = false;
+        // };
     }
 
     private void OnEventEdit(int lineId, int layer, LineEventEnum lineEventEnum, int index)
@@ -1163,6 +1284,7 @@ public partial class EditorScene : Node
         GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
         eventInfoPanel.Visible = true;
         eventEditPanel.DeselectAll();
+        IsSelecting = false;
 
         LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum)[index];
 
@@ -1194,13 +1316,14 @@ public partial class EditorScene : Node
 
     private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
     {
-        _chartEditService.DeleteEvent(lineId, lineEventEnum, index);
+        _chartEditService.DeleteEvent(lineId, editingLayer, lineEventEnum, index);
 
     }
 
     private void OnEventMultiSelected()
     {
         _selectFocusPanel = EditPanelType.LineEventEdit;
+        IsSelecting = true;
     }
 
     private void OnBpmSelected(int index, Vector2 popupViewportPos)
@@ -1211,6 +1334,8 @@ public partial class EditorScene : Node
         }
 
         _selectFocusPanel = EditPanelType.BpmEventEdit;
+        IsSelecting = true;
+
         BpmEvent bpmEvent = editingChart.BpmList[index];
         var items = new List<PopupMenuItem>
         {
@@ -1221,12 +1346,16 @@ public partial class EditorScene : Node
         };
 
         PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        popupMenu.PopupHide += bpmEditPanel.DeselectAll;
+        // popupMenu.PopupHide += () => {
+        //     bpmEditPanel.DeselectAll();
+        //     IsSelecting = false;
+        // };
     }
 
     private void OnBpmMultiSelected()
     {
         _selectFocusPanel = EditPanelType.BpmEventEdit;
+        IsSelecting = true;
     }
 
     private void OnBpmEdit(BpmEvent bpmEvent)
@@ -1237,6 +1366,8 @@ public partial class EditorScene : Node
         }
 
         bpmEditPanel.DeselectAll();
+        IsSelecting = false;
+
         bpmInfoPanel.Visible = true;
         bpmInfoPanel.Edit(bpmEvent, editingChart.BpmList.IndexOf(bpmEvent));
     }
@@ -1261,38 +1392,44 @@ public partial class EditorScene : Node
     {
         _chartEditService.DeleteBpms(new List<BpmEvent> { bpmEvent });
         bpmEditPanel.DeselectAll();
+        IsSelecting = false;
     }
 
-    private void DeleteEvents(int lineId, int layer, List<LineEvent> eventsToDelete)
+    // private void DeleteEvents(int lineId, int layer, IEnumerable<LineEvent> eventsToDelete)
+    // {
+    //     // lineEvents可能包含不同种类的事件，需要分别删除，构建一张表格
+    //     LineEventEnum[] allEventTypes = (LineEventEnum[])Enum.GetValues(typeof(LineEventEnum));
+    //     Dictionary<LineEventEnum, List<int>> table = new();
+
+    //     foreach(LineEvent lineEvent in eventsToDelete)
+    //     {
+    //         foreach(LineEventEnum lineEventEnum in allEventTypes)
+    //         {
+    //             List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
+    //             if (lineEvents.Contains(lineEvent))
+    //             {
+    //                 //添加到表格
+    //                 if (!table.TryGetValue(lineEventEnum, out var indices))
+    //                 {
+    //                     indices = new List<int>();
+    //                     table[lineEventEnum] = indices;
+    //                 }
+    //                 indices.Add(lineEvents.IndexOf(lineEvent));
+    //                 break;
+    //             }
+    //         }
+    //     }
+
+    //     //分别删除
+    //     foreach(LineEventEnum lineEventEnum in table.Keys)
+    //     {
+    //         _chartEditService.DeleteEvents(lineId, lineEventEnum, table[lineEventEnum]);
+    //     }
+    // }
+
+    private void DeleteEvents(int lineId, int layer, IEnumerable<(LineEventEnum Type, LineEvent Evt)> events)
     {
-        // lineEvents可能包含不同种类的事件，需要分别删除，构建一张表格
-        LineEventEnum[] allEventTypes = (LineEventEnum[])Enum.GetValues(typeof(LineEventEnum));
-        Dictionary<LineEventEnum, List<int>> table = new();
-
-        foreach(LineEvent lineEvent in eventsToDelete)
-        {
-            foreach(LineEventEnum lineEventEnum in allEventTypes)
-            {
-                List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
-                if (lineEvents.Contains(lineEvent))
-                {
-                    //添加到表格
-                    if (!table.TryGetValue(lineEventEnum, out var indices))
-                    {
-                        indices = new List<int>();
-                        table[lineEventEnum] = indices;
-                    }
-                    indices.Add(lineEvents.IndexOf(lineEvent));
-                    break;
-                }
-            }
-        }
-
-        //分别删除
-        foreach(LineEventEnum lineEventEnum in table.Keys)
-        {
-            _chartEditService.DeleteEvents(lineId, lineEventEnum, table[lineEventEnum]);
-        }
+        _chartEditService.DeleteEvents(lineId, layer, events);
     }
 
     private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
@@ -1548,7 +1685,6 @@ public partial class EditorScene : Node
         {
             case EditPanelType.NoteEdit:
                 noteEditPanel.ExitPasteMode();
-
                 // 执行粘贴
                 _chartEditService.PasteNotes(
                     _editorClipboard.noteClipBoard,
@@ -1556,7 +1692,6 @@ public partial class EditorScene : Node
                     noteEditPanel.PasteTargetBeat,
                     noteEditPanel.PasteTargetPosX
                 );
-                
                 break;
 
             case EditPanelType.LineEventEdit:
@@ -1616,6 +1751,54 @@ public partial class EditorScene : Node
                 _chartEditService.Redo();
                 GetViewport().SetInputAsHandled();
             }
+        }
+    }
+
+    /// <summary>
+    /// 当删除按钮被按下时调用
+    /// </summary>
+    private void OnDeletePressed()
+    {
+        bool isSuccess = true;
+
+        // 由于删除按钮只有一个，需要判断当前选中的对象位于哪个面板
+        switch (_selectFocusPanel)
+        {
+            case EditPanelType.NoteEdit:
+                if(noteEditPanel.SelectedNotes != null && noteEditPanel.SelectedNotes.Count != 0)
+                {
+                    _chartEditService.DeleteNotes(editingLineId, noteEditPanel.SelectedNotes);
+                }
+                break;
+            case EditPanelType.LineEventEdit:
+                if(eventEditPanel.SelectedEventsWithType != null && 
+                    eventEditPanel.SelectedEventsWithType.Count != 0)
+                {
+                    List<LineEvent> eventsToDelete = eventEditPanel.SelectedEventsWithType
+                        .Select(kvp => kvp.Item2)
+                        .ToList();
+                    DeleteEvents(editingLineId, editingLayer, eventsToDelete);
+                }
+                break;
+            case EditPanelType.BpmEventEdit:
+                if(bpmEditPanel.SelectedEvents != null && bpmEditPanel.SelectedEvents.Count != 0)
+                {
+                    _chartEditService.DeleteBpms(bpmEditPanel.SelectedEvents.ToList());
+                }
+                break;
+            default:
+                GD.PrintErr($"[{this.Name}] 未知的选中面板类型:{_selectFocusPanel}");
+                isSuccess = false;
+                break;
+        }
+
+        if (isSuccess)
+        {
+            IsSelecting = false;
+            noteEditPanel.DeselectAll();
+            eventEditPanel.DeselectAll();
+            bpmEditPanel.DeselectAll();
+
         }
     }
 

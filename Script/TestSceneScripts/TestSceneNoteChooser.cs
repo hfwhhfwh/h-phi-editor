@@ -11,7 +11,7 @@ public partial class TestSceneNoteChooser : Node
 
         noteChooser.NoteChoosed += OnNoteChoosed;
         noteChooser.Deselected += OnDeselected;
-        noteChooser.DeleteButtonChoosed += OnDeleteButtonChoosed;
+        //noteChooser.DeleteButtonChoosed += OnDeleteButtonChoosed;
 
     }
 
@@ -21,7 +21,7 @@ public partial class TestSceneNoteChooser : Node
 
         noteChooser.NoteChoosed -= OnNoteChoosed;
         noteChooser.Deselected -= OnDeselected;
-        noteChooser.DeleteButtonChoosed -= OnDeleteButtonChoosed;
+        //noteChooser.DeleteButtonChoosed -= OnDeleteButtonChoosed;
     }
 
 

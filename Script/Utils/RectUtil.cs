@@ -98,13 +98,13 @@ public static class RectUtil
         return xInRange && yOverlap;
     }
 
-    public static List<ValueTuple<float, LineEvent>> GetEventsInRect(List<ValueTuple<float, LineEvent>> lineEvents, Rect2 rect)
+    public static List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> GetEventsInRect(List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> lineEvents, Rect2 rect)
     {
-        List<ValueTuple<float, LineEvent>> eventsInRect = new();
+        List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> eventsInRect = new();
         for (int i = 0; i < lineEvents.Count; i++)
         {
-            ValueTuple<float, LineEvent> lineEvent = lineEvents[i];
-            if (IsEventInRect(lineEvent.Item2, lineEvent.Item1, rect))
+            ValueTuple<float, (LineEventEnum Type, LineEvent Evt)> lineEvent = lineEvents[i];
+            if (IsEventInRect(lineEvent.Item2.Evt, lineEvent.Item1, rect))
             {
                 eventsInRect.Add(lineEvent);
             }

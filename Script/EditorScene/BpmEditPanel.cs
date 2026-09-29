@@ -443,6 +443,8 @@ public partial class BpmEditPanel : BaseEditPanel
     public void DeselectAll()
     {
         selectedEvents.Clear();
+
+        EmitAllDeselected();
     }
 
     public void StartPaste(BpmEventClipBoard bpmEventClipBoard)

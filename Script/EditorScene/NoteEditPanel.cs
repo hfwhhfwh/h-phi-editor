@@ -151,6 +151,8 @@ public partial class NoteEditPanel : BaseEditPanel
     public void DeselectAll()
     {
         selectedNotes.Clear();
+
+        EmitAllDeselected();
     }
     
     public void StartPaste(NoteClipBoard noteClipBoard)

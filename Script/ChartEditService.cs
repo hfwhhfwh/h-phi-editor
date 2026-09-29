@@ -3,6 +3,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class ChartEditService : Node
 {
@@ -238,11 +239,11 @@ public partial class ChartEditService : Node
         GD.Print($"[{Name}] 删除note(line{lineId})");
     }
 
-    public void DeleteNotes(int lineId, List<Note> notes)
+    public void DeleteNotes(int lineId, IEnumerable<Note> notes)
     {
-        if (notes == null || notes.Count == 0) return;
+        if (notes == null || !notes.Any()) return;
         _history.Execute(new DeleteNotesCommand(lineId, notes), this);
-        GD.Print($"[{Name}] 删除note: {notes.Count} 个");
+        GD.Print($"[{Name}] 删除note: {notes.Count()} 个");
     }
 
     public void AddNote(int lineId, NoteType noteType, Beat startBeat, Beat endBeat, float posX)
@@ -343,19 +344,16 @@ public partial class ChartEditService : Node
             RefreshSpeedDependencies(lineId);
     }
 
-    public void DeleteEvent(int lineId, LineEventEnum lineEventEnum, int index)
+    public void DeleteEvent(int lineId, int layer, LineEventEnum lineEventEnum, int index)
     {
         var list = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
-        _history.Execute(new DeleteEventsCommand(lineId, 0, lineEventEnum, new[] { list[index] }), this);
+
+        _history.Execute(new DeleteEventsCommand(lineId, layer, [(lineEventEnum, list[index])]), this);
     }
 
-    public void DeleteEvents(int lineId, LineEventEnum lineEventEnum, List<int> indexes)
+    public void DeleteEvents(int lineId, int layer, IEnumerable<(LineEventEnum Type, LineEvent Evt)> events)
     {
-        var layerList = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
-        var events = new List<LineEvent>(indexes.Count);
-        foreach (var idx in indexes) events.Add(layerList[idx]);
-
-        _history.Execute(new DeleteEventsCommand(lineId, 0, lineEventEnum, events), this);
+        _history.Execute(new DeleteEventsCommand(lineId, layer, events), this);
     }
 
     // ============== internal：命令使用的辅助方法 ==============

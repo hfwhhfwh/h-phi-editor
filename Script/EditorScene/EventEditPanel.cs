@@ -37,7 +37,7 @@ public partial class EventEditPanel : BaseEditPanel
 	/// <summary>
 	/// 请求删除若干个事件，参数:(判定线编号，事件层，LineEvent列表)
 	/// </summary>
-	public event Action<int, int, List<LineEvent>> EventsDeleteRequested;
+	public event Action<int, int, IEnumerable<(LineEventEnum Type, LineEvent Evt)>> EventsDeleteRequested;
 
 	/// <summary>
 	/// 请求添加一个事件，参数:(判定线编号，事件层，事件类型，起始Beat，结束Beat)
@@ -374,6 +374,8 @@ public partial class EventEditPanel : BaseEditPanel
 		selectedEvents.Clear();
 
 		_selectedEventsWithType.Clear();
+
+		EmitAllDeselected();
 	}
 
 	public void StartPaste(LineEventClipBoard lineEventClipBoard)
@@ -585,6 +587,7 @@ public partial class EventEditPanel : BaseEditPanel
             if(tuple.Item1 == null || tuple.Item2 < 0) // 代表没有选中
             {
                 DeselectAll();
+				
             }
             else
             {
@@ -748,7 +751,7 @@ public partial class EventEditPanel : BaseEditPanel
         float distance = (float)Math.Sqrt(nearestDistSquared);
         if(distance > distanceThreshold)
         {
-            GD.Print($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
+            // GD.Print($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
             return new (null, -1);
         }
 
@@ -766,13 +769,13 @@ public partial class EventEditPanel : BaseEditPanel
             //检测范围内的event
             Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
 
-            List<ValueTuple<float, LineEvent>> lineEvents = GetEventsInRect(rect);
+            List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> lineEvents = GetEventsInRect(rect);
 
             eventsToDelete.Clear();
             
-            foreach(ValueTuple<float, LineEvent> lineEvent in lineEvents)
+            foreach(ValueTuple<float, (LineEventEnum Type, LineEvent Evt)> lineEvent in lineEvents)
             {
-                eventsToDelete.Add(lineEvent.Item2);
+                eventsToDelete.Add(lineEvent.Item2.Evt);
             }
 
         }
@@ -788,10 +791,10 @@ public partial class EventEditPanel : BaseEditPanel
             //检测范围内的event
             Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
 
-            List<ValueTuple<float, LineEvent>> lineEvents = GetEventsInRect(rect);
+            List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> lineEvents = GetEventsInRect(rect);
 
-			List<LineEvent> deletingEvents = new();
-			foreach(ValueTuple<float, LineEvent> lineEvent in lineEvents)
+			List<(LineEventEnum Type, LineEvent Evt)> deletingEvents = new();
+			foreach(ValueTuple<float, (LineEventEnum Type, LineEvent Evt)> lineEvent in lineEvents)
             {
                 deletingEvents.Add(lineEvent.Item2);
             }
@@ -813,25 +816,26 @@ public partial class EventEditPanel : BaseEditPanel
 
     }
 
-	private List<ValueTuple<float, LineEvent>> GetEventsInRect(Rect2 rect)
+	private List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> GetEventsInRect(Rect2 rect)
 	{
 		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
 
-		List<ValueTuple<float, LineEvent>> allEvents = new();
+		List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> allEvents = new();
+
 		foreach(LineEvent lineEvent in eventLayer.MoveXEvents){
-			allEvents.Add((-675 + 1350f * 0f, lineEvent));
+			allEvents.Add((-675 + 1350f * 0f, (LineEventEnum.MoveX, lineEvent)));
 		}
 		foreach(LineEvent lineEvent in eventLayer.MoveYEvents){
-			allEvents.Add((-675 + 1350f * 0.25f, lineEvent));
+			allEvents.Add((-675 + 1350f * 0.25f, (LineEventEnum.MoveY, lineEvent)));
 		}
 		foreach(LineEvent lineEvent in eventLayer.RotateEvents){
-			allEvents.Add((-675 + 1350f * 0.5f, lineEvent));
+			allEvents.Add((-675 + 1350f * 0.5f, (LineEventEnum.Rotate, lineEvent)));
 		}
 		foreach(LineEvent lineEvent in eventLayer.AlphaEvents){
-			allEvents.Add((-675 + 1350f * 0.75f, lineEvent));
+			allEvents.Add((-675 + 1350f * 0.75f, (LineEventEnum.Alpha, lineEvent)));
 		}
 		foreach(LineEvent lineEvent in eventLayer.SpeedEvents){
-			allEvents.Add((-675 + 1350f * 1f, lineEvent));
+			allEvents.Add((-675 + 1350f * 1f, (LineEventEnum.Speed, lineEvent)));
 		}
 
 		return RectUtil.GetEventsInRect(
