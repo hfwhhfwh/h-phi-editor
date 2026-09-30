@@ -56,6 +56,7 @@ public partial class EditorScene : Node
     [Export] private Button _copyBtn;
     [Export] private Button _pasteBtn;
     [Export] private Button _multiSelectBtn;
+    [Export] private Button _boxSelectBtn;
     [Export] private Button _pasteConfirmBtn;
     [Export] private Button _pasteCancelBtn;
     [Export] private Button _deleteBtn;
@@ -182,6 +183,10 @@ public partial class EditorScene : Node
 		horOffset = BeatValue * horSeparation;
 	}
 
+    /// <summary>
+    /// 按照编辑面板的距离滚动
+    /// </summary>
+    /// <param name="deltaY"></param>
     public void Slide(float deltaY)
 	{
         horOffset += deltaY;
@@ -191,6 +196,10 @@ public partial class EditorScene : Node
         BeatValue = horOffset / horSeparation;
 	}
 
+    /// <summary>
+    /// 按照时间单位滚动
+    /// </summary>
+    /// <param name="deltaTime"></param>
     private void SlideTime(float deltaTime)
     {
         ChartTime = ChartTime + deltaTime;
@@ -800,229 +809,13 @@ public partial class EditorScene : Node
         Performance.RemoveCustomMonitor("EditorScene/DrawEditPanelTimeUs");
         #endif
 
+        // 取消订阅所有事件
         UnsubscribeAll();
 
         GD.Print($"[{Name}] 成功退出EditorScene");
         
     }
-
-    private void SetEditPanelVisible(bool value)
-    {
-        editPanel.Visible = value;
-        noteEditPanel.Disabled = !value;
-        eventEditPanel.Disabled = !value;
-        bpmEditPanel.Disabled = !value;
-    }
-
-    private void SetChartPlayerVisible(bool value)
-    {
-        chartPlayParent.Visible = value;
-        chartPlayer.Disabled = !value;
-        chartRenderer.Disabled = !value;
-    }
-
-    private void SetIsPlaying(bool value)
-    {
-        isPlaying = value;
-        if(value) chartPlayer.Play((float)ChartTime);
-        else chartPlayer.Pause();
-    }
-
-    public void OnPlayButtonClicked()
-    {
-        // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPlaying);
-
-        // // 开始播放
-        // chartPlayer.Play((float)ChartTime);
-        // chartPlayer.IsPlaying = true;
-        // isPlaying = true;
-
-        // //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
-    }
-
-    public void PlayInEditPanel()
-    {
-        if(PlayModeManager.PlayMode == PlayModeEnum.EditorPlaying)
-        {
-            PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
-        }
-        else
-        {
-            // 切换播放模式
-            PlayModeManager.SetPlayMode(PlayModeEnum.EditorPlaying);
-        }
-        
-
-        // // 开始播放
-        // chartPlayer.Play((float)ChartTime);
-        // chartPlayer.IsPlaying = true;
-        // isPlaying = true;
-
-        //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
-    }
-
-    public void OnStopButtonClicked()
-    {
-        // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
-
-        // // 暂停播放
-        // chartPlayer.Pause();
-        // chartPlayer.IsPlaying = false;
-        // isPlaying = false;
-
-        //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
-    }
-
-    public void OnPauseClicked()
-    {
-        // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPause);
-
-        // // 暂停播放
-        // chartPlayer.IsPlaying = false;
-        // chartPlayer.Pause();
-        // isPlaying = false;
-
-        //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
-
-    }
-
-    private void OnPlayModeChanged(PlayModeEnum playMode)
-    {
-        switch (playMode)
-        {
-            case PlayModeEnum.Editing:
-                SetChartPlayerVisible(false);
-                SetEditPanelVisible(true);
-                SetIsPlaying(false);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
-                break;
-
-            case PlayModeEnum.PlayerPlaying:
-                SetChartPlayerVisible(true);
-                SetEditPanelVisible(false);
-                SetIsPlaying(true);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
-                break;
-
-            case PlayModeEnum.PlayerPause:
-                SetChartPlayerVisible(true);
-                SetEditPanelVisible(false);
-                SetIsPlaying(false);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
-                break;
-            case PlayModeEnum.EditorPlaying:
-                SetChartPlayerVisible(false);
-                SetEditPanelVisible(true);
-                SetIsPlaying(true);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
-                break;
-            case PlayModeEnum.EditorAndPlayerPlaying:
-                SetChartPlayerVisible(true);
-                SetEditPanelVisible(true);
-                SetIsPlaying(true);
-                // TODO
-                break;
-        }
-    }
-
-    private void OnChooseLineClicked()
-    {
-        if(chooseLinePanel.Visible == false)
-        {
-            chooseLinePanel.Visible = true;
-            _inputManager.IsEnable = false;
-
-            RefreshChooseLinePanel();
-            chooseLinePanel.SetEventLayer(editingLayer);
-        }
-        else
-        {
-            chooseLinePanel.Visible = false;
-            _inputManager.IsEnable = true;
-        }
-    }
-
-    private void RefreshChooseLinePanel()
-    {
-        //准备LineInfo数据
-        List<ChooseLinePanel.LineInfo> lineInfos = new();
-        for (int i = 0; i < editingChart.JudgeLineList.Count; i++)
-        {
-            JudgeLine line = editingChart.JudgeLineList[i];
-
-            lineInfos.Add(new ChooseLinePanel.LineInfo
-            {
-                Id = i, // 判定线的编号从0开始
-                NoteCount = line.NumOfNotes,
-                //NextEventTime = //TODO 在ChooseLinePanel显示下一个事件的时间
-            });
-        }
-
-        //设置LineInfo数据
-        chooseLinePanel.ShowInfos(lineInfos);
-    }
-
-    private void SetEditingLine(int id)
-    {
-        GD.Print($"[{this.Name}] 用户选择了Line:{id}");
-        editingLineId = id;
-
-        noteEditPanel.EditingLineId = id;
-        eventEditPanel.EditingLineId = id;
-
-        editingLineLabel.Text = $"线{id}";
-
-        chooseLinePanel.Visible = false;
-        _inputManager.IsEnable = true;
-    }
-
-    private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
-    {
-        _chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
-    }
-
-    private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
-    {
-        _selectFocusPanel = EditPanelType.NoteEdit;
-        IsSelecting = true;
-
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-
-        float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-        //Vector2 popupPos = noteEditPanel.GetScreenPosition(beatValue, note.PositionX)
-        //    + new Vector2(30,30);
-
-        // 构建菜单项（使用闭包捕获当前音符信息）
-        var items = new List<PopupMenuItem>
-        {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnNoteEdit(lineId, noteIndex) },
-            new PopupMenuItem { Text = "复制", Callback = () => OnNoteCopy(lineId, noteIndex) },
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "删除", Callback = () => OnNoteDelete(lineId, noteIndex) }
-        };
-
-        // 弹出菜单
-        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        // popupMenu.PopupHide += () =>
-        // {
-        //     noteEditPanel.DeselectAll();
-        //     IsSelecting = false;
-        // };
-    }
-
-    private void OnNoteChooserDeselected()
-    {
-        EditModeManager.SetEditMode(EditModeEnum.Normal);
-        // GD.Print($"[{this.Name}] 用户取消选择了note");
-    }
-
+    
     private void OnEditModeChanged(EditModeEnum editMode)
     {
         editModeLabel.Text = editMode switch
@@ -1032,44 +825,6 @@ public partial class EditorScene : Node
             EditModeEnum.Delete => "模式：删除模式",
             _ => "模式：未知",
         };
-    }
-
-    private void OnNoteEdit(int lineId, int noteIndex)
-    {
-        noteInfoPanel.Visible = true;
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        noteInfoPanel.ShowInfo(note, lineId, noteIndex);
-    }
-
-    private void OnNoteCopy(int lineId, int noteIndex)
-    {
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-
-        _editorClipboard.noteClipBoard.Notes = [NoteSnapshot.Capture(note)];
-        _editorClipboard.noteClipBoard.SourceLineId = lineId;
-        _editorClipboard.noteClipBoard.SourceStartBeat = new Beat(note.StartTime);
-        _editorClipboard.noteClipBoard.SourcePosX = note.PositionX;
-
-        _editorClipboard.LatestClipBoard = EditPanelType.NoteEdit;
-
-        GD.Print($"[{Name}] 复制Note: Line{lineId}_{noteIndex} {(NoteType)note.Type}");
-    }
-
-    private void OnNoteDelete(int lineId, int noteIndex)
-    {
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        _chartEditService.DeleteNote(lineId, note);
-    }
-
-    private void OnNotesDelete(int lineId, List<Note> notes)
-    {
-        _chartEditService.DeleteNotes(lineId, notes);
-    }
-
-    private void OnNoteMultiSelected()
-    {
-        _selectFocusPanel = EditPanelType.NoteEdit;
-        IsSelecting = true;
     }
 
     private void SaveChart()
@@ -1088,6 +843,7 @@ public partial class EditorScene : Node
         global.GotoScene("res://Scene/start_menu.tscn");
     }
 
+    #region 编辑器设置
     private void ApplyGridAppearanceSettings()
     {
         if (GameSettings.Instance == null || GameSettings.Instance.Current == null)
@@ -1203,6 +959,8 @@ public partial class EditorScene : Node
         }
     }
 
+    #endregion
+
     private void OnQuitPressed()
     {
         PopupHelper.Instance.ShowConfirm(
@@ -1216,240 +974,6 @@ public partial class EditorScene : Node
     {
         SaveChart();
         Quit();
-    }
-
-    private void OnNoteChooserNoteChoosed(NoteType noteType)
-    {
-        EditModeManager.SetEditMode(EditModeEnum.Place);
-        noteEditPanel.PlacingNote = noteType;
-    }
-
-    private void OnNoteChooserDeleteChoosed()
-    {
-        EditModeManager.SetEditMode(EditModeEnum.Delete);
-    }
-
-    private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
-    {
-        _chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
-
-        //通知谱面数据产生了变化
-        ChartEventBus.NotifyNoteCountChanged(editingLineId);
-    }
-
-    private void AddLine()
-    {
-        _chartEditService.AddLine(editingChart.JudgeLineList, -1);
-    }
-
-    private void DeleteLine(int id)
-    {
-        if(editingChart.JudgeLineList.Count <= 1)
-        {
-            GD.Print($"[{this.Name}] 最少保留一条判定线，删除失败");
-            PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
-            return;
-        }
-        _chartEditService.DeleteLine(editingChart.JudgeLineList, id);
-    }
-
-    private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
-    {
-        _selectFocusPanel = EditPanelType.LineEventEdit;
-        IsSelecting = true;
-        
-        EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
-		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
-
-        // 构建菜单项（使用闭包捕获当前音符信息）
-        var items = new List<PopupMenuItem>
-        {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, editingLayer, lineEventEnum, eventIndex) },
-            new PopupMenuItem { Text = "复制", Callback = () => OnEventCopy(lineId, lineEventEnum, eventIndex) },
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "删除", Callback = () => OnEventDelete(lineId, lineEventEnum, eventIndex) }
-        };
-
-        // 弹出菜单
-        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        // popupMenu.PopupHide += () =>
-        // {
-        //     eventEditPanel.DeselectAll();
-        //     IsSelecting = false;
-        // };
-    }
-
-    private void OnEventEdit(int lineId, int layer, LineEventEnum lineEventEnum, int index)
-    {
-        GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        eventInfoPanel.Visible = true;
-        eventEditPanel.DeselectAll();
-        IsSelecting = false;
-
-        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum)[index];
-
-        eventInfoPanel.Edit(lineEvent, lineId, layer, lineEventEnum, index);
-    }
-
-    private void SetEventProperty(
-        int lineId, int layer, LineEventEnum lineEventEnum, int index,
-        LineEventPropertyType propertyType, object value)
-    {
-        _chartEditService.SetEventProperty(lineId, layer, lineEventEnum, index, propertyType, value);
-    }
-
-    private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
-    {
-        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[editingLayer].GetLineEvents(lineEventEnum)[index];
-
-        _editorClipboard.lineEventClipBoard = new LineEventClipBoard
-        {
-            SourceLineId = lineId,
-            SourceLayer = editingLayer,
-            SourceStartBeat = new Beat(lineEvent.StartTime),
-            Events = [ new LineEventClipBoardItem(lineEventEnum, LineEventSnapshot.Capture(lineEvent)) ]
-        };
-
-        _editorClipboard.LatestClipBoard = EditPanelType.LineEventEdit;
-        GD.Print($"[{this.Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-    }
-
-    private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
-    {
-        _chartEditService.DeleteEvent(lineId, editingLayer, lineEventEnum, index);
-
-    }
-
-    private void OnEventMultiSelected()
-    {
-        _selectFocusPanel = EditPanelType.LineEventEdit;
-        IsSelecting = true;
-    }
-
-    private void OnBpmSelected(int index, Vector2 popupViewportPos)
-    {
-        if (editingChart?.BpmList == null || index < 0 || index >= editingChart.BpmList.Count)
-        {
-            return;
-        }
-
-        _selectFocusPanel = EditPanelType.BpmEventEdit;
-        IsSelecting = true;
-
-        BpmEvent bpmEvent = editingChart.BpmList[index];
-        var items = new List<PopupMenuItem>
-        {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnBpmEdit(bpmEvent) },
-            new PopupMenuItem { Text = "复制", Callback = () => OnBpmCopy(bpmEvent) },
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "删除", Callback = () => OnBpmDelete(bpmEvent) }
-        };
-
-        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        // popupMenu.PopupHide += () => {
-        //     bpmEditPanel.DeselectAll();
-        //     IsSelecting = false;
-        // };
-    }
-
-    private void OnBpmMultiSelected()
-    {
-        _selectFocusPanel = EditPanelType.BpmEventEdit;
-        IsSelecting = true;
-    }
-
-    private void OnBpmEdit(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null || !editingChart.BpmList.Contains(bpmEvent))
-        {
-            return;
-        }
-
-        bpmEditPanel.DeselectAll();
-        IsSelecting = false;
-
-        bpmInfoPanel.Visible = true;
-        bpmInfoPanel.Edit(bpmEvent, editingChart.BpmList.IndexOf(bpmEvent));
-    }
-
-    private void SetBpmProperty(BpmEvent bpmEvent, string property, object value)
-    {
-        _chartEditService.SetBpmProperty(bpmEvent, property, value);
-    }
-
-    private void OnBpmCopy(BpmEvent bpmEvent)
-    {
-        _editorClipboard.bpmEventClipBoard = new BpmEventClipBoard
-        {
-            SourceStartBeat = new Beat(bpmEvent.StartTime),
-            Bpms = [ BpmEventSnapshot.Capture(bpmEvent) ]
-        };
-        _editorClipboard.LatestClipBoard = EditPanelType.BpmEventEdit;
-        GD.Print($"[{Name}] 复制 BPM:{bpmEvent?.Bpm}");
-    }
-
-    private void OnBpmDelete(BpmEvent bpmEvent)
-    {
-        _chartEditService.DeleteBpms(new List<BpmEvent> { bpmEvent });
-        bpmEditPanel.DeselectAll();
-        IsSelecting = false;
-    }
-
-    // private void DeleteEvents(int lineId, int layer, IEnumerable<LineEvent> eventsToDelete)
-    // {
-    //     // lineEvents可能包含不同种类的事件，需要分别删除，构建一张表格
-    //     LineEventEnum[] allEventTypes = (LineEventEnum[])Enum.GetValues(typeof(LineEventEnum));
-    //     Dictionary<LineEventEnum, List<int>> table = new();
-
-    //     foreach(LineEvent lineEvent in eventsToDelete)
-    //     {
-    //         foreach(LineEventEnum lineEventEnum in allEventTypes)
-    //         {
-    //             List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
-    //             if (lineEvents.Contains(lineEvent))
-    //             {
-    //                 //添加到表格
-    //                 if (!table.TryGetValue(lineEventEnum, out var indices))
-    //                 {
-    //                     indices = new List<int>();
-    //                     table[lineEventEnum] = indices;
-    //                 }
-    //                 indices.Add(lineEvents.IndexOf(lineEvent));
-    //                 break;
-    //             }
-    //         }
-    //     }
-
-    //     //分别删除
-    //     foreach(LineEventEnum lineEventEnum in table.Keys)
-    //     {
-    //         _chartEditService.DeleteEvents(lineId, lineEventEnum, table[lineEventEnum]);
-    //     }
-    // }
-
-    private void DeleteEvents(int lineId, int layer, IEnumerable<(LineEventEnum Type, LineEvent Evt)> events)
-    {
-        _chartEditService.DeleteEvents(lineId, layer, events);
-    }
-
-    private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
-    {
-        _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
-    }
-
-    private void AddBpm(float bpm, Beat startBeat)
-    {
-        _chartEditService.AddBpm(bpm, startBeat);
-    }
-
-    private void DeleteBpms(List<BpmEvent> bpmEvents)
-    {
-        _chartEditService.DeleteBpms(bpmEvents);
-    }
-
-    private void SetBpmTime(int index, Beat startBeat)
-    {
-        _chartEditService.SetBpmTime(index, startBeat);
     }
 
     private void LoadResourcePack()
@@ -1473,77 +997,6 @@ public partial class EditorScene : Node
         }
 
         GD.Print($"[{Name}] 成功重新加载资源包!");
-    }
-
-    // 注意：这里不直接执行命令，而是把拖动过程包装成一个事务。
-    // 拖动中仅直接修改共享 Chart，拖动结束时统一压入一条撤销命令。
-    private void BeginNoteDrag(int lineId, Note note)
-    {
-        if (note == null) return;
-        _chartEditService.BeginNoteDrag(lineId, note);
-    }
-
-    private void EndNoteDrag(int lineId, Note note)
-    {
-        if (note == null) return;
-        _chartEditService.EndNoteDrag(lineId, note);
-    }
-
-    private void MoveNote(int lineId, int noteIndex, float chartX)
-    {
-        _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.PosX, chartX);
-    }
-
-    private void SetNoteTime(int lineId, int noteIndex, Beat startBeat, Beat endBeat)
-    {
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        if(!TimeUtil.IsBeatEqual(note.StartTime, startBeat.Values))
-        {
-            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
-        }
-        if(!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
-        {
-            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
-        }
-    }
-
-    private void BeginEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
-    {
-        if (lineEvent == null) return;
-        _chartEditService.BeginEventDrag(lineId, layer, type, lineEvent);
-    }
-
-    private void EndEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
-    {
-        if (lineEvent == null) return;
-        _chartEditService.EndEventDrag(lineId, layer, type, lineEvent);
-    }
-
-    private void SetEventTime(int lineId, int layer, LineEventEnum type, int index, Beat startBeat, Beat endBeat)
-    {
-        List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(type);
-        LineEvent lineEvent = lineEvents[index];
-
-        if(!TimeUtil.IsBeatEqual(lineEvent.StartTime, startBeat.Values))
-        {
-            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.StartTime, startBeat);
-        }
-        if(!TimeUtil.IsBeatEqual(lineEvent.EndTime, endBeat.Values))
-        {
-            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
-        }
-    }
-
-    private void BeginBpmDrag(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null) return;
-        _chartEditService.BeginBpmDrag(bpmEvent);
-    }
-
-    private void EndBpmDrag(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null) return;
-        _chartEditService.EndBpmDrag(bpmEvent);
     }
 
     private void OnTestPlay()
@@ -1800,5 +1253,549 @@ public partial class EditorScene : Node
 
         }
     }
+
+
+    #region 播放控制
+
+    private void SetEditPanelVisible(bool value)
+    {
+        editPanel.Visible = value;
+        noteEditPanel.Disabled = !value;
+        eventEditPanel.Disabled = !value;
+        bpmEditPanel.Disabled = !value;
+    }
+
+    private void SetChartPlayerVisible(bool value)
+    {
+        chartPlayParent.Visible = value;
+        chartPlayer.Disabled = !value;
+        chartRenderer.Disabled = !value;
+    }
+
+    private void SetIsPlaying(bool value)
+    {
+        isPlaying = value;
+        if(value) chartPlayer.Play((float)ChartTime);
+        else chartPlayer.Pause();
+    }
+
+    public void OnPlayButtonClicked()
+    {
+        // 切换播放模式
+        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPlaying);
+
+        // // 开始播放
+        // chartPlayer.Play((float)ChartTime);
+        // chartPlayer.IsPlaying = true;
+        // isPlaying = true;
+
+        // //更新右侧面板
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
+    }
+
+    public void PlayInEditPanel()
+    {
+        if(PlayModeManager.PlayMode == PlayModeEnum.EditorPlaying)
+        {
+            PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
+        }
+        else
+        {
+            // 切换播放模式
+            PlayModeManager.SetPlayMode(PlayModeEnum.EditorPlaying);
+        }
+        
+
+        // // 开始播放
+        // chartPlayer.Play((float)ChartTime);
+        // chartPlayer.IsPlaying = true;
+        // isPlaying = true;
+
+        //更新右侧面板
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
+    }
+
+    public void OnStopButtonClicked()
+    {
+        // 切换播放模式
+        PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
+
+        // // 暂停播放
+        // chartPlayer.Pause();
+        // chartPlayer.IsPlaying = false;
+        // isPlaying = false;
+
+        //更新右侧面板
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+    }
+
+    public void OnPauseClicked()
+    {
+        // 切换播放模式
+        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPause);
+
+        // // 暂停播放
+        // chartPlayer.IsPlaying = false;
+        // chartPlayer.Pause();
+        // isPlaying = false;
+
+        //更新右侧面板
+        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
+
+    }
+
+    private void OnPlayModeChanged(PlayModeEnum playMode)
+    {
+        switch (playMode)
+        {
+            case PlayModeEnum.Editing:
+                SetChartPlayerVisible(false);
+                SetEditPanelVisible(true);
+                SetIsPlaying(false);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+                break;
+
+            case PlayModeEnum.PlayerPlaying:
+                SetChartPlayerVisible(true);
+                SetEditPanelVisible(false);
+                SetIsPlaying(true);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
+                break;
+
+            case PlayModeEnum.PlayerPause:
+                SetChartPlayerVisible(true);
+                SetEditPanelVisible(false);
+                SetIsPlaying(false);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
+                break;
+            case PlayModeEnum.EditorPlaying:
+                SetChartPlayerVisible(false);
+                SetEditPanelVisible(true);
+                SetIsPlaying(true);
+                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+                break;
+            case PlayModeEnum.EditorAndPlayerPlaying:
+                SetChartPlayerVisible(true);
+                SetEditPanelVisible(true);
+                SetIsPlaying(true);
+                // TODO
+                break;
+        }
+    }
+
+    #endregion
+
+    #region JudgeLine相关方法
+
+    private void OnChooseLineClicked()
+    {
+        if(chooseLinePanel.Visible == false)
+        {
+            chooseLinePanel.Visible = true;
+            _inputManager.IsEnable = false;
+
+            RefreshChooseLinePanel();
+            chooseLinePanel.SetEventLayer(editingLayer);
+        }
+        else
+        {
+            chooseLinePanel.Visible = false;
+            _inputManager.IsEnable = true;
+        }
+    }
+
+    private void RefreshChooseLinePanel()
+    {
+        //准备LineInfo数据
+        List<ChooseLinePanel.LineInfo> lineInfos = new();
+        for (int i = 0; i < editingChart.JudgeLineList.Count; i++)
+        {
+            JudgeLine line = editingChart.JudgeLineList[i];
+
+            lineInfos.Add(new ChooseLinePanel.LineInfo
+            {
+                Id = i, // 判定线的编号从0开始
+                NoteCount = line.NumOfNotes,
+                //NextEventTime = //TODO 在ChooseLinePanel显示下一个事件的时间
+            });
+        }
+
+        //设置LineInfo数据
+        chooseLinePanel.ShowInfos(lineInfos);
+    }
+
+    private void SetEditingLine(int id)
+    {
+        GD.Print($"[{this.Name}] 用户选择了Line:{id}");
+        editingLineId = id;
+
+        noteEditPanel.EditingLineId = id;
+        eventEditPanel.EditingLineId = id;
+
+        editingLineLabel.Text = $"线{id}";
+
+        chooseLinePanel.Visible = false;
+        _inputManager.IsEnable = true;
+    }
+
+    private void AddLine()
+    {
+        _chartEditService.AddLine(editingChart.JudgeLineList, -1);
+    }
+
+    private void DeleteLine(int id)
+    {
+        if(editingChart.JudgeLineList.Count <= 1)
+        {
+            GD.Print($"[{this.Name}] 最少保留一条判定线，删除失败");
+            PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
+            return;
+        }
+        _chartEditService.DeleteLine(editingChart.JudgeLineList, id);
+    }
+
+    #endregion
+
+    #region Note相关方法
+
+    private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
+    {
+        _chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
+
+        //通知谱面数据产生了变化
+        ChartEventBus.NotifyNoteCountChanged(editingLineId);
+    }
+
+    private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
+    {
+        _chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
+    }
+
+    private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
+    {
+        _selectFocusPanel = EditPanelType.NoteEdit;
+        IsSelecting = true;
+
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+
+        float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
+        //Vector2 popupPos = noteEditPanel.GetScreenPosition(beatValue, note.PositionX)
+        //    + new Vector2(30,30);
+
+        // 构建菜单项（使用闭包捕获当前音符信息）
+        var items = new List<PopupMenuItem>
+        {
+            new PopupMenuItem { Text = "编辑", Callback = () => OnNoteEdit(lineId, noteIndex) },
+            new PopupMenuItem { Text = "复制", Callback = () => OnNoteCopy(lineId, noteIndex) },
+            new PopupMenuItem { IsSeparator = true },
+            new PopupMenuItem { Text = "删除", Callback = () => OnNoteDelete(lineId, noteIndex) }
+        };
+
+        // 弹出菜单
+        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
+        // popupMenu.PopupHide += () =>
+        // {
+        //     noteEditPanel.DeselectAll();
+        //     IsSelecting = false;
+        // };
+    }
+
+    private void OnNoteEdit(int lineId, int noteIndex)
+    {
+        noteInfoPanel.Visible = true;
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+        noteInfoPanel.ShowInfo(note, lineId, noteIndex);
+    }
+
+    private void OnNoteCopy(int lineId, int noteIndex)
+    {
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+
+        _editorClipboard.noteClipBoard.Notes = [NoteSnapshot.Capture(note)];
+        _editorClipboard.noteClipBoard.SourceLineId = lineId;
+        _editorClipboard.noteClipBoard.SourceStartBeat = new Beat(note.StartTime);
+        _editorClipboard.noteClipBoard.SourcePosX = note.PositionX;
+
+        _editorClipboard.LatestClipBoard = EditPanelType.NoteEdit;
+
+        GD.Print($"[{Name}] 复制Note: Line{lineId}_{noteIndex} {(NoteType)note.Type}");
+    }
+
+    private void OnNoteDelete(int lineId, int noteIndex)
+    {
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+        _chartEditService.DeleteNote(lineId, note);
+    }
+
+    private void OnNotesDelete(int lineId, List<Note> notes)
+    {
+        _chartEditService.DeleteNotes(lineId, notes);
+    }
+
+    private void OnNoteMultiSelected()
+    {
+        _selectFocusPanel = EditPanelType.NoteEdit;
+        IsSelecting = true;
+    }
+
+    // 注意：这里不直接执行命令，而是把拖动过程包装成一个事务。
+    // 拖动中仅直接修改共享 Chart，拖动结束时统一压入一条撤销命令。
+    private void BeginNoteDrag(int lineId, Note note)
+    {
+        if (note == null) return;
+        _chartEditService.BeginNoteDrag(lineId, note);
+    }
+
+    private void EndNoteDrag(int lineId, Note note)
+    {
+        if (note == null) return;
+        _chartEditService.EndNoteDrag(lineId, note);
+    }
+
+    private void MoveNote(int lineId, int noteIndex, float chartX)
+    {
+        _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.PosX, chartX);
+    }
+
+    private void SetNoteTime(int lineId, int noteIndex, Beat startBeat, Beat endBeat)
+    {
+        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
+        if(!TimeUtil.IsBeatEqual(note.StartTime, startBeat.Values))
+        {
+            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
+        }
+        if(!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
+        {
+            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
+        }
+    }
+
+    private void OnNoteChooserDeselected()
+    {
+        EditModeManager.SetEditMode(EditModeEnum.Normal);
+        // GD.Print($"[{this.Name}] 用户取消选择了note");
+    }
+
+    private void OnNoteChooserNoteChoosed(NoteType noteType)
+    {
+        EditModeManager.SetEditMode(EditModeEnum.Place);
+        noteEditPanel.PlacingNote = noteType;
+    }
+
+    #endregion
+
+    #region LineEvent相关方法
+
+    private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
+    {
+        _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
+    }
+
+    private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
+    {
+        _selectFocusPanel = EditPanelType.LineEventEdit;
+        IsSelecting = true;
+        
+        EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
+		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
+
+        // 构建菜单项（使用闭包捕获当前音符信息）
+        var items = new List<PopupMenuItem>
+        {
+            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, editingLayer, lineEventEnum, eventIndex) },
+            new PopupMenuItem { Text = "复制", Callback = () => OnEventCopy(lineId, lineEventEnum, eventIndex) },
+            new PopupMenuItem { IsSeparator = true },
+            new PopupMenuItem { Text = "删除", Callback = () => OnEventDelete(lineId, lineEventEnum, eventIndex) }
+        };
+
+        // 弹出菜单
+        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
+        // popupMenu.PopupHide += () =>
+        // {
+        //     eventEditPanel.DeselectAll();
+        //     IsSelecting = false;
+        // };
+    }
+
+    private void OnEventEdit(int lineId, int layer, LineEventEnum lineEventEnum, int index)
+    {
+        GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+        eventInfoPanel.Visible = true;
+        eventEditPanel.DeselectAll();
+        IsSelecting = false;
+
+        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum)[index];
+
+        eventInfoPanel.Edit(lineEvent, lineId, layer, lineEventEnum, index);
+    }
+
+    private void SetEventProperty(
+        int lineId, int layer, LineEventEnum lineEventEnum, int index,
+        LineEventPropertyType propertyType, object value)
+    {
+        _chartEditService.SetEventProperty(lineId, layer, lineEventEnum, index, propertyType, value);
+    }
+
+    private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[editingLayer].GetLineEvents(lineEventEnum)[index];
+
+        _editorClipboard.lineEventClipBoard = new LineEventClipBoard
+        {
+            SourceLineId = lineId,
+            SourceLayer = editingLayer,
+            SourceStartBeat = new Beat(lineEvent.StartTime),
+            Events = [ new LineEventClipBoardItem(lineEventEnum, LineEventSnapshot.Capture(lineEvent)) ]
+        };
+
+        _editorClipboard.LatestClipBoard = EditPanelType.LineEventEdit;
+        GD.Print($"[{this.Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+    }
+
+    private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
+    {
+        _chartEditService.DeleteEvent(lineId, editingLayer, lineEventEnum, index);
+
+    }
+
+    private void OnEventMultiSelected()
+    {
+        _selectFocusPanel = EditPanelType.LineEventEdit;
+        IsSelecting = true;
+    }
+
+    private void BeginEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
+    {
+        if (lineEvent == null) return;
+        _chartEditService.BeginEventDrag(lineId, layer, type, lineEvent);
+    }
+
+    private void EndEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
+    {
+        if (lineEvent == null) return;
+        _chartEditService.EndEventDrag(lineId, layer, type, lineEvent);
+    }
+
+    private void SetEventTime(int lineId, int layer, LineEventEnum type, int index, Beat startBeat, Beat endBeat)
+    {
+        List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(type);
+        LineEvent lineEvent = lineEvents[index];
+
+        if(!TimeUtil.IsBeatEqual(lineEvent.StartTime, startBeat.Values))
+        {
+            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.StartTime, startBeat);
+        }
+        if(!TimeUtil.IsBeatEqual(lineEvent.EndTime, endBeat.Values))
+        {
+            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
+        }
+    }
+
+    #endregion
+
+    #region Bpm相关方法
+
+    private void OnBpmSelected(int index, Vector2 popupViewportPos)
+    {
+        if (editingChart?.BpmList == null || index < 0 || index >= editingChart.BpmList.Count)
+        {
+            return;
+        }
+
+        _selectFocusPanel = EditPanelType.BpmEventEdit;
+        IsSelecting = true;
+
+        BpmEvent bpmEvent = editingChart.BpmList[index];
+        var items = new List<PopupMenuItem>
+        {
+            new PopupMenuItem { Text = "编辑", Callback = () => OnBpmEdit(bpmEvent) },
+            new PopupMenuItem { Text = "复制", Callback = () => OnBpmCopy(bpmEvent) },
+            new PopupMenuItem { IsSeparator = true },
+            new PopupMenuItem { Text = "删除", Callback = () => OnBpmDelete(bpmEvent) }
+        };
+
+        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
+        // popupMenu.PopupHide += () => {
+        //     bpmEditPanel.DeselectAll();
+        //     IsSelecting = false;
+        // };
+    }
+
+    private void OnBpmMultiSelected()
+    {
+        _selectFocusPanel = EditPanelType.BpmEventEdit;
+        IsSelecting = true;
+    }
+
+    private void OnBpmEdit(BpmEvent bpmEvent)
+    {
+        if (bpmEvent == null || !editingChart.BpmList.Contains(bpmEvent))
+        {
+            return;
+        }
+
+        bpmEditPanel.DeselectAll();
+        IsSelecting = false;
+
+        bpmInfoPanel.Visible = true;
+        bpmInfoPanel.Edit(bpmEvent, editingChart.BpmList.IndexOf(bpmEvent));
+    }
+
+    private void SetBpmProperty(BpmEvent bpmEvent, string property, object value)
+    {
+        _chartEditService.SetBpmProperty(bpmEvent, property, value);
+    }
+
+    private void OnBpmCopy(BpmEvent bpmEvent)
+    {
+        _editorClipboard.bpmEventClipBoard = new BpmEventClipBoard
+        {
+            SourceStartBeat = new Beat(bpmEvent.StartTime),
+            Bpms = [ BpmEventSnapshot.Capture(bpmEvent) ]
+        };
+        _editorClipboard.LatestClipBoard = EditPanelType.BpmEventEdit;
+        GD.Print($"[{Name}] 复制 BPM:{bpmEvent?.Bpm}");
+    }
+
+    private void OnBpmDelete(BpmEvent bpmEvent)
+    {
+        _chartEditService.DeleteBpms(new List<BpmEvent> { bpmEvent });
+        bpmEditPanel.DeselectAll();
+        IsSelecting = false;
+    }
+
+    private void DeleteEvents(int lineId, int layer, IEnumerable<(LineEventEnum Type, LineEvent Evt)> events)
+    {
+        _chartEditService.DeleteEvents(lineId, layer, events);
+    }
+
+    private void AddBpm(float bpm, Beat startBeat)
+    {
+        _chartEditService.AddBpm(bpm, startBeat);
+    }
+
+    private void DeleteBpms(List<BpmEvent> bpmEvents)
+    {
+        _chartEditService.DeleteBpms(bpmEvents);
+    }
+
+    private void SetBpmTime(int index, Beat startBeat)
+    {
+        _chartEditService.SetBpmTime(index, startBeat);
+    }
+
+    private void BeginBpmDrag(BpmEvent bpmEvent)
+    {
+        if (bpmEvent == null) return;
+        _chartEditService.BeginBpmDrag(bpmEvent);
+    }
+
+    private void EndBpmDrag(BpmEvent bpmEvent)
+    {
+        if (bpmEvent == null) return;
+        _chartEditService.EndBpmDrag(bpmEvent);
+    }
+
+    #endregion
 
 }
