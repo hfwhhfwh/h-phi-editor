@@ -40,11 +40,6 @@ public partial class BpmEditPanel : BaseEditPanel
     public event Action<float, Beat> EventAddRequested;
     
     /// <summary>
-    /// 请求删除BPM事件，参数为(要删除的BPM事件列表)
-    /// </summary>
-    public event Action<List<BpmEvent>> EventDeleteRequested;
-
-    /// <summary>
     /// 当BPM事件的时间被修改时触发，参数:(事件索引，新StartTime)
     /// </summary>
     public event Action<int, Beat> EventTimeChanged;
@@ -265,6 +260,16 @@ public partial class BpmEditPanel : BaseEditPanel
             return;
         }
 
+        if (_isBoxSelectMode)
+        {
+            Vector2 dataPos = new Vector2(
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
+            );
+            _boxSelectController.StartDrag(dataPos);
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             int eventIndex = FindNearestEventIndex(pos);
@@ -293,14 +298,6 @@ public partial class BpmEditPanel : BaseEditPanel
             _dragPlaceComponent.StartDrag(0, snappedBeat);
             _dragPlaceComponent.Mode = DragPlaceComponent.PlaceMode.Point;
         }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(pos.X),
-                _coordComponent.GetBeatValue(pos.Y)
-            );
-            _boxSelectController.StartDrag(dataPos);
-        }
     }
 
 	protected override void OnMotionInput(Vector2 position, Vector2 relative)
@@ -308,6 +305,16 @@ public partial class BpmEditPanel : BaseEditPanel
         if (_isPasteMode)
         {
             UpdatePasteTarget(position.Y);
+            return;
+        }
+
+        if (_isBoxSelectMode)
+        {
+            Vector2 dataPos = new Vector2(
+                _coordComponent.GetChartPosX(position.X),
+                _coordComponent.GetBeatValue(position.Y)
+            );
+            _boxSelectController.Move(dataPos);
             return;
         }
 
@@ -325,20 +332,22 @@ public partial class BpmEditPanel : BaseEditPanel
 
             _dragPlaceComponent.Move(0, snappedBeat);
         }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(position.X),
-                _coordComponent.GetBeatValue(position.Y)
-            );
-            _boxSelectController.Move(dataPos);
-        }
     }
 
     protected override void OnButtonUp(Vector2 pos)
     {
         if (_isPasteMode)
         {
+            return;
+        }
+
+        if (_isBoxSelectMode)
+        {
+            Vector2 dataPos = new Vector2(
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
+            );
+            _boxSelectController.EndDrag(dataPos);
             return;
         }
 
@@ -367,14 +376,6 @@ public partial class BpmEditPanel : BaseEditPanel
             Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
 
             _dragPlaceComponent.EndDrag(0, snappedBeat);
-        }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(pos.X),
-                _coordComponent.GetBeatValue(pos.Y)
-            );
-            _boxSelectController.EndDrag(dataPos);
         }
     }
 
@@ -440,7 +441,7 @@ public partial class BpmEditPanel : BaseEditPanel
         EventTimeChanged?.Invoke(eventIndex, newBeat);
     }
 
-    public void DeselectAll()
+    public override void DeselectAll()
     {
         selectedEvents.Clear();
 
@@ -487,19 +488,9 @@ public partial class BpmEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(EditModeManager.EditMode == EditModeEnum.Delete)
+        if(_isBoxSelectMode)
         {
-            //检测范围内的bpmEvent
-            Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
-
-            List<int> eventsIndex = GetEventsInRect(rect);
-
-            eventsToDelete.Clear();
-            List<BpmEvent> bpmEvents = editingChart.BpmList;
-            foreach(int i in eventsIndex)
-            {
-                eventsToDelete.Add(bpmEvents[i]);
-            }
+            UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
         }
     }
 
@@ -508,22 +499,39 @@ public partial class BpmEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(EditModeManager.EditMode == EditModeEnum.Delete)
+        if(_isBoxSelectMode)
         {
-            //检测范围内的bpmEvent
-            Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
-            List<int> eventsToDeleteIndex = GetEventsInRect(rect);
+            UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
+        }
+    }
 
-            //转换为List<BpmEvent>数据格式
-            List<BpmEvent> bpmEventsToDelete = new();
-            List<BpmEvent> bpmEvents = editingChart.BpmList;
-            foreach(int index in eventsToDeleteIndex) bpmEventsToDelete.Add(bpmEvents[index]);
+    private void UpdateSelectionInRect(Rect2 rect)
+    {
+        HashSet<BpmEvent> previousSelection = new(selectedEvents);
+        List<int> eventIndexes = GetEventsInRect(rect);
 
-            //触发事件，请求删除bpmEvent
-            EventDeleteRequested?.Invoke(bpmEventsToDelete);
+        if (SelectMode == SelectModeEnum.Single)
+        {
+            selectedEvents.Clear();
+        }
 
-            //清除高亮显示
-            eventsToDelete.Clear();
+        List<BpmEvent> bpmEvents = editingChart.BpmList;
+        foreach (int index in eventIndexes)
+        {
+            selectedEvents.Add(bpmEvents[index]);
+        }
+
+        // 如果选择的数量发生变化，意味着需要向上级通知选择情况
+        if (!previousSelection.SetEquals(selectedEvents))
+        {
+            if (selectedEvents.Count == 0)
+            {
+                EmitAllDeselected();
+            }
+            else
+            {
+                BpmMultiSelected?.Invoke();
+            }
         }
     }
 
@@ -544,8 +552,8 @@ public partial class BpmEditPanel : BaseEditPanel
             BpmEvent bpmEvent = bpmEvents[i];
             float beatValue = bpmEvent.StartTime[0] + bpmEvent.StartTime[1] * 1f / bpmEvent.StartTime[2];
             
-            // BPM只有一列，只判断Y轴（beat值）是否在矩形范围内
-            if(rect.HasPoint(new Vector2(0, beatValue)))
+            // BPM标记渲染在最左侧竖线，对应谱面X=-675
+            if(rect.HasPoint(new Vector2(-675f, beatValue)))
             {
                 result.Add(i);
             }

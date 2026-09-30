@@ -35,11 +35,6 @@ public partial class EventEditPanel : BaseEditPanel
 	/// </summary>
 	public event Action<int, int, LineEventEnum, int, Vector2> EventSelected;
 	/// <summary>
-	/// 请求删除若干个事件，参数:(判定线编号，事件层，LineEvent列表)
-	/// </summary>
-	public event Action<int, int, IEnumerable<(LineEventEnum Type, LineEvent Evt)>> EventsDeleteRequested;
-
-	/// <summary>
 	/// 请求添加一个事件，参数:(判定线编号，事件层，事件类型，起始Beat，结束Beat)
 	/// </summary>
 	public event Action<int, int, LineEventEnum, Beat, Beat> AddEventRequested;
@@ -369,7 +364,7 @@ public partial class EventEditPanel : BaseEditPanel
         multiMesh.SetInstanceColor(id, toAddModulate);
     }
 
-	public void DeselectAll()
+	public override void DeselectAll()
 	{
 		selectedEvents.Clear();
 
@@ -449,6 +444,16 @@ public partial class EventEditPanel : BaseEditPanel
             return;
         }
 
+		if (_isBoxSelectMode)
+		{
+			Vector2 dataPos = new Vector2(
+				_coordComponent.GetChartPosX(pos.X),
+				_coordComponent.GetBeatValue(pos.Y)
+			);
+			_boxSelectController.StartDrag(dataPos);
+			return;
+		}
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
             (LineEventEnum?, int) hit = FindNearestEvent(pos);
@@ -516,14 +521,6 @@ public partial class EventEditPanel : BaseEditPanel
 			_dragPlaceComponent.Mode = DragPlaceComponent.PlaceMode.LongStraight;
             
         }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(pos.X),
-                _coordComponent.GetBeatValue(pos.Y)
-            );
-            _boxSelectController.StartDrag(dataPos);
-        }
     }
 
     protected override void OnMotionInput(Vector2 position, Vector2 relative)
@@ -542,6 +539,16 @@ public partial class EventEditPanel : BaseEditPanel
 
             return;
         }
+
+		if (_isBoxSelectMode)
+		{
+			Vector2 dataPos = new Vector2(
+				_coordComponent.GetChartPosX(position.X),
+				_coordComponent.GetBeatValue(position.Y)
+			);
+			_boxSelectController.Move(dataPos);
+			return;
+		}
 
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
@@ -562,18 +569,25 @@ public partial class EventEditPanel : BaseEditPanel
 			_dragPlaceComponent.Move(verLineIndex, snappedBeat);
             
         }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(position.X),
-                _coordComponent.GetBeatValue(position.Y)
-            );
-            _boxSelectController.Move(dataPos);
-        }
     }
 
 	protected override void OnButtonUp(Vector2 pos)
     {
+		if (_isPasteMode)
+		{
+			return;
+		}
+
+		if (_isBoxSelectMode)
+		{
+			Vector2 dataPos = new Vector2(
+				_coordComponent.GetChartPosX(pos.X),
+				_coordComponent.GetBeatValue(pos.Y)
+			);
+			_boxSelectController.EndDrag(dataPos);
+			return;
+		}
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
 			if (_inputController.IsDragging)
@@ -603,14 +617,6 @@ public partial class EventEditPanel : BaseEditPanel
 			Beat snappedBeat = _coordComponent.SnapBeatValueToGrid(beatValue);
 
 			_dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
-        }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(pos.X),
-                _coordComponent.GetBeatValue(pos.Y)
-            );
-            _boxSelectController.EndDrag(dataPos);
         }
     }
 
@@ -761,52 +767,60 @@ public partial class EventEditPanel : BaseEditPanel
 
     protected override void OnBoxUpdated(Vector2 startDataPos, Vector2 endDataPos)
     {
-        if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-			boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
-        	boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
+		boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
+		boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-            //检测范围内的event
-            Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
-
-            List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> lineEvents = GetEventsInRect(rect);
-
-            eventsToDelete.Clear();
-            
-            foreach(ValueTuple<float, (LineEventEnum Type, LineEvent Evt)> lineEvent in lineEvents)
-            {
-                eventsToDelete.Add(lineEvent.Item2.Evt);
-            }
-
-        }
+		if (_isBoxSelectMode)
+		{
+			UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
+		}
     }
 
     protected override void OnBoxEnded(Vector2 startDataPos, Vector2 endDataPos)
     {
-        if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-			boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
-        	boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
+		boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
+		boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-            //检测范围内的event
-            Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
-
-            List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> lineEvents = GetEventsInRect(rect);
-
-			List<(LineEventEnum Type, LineEvent Evt)> deletingEvents = new();
-			foreach(ValueTuple<float, (LineEventEnum Type, LineEvent Evt)> lineEvent in lineEvents)
-            {
-                deletingEvents.Add(lineEvent.Item2);
-            }
-
-			//触发事件，请求删除note
-            EventsDeleteRequested?.Invoke(EditingLineId, EditingLayer, deletingEvents);
-
-			//清除高亮显示
-            eventsToDelete.Clear();
-
-        }
+		if (_isBoxSelectMode)
+		{
+			UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
+		}
     }
+
+	private void UpdateSelectionInRect(Rect2 rect)
+	{
+		HashSet<(LineEventEnum Type, LineEvent Evt)> previousSelection = new(_selectedEventsWithType);
+		List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> lineEvents = GetEventsInRect(rect);
+
+		if (SelectMode == SelectModeEnum.Single)
+		{
+			selectedEvents.Clear();
+			_selectedEventsWithType.Clear();
+		}
+
+		foreach (ValueTuple<float, (LineEventEnum Type, LineEvent Evt)> lineEvent in lineEvents)
+		{
+			(LineEventEnum Type, LineEvent Evt) selectedEvent = lineEvent.Item2;
+			selectedEvents.Add(selectedEvent.Evt);
+			if (!_selectedEventsWithType.Contains(selectedEvent))
+			{
+				_selectedEventsWithType.Add(selectedEvent);
+			}
+		}
+		
+		// 如果选择的数量发生变化，意味着需要向上级通知选择情况
+		if (!previousSelection.SetEquals(_selectedEventsWithType))
+		{
+			if (_selectedEventsWithType.Count == 0)
+			{
+				EmitAllDeselected();
+			}
+			else
+			{
+				EventMultiSelected?.Invoke();
+			}
+		}
+	}
 
     protected override void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
     {

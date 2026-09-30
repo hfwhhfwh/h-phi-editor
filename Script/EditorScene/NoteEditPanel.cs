@@ -39,7 +39,7 @@ public partial class NoteEditPanel : BaseEditPanel
     // private List<Note> notesToDelete = new();
 
     private readonly HashSet<Note> selectedNotes = new();
-    private readonly HashSet<Note> notesToDelete = new();
+    // private readonly HashSet<Note> notesToDelete = new();
 
     /// <summary>
     /// 只读暴露给外部遍历，外部无法修改集合内容
@@ -57,10 +57,12 @@ public partial class NoteEditPanel : BaseEditPanel
     /// 请求添加一个note的事件，参数为(音符类型，起始Beat，结束Beat，谱面X坐标)
     /// </summary>
     public event Action<NoteType, Beat, Beat, float> NoteAddRequested;
+
     /// <summary>
     /// 请求删除note的事件，参数为(判定线编号，要删除的note的列表)
     /// </summary>
-    public event Action<int, List<Note> > NoteDeleteRequested;
+    // public event Action<int, List<Note> > NoteDeleteRequested;
+
     /// <summary>
     /// 拖动开始/结束时触发，参数:(判定线编号，note对象)
     /// </summary>
@@ -148,7 +150,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
     // ================ 公开方法 ================
     #region 公开方法
-    public void DeselectAll()
+    public override void DeselectAll()
     {
         selectedNotes.Clear();
 
@@ -175,6 +177,18 @@ public partial class NoteEditPanel : BaseEditPanel
 
         GD.Print($"[{Name}] 用户退出了粘贴模式");
     }
+
+    public override bool IsBoxSelectMode
+    {
+        get => base.IsBoxSelectMode;
+        set
+        {
+            base.IsBoxSelectMode = value;
+
+            // 打开框选模式
+        }
+    }
+
 
     #endregion
 
@@ -267,11 +281,6 @@ public partial class NoteEditPanel : BaseEditPanel
                 if (selectedNotes.Contains(note))
                 {
                     renderEffect = SelectedRender;
-                }
-                //即将删除的高亮效果
-                if (notesToDelete.Contains(note))
-                {
-                    renderEffect = AboutToDeleteRender;
                 }
 
                 // 渲染note
@@ -387,6 +396,17 @@ public partial class NoteEditPanel : BaseEditPanel
             return;
         }
 
+        if (_isBoxSelectMode)
+        {
+            Vector2 dataPos = new Vector2(
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
+            );
+            _boxSelectController.StartDrag(dataPos);
+
+            return;
+        }
+
 
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
@@ -466,14 +486,6 @@ public partial class NoteEditPanel : BaseEditPanel
             };
 
         }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(pos.X),
-                _coordComponent.GetBeatValue(pos.Y)
-            );
-            _boxSelectController.StartDrag(dataPos);
-        }
     }
 
     protected override void OnMotionInput(Vector2 pos, Vector2 relative)
@@ -502,6 +514,17 @@ public partial class NoteEditPanel : BaseEditPanel
             return;
         }
 
+        if (_isBoxSelectMode)
+        {
+            Vector2 dataPos = new Vector2(
+                _coordComponent.GetChartPosX(pos.X),
+                _coordComponent.GetBeatValue(pos.Y)
+            );
+            _boxSelectController.Move(dataPos);
+
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
 
@@ -523,18 +546,21 @@ public partial class NoteEditPanel : BaseEditPanel
             _dragPlaceComponent.Move(verLineIndex, snappedBeat);
             
         }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
+    }
+
+    protected override void OnButtonUp(Vector2 pos)
+    {
+        if (_isBoxSelectMode)
         {
             Vector2 dataPos = new Vector2(
                 _coordComponent.GetChartPosX(pos.X),
                 _coordComponent.GetBeatValue(pos.Y)
             );
-            _boxSelectController.Move(dataPos);
-        }
-    }
+            _boxSelectController.EndDrag(dataPos);
 
-    protected override void OnButtonUp(Vector2 pos)
-    {
+            return;
+        }
+
         if(EditModeManager.EditMode == EditModeEnum.Normal)
         {
 
@@ -559,14 +585,6 @@ public partial class NoteEditPanel : BaseEditPanel
 
             _dragPlaceComponent.EndDrag(verLineIndex, snappedBeat);
             
-        }
-        else if(EditModeManager.EditMode == EditModeEnum.Delete)
-        {
-            Vector2 dataPos = new Vector2(
-                _coordComponent.GetChartPosX(pos.X),
-                _coordComponent.GetBeatValue(pos.Y)
-            );
-            _boxSelectController.EndDrag(dataPos);
         }
     }
 
@@ -726,18 +744,37 @@ public partial class NoteEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(EditModeManager.EditMode == EditModeEnum.Delete)
+        if(_isBoxSelectMode)
         {
             //检测范围内的note
             Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
 
             List<int> notesIndex = GetNotesInRect(rect);
 
-            notesToDelete.Clear();
+            int previousCount = selectedNotes.Count;
+
+            if(SelectMode == SelectModeEnum.Single) selectedNotes.Clear();
             List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
             foreach(int i in notesIndex)
             {
-                notesToDelete.Add(notes[i]);
+                selectedNotes.Add(notes[i]);
+            }
+
+            // 如果选择的数量发生变化，意味着需要向上级通知选择情况
+            if(selectedNotes.Count != previousCount)
+            {
+                if(selectedNotes.Count == 0)
+                {
+                    EmitAllDeselected();
+
+                    // GD.Print($"[{Name}] 事件触发：AllDeselected");
+                }
+                else
+                {
+                    NoteMultiSelected?.Invoke();
+
+                    // GD.Print($"[{Name}] 事件触发: NoteMultiSelected");
+                }
             }
 
         }
@@ -748,23 +785,19 @@ public partial class NoteEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(EditModeManager.EditMode == EditModeEnum.Delete)
+        if(_isBoxSelectMode)
         {
             //检测范围内的note
             Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
-            List<int> notesToDeleteIndex = GetNotesInRect(rect);
 
-            //转换为List<Note>数据格式
-            List<Note> notesToDelete = new();
+            List<int> notesIndex = GetNotesInRect(rect);
+
+            if(SelectMode == SelectModeEnum.Single) selectedNotes.Clear();
             List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
-            foreach(int index in notesToDeleteIndex) notesToDelete.Add(notes[index]);
-
-            //触发事件，请求删除note
-            NoteDeleteRequested?.Invoke(EditingLineId, notesToDelete);
-
-            //清除高亮显示
-            this.notesToDelete.Clear();
-
+            foreach(int i in notesIndex)
+            {
+                selectedNotes.Add(notes[i]);
+            }
         }
     }
 

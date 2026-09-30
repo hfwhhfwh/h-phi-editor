@@ -135,6 +135,27 @@ public partial class EditorScene : Node
     /// </summary>
     private EditPanelType _selectFocusPanel;
 
+    public EditPanelType SelectFocusPanel 
+    {
+        get => _selectFocusPanel;
+        set
+        {
+            _selectFocusPanel = value;
+
+            // 同时设置所有面板是否选择对象
+            List<BaseEditPanel> editPanels = [noteEditPanel, eventEditPanel, bpmEditPanel];
+            List<EditPanelType> editPanelTypes = [EditPanelType.NoteEdit, EditPanelType.LineEventEdit, EditPanelType.BpmEventEdit];
+            
+            for(int i = 0; i < editPanels.Count; i++)
+            {
+                BaseEditPanel panel = editPanels[i];
+                EditPanelType type = editPanelTypes[i];
+
+                if(type != _selectFocusPanel) panel.DeselectAll();
+            }
+        }
+    }
+
     /// <summary>
     /// 对当前哪一个面板正在进行粘贴操作
     /// </summary>
@@ -397,10 +418,10 @@ public partial class EditorScene : Node
             AddNote,
             h => noteEditPanel.NoteAddRequested += h,
             h => noteEditPanel.NoteAddRequested -= h);
-        Subscribe(
-            OnNotesDelete,
-            h => noteEditPanel.NoteDeleteRequested += h,
-            h => noteEditPanel.NoteDeleteRequested -= h);
+        // Subscribe(
+        //     OnNotesDelete,
+        //     h => noteEditPanel.NoteDeleteRequested += h,
+        //     h => noteEditPanel.NoteDeleteRequested -= h);
         Subscribe(
             BeginNoteDrag,
             h => noteEditPanel.NoteDragStarted += h,
@@ -428,10 +449,6 @@ public partial class EditorScene : Node
             OnEventSelected,
             h => eventEditPanel.EventSelected += h,
             h => eventEditPanel.EventSelected -= h);
-        Subscribe(
-            DeleteEvents,
-            h => eventEditPanel.EventsDeleteRequested += h,
-            h => eventEditPanel.EventsDeleteRequested -= h);
         Subscribe(
             AddEvent,
             h => eventEditPanel.AddEventRequested += h,
@@ -476,10 +493,6 @@ public partial class EditorScene : Node
             AddBpm,
             h => bpmEditPanel.EventAddRequested += h,
             h => bpmEditPanel.EventAddRequested -= h);
-        Subscribe(
-            DeleteBpms,
-            h => bpmEditPanel.EventDeleteRequested += h,
-            h => bpmEditPanel.EventDeleteRequested -= h);
         Subscribe(
             SetBpmTime,
             h => bpmEditPanel.EventTimeChanged += h,
@@ -630,6 +643,7 @@ public partial class EditorScene : Node
         _pasteCancelBtn.Pressed += OnPasteCancelPressed;
 
         // 设置多选按钮
+        _multiSelectBtn.ToggleMode = true;
         _multiSelectBtn.Toggled += (bool value) =>
         {
             BaseEditPanel.SelectModeEnum mode = value ? 
@@ -638,6 +652,15 @@ public partial class EditorScene : Node
             noteEditPanel.SelectMode = mode;
             eventEditPanel.SelectMode = mode;
             bpmEditPanel.SelectMode = mode;
+        };
+
+        // 设置框选按钮
+        _boxSelectBtn.ToggleMode = true;
+        _boxSelectBtn.Toggled += (bool value) =>
+        {
+            noteEditPanel.IsBoxSelectMode = value;
+            eventEditPanel.IsBoxSelectMode = value;
+            bpmEditPanel.IsBoxSelectMode = value;
         };
 
         // 统一设置面板取消选择的事件
@@ -822,7 +845,7 @@ public partial class EditorScene : Node
         {
             EditModeEnum.Normal => "模式：常规模式",
             EditModeEnum.Place => "模式：放置模式",
-            EditModeEnum.Delete => "模式：删除模式",
+            // EditModeEnum.Delete => "模式：删除模式",
             _ => "模式：未知",
         };
     }
@@ -1254,6 +1277,11 @@ public partial class EditorScene : Node
         }
     }
 
+    private void OnMultiSelectPressed()
+    {
+        
+    }
+
 
     #region 播放控制
 
@@ -1473,7 +1501,7 @@ public partial class EditorScene : Node
 
     private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
     {
-        _selectFocusPanel = EditPanelType.NoteEdit;
+        SelectFocusPanel = EditPanelType.NoteEdit;
         IsSelecting = true;
 
         Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
@@ -1527,14 +1555,9 @@ public partial class EditorScene : Node
         _chartEditService.DeleteNote(lineId, note);
     }
 
-    private void OnNotesDelete(int lineId, List<Note> notes)
-    {
-        _chartEditService.DeleteNotes(lineId, notes);
-    }
-
     private void OnNoteMultiSelected()
     {
-        _selectFocusPanel = EditPanelType.NoteEdit;
+        SelectFocusPanel = EditPanelType.NoteEdit;
         IsSelecting = true;
     }
 
@@ -1593,7 +1616,7 @@ public partial class EditorScene : Node
 
     private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
     {
-        _selectFocusPanel = EditPanelType.LineEventEdit;
+        SelectFocusPanel = EditPanelType.LineEventEdit;
         IsSelecting = true;
         
         EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
@@ -1660,7 +1683,7 @@ public partial class EditorScene : Node
 
     private void OnEventMultiSelected()
     {
-        _selectFocusPanel = EditPanelType.LineEventEdit;
+        SelectFocusPanel = EditPanelType.LineEventEdit;
         IsSelecting = true;
     }
 
@@ -1702,7 +1725,7 @@ public partial class EditorScene : Node
             return;
         }
 
-        _selectFocusPanel = EditPanelType.BpmEventEdit;
+        SelectFocusPanel = EditPanelType.BpmEventEdit;
         IsSelecting = true;
 
         BpmEvent bpmEvent = editingChart.BpmList[index];
@@ -1723,7 +1746,7 @@ public partial class EditorScene : Node
 
     private void OnBpmMultiSelected()
     {
-        _selectFocusPanel = EditPanelType.BpmEventEdit;
+        SelectFocusPanel = EditPanelType.BpmEventEdit;
         IsSelecting = true;
     }
 
