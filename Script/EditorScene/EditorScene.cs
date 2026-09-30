@@ -1774,8 +1774,7 @@ public partial class EditorScene : Node
                 if(eventEditPanel.SelectedEventsWithType != null && 
                     eventEditPanel.SelectedEventsWithType.Count != 0)
                 {
-                    List<LineEvent> eventsToDelete = eventEditPanel.SelectedEventsWithType
-                        .Select(kvp => kvp.Item2)
+                    List<(LineEventEnum Type, LineEvent Evt)> eventsToDelete = eventEditPanel.SelectedEventsWithType
                         .ToList();
                     DeleteEvents(editingLineId, editingLayer, eventsToDelete);
                 }
