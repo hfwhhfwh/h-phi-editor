@@ -26,7 +26,7 @@ public partial class ChartPlayer : BaseChartPlayer
 
     // public bool LogicDisabled { get; set; } // 是否禁用位置计算
 
-    private HitEffectPool hitEffectPool;
+    private HitEffectPool _hitEffectPool;
     
     private AudioPool audioPool;
 
@@ -177,8 +177,8 @@ public partial class ChartPlayer : BaseChartPlayer
 
     public override void CreateHitEffect(Vector2 parentPos, Color modulate)
     {
-        if (hitEffectPool == null) return;
-        hitEffectPool.Spawn(parentPos, modulate);
+        if (_hitEffectPool == null) return;
+        _hitEffectPool.Spawn(parentPos, modulate);
     }
 
     /// <summary>
@@ -211,7 +211,7 @@ public partial class ChartPlayer : BaseChartPlayer
     }
 
 
-    public override void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio)
+    public override void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio, HitEffectPool hitEffectPool)
     {
         //1. 设置谱面
         Chart = chart;
@@ -260,8 +260,8 @@ public partial class ChartPlayer : BaseChartPlayer
         Parent = parent;
 
         //设置打击特效
-        hitEffectPool = new HitEffectPool(parent, HitFrames, 50);
-        parent.AddChild(hitEffectPool);
+        _hitEffectPool = hitEffectPool;
+        parent.AddChild(_hitEffectPool);
 
         //设置打击音效
         audioPool = new AudioPool(parent);

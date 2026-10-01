@@ -5,11 +5,68 @@ using System.Collections.Generic;
 
 public partial class HitEffectPool : Node
 {
-    private Node _parent;                  // 用于添加/移除特效节点
+    private Control _parent;                  // 用于添加/移除特效节点
     private SpriteFrames _frames;          // 动画资源
     private Stack<AnimatedSprite2D> _pool = new();
     private int _initSize;
     private Color _modulate;
+
+    /// <summary>
+    /// 打击特效的缩放
+    /// </summary>
+    /// <value></value>
+    public float HxScale { get; protected set; }
+
+    public override void _Ready()
+    {
+        base._Ready();
+
+        _parent.Ready += UpdateHxScale;
+
+        _parent.Resized += () =>
+        {
+            UpdateHxScale();
+        };
+    }
+
+    private void UpdateHxScale()
+    {
+        if(_parent == null || _frames == null)
+        {
+            HxScale = 1f;
+            GD.PrintErr($"[{Name}] 无法设置打击特效缩放:_parent == null || _frames == null");
+            return;
+        }
+
+        Texture2D frame = _frames.GetFrameTexture("default", 0);
+        if(frame == null)
+        {
+            HxScale = 1f;
+            GD.PrintErr($"[{Name}] 无法设置打击特效缩放: 未找到动画帧");
+            return;
+        }
+
+        float textureWidth = _frames.GetFrameTexture("default", 0).GetWidth();
+        if (textureWidth <= 0f)
+        {
+            HxScale = 1f;
+            GD.PrintErr($"[{Name}] 无法设置打击特效缩放: 图片宽度不合法");
+            return;
+        }
+
+        HxScale = _parent.Size.X * 0.25f / textureWidth;
+
+        if (float.IsNaN(HxScale) || float.IsInfinity(HxScale) || HxScale <= 0f)
+        {
+            HxScale = 1f;
+            GD.PrintErr($"[{Name}] 无法设置打击特效缩放: 缩放数值不合法, HxScale:{HxScale}, _parent.Size:{_parent.Size}, textureWidth:{textureWidth}");
+            return;
+        }
+
+        GD.Print($"[{Name}] 成功设置打击特效缩放: HxScale:{HxScale}, _parent.Size:{_parent.Size}, textureWidth:{textureWidth}");
+
+    }
+
 
     /// <summary>
     /// 构造函数
@@ -18,7 +75,7 @@ public partial class HitEffectPool : Node
     /// <param name="frames">SpriteFrames 资源</param>
     /// <param name="modulate">特效颜色（默认金色）</param>
     /// <param name="initSize">初始池大小</param>
-    public HitEffectPool(Node parent, SpriteFrames frames, int initSize = 50)
+    public HitEffectPool(Control parent, SpriteFrames frames, int initSize = 50)
     {
         _parent = parent;
         _frames = frames;
@@ -44,7 +101,8 @@ public partial class HitEffectPool : Node
             SpriteFrames = _frames,
             Modulate = _modulate,
             ZIndex = 3,
-            Visible = false
+            Visible = false,
+            Scale = new Vector2(HxScale, HxScale)
         };
         // 动画播放完毕时自动回收
         fx.AnimationFinished += () => ReturnEffect(fx);
@@ -94,6 +152,8 @@ public partial class HitEffectPool : Node
         fx.Position = position;
         fx.Modulate = modulate;
         fx.Visible = true;
+        fx.Scale = new Vector2(HxScale, HxScale);
+
         _parent.AddChild(fx);
         fx.Play();
     }

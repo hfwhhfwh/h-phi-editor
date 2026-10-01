@@ -49,7 +49,8 @@ public partial class TestSceneChartPlayer : Node
             return;
         }
 
-        chartPlayer.Initialize(parent, editingChart, bgImage, audioStream);
+        HitEffectPool hitEffectPool = new HitEffectPool(parent, chartPlayer.HitFrames, 50);
+        chartPlayer.Initialize(parent, editingChart, bgImage, audioStream, hitEffectPool);
         chartRenderer.Initialize(parent);
 
         //开始播放

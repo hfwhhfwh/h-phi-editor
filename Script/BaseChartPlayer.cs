@@ -53,7 +53,7 @@ public abstract partial class BaseChartPlayer : Node
     /// <summary>
     /// 初始化
     /// </summary>
-    public abstract void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio);
+    public abstract void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio, HitEffectPool hitEffectPool);
 
     /// <summary>
     /// 计算判定线和note的位置

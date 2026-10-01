@@ -143,7 +143,14 @@ public partial class PlayScene : Node
         chartPlayer.UseDefaultResource();
         chartRenderer.UseDefaultResource();
 
-        chartPlayer.Initialize(parent, _chart, Image.LoadFromFile(chartInfo.PicturePath), FileUtil.LoadAudioFromFile(chartInfo.SongPath));
+        HitEffectPool hitEffectPool = new HitEffectPool(parent, chartPlayer.HitFrames, 50);
+        chartPlayer.Initialize(
+            parent, 
+            _chart, 
+            Image.LoadFromFile(chartInfo.PicturePath), 
+            FileUtil.LoadAudioFromFile(chartInfo.SongPath),
+            hitEffectPool);
+        
         chartRenderer.Initialize(parent);
 
         

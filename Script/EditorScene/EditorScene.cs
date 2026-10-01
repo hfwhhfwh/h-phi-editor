@@ -355,7 +355,8 @@ public partial class EditorScene : Node
             }),
             ("正在初始化谱面播放器...", async () => {
                 // ================初始化谱面播放器================
-                chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream);
+                HitEffectPool hitEffectPool = new HitEffectPool(chartPlayParent, chartPlayer.HitFrames, 50);
+                chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream, hitEffectPool);
                 chartRenderer.Initialize(chartPlayParent);
 
                 chartPlayParent.ClipContents = true;

@@ -240,7 +240,7 @@ public partial class GameChartPlayer : BaseChartPlayer
     }
 
 
-    public override void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio)
+    public override void Initialize(Control parent, Chart chart, Image bgImage, AudioStream audio, HitEffectPool hxPool)
     {
         //1. 设置谱面
         Chart = chart;
@@ -290,7 +290,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         Parent = parent;
 
         //设置打击特效
-        _hitEffectPool = new HitEffectPool(parent, HitFrames, 50);
+        _hitEffectPool = hxPool;
         parent.AddChild(_hitEffectPool);
 
         _badEffectPool = new BadEffectPool(parent, _badTexture, 50);
