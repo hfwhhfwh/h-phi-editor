@@ -1,86 +1,113 @@
 using Godot;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 public partial class ImageBlur : Node
 {
-    /// <summary>
-    /// 对 Image 应用高斯模糊（分离卷积实现）
-    /// </summary>
-    /// <param name="source">原始图像（不会被修改）</param>
-    /// <param name="radius">模糊半径（像素），建议 2-5</param>
-    /// <param name="sigma">标准差，通常设为 radius/2</param>
-    /// <returns>模糊后的新 Image</returns>
-    public static Image GaussianBlur(Image source, int radius, float sigma)
+    public static ImageBlur Instance;
+
+    private SubViewport _vpH;
+    private SubViewport _vpV;
+    private TextureRect _rectH;
+    private TextureRect _rectV;
+
+    private ShaderMaterial _matH;
+    private ShaderMaterial _matV;
+
+    public override void _Ready()
     {
-        // 复制一份并确保格式为 RGBA8 方便处理
-        Image img = new Image();
-        img.CopyFrom(source);
-        img.Convert(Image.Format.Rgba8);
+        base._Ready();
 
-        int width = img.GetWidth();
-        int height = img.GetHeight();
-
-        // 1. 水平模糊：生成临时图像
-        Image horizontalPass = new Image();
-        horizontalPass.CopyFrom(img);
-        for (int y = 0; y < height; y++)
+        // ========== 单例保护 ==========
+        if (Instance != null && GodotObject.IsInstanceValid(Instance))
         {
-            for (int x = 0; x < width; x++)
-            {
-                Color sum = Colors.Transparent;
-                float totalWeight = 0f;
-                for (int dx = -radius; dx <= radius; dx++)
-                {
-                    int nx = x + dx;
-                    if (nx < 0 || nx >= width) continue;
-                    float weight = Mathf.Exp(-(dx * dx) / (2 * sigma * sigma));
-                    sum += img.GetPixel(nx, y) * weight;
-                    totalWeight += weight;
-                }
-                horizontalPass.SetPixel(x, y, sum / totalWeight);
-            }
+            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            QueueFree();  // 自杀，保留旧实例
+            return;
         }
 
-        // 2. 垂直模糊：基于水平结果
-        Image result = new Image();
-        result.CopyFrom(horizontalPass);
-        for (int x = 0; x < width; x++)
+        Instance = this;
+        // =============================
+
+        // 设置子节点
+        _vpH = new SubViewport();
+        _vpH.Name = "SubViewport_H";
+        AddChild(_vpH);
+
+        _rectH = new TextureRect();
+        _rectH.Name = "TextureRect_H";
+        _vpH.AddChild(_rectH);
+
+        _vpV = new SubViewport();
+        _vpV.Name = "SubViewport_V";
+        AddChild(_vpV);
+
+        _rectV = new TextureRect();
+        _rectV.Name = "TextureRect_V";
+        _vpV.AddChild(_rectV);
+
+        _vpH.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
+        _vpV.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
+
+        foreach (var r in new[] { _rectH, _rectV })
         {
-            for (int y = 0; y < height; y++)
-            {
-                Color sum = Colors.Transparent;
-                float totalWeight = 0f;
-                for (int dy = -radius; dy <= radius; dy++)
-                {
-                    int ny = y + dy;
-                    if (ny < 0 || ny >= height) continue;
-                    float weight = Mathf.Exp(-(dy * dy) / (2 * sigma * sigma));
-                    sum += horizontalPass.GetPixel(x, ny) * weight;
-                    totalWeight += weight;
-                }
-                result.SetPixel(x, y, sum / totalWeight);
-            }
+            r.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            r.OffsetLeft = r.OffsetTop = r.OffsetRight = r.OffsetBottom = 0;
+            r.Visible = true;
         }
 
-        return result;
+        // 设置模糊材质shader
+        var shader = GD.Load<Shader>("res://Shader/blur.gdshader");
+        _matH = new ShaderMaterial { Shader = shader };
+        _matV = new ShaderMaterial { Shader = shader };
+        _rectH.Material = _matH;
+        _rectV.Material = _matV;
     }
 
-    /// <summary>
-    /// 保存 Image 为 PNG 文件（在项目资源目录）
-    /// </summary>
-    public static void SaveImage(Image image, string path)
+    /// <summary>把图片做高斯模糊，返回模糊后的新 Image</summary>
+    public async Task<Image> BlurImageAsync(Image src, float radius)
     {
-        // 注意：path 应该是 "res://" 开头的项目路径
-        image.SavePng(path);
+        var size = new Vector2I(src.GetWidth(), src.GetHeight());
+        _vpH.Size = size;
+        _vpV.Size = size;
+        _vpH.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
+        _vpV.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
+
+        GD.Print("src: ", src.GetSize(), " format: ", src.GetFormat());
+        _rectH.Texture = ImageTexture.CreateFromImage(src);
+        GD.Print("rect texture: ", _rectH.Texture.GetSize());
+
+        // 第一遍：横向
+        _rectH.Texture = ImageTexture.CreateFromImage(src);
+        _matH.SetShaderParameter("direction", new Vector2(1, 0));
+        _matH.SetShaderParameter("radius", radius);
+
+        // 等第一遍真正渲染完成
+        // 等一整个帧：第 N 帧绘制把 rectH 画进 _vpH，到这里 _vpH 必定有内容
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+        // 第二遍：此时 _vpH 的纹理才有内容
+        _rectV.Texture = _vpH.GetTexture();
+        _matV.SetShaderParameter("direction", new Vector2(0, 1));
+        _matV.SetShaderParameter("radius", radius);
+
+        // 再等第二遍渲染完成
+        // 等一整个帧：第 N 帧绘制把 rectH 画进 _vpH，到这里 _vpH 必定有内容
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+        return _vpV.GetTexture().GetImage();
     }
 
-    /// <summary>
-    /// 从文件加载 Image
-    /// </summary>
-    public static Image LoadImage(string path)
+    public override void _ExitTree()
     {
-        var img = new Image();
-        img.Load(path);
-        return img;
+        // 先清自己的引用，再交给 base
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+        base._ExitTree();
     }
+
+
 }

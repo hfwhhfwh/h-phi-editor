@@ -1,19 +1,23 @@
 shader_type canvas_item;
 
-uniform sampler2D SCREEN_TEXTURE: hint_screen_texture , filter_linear_mipmap;
-uniform float blur_amount : hint_range(0.0,5.0) = 1.5;
+// Godot 4 的 shader for 循环边界必须是编译期常量，所以用常量上限
+const int MAX_SAMPLES = 64;
 
-void vertex() {
-	// Called for every vertex the material is visible on.
-}
+uniform float radius : hint_range(0.0, 1024.0) = 8.0;   // 模糊半径（像素）
+uniform vec2 direction = vec2(1.0, 0.0);               // (1,0) 横向 / (0,1) 纵向
 
 void fragment() {
-	// Called for every pixel the material is visible on.
-	vec3 result = textureLod(SCREEN_TEXTURE,SCREEN_UV,blur_amount).rgb;
-	COLOR.rgb = result;
-}
+    vec2 texel = direction / vec2(textureSize(TEXTURE, 0));
+    vec4 sum = vec4(0.0);
+    float weight_sum = 0.0;
+    float sigma = max(radius * 0.5, 0.001);
 
-//void light() {
-//	// Called for every pixel for every light affecting the CanvasItem.
-//	// Uncomment to replace the default light processing function with this one.
-//}
+    for (int i = -MAX_SAMPLES; i <= MAX_SAMPLES; i++) {
+        // 关键改动：采样间距随 radius 放大，65 个采样点均匀覆盖 ±radius
+        float offset = float(i) * (radius / float(MAX_SAMPLES));
+        float w = exp(-0.5 * offset * offset / (sigma * sigma));
+        sum += texture(TEXTURE, UV + texel * offset) * w;
+        weight_sum += w;
+    }
+    COLOR = sum / weight_sum;
+}

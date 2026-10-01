@@ -153,7 +153,7 @@ public partial class ChartService : Node
     /// 导入谱面
     /// </summary>
     /// <param name="path">谱面文件（zip、pez等）的路径</param>
-    public async Task ImportChart(string path)
+    public async Task ImportChartAsync(string path)
     {
         //1. 创建临时导入目录
         string id = Util.GenerateRandomNumId(14);
@@ -214,12 +214,97 @@ public partial class ChartService : Node
             ("正在复制音乐...", async () => {
                 await Task.Run(() => FileUtil.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"])));
             }),
+            ("正在生成模糊曲绘...", async () => {
+                await BlurPicture(
+                    picPath: Path.Combine(dir, infoDic["Picture"]),
+                    radius: 200,
+                    outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_200.png"))// ← 注意加 .png
+                );
+            }),
         ];
 
         await LoadingManager.Instance.RunTasksAsync("正在导入谱面", tasks);
         
         GD.Print($"[{this.Name}] 铺面导入成功, id:{id}");
 
+    }
+
+    public async Task GenerateBlurredPic(string chartId)
+    {
+        if(string.IsNullOrEmpty(chartId)) throw new ArgumentNullException(nameof(chartId));
+
+        // 找到谱面路径
+        string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
+        string dirAbsolute = ProjectSettings.GlobalizePath(dir);
+        if (!Godot.DirAccess.DirExistsAbsolute(dirAbsolute))
+        {
+            GD.PrintErr($"[{Name}] 未找到谱面id:{chartId}");
+            return;
+        }
+
+        // 读取info
+        string infoPath = Path.Combine(dirAbsolute, "info.txt");
+        if (!Godot.FileAccess.FileExists(infoPath))
+        {
+            GD.PrintErr("无法找到info.txt文件");
+            return;
+        }
+
+        Dictionary<string, string> infoDic = FileUtil.ReadInfoFile(infoPath);
+
+        // 生成模糊曲绘
+        (Image image, string _) = await FileUtil.LoadImageFromFileAsync(
+            Path.Combine(dir, infoDic["Picture"]));
+
+        Image blurred = await ImageBlur.Instance.BlurImageAsync(image, 200);
+
+        // 保存
+        string blurredPath = ProjectSettings.GlobalizePath(
+            Path.Combine(dir, "img_blur_200.png"));   // ← 注意加 .png
+
+        Error err = await RunOnMainThreadAsync(() => blurred.SavePng(blurredPath));
+        if (err != Error.Ok)
+            GD.PrintErr($"模糊图保存失败: {err}");
+
+        await BlurPicture(
+            picPath: Path.Combine(dir, infoDic["Picture"]),
+            radius: 200,
+            outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_200.png"))// ← 注意加 .png
+        );
+        
+    }
+
+    private async Task BlurPicture(string picPath, float radius, string outputPath)
+    {
+        // 生成模糊曲绘
+        (Image image, string _) = await FileUtil.LoadImageFromFileAsync(picPath);
+
+        Image blurred = await ImageBlur.Instance.BlurImageAsync(image, radius);
+
+        // 保存
+        string blurredPath = ProjectSettings.GlobalizePath(outputPath);
+
+        Error err = await RunOnMainThreadAsync(() => blurred.SavePng(blurredPath));
+        if (err != Error.Ok)
+            GD.PrintErr($"模糊图保存失败: {err}");
+    }
+
+    /// <summary>
+    /// 在主线程上执行一个委托，并异步等待其返回值。
+    /// 可从任意线程调用。
+    /// </summary>
+    public Task<T> RunOnMainThreadAsync<T>(Func<T> func)
+    {
+        var tcs = new TaskCompletionSource<T>();
+
+        // CallDeferred 是线程安全的，会在主线程空闲时执行
+        Callable.From(() =>
+        {
+            try   { tcs.SetResult(func()); }
+            catch (Exception e) { tcs.SetException(e); }
+        }).CallDeferred();
+
+        return tcs.Task;
     }
     
     /// <summary>

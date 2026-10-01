@@ -20,7 +20,6 @@ config/icon="uid://dr5b2hjh04vy8"
 [autoload]
 
 ChartLoader="*uid://hs6uvyfkqhd0"
-ImageBlur="*uid://q6jaa43qjmt8"
 FileDialogManager="*uid://7dks72m4nja7"
 ChartService="*uid://dcb40ki6g4ka8"
 ChartRepository="*uid://dgrw8ly3bw4br"
@@ -34,6 +33,7 @@ ImagePicker="*uid://c7m75i1ksev8a"
 IosPhotoPicker="*uid://cvl10oovvfsnx"
 PopupHelper="*uid://vokpe42lhbej"
 LoadingManager="*uid://b57um3paj7g87"
+ImageBlur="*uid://q6jaa43qjmt8"
 
 [display]
 

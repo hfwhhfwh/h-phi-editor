@@ -1,24 +1,23 @@
 shader_type canvas_item;
 
-uniform float blur_size : hint_range(0.0, 10.0) = 5.0;  // 模糊半径（像素）
-uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap; // 可选：用于屏幕纹理
+// Godot 4 的 shader for 循环边界必须是编译期常量，所以用常量上限
+const int MAX_SAMPLES = 64;
+
+uniform float radius : hint_range(0.0, 1024.0) = 8.0;   // 模糊半径（像素）
+uniform vec2 direction = vec2(1.0, 0.0);               // (1,0) 横向 / (0,1) 纵向
 
 void fragment() {
-    vec2 uv = UV;
-    vec4 color = vec4(0.0);
-    float total = 0.0;
-    
-    // 简单的盒式模糊（可替换为更高效的高斯模糊）
-    int size = int(blur_size);
-    for (int x = -size; x <= size; x++) {
-        for (int y = -size; y <= size; y++) {
-            vec2 offset = vec2(float(x), float(y)) * TEXTURE_PIXEL_SIZE; // 使用纹理像素大小
-            color += texture(TEXTURE, uv + offset);
-            total += 1.0;
-        }
+    vec2 texel = direction / vec2(textureSize(TEXTURE, 0));
+    vec4 sum = vec4(0.0);
+    float weight_sum = 0.0;
+    float sigma = max(radius * 0.5, 0.001);
+
+    for (int i = -MAX_SAMPLES; i <= MAX_SAMPLES; i++) {
+        // 关键改动：采样间距随 radius 放大，65 个采样点均匀覆盖 ±radius
+        float offset = float(i) * (radius / float(MAX_SAMPLES));
+        float w = exp(-0.5 * offset * offset / (sigma * sigma));
+        sum += texture(TEXTURE, UV + texel * offset) * w;
+        weight_sum += w;
     }
-    COLOR = color / total;
-	
-	//vec3 result = textureLod(TEXTURE,UV,blur_size).rgb;
-	//COLOR.rgb = result;
+    COLOR = sum / weight_sum;
 }

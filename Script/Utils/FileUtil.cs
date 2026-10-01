@@ -1007,8 +1007,10 @@ public static class FileUtil
     {
         string realFormat = null;
 
+        string picPathAbsolute = ProjectSettings.GlobalizePath(picPath);
+
         // 检查文件存在
-        if (!Godot.FileAccess.FileExists(picPath))
+        if (!Godot.FileAccess.FileExists(picPathAbsolute))
         {
             GD.PrintErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
             return (null, null);
@@ -1018,7 +1020,7 @@ public static class FileUtil
         Error err = Error.Failed;
 
         // 1. 通用加载（扩展名和格式一致时直接成功）
-        err = image.Load(picPath);
+        err = image.Load(picPathAbsolute);
 
         // 2. 失败则回退到 Buffer + 格式检测
         if (err != Error.Ok)
@@ -1028,7 +1030,7 @@ public static class FileUtil
             // 后台线程读取文件字节 + 检测真实格式
             (byte[] buffer, string format) = await Task.Run(() =>
             {
-                byte[] data = System.IO.File.ReadAllBytes(picPath); // 纯 IO
+                byte[] data = System.IO.File.ReadAllBytes(picPathAbsolute); // 纯 IO
                 string detectedFormat = DetectImageFormat(data);
                 return (data, detectedFormat);
             });
@@ -1074,7 +1076,7 @@ public static class FileUtil
 
         if (err != Error.Ok)
         {
-            GD.PrintErr($"[{Name}] 所有格式解码均失败:{picPath}");
+            GD.PrintErr($"[{Name}] (图片)所有格式解码均失败:{picPath}");
             return (null, realFormat);
         }
 

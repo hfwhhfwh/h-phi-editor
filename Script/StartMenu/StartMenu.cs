@@ -129,7 +129,7 @@ public partial class StartMenu : Node
             {
                 if(string.IsNullOrEmpty(path)) return;
 
-                await _chartService.ImportChart(path);
+                await _chartService.ImportChartAsync(path);
                 RefreshChartList();
             },
             filters
