@@ -2,6 +2,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 public partial class PlayScene : Node
 {
@@ -16,6 +17,8 @@ public partial class PlayScene : Node
     [Export] private Button _quitButton;
     [Export] private Button _restartButton;
     [Export] private Button _startButton;
+    [Export] private TextureRect _bgImageRect;
+    [Export] private TextureRect _bgImageWiderRect;
     private bool _isPauseActive = false;
     private float _pauseTimer;
 
@@ -25,7 +28,7 @@ public partial class PlayScene : Node
     private bool _isPlaying = false;
     private double _gameTime;
 
-    public override void _Ready()
+    public override async void _Ready()
     {
         base._Ready();
 
@@ -138,21 +141,50 @@ public partial class PlayScene : Node
             return;
         }
 
+        (Image bgImage, string _) = await FileUtil.LoadImageFromFileAsync(chartInfo.PicturePath);
+        var audio = FileUtil.LoadAudioFromFile(chartInfo.SongPath);
+
+        // 加载模糊图片
+        string blurredPath = Path.Combine("user://ChartSaves", chartId, $"img_blur_150.png");
+        string blurredPathAbs = ProjectSettings.GlobalizePath(blurredPath);
+
+        if(!Godot.FileAccess.FileExists(blurredPathAbs))
+        {
+            // 需要新建一个模糊图片
+            await ImageBlur.Instance.BlurPicture(bgImage, 150, blurredPathAbs);
+        }
+        (Image bgImageBlurred, _) = await FileUtil.LoadImageFromFileAsync(blurredPathAbs);
+        if (bgImageBlurred == null)
+        {
+            GD.PrintErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
+        }
+
         _judge = new ChartJudge();
 
         chartPlayer.UseDefaultResource();
         chartRenderer.UseDefaultResource();
 
-        HitEffectPool hitEffectPool = new HitEffectPool(parent, chartPlayer.HitFrames, 50);
+        HitEffectPool hitEffectPool = new HitEffectPool();
+        hitEffectPool.Name = "HitEffectPool";
+        // 这一行需要保证已经设置过资源包
+        hitEffectPool.Initialize(parent, chartPlayer.HitFrames, 50);
+        
         chartPlayer.Initialize(
             parent, 
             _chart, 
-            Image.LoadFromFile(chartInfo.PicturePath), 
-            FileUtil.LoadAudioFromFile(chartInfo.SongPath),
+            bgImageBlurred, 
+            audio,
             hitEffectPool);
         
         chartRenderer.Initialize(parent);
 
+        _bgImageRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);
+        _bgImageRect.SelfModulate = new Color(0.3f, 0.3f ,0.3f ,1);
+        _bgImageRect.MouseFilter = Control.MouseFilterEnum.Ignore;
+
+        _bgImageWiderRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);
+        _bgImageWiderRect.SelfModulate = new Color(0.8f, 0.8f ,0.8f ,1);
+        _bgImageWiderRect.MouseFilter = Control.MouseFilterEnum.Ignore;
         
         AddChild(_judge);
         _judge.Initialize(chartPlayer, parent, _chart);

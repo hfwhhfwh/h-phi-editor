@@ -16,15 +16,15 @@
 [ext_resource type="Texture2D" uid="uid://cep4i57yovmvt" path="res://Sprite/HoldEnd.png" id="12_adj2r"]
 [ext_resource type="Texture2D" uid="uid://bs6cfa5ijqqd7" path="res://Sprite/line.png" id="13_ap1vk"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="14_ii6ij"]
-[ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://暂停_256px.png" id="16_4mcor"]
+[ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://Textures/暂停_256px.png" id="16_4mcor"]
 [ext_resource type="Texture2D" uid="uid://4su3gb6l6dku" path="res://Sprite/TapHL.png" id="16_ii6ij"]
 [ext_resource type="Texture2D" uid="uid://ckavuu86r8dl6" path="res://Sprite/DragHL.png" id="17_jp30j"]
 [ext_resource type="Texture2D" uid="uid://ce2i2r1d6so0" path="res://Sprite/FlickHL.png" id="18_ikskq"]
-[ext_resource type="Texture2D" uid="uid://dxev5wk8ceda2" path="res://箭头左-02.png" id="18_w2a2n"]
+[ext_resource type="Texture2D" uid="uid://dxev5wk8ceda2" path="res://Textures/箭头左-02.png" id="18_w2a2n"]
 [ext_resource type="Texture2D" uid="uid://ira5jjrtm3d4" path="res://Sprite/HoldHeadMh.png" id="19_fhsrd"]
-[ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://刷新.png" id="19_vtsto"]
+[ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://Textures/刷新.png" id="19_vtsto"]
 [ext_resource type="Texture2D" uid="uid://bxibwjcib4p6l" path="res://Sprite/HoldBodyMh.png" id="20_6txkt"]
-[ext_resource type="Texture2D" uid="uid://bprcrbiaou75j" path="res://播放.png" id="20_kqb28"]
+[ext_resource type="Texture2D" uid="uid://bprcrbiaou75j" path="res://Textures/播放.png" id="20_kqb28"]
 [ext_resource type="Texture2D" uid="uid://ceqs11llnv1mi" path="res://Sprite/HoldEndMh.png" id="21_qptvg"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dqi6c"]
@@ -37,7 +37,7 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jp30j"]
 
-[node name="PlayScene" type="Node" unique_id=581511815 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "statusLabel", "_pauseButtonTouch", "_pauseButtonMouse", "_pauseLayer", "_quitButton", "_restartButton", "_startButton")]
+[node name="PlayScene" type="Node" unique_id=581511815 node_paths=PackedStringArray("parent", "chartPlayer", "chartRenderer", "statusLabel", "_pauseButtonTouch", "_pauseButtonMouse", "_pauseLayer", "_quitButton", "_restartButton", "_startButton", "_bgImageRect", "_bgImageWiderRect")]
 script = ExtResource("1_iwabn")
 parent = NodePath("SafeArea/AspectRatioContainer/Parent")
 chartPlayer = NodePath("SafeArea/AspectRatioContainer/Parent/ChartPlayer")
@@ -49,6 +49,19 @@ _pauseLayer = NodePath("PauseLayer")
 _quitButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Quit")
 _restartButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Restart")
 _startButton = NodePath("PauseLayer/BackGround/CenterContainer/HBoxContainer/Start")
+_bgImageRect = NodePath("SafeArea/AspectRatioContainer/Parent/BgImage")
+_bgImageWiderRect = NodePath("BgImageWider")
+
+[node name="BgImageWider" type="TextureRect" parent="." unique_id=282641705]
+z_index = -10
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
 
 [node name="SafeArea" type="MarginContainer" parent="." unique_id=978895148]
 anchors_preset = 15
@@ -121,6 +134,18 @@ offset_bottom = 8.0
 icon = ExtResource("16_4mcor")
 icon_alignment = 1
 expand_icon = true
+
+[node name="BgImage" type="TextureRect" parent="SafeArea/AspectRatioContainer/Parent" unique_id=1874737323]
+z_index = -5
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
 
 [node name="PauseLayer" type="CanvasLayer" parent="." unique_id=1043612123]
 visible = false

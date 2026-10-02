@@ -37,6 +37,7 @@ public partial class EditorScene : Node
     [Export] private BaseChartPlayer chartPlayer;
     [Export] private BaseChartRenderer chartRenderer;
     [Export] private Control chartPlayParent;
+    [Export] private TextureRect _bgImageRect;
     [Export] private Control editPanel;
     [Export] private RightPanel rightPanel;
     [Export] private ChooseLinePanel chooseLinePanel;
@@ -179,6 +180,8 @@ public partial class EditorScene : Node
 
     private readonly List<Action> _unsubscribes = new();
 
+    private const float BlurRadius = 150;
+
     #if TOOLS
     // ---- 性能分析 ----
     private double _setChartTimeTimeUs = 0;
@@ -302,6 +305,7 @@ public partial class EditorScene : Node
 
         ChartInfo chartInfo = null;
         Image bgImage = null;
+        Image bgImageBlurred = null;
         AudioStream audioStream = null;
 
         List<(string, Func<Task>)> tasks = [
@@ -343,7 +347,21 @@ public partial class EditorScene : Node
                 {
                     GD.PrintErr($"[{this.Name}] 背景图片导入失败: {chartInfo.PicturePath}");
                 }
-                //TODO 图片模糊效果
+                
+                // 加载模糊图片
+                string blurredPath = Path.Combine("user://ChartSaves", editingChartId, $"img_blur_{BlurRadius}.png");
+                string blurredPathAbs = ProjectSettings.GlobalizePath(blurredPath);
+
+                if(!Godot.FileAccess.FileExists(blurredPathAbs))
+                {
+                    // 需要新建一个模糊图片
+                    await ImageBlur.Instance.BlurPicture(bgImage, BlurRadius, blurredPathAbs);
+                }
+                (bgImageBlurred, _) = await FileUtil.LoadImageFromFileAsync(blurredPathAbs);
+                if (bgImageBlurred == null)
+                {
+                    GD.PrintErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
+                }
 
                 // 音乐
                 // 因为MP3文件时解压时动态生成的，所以需要使用 AudioStreamMP3.LoadFromFile 加载 MP3
@@ -355,11 +373,19 @@ public partial class EditorScene : Node
             }),
             ("正在初始化谱面播放器...", async () => {
                 // ================初始化谱面播放器================
-                HitEffectPool hitEffectPool = new HitEffectPool(chartPlayParent, chartPlayer.HitFrames, 50);
-                chartPlayer.Initialize(chartPlayParent, editingChart, bgImage, audioStream, hitEffectPool);
+                
+                HitEffectPool hitEffectPool = new HitEffectPool();
+                hitEffectPool.Name = "HitEffectPool";
+                // 这一行需要保证已经设置过资源包
+                hitEffectPool.Initialize(chartPlayParent, chartPlayer.HitFrames, 50);
+
+                chartPlayer.Initialize(chartPlayParent, editingChart, bgImageBlurred, audioStream, hitEffectPool);
                 chartRenderer.Initialize(chartPlayParent);
 
                 chartPlayParent.ClipContents = true;
+
+                _bgImageRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);
+                _bgImageRect.SelfModulate = new Color(0.3f, 0.3f ,0.3f ,1);
 
                 SetChartPlayerVisible(false); // 初始不显示
                 

@@ -99,6 +99,27 @@ public partial class ImageBlur : Node
         return _vpV.GetTexture().GetImage();
     }
 
+    public async Task BlurPicture(string picPath, float radius, string outputPath)
+    {
+        // 生成模糊曲绘
+        (Image image, string _) = await FileUtil.LoadImageFromFileAsync(picPath);
+
+        await BlurPicture(image, radius, outputPath);
+    }
+
+    public async Task BlurPicture(Image image, float radius, string outputPath)
+    {
+        // 生成模糊曲绘
+        Image blurred = await BlurImageAsync(image, radius);
+
+        // 保存
+        string blurredPath = ProjectSettings.GlobalizePath(outputPath);
+
+        Error err = await RunOnMainThreadAsync(() => blurred.SavePng(blurredPath));
+        if (err != Error.Ok)
+            GD.PrintErr($"模糊图保存失败: {err}");
+    }
+
     public override void _ExitTree()
     {
         // 先清自己的引用，再交给 base
@@ -107,6 +128,26 @@ public partial class ImageBlur : Node
             Instance = null;
         }
         base._ExitTree();
+    }
+
+    // ------------ 辅助方法 ------------
+    
+    /// <summary>
+    /// 在主线程上执行一个委托，并异步等待其返回值。
+    /// 可从任意线程调用。
+    /// </summary>
+    public Task<T> RunOnMainThreadAsync<T>(Func<T> func)
+    {
+        var tcs = new TaskCompletionSource<T>();
+
+        // CallDeferred 是线程安全的，会在主线程空闲时执行
+        Callable.From(() =>
+        {
+            try   { tcs.SetResult(func()); }
+            catch (Exception e) { tcs.SetException(e); }
+        }).CallDeferred();
+
+        return tcs.Task;
     }
 
 

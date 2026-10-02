@@ -17,16 +17,12 @@ public partial class HitEffectPool : Node
     /// <value></value>
     public float HxScale { get; protected set; }
 
+    public bool IsInitialized { get; private set; } = false;
+
     public override void _Ready()
     {
         base._Ready();
-
-        _parent.Ready += UpdateHxScale;
-
-        _parent.Resized += () =>
-        {
-            UpdateHxScale();
-        };
+        
     }
 
     private void UpdateHxScale()
@@ -68,17 +64,58 @@ public partial class HitEffectPool : Node
     }
 
 
+    // /// <summary>
+    // /// 构造函数
+    // /// </summary>
+    // /// <param name="parent">特效节点将被添加为此节点的子节点（通常是调用方节点）</param>
+    // /// <param name="frames">SpriteFrames 资源</param>
+    // /// <param name="modulate">特效颜色（默认金色）</param>
+    // /// <param name="initSize">初始池大小</param>
+    // public HitEffectPool(Control parent, SpriteFrames frames, int initSize = 50)
+    // {
+    //     _parent = parent;
+    //     _frames = frames;
+    //     _modulate = new Color
+    //     {
+    //         R8 = 237,
+    //         G8 = 236,
+    //         B8 = 176,
+    //         A8 = 255
+    //     };
+    //     _initSize = initSize;
+
+    //     for (int i = 0; i < _initSize; i++)
+    //     {
+    //         _pool.Push(CreateNewEffect());
+    //     }
+
+    //     // 设置特效缩放
+    //     _parent.Ready += UpdateHxScale;
+    //     _parent.Resized += UpdateHxScale;
+        
+    //     if (_parent.IsNodeReady())
+    //     {
+    //         UpdateHxScale();
+    //     }
+    // }
+
     /// <summary>
-    /// 构造函数
+    /// 初始化
     /// </summary>
     /// <param name="parent">特效节点将被添加为此节点的子节点（通常是调用方节点）</param>
     /// <param name="frames">SpriteFrames 资源</param>
     /// <param name="modulate">特效颜色（默认金色）</param>
     /// <param name="initSize">初始池大小</param>
-    public HitEffectPool(Control parent, SpriteFrames frames, int initSize = 50)
+    public void Initialize(Control parent, SpriteFrames frames, int initSize = 50)
     {
         _parent = parent;
         _frames = frames;
+        _initSize = initSize;
+
+        // 因为下文要初始化对象池，这里需要设置为已初始化状态
+        IsInitialized = true;
+
+
         _modulate = new Color
         {
             R8 = 237,
@@ -86,16 +123,37 @@ public partial class HitEffectPool : Node
             B8 = 176,
             A8 = 255
         };
-        _initSize = initSize;
 
         for (int i = 0; i < _initSize; i++)
         {
             _pool.Push(CreateNewEffect());
         }
+
+        // 设置特效缩放
+        _parent.Ready += UpdateHxScale;
+        _parent.Resized += UpdateHxScale;
+        
+        // parent准备就绪之后，可能还没有进行布局，需要判断尺寸来确定是否完成了布局
+        // parent完成布局之后会触发Resized
+        if (_parent.IsNodeReady() && _parent.Size.X > 0 && _parent.Size.Y > 0)
+        {
+            UpdateHxScale();
+        }
+
+        
+    }
+
+    private void EnsureInitialized()
+    {
+        if (!IsInitialized)
+            throw new InvalidOperationException(
+                $"[{Name}] HitEffectPool 尚未初始化，请先调用 Initialize 再使用");
     }
 
     private AnimatedSprite2D CreateNewEffect()
     {
+        EnsureInitialized();
+
         var fx = new AnimatedSprite2D
         {
             SpriteFrames = _frames,
@@ -114,6 +172,8 @@ public partial class HitEffectPool : Node
     /// </summary>
     public AnimatedSprite2D Get()
     {
+        EnsureInitialized();
+        
         if (_pool.Count > 0)
             return _pool.Pop();
 
@@ -123,6 +183,8 @@ public partial class HitEffectPool : Node
 
     private void ReturnEffect(AnimatedSprite2D fx)
     {
+        EnsureInitialized();
+        
         // 如果还在场景树中，移除
         if (fx.GetParent() != null)
             fx.GetParent().RemoveChild(fx);
@@ -143,11 +205,15 @@ public partial class HitEffectPool : Node
     /// <param name="position">全局或局部坐标（相对于 _parent）</param>
     public void Spawn(Vector2 position)
     {
+        EnsureInitialized();
+        
         Spawn(position, _modulate);
     }
 
     public void Spawn(Vector2 position, Color modulate)
     {
+        EnsureInitialized();
+        
         var fx = Get();
         fx.Position = position;
         fx.Modulate = modulate;

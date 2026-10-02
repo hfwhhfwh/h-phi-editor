@@ -51,7 +51,7 @@
 [ext_resource type="Texture2D" uid="uid://dimsw7fkr8jmj" path="res://Textures/删除5_delete-five.svg" id="42_x7a0t"]
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://Textures/暂停_256px.png" id="43_x7a0t"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_boxSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "_deleteBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "_bgImageRect", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_boxSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "_deleteBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -62,6 +62,7 @@ bpmEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPa
 chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
 chartRenderer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartRenderer")
 chartPlayParent = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/Parent")
+_bgImageRect = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/Parent/BgImage")
 editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel")
 rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
 chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
@@ -289,9 +290,18 @@ layout_mode = 2
 ratio = 1.5
 
 [node name="Parent" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1661683536]
-visible = false
 clip_contents = true
 layout_mode = 2
+
+[node name="BgImage" type="TextureRect" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/Parent" unique_id=1566319886]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
 
 [node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854]
 script = ExtResource("7_75obp")

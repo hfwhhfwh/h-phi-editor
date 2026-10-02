@@ -49,7 +49,11 @@ public partial class TestSceneChartPlayer : Node
             return;
         }
 
-        HitEffectPool hitEffectPool = new HitEffectPool(parent, chartPlayer.HitFrames, 50);
+        HitEffectPool hitEffectPool = new HitEffectPool();
+        hitEffectPool.Name = "HitEffectPool";
+        // 这一行需要保证已经设置过资源包
+        hitEffectPool.Initialize(parent, chartPlayer.HitFrames, 50);
+        
         chartPlayer.Initialize(parent, editingChart, bgImage, audioStream, hitEffectPool);
         chartRenderer.Initialize(parent);
 
