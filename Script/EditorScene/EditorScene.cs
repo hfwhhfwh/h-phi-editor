@@ -82,6 +82,7 @@ public partial class EditorScene : Node
     private EditorClipboardController _clipboardController;
     private EditorSelectionController _selectionController;
     private EditorUIManager _uiManager;
+    private SettingsController _settingsController;
 
     // ---- 兼容既有代码的只读访问器：数据实际存放在 EditorContext 中 ----
     private Chart editingChart => _context?.EditingChart;
@@ -112,9 +113,7 @@ public partial class EditorScene : Node
         set { if (_context != null) _context.ChartTime = value; }
     }
 
-    // 皮肤资源包
-    private ResourcePack _resourcePack;
-
+    // 皮肤资源包（由 SettingsController 持有与应用）
     private bool _isReady = false;
 
     private readonly List<Action> _unsubscribes = new();
@@ -175,16 +174,11 @@ public partial class EditorScene : Node
         {
             GD.PrintErr($"[{this.Name}] EditorSettings is null");
         }
-        else
-        {
-            // 监听编辑器设置变化事件
-            _editorSettings.SettingChanged += OnEditorSettingChanged;
-        }
 
         // 创建场景级状态中心(EditorContext)，并把 Context / ChartEditService 注入各面板
         InitContext();
 
-        // 创建各场景级控制器（输入、播放、剪贴板、选择）
+        // 创建各场景级控制器（输入、播放、剪贴板、选择、设置）
         InitControllers();
 
         ChartInfo chartInfo = null;
@@ -200,7 +194,7 @@ public partial class EditorScene : Node
                 chartId = global.editingChartId;
 
                 // 谱面加载完成前先恢复该谱面的编辑器布局设置。
-                _editorSettings.Load(chartId);
+                _settingsController.LoadForChart(chartId);
 
                 // 设置正在编辑的铺面
                 chartInfo = _chartService.GetChartInfo(chartId);
@@ -215,12 +209,12 @@ public partial class EditorScene : Node
                 _chartEditService.EditingChart = chart;
 
                 // 将持久化设置应用到所有使用同一网格的编辑面板。
-                ApplyEditorSettings();
+                _settingsController.ApplyEditorSettings();
                 
             }),
             ("正在加载资源包...", async () => {
                 // ================ 加载资源包 ================
-                await Task.Run(() => LoadResourcePack());
+                await Task.Run(() => _settingsController.LoadResourcePack());
                 
             }),
             ("正在加载背景和音乐...", async () => {
@@ -352,6 +346,15 @@ public partial class EditorScene : Node
             noteInfoPanel, eventInfoPanel, bpmInfoPanel,
             _deleteBtn);
 
+        // ---- 设置：编辑器设置 / 全局设置 / 资源包 ----
+        // 必须在加载任务开始前就绪：读取谱面时会先载入该谱面的编辑器设置。
+        _settingsController = new SettingsController { Name = "SettingsController" };
+        AddChild(_settingsController);
+        _settingsController.Initialize(
+            _editorSettings, _context,
+            noteEditPanel, eventEditPanel, bpmEditPanel,
+            _playbackController);
+
         // ---- 界面：菜单、按钮、标签、面板显隐（Initialize 在 InitEditor 中调用）----
         _uiManager = new EditorUIManager { Name = "EditorUIManager" };
         AddChild(_uiManager);
@@ -463,8 +466,6 @@ public partial class EditorScene : Node
 
         // ---- 谱面播放器与编辑面板此时都已经初始化完成，可以安全进入编辑模式 ----
         _playbackController.EnterEditingMode();
-
-        GameSettings.Instance.SettingChanged += OnSettingsChanged;
     }
 
     public override void _Process(double delta)
@@ -495,11 +496,6 @@ public partial class EditorScene : Node
     {
         base._ExitTree();
 
-        // if (_editorSettings != null)
-        // {
-        //     _editorSettings.SettingChanged -= OnEditorSettingChanged;
-        // }
-
         #if TOOLS
         // 取消注册自定义监视器 小心lambda诡异的生命周期问题
         Performance.RemoveCustomMonitor("EditorScene/PanelSyncUs");
@@ -516,135 +512,17 @@ public partial class EditorScene : Node
     {
         _chartService.SaveChart(editingChartId, editingChart);
         // 谱面和编辑器视图设置一起保存，避免退出后丢失网格状态。
-        SaveEditorSettings();
+        _settingsController.SaveEditorSettings();
         // TODO 保存成功后弹出Toast提示
     }
 
     private void Quit()
     {
-        SaveEditorSettings();
+        _settingsController.SaveEditorSettings();
         var global = GetNode<Global>("/root/Global");
         global.editingChartId = "";
         global.GotoScene("res://Scene/start_menu.tscn");
     }
-
-    #region 编辑器设置
-    private void ApplyGridAppearanceSettings()
-    {
-        if (GameSettings.Instance == null || GameSettings.Instance.Current == null)
-        {
-            return;
-        }
-
-        SettingsData settings = GameSettings.Instance.Current;
-
-        noteEditPanel.HorColor = settings.HorColor;
-        noteEditPanel.HorWidth = settings.HorWidth;
-        noteEditPanel.HorSubColor = settings.HorSubColor;
-        noteEditPanel.HorSubWidth = settings.HorSubWidth;
-        noteEditPanel.VerColor = settings.VerColor;
-        noteEditPanel.VerWidth = settings.VerWidth;
-        noteEditPanel.GroundLineColor = settings.GroundLineColor;
-        noteEditPanel.GroundLineWidth = settings.GroundLineWidth;
-
-        eventEditPanel.HorColor = settings.HorColor;
-        eventEditPanel.HorWidth = settings.HorWidth;
-        eventEditPanel.HorSubColor = settings.HorSubColor;
-        eventEditPanel.HorSubWidth = settings.HorSubWidth;
-        eventEditPanel.VerColor = settings.VerColor;
-        eventEditPanel.VerWidth = settings.VerWidth;
-        eventEditPanel.GroundLineColor = settings.GroundLineColor;
-        eventEditPanel.GroundLineWidth = settings.GroundLineWidth;
-
-        bpmEditPanel.HorColor = settings.HorColor;
-        bpmEditPanel.HorWidth = settings.HorWidth;
-        bpmEditPanel.HorSubColor = settings.HorSubColor;
-        bpmEditPanel.HorSubWidth = settings.HorSubWidth;
-        bpmEditPanel.VerColor = settings.VerColor;
-        bpmEditPanel.VerWidth = settings.VerWidth;
-        bpmEditPanel.GroundLineColor = settings.GroundLineColor;
-        bpmEditPanel.GroundLineWidth = settings.GroundLineWidth;
-    }
-
-    private void ApplyEditorSettings()
-    {
-        if(_editorSettings == null)
-        {
-            GD.PrintErr($"[{this.Name}] EditorSettings is null");
-            return;
-        }
-        
-        int verLineCount = _editorSettings.Current.VerLineCount;
-        int subBeatCount = _editorSettings.Current.SubBeatCount;
-
-        noteEditPanel.VerLineCount = verLineCount;
-        noteEditPanel.SubBeatCount = subBeatCount;
-        
-        eventEditPanel.SubBeatCount = subBeatCount;
-        
-        bpmEditPanel.SubBeatCount = subBeatCount;
-
-        ApplyGridAppearanceSettings();
-    }
-
-    private void OnEditorSettingChanged(string key, Variant value)
-    {
-        if(_editorSettings == null)
-        {
-            GD.PrintErr($"[{this.Name}] EditorSettings is null");
-            return;
-        }
-
-        switch (key)
-        {
-            case nameof(EditorSettingsData.VerLineCount):
-                int verLineCount = _editorSettings.Current.VerLineCount;
-                noteEditPanel.VerLineCount = verLineCount;
-                break;
-            
-            case nameof(EditorSettingsData.SubBeatCount):
-                int subBeatCount = _editorSettings.Current.SubBeatCount;
-                noteEditPanel.SubBeatCount = subBeatCount;
-                eventEditPanel.SubBeatCount = subBeatCount;
-                bpmEditPanel.SubBeatCount = subBeatCount;
-                break;
-            
-            default:
-                GD.PrintErr($"[{this.Name}] 未知的EditorSettings设置项:{key}");
-                ApplyEditorSettings();
-                break;
-        }
-    }
-
-    private void SaveEditorSettings()
-    {
-        if (_editorSettings == null || string.IsNullOrEmpty(editingChartId)) return;
-
-        _editorSettings.Save();
-    }
-
-    private void OnSettingsChanged(string key, Variant value)
-    {
-        if (key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
-        {
-            LoadResourcePack();
-            return;
-        }
-
-        if (key == nameof(SettingsData.HorColor)
-            || key == nameof(SettingsData.HorWidth)
-            || key == nameof(SettingsData.HorSubColor)
-            || key == nameof(SettingsData.HorSubWidth)
-            || key == nameof(SettingsData.VerColor)
-            || key == nameof(SettingsData.VerWidth)
-            || key == nameof(SettingsData.GroundLineColor)
-            || key == nameof(SettingsData.GroundLineWidth))
-        {
-            ApplyGridAppearanceSettings();
-        }
-    }
-
-    #endregion
 
     private void OnQuitPressed()
     {
@@ -659,27 +537,6 @@ public partial class EditorScene : Node
     {
         SaveChart();
         Quit();
-    }
-
-    private void LoadResourcePack()
-    {
-        bool useDefault = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource));
-        if (useDefault)
-        {
-            _playbackController.UseDefaultResource();
-        }
-        else
-        {
-            string id = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
-            _resourcePack = ResourcePackLoader.LoadFromLocal(id);
-            if(_resourcePack == null)
-            {
-                GD.PrintErr($"[{Name}] 加载资源包失败, id:{id}");
-            }
-            _playbackController.SetResourcePack(_resourcePack);
-        }
-
-        GD.Print($"[{Name}] 成功重新加载资源包!");
     }
 
     private void OnTestPlay()
