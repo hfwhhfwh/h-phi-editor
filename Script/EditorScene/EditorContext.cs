@@ -3,6 +3,16 @@ using QuickType;
 using System;
 
 /// <summary>
+/// 当前正在编辑哪一类对象（删除、复制粘贴等操作需要据此分发到对应面板）
+/// </summary>
+public enum EditPanelType
+{
+    NoteEdit,
+    LineEventEdit,
+    BpmEventEdit
+}
+
+/// <summary>
 /// 编辑器场景级状态中心。
 ///
 /// 设计约定：
@@ -109,6 +119,17 @@ public partial class EditorContext : Node
 
     /// <summary>是否处于框选模式，所有面板共享</summary>
     public bool IsBoxSelectMode { get; set; }
+
+    // ==================== 选择与剪贴板 ====================
+
+    /// <summary>
+    /// 当前持有选择焦点的面板。
+    /// 由 EditorSelectionController 维护，复制/删除等操作据此决定操作对象。
+    /// </summary>
+    public EditPanelType SelectFocusPanel { get; set; } = EditPanelType.NoteEdit;
+
+    /// <summary>编辑器剪贴板（Note / LineEvent / BPM 三种内容）</summary>
+    public EditorClipboard Clipboard { get; } = new();
 
     // ==================== 变更事件 ====================
 
