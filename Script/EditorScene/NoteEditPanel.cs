@@ -53,30 +53,8 @@ public partial class NoteEditPanel : BaseEditPanel
     /// </summary>
     public event Action NoteMultiSelected;
 
-    /// <summary>
-    /// 请求添加一个note的事件，参数为(音符类型，起始Beat，结束Beat，谱面X坐标)
-    /// </summary>
-    public event Action<NoteType, Beat, Beat, float> NoteAddRequested;
-
-    /// <summary>
-    /// 请求删除note的事件，参数为(判定线编号，要删除的note的列表)
-    /// </summary>
-    // public event Action<int, List<Note> > NoteDeleteRequested;
-
-    /// <summary>
-    /// 拖动开始/结束时触发，参数:(判定线编号，note对象)
-    /// </summary>
-    public event Action<int, Note> NoteDragStarted;
-    public event Action<int, Note> NoteDragEnded;
-    /// <summary>
-    /// 当Note被移动时触发，参数:(判定线编号，note索引，ChartX)
-    /// </summary>
-    public event Action<int, int, float> NoteMoved;
-
-    /// <summary>
-    /// 当note的时间被修改时触发，参数:(判定线编号，note索引，新StartTime，新EndTime)
-    /// </summary>
-    public event Action<int, int, Beat, Beat> NoteTimeChanged;
+    // 注意：添加/删除/移动/改时间等编辑操作不再抛事件给 EditorScene 转发，
+    // 面板直接通过 EditService（ChartEditService）执行命令。
 
     public NoteType PlacingNote { get; set; } // 正在放置的note
 
@@ -199,14 +177,14 @@ public partial class NoteEditPanel : BaseEditPanel
         // 如果没有可用的谱面或判定线，则隐藏所有池节点
 		if (editingChart == null || 
 			editingChart.JudgeLineList == null || 
-			editingLineId < 0 || 
-			editingLineId >= editingChart.JudgeLineList.Count)
+			EditingLineId < 0 || 
+			EditingLineId >= editingChart.JudgeLineList.Count)
 		{
 			//HideAllNodes();
 			return;
 		}
 
-		List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+		List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
 
         
 
@@ -396,7 +374,7 @@ public partial class NoteEditPanel : BaseEditPanel
             return;
         }
 
-        if (_isBoxSelectMode)
+        if (IsBoxSelectMode)
         {
             Vector2 dataPos = new Vector2(
                 _coordComponent.GetChartPosX(pos.X),
@@ -417,7 +395,7 @@ public partial class NoteEditPanel : BaseEditPanel
                 return;
             }
 
-            List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+            List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
             Note note = notes[noteIndex];
 
             // 只有已选中的对象才能拖动
@@ -514,7 +492,7 @@ public partial class NoteEditPanel : BaseEditPanel
             return;
         }
 
-        if (_isBoxSelectMode)
+        if (IsBoxSelectMode)
         {
             Vector2 dataPos = new Vector2(
                 _coordComponent.GetChartPosX(pos.X),
@@ -550,7 +528,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
     protected override void OnButtonUp(Vector2 pos)
     {
-        if (_isBoxSelectMode)
+        if (IsBoxSelectMode)
         {
             Vector2 dataPos = new Vector2(
                 _coordComponent.GetChartPosX(pos.X),
@@ -590,7 +568,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
     public void OnNoteTapped(int noteIndex, Vector2 localPos)
     {
-        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+        List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
         Note note = notes[noteIndex];
         
         if(SelectMode == SelectModeEnum.Single)
@@ -625,43 +603,70 @@ public partial class NoteEditPanel : BaseEditPanel
     private void OnNoteDragStarted(object targetId, DragMoveComponent.DragMode mode)
     {
         if (targetId is not Note note) return;
-        NoteDragStarted?.Invoke(editingLineId, note);
+        EditService?.BeginNoteDrag(EditingLineId, note);
     }
 
     private void OnNoteDragEnded(object targetId, DragMoveComponent.DragMode mode)
     {
         if (targetId is not Note note) return;
-        NoteDragEnded?.Invoke(editingLineId, note);
+        EditService?.EndNoteDrag(EditingLineId, note);
     }
 
     // -------- 拖动响应 --------
+    // 拖动过程中只做「实时预览」式的直接修改，不压入撤销栈；
+    // 拖动结束时由 EndNoteDrag 统一提交一条命令。
     private void OnNoteDragMoved(object targetId, DragMoveComponent.DragMode mode,
                                  float newChartX, Beat newBeat)
     {
+        if (EditService == null) return;
+
         Note note = (Note)targetId;
-        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+        List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
         int noteIndex = notes.IndexOf(note);
+        if (noteIndex < 0) return;
 
         // X 变化
         if (!Mathf.IsEqualApprox(newChartX, note.PositionX))
         {
-            NoteMoved?.Invoke(editingLineId, noteIndex, newChartX);
+            EditService.ApplyNotePropertyDirect(EditingLineId, noteIndex, NotePropertyEnum.PosX, newChartX);
         }
 
         // 时间变化
         if (note.Type == 2) // Hold
         {
             if (mode == DragMoveComponent.DragMode.Head)
-                NoteTimeChanged?.Invoke(editingLineId, noteIndex, newBeat, new Beat(note.EndTime));
+                SetNoteTime(noteIndex, newBeat, new Beat(note.EndTime));
             else if (mode == DragMoveComponent.DragMode.Tail)
-                NoteTimeChanged?.Invoke(editingLineId, noteIndex, new Beat(note.StartTime), newBeat);
+                SetNoteTime(noteIndex, new Beat(note.StartTime), newBeat);
             else // Body：整体偏移，保持时长不变（如需此功能可在此扩展）
-                NoteTimeChanged?.Invoke(editingLineId, noteIndex, newBeat,
+                SetNoteTime(noteIndex, newBeat,
                     newBeat + (new Beat(note.EndTime) - new Beat(note.StartTime)));
         }
         else
         {
-            NoteTimeChanged?.Invoke(editingLineId, noteIndex, newBeat, newBeat);
+            SetNoteTime(noteIndex, newBeat, newBeat);
+        }
+    }
+
+    /// <summary>
+    /// 应用音符时间（拖动中实时预览用，不压入撤销栈）
+    /// </summary>
+    private void SetNoteTime(int noteIndex, Beat startBeat, Beat endBeat)
+    {
+        if (EditService == null) return;
+
+        List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
+        if (noteIndex < 0 || noteIndex >= notes.Count) return;
+
+        Note note = notes[noteIndex];
+
+        if (!TimeUtil.IsBeatEqual(note.StartTime, startBeat.Values))
+        {
+            EditService.ApplyNotePropertyDirect(EditingLineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
+        }
+        if (!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
+        {
+            EditService.ApplyNotePropertyDirect(EditingLineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
         }
     }
 
@@ -672,7 +677,7 @@ public partial class NoteEditPanel : BaseEditPanel
     /// <returns>距离点击位置最近的note的索引</returns>
     private int FindNearestNoteIndex(Vector2 pos)
     {
-        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+        List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
 
         int nearestNoteIndex = -1;
         float nearestDistSquared = 99999f;
@@ -744,7 +749,7 @@ public partial class NoteEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(_isBoxSelectMode)
+        if(IsBoxSelectMode)
         {
             //检测范围内的note
             Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
@@ -754,7 +759,7 @@ public partial class NoteEditPanel : BaseEditPanel
             int previousCount = selectedNotes.Count;
 
             if(SelectMode == SelectModeEnum.Single) selectedNotes.Clear();
-            List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+            List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
             foreach(int i in notesIndex)
             {
                 selectedNotes.Add(notes[i]);
@@ -785,7 +790,7 @@ public partial class NoteEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(_isBoxSelectMode)
+        if(IsBoxSelectMode)
         {
             //检测范围内的note
             Rect2 rect = RectUtil.TwoPointsToRect(startDataPos, endDataPos); // 坐标系：(ChartPosX, BeatValue)
@@ -793,7 +798,7 @@ public partial class NoteEditPanel : BaseEditPanel
             List<int> notesIndex = GetNotesInRect(rect);
 
             if(SelectMode == SelectModeEnum.Single) selectedNotes.Clear();
-            List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+            List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
             foreach(int i in notesIndex)
             {
                 selectedNotes.Add(notes[i]);
@@ -808,7 +813,7 @@ public partial class NoteEditPanel : BaseEditPanel
     /// <returns></returns>
     private List<int> GetNotesInRect(Rect2 rect)
     {
-        List<Note> notes = editingChart.JudgeLineList[editingLineId].Notes;
+        List<Note> notes = editingChart.JudgeLineList[EditingLineId].Notes;
         return RectUtil.GetNotesInRect(notes, rect);
     }
 
@@ -818,11 +823,11 @@ public partial class NoteEditPanel : BaseEditPanel
 
         if(PlacingNote == NoteType.Hold)
         {
-            NoteAddRequested?.Invoke(NoteType.Hold, startBeat, endBeat, chartPosX);
+            EditService?.AddNote(EditingLineId, NoteType.Hold, startBeat, endBeat, chartPosX);
         }
         else
         {
-            NoteAddRequested?.Invoke(PlacingNote, endBeat, endBeat, chartPosX);
+            EditService?.AddNote(EditingLineId, PlacingNote, endBeat, endBeat, chartPosX);
         }
         
     }

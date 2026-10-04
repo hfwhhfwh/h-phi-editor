@@ -56,8 +56,10 @@ public partial class ChooseLinePanel : Panel
 			layerButtons[i].ButtonGroup = layerButtonGroup;
 		}
 
-		// 监听谱面数据变化
+		// 监听谱面结构变化
 		ChartEventBus.LineCountChanged += RequestRefresh;
+		// 音符数量变化时也要刷新（原来只在判定线数量变化时刷新，音符数量会显示过期数据）
+		ChartEventBus.NoteCountChanged += OnNoteCountChanged;
     }
 
     public override void _ExitTree()
@@ -65,7 +67,13 @@ public partial class ChooseLinePanel : Panel
         base._ExitTree();
 
 		ChartEventBus.LineCountChanged -= RequestRefresh;
+		ChartEventBus.NoteCountChanged -= OnNoteCountChanged;
     }
+
+	private void OnNoteCountChanged(int lineId)
+	{
+		RequestRefresh();
+	}
 
 
 
@@ -128,6 +136,9 @@ public partial class ChooseLinePanel : Panel
 	/// </summary>
 	private void RequestRefresh()
 	{
+		// 面板不可见时不需要重建按钮列表
+		if (!Visible) return;
+
 		EmitSignal(SignalName.RefreshRequested);
 	}
 

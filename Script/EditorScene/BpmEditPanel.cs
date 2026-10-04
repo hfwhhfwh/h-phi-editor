@@ -35,14 +35,9 @@ public partial class BpmEditPanel : BaseEditPanel
 	/// </summary>
 	public event Action<int, Vector2> EventSelected;
     public event Action BpmMultiSelected;
-    public event Action<BpmEvent> BpmDragStarted;
-    public event Action<BpmEvent> BpmDragEnded;
-    public event Action<float, Beat> EventAddRequested;
-    
-    /// <summary>
-    /// 当BPM事件的时间被修改时触发，参数:(事件索引，新StartTime)
-    /// </summary>
-    public event Action<int, Beat> EventTimeChanged;
+
+    // 注意：添加BPM、修改BPM时间、拖动开始/结束等编辑操作不再抛事件给 EditorScene 转发，
+    // 面板直接通过 EditService（ChartEditService）执行命令。
 
 	public override void _Ready()
     {
@@ -260,7 +255,7 @@ public partial class BpmEditPanel : BaseEditPanel
             return;
         }
 
-        if (_isBoxSelectMode)
+        if (IsBoxSelectMode)
         {
             Vector2 dataPos = new Vector2(
                 _coordComponent.GetChartPosX(pos.X),
@@ -308,7 +303,7 @@ public partial class BpmEditPanel : BaseEditPanel
             return;
         }
 
-        if (_isBoxSelectMode)
+        if (IsBoxSelectMode)
         {
             Vector2 dataPos = new Vector2(
                 _coordComponent.GetChartPosX(position.X),
@@ -341,7 +336,7 @@ public partial class BpmEditPanel : BaseEditPanel
             return;
         }
 
-        if (_isBoxSelectMode)
+        if (IsBoxSelectMode)
         {
             Vector2 dataPos = new Vector2(
                 _coordComponent.GetChartPosX(pos.X),
@@ -413,12 +408,12 @@ public partial class BpmEditPanel : BaseEditPanel
 
     private void OnBpmDragStarted(object targetId, DragMoveComponent.DragMode mode)
     {
-        if (targetId is BpmEvent bpmEvent) BpmDragStarted?.Invoke(bpmEvent);
+        if (targetId is BpmEvent bpmEvent) EditService?.BeginBpmDrag(bpmEvent);
     }
 
     private void OnBpmDragEnded(object targetId, DragMoveComponent.DragMode mode)
     {
-        if (targetId is BpmEvent bpmEvent) BpmDragEnded?.Invoke(bpmEvent);
+        if (targetId is BpmEvent bpmEvent) EditService?.EndBpmDrag(bpmEvent);
     }
 
     // -------- 拖动响应 --------
@@ -438,7 +433,8 @@ public partial class BpmEditPanel : BaseEditPanel
         }
 
         // BPM事件只有时间变化
-        EventTimeChanged?.Invoke(eventIndex, newBeat);
+        // 保持原有语义：BPM 拖动过程中每次吸附都会提交一条命令（拖动事务的收尾见 EndBpmDrag）
+        EditService?.SetBpmTime(eventIndex, newBeat);
     }
 
     public override void DeselectAll()
@@ -488,7 +484,7 @@ public partial class BpmEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(_isBoxSelectMode)
+        if(IsBoxSelectMode)
         {
             UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
         }
@@ -499,7 +495,7 @@ public partial class BpmEditPanel : BaseEditPanel
         boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
         boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-        if(_isBoxSelectMode)
+        if(IsBoxSelectMode)
         {
             UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
         }
@@ -565,6 +561,6 @@ public partial class BpmEditPanel : BaseEditPanel
     protected override void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
     {
         // BPM事件是点事件，使用endBeat作为startTime
-        EventAddRequested?.Invoke(PlacingBpm, endBeat);
+        EditService?.AddBpm(PlacingBpm, endBeat);
     }
 }

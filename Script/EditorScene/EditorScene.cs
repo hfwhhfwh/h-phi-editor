@@ -68,59 +68,50 @@ public partial class EditorScene : Node
     [Export] private Label fpsLabel;
     [Export] private Label editModeLabel;
 
-    private string editingChartId; // 正在编辑的铺面的ID
-    private Chart editingChart; // 正在编辑的铺面
-    private int editingLineId; // 正在编辑的判定线编号
-    private int editingLayer = 0; // 正在编辑的事件层
-
     private InputManager _inputManager;
     private ChartService _chartService;
     private ChartEditService _chartEditService;
     private EditorSettings _editorSettings;
 
+    /// <summary>
+    /// 场景级状态中心：谱面、判定线、事件层、视图与时间状态的唯一来源。
+    /// </summary>
+    private EditorContext _context;
+
+    // 场景中可调的视图初值，在 _Ready 中写入 EditorContext；此后视图状态只存在于 Context。
     [Export] private float horOffset;
 	[Export] private float horSeparation = 100f;
-    private float horOffsetSmoothed; // 用于使竖直滚动更平滑
-	private float horSeparationSmoothed; // 用于使竖直缩放更平滑
     [Export] private float groundY = 450f; // 当前时间点在EditPanel上的Y坐标（向下偏移）
 
     private bool isPlaying; // 是否正在播放铺面
-    private float _horBeatOffset;
-    private double _chartTime; // 谱面当前时间
 
+    // ---- 兼容既有代码的只读访问器：数据实际存放在 EditorContext 中 ----
+    private Chart editingChart => _context?.EditingChart;
+    private string editingChartId => _context?.EditingChartId;
+
+    private int EditingLineId
+    {
+        get => _context?.EditingLineId ?? 0;
+        set { if (_context != null) _context.EditingLineId = value; }
+    }
+
+    private int EditingLayer
+    {
+        get => _context?.EditingLayer ?? 0;
+        set { if (_context != null) _context.EditingLayer = value; }
+    }
+
+    // ---- 视图/时间状态的读写入口，全部转发到 EditorContext ----
     public float BeatValue
     {
-        get
-        {
-            return _horBeatOffset;
-        }
-        set
-        {
-            // 谱面还没加载完成时，先只更新 beat 偏移，等加载完再由 _Process 同步时间
-            if (editingChart?.BpmList == null)
-                return;
-
-            _horBeatOffset = value;
-            _chartTime = TimeUtil.BeatToSecond(_horBeatOffset, editingChart.BpmList);
-        }
+        get => _context?.BeatValue ?? 0f;
+        set { if (_context != null) _context.BeatValue = value; }
     }
 
     public double ChartTime
     {
-        get
-        {
-            return _chartTime;
-        }
-        set
-        {
-            // 谱面还没加载完成时，先只更新 beat 偏移，等加载完再由 _Process 同步时间
-            if (editingChart?.BpmList == null)
-                return;
-
-            _chartTime = value;
-            _horBeatOffset = TimeUtil.SecondToBeat((float)_chartTime, editingChart.BpmList);
-            horOffset = _horBeatOffset * horSeparation;
-        }
+        get => _context?.ChartTime ?? 0d;
+        set { if (_context != null) _context.ChartTime = value; }
     }
 
     // 皮肤资源包
@@ -198,13 +189,15 @@ public partial class EditorScene : Node
 	/// <param name="zoomDelta">缩放比例</param>
 	public void Zoom(float zoomDelta)
 	{
-		horSeparation *= 1f + zoomDelta;
+        if (_context == null) return;
+
+		_context.HorSeparation *= 1f + zoomDelta;
 
         // 限制不能缩放到负数
-        if(horSeparation < 0) horSeparation = -horSeparation;
+        if(_context.HorSeparation < 0) _context.HorSeparation = -_context.HorSeparation;
 
 		//确保当前处于的beat不变
-		horOffset = BeatValue * horSeparation;
+		_context.HorOffset = _context.BeatValue * _context.HorSeparation;
 	}
 
     /// <summary>
@@ -213,11 +206,13 @@ public partial class EditorScene : Node
     /// <param name="deltaY"></param>
     public void Slide(float deltaY)
 	{
-        horOffset += deltaY;
-        //限制不能滚动到0以下
-        if(horOffset < 0) horOffset = 0;
+        if (_context == null) return;
 
-        BeatValue = horOffset / horSeparation;
+        _context.HorOffset += deltaY;
+        //限制不能滚动到0以下
+        if(_context.HorOffset < 0) _context.HorOffset = 0;
+
+        _context.BeatValue = _context.HorOffset / _context.HorSeparation;
 	}
 
     /// <summary>
@@ -226,13 +221,15 @@ public partial class EditorScene : Node
     /// <param name="deltaTime"></param>
     private void SlideTime(float deltaTime)
     {
-        ChartTime = ChartTime + deltaTime;
+        if (_context == null) return;
+
+        _context.ChartTime = _context.ChartTime + deltaTime;
 
         //限制不能滚动到0以下
-        if(ChartTime < 0) ChartTime = 0;
+        if(_context.ChartTime < 0) _context.ChartTime = 0;
 
-        // 此时BeatValue收到牵连改变，需要更新horOffset
-        horOffset = BeatValue * horSeparation;
+        // 此时BeatValue收到牵连改变，需要更新HorOffset
+        _context.HorOffset = _context.BeatValue * _context.HorSeparation;
     }
 
     private void Subscribe<THandler>(THandler handler,
@@ -293,6 +290,9 @@ public partial class EditorScene : Node
             _editorSettings.SettingChanged += OnEditorSettingChanged;
         }
 
+        // 创建场景级状态中心，并把 Context / ChartEditService 注入各面板
+        InitContext();
+
 		//绑定事件
 		_inputManager.Slide += (float x) =>
         {
@@ -304,6 +304,7 @@ public partial class EditorScene : Node
         };
 
         ChartInfo chartInfo = null;
+        string chartId = "";
         Image bgImage = null;
         Image bgImageBlurred = null;
         AudioStream audioStream = null;
@@ -312,23 +313,23 @@ public partial class EditorScene : Node
             ("正在读取谱面...", async () => {
                 //从global中同步数据
                 var global = GetNode<Global>("/root/Global");
-                editingChartId = global.editingChartId;
+                chartId = global.editingChartId;
 
                 // 谱面加载完成前先恢复该谱面的编辑器布局设置。
-                _editorSettings.Load(editingChartId);
+                _editorSettings.Load(chartId);
 
                 // 设置正在编辑的铺面
-                chartInfo = _chartService.GetChartInfo(editingChartId);
+                chartInfo = _chartService.GetChartInfo(chartId);
 
                 // 这里 ChartLoader.LoadChart 可能涉及文件读取和 Json 解析，可以改为异步后台
                 var sw = Stopwatch.StartNew();
-                editingChart = await Task.Run(() => ChartLoader.LoadChart(chartInfo.ChartPath));
+                Chart chart = await Task.Run(() => ChartLoader.LoadChart(chartInfo.ChartPath));
                 GD.Print($"[{Name}] 读取谱面用时:{sw.ElapsedMilliseconds} ms");
-                //editingChart = ChartLoader.LoadChart(chartInfo.ChartPath);
 
-                noteEditPanel.editingChart = editingChart;
-                eventEditPanel.editingChart = editingChart;
-                bpmEditPanel.editingChart = editingChart;
+                // 谱面只在 EditorContext 中保存一份，面板通过 Context 读取
+                _context.SetChart(chartId, chart);
+                _chartEditService.EditingChart = chart;
+
                 // 将持久化设置应用到所有使用同一网格的编辑面板。
                 ApplyEditorSettings();
                 
@@ -349,7 +350,7 @@ public partial class EditorScene : Node
                 }
                 
                 // 加载模糊图片
-                string blurredPath = Path.Combine("user://ChartSaves", editingChartId, $"img_blur_{BlurRadius}.png");
+                string blurredPath = Path.Combine("user://ChartSaves", chartId, $"img_blur_{BlurRadius}.png");
                 string blurredPathAbs = ProjectSettings.GlobalizePath(blurredPath);
 
                 if(!Godot.FileAccess.FileExists(blurredPathAbs))
@@ -379,7 +380,7 @@ public partial class EditorScene : Node
                 // 这一行需要保证已经设置过资源包
                 hitEffectPool.Initialize(chartPlayParent, chartPlayer.HitFrames, 50);
 
-                chartPlayer.Initialize(chartPlayParent, editingChart, bgImageBlurred, audioStream, hitEffectPool);
+                chartPlayer.Initialize(chartPlayParent, _context.EditingChart, bgImageBlurred, audioStream, hitEffectPool);
                 chartRenderer.Initialize(chartPlayParent);
 
                 chartPlayParent.ClipContents = true;
@@ -402,6 +403,39 @@ public partial class EditorScene : Node
         
     }
 
+    /// <summary>
+    /// 创建场景级状态中心，并把依赖注入各面板。
+    /// 必须在 _Ready 中第一个 await 之前完成，避免 _Process 提前运行。
+    /// </summary>
+    private void InitContext()
+    {
+        _context = new EditorContext { Name = "EditorContext" };
+        AddChild(_context);
+
+        // 把场景中导出的视图初值写入 Context
+        _context.HorOffset = horOffset;
+        _context.HorOffsetSmoothed = horOffset;
+        _context.HorSeparation = horSeparation;
+        _context.HorSeparationSmoothed = horSeparation;
+        _context.GroundY = groundY;
+
+        Subscribe(
+            OnEditingLineChanged,
+            h => _context.EditingLineChanged += h,
+            h => _context.EditingLineChanged -= h);
+
+        // 面板直接依赖 Context（数据）与 ChartEditService（命令）
+        foreach (BaseEditPanel panel in new BaseEditPanel[] { noteEditPanel, eventEditPanel, bpmEditPanel })
+        {
+            panel.Initialize(_context, _chartEditService);
+        }
+    }
+
+    private void OnEditingLineChanged(int lineId)
+    {
+        editingLineLabel.Text = $"线{lineId}";
+    }
+
     private void InitEditor()
     {
         // 设置chooseLinePanel
@@ -418,7 +452,7 @@ public partial class EditorScene : Node
                 return;
             }
 
-            List<EventLayer> eventLayers = editingChart.JudgeLineList[editingLineId].EventLayers;
+            List<EventLayer> eventLayers = editingChart.JudgeLineList[EditingLineId].EventLayers;
 
             // 如果列表元素不够，用 null 填充到目标索引
             while (eventLayers.Count <= index)
@@ -431,40 +465,17 @@ public partial class EditorScene : Node
                 eventLayers[index] = new();
             }
 
-            editingLayer = index;
-            eventEditPanel.EditingLayer = index;
+            EditingLayer = index;
 
-            GD.Print($"切换到事件层:{index}");
+            GD.Print($"[{Name}] 切换到事件层:{index}");
         };
 
         editingLineLabel.Text = $"线{0}";
 
         // 设置NoteEditPanel
+        // 添加/删除/拖动等编辑操作由面板直接调用 ChartEditService，
+        // 这里只保留「选择」相关事件（选择焦点、右键菜单仍由 EditorScene 协调）。
         noteEditPanel.OnNoteSelected += OnNoteSelected;
-        Subscribe(
-            AddNote,
-            h => noteEditPanel.NoteAddRequested += h,
-            h => noteEditPanel.NoteAddRequested -= h);
-        // Subscribe(
-        //     OnNotesDelete,
-        //     h => noteEditPanel.NoteDeleteRequested += h,
-        //     h => noteEditPanel.NoteDeleteRequested -= h);
-        Subscribe(
-            BeginNoteDrag,
-            h => noteEditPanel.NoteDragStarted += h,
-            h => noteEditPanel.NoteDragStarted -= h);
-        Subscribe(
-            EndNoteDrag,
-            h => noteEditPanel.NoteDragEnded += h,
-            h => noteEditPanel.NoteDragEnded -= h);
-        Subscribe(
-            MoveNote,
-            h => noteEditPanel.NoteMoved += h,
-            h => noteEditPanel.NoteMoved -= h);
-        Subscribe(
-            SetNoteTime,
-            h => noteEditPanel.NoteTimeChanged += h,
-            h => noteEditPanel.NoteTimeChanged -= h);
         Subscribe(
             OnNoteMultiSelected,
             h => noteEditPanel.NoteMultiSelected += h,
@@ -476,22 +487,6 @@ public partial class EditorScene : Node
             OnEventSelected,
             h => eventEditPanel.EventSelected += h,
             h => eventEditPanel.EventSelected -= h);
-        Subscribe(
-            AddEvent,
-            h => eventEditPanel.AddEventRequested += h,
-            h => eventEditPanel.AddEventRequested -= h);
-        Subscribe(
-            BeginEventDrag,
-            h => eventEditPanel.EventDragStarted += h,
-            h => eventEditPanel.EventDragStarted -= h);
-        Subscribe(
-            EndEventDrag,
-            h => eventEditPanel.EventDragEnded += h,
-            h => eventEditPanel.EventDragEnded -= h);
-        Subscribe(
-            SetEventTime,
-            h => eventEditPanel.EventTimeChangeRequested += h,
-            h => eventEditPanel.EventTimeChangeRequested -= h);
         Subscribe(
             OnEventMultiSelected,
             h => eventEditPanel.EventMultiSelected += h,
@@ -508,22 +503,6 @@ public partial class EditorScene : Node
             h => bpmEditPanel.BpmMultiSelected += h,
             h => bpmEditPanel.BpmMultiSelected -= h);
         bpmEditPanel.Disabled = false;
-        Subscribe(
-            BeginBpmDrag,
-            h => bpmEditPanel.BpmDragStarted += h,
-            h => bpmEditPanel.BpmDragStarted -= h);
-        Subscribe(
-            EndBpmDrag,
-            h => bpmEditPanel.BpmDragEnded += h,
-            h => bpmEditPanel.BpmDragEnded -= h);
-        Subscribe(
-            AddBpm,
-            h => bpmEditPanel.EventAddRequested += h,
-            h => bpmEditPanel.EventAddRequested -= h);
-        Subscribe(
-            SetBpmTime,
-            h => bpmEditPanel.EventTimeChanged += h,
-            h => bpmEditPanel.EventTimeChanged -= h);
 
         SetEditPanelVisible(true); // 初始默认显示
 
@@ -550,9 +529,6 @@ public partial class EditorScene : Node
 
         //设置弹出菜单
         PopupMenuHelper.SetTheme(theme);
-
-        //设置ChartEditService
-        _chartEditService.EditingChart = editingChart;
 
         //设置顶部菜单栏
         //设置“文件”选项
@@ -676,18 +652,15 @@ public partial class EditorScene : Node
             BaseEditPanel.SelectModeEnum mode = value ? 
                 BaseEditPanel.SelectModeEnum.Multi : BaseEditPanel.SelectModeEnum.Single;
             
-            noteEditPanel.SelectMode = mode;
-            eventEditPanel.SelectMode = mode;
-            bpmEditPanel.SelectMode = mode;
+            // 选择模式由 Context 统一持有，三个面板共享
+            _context.SelectMode = mode;
         };
 
         // 设置框选按钮
         _boxSelectBtn.ToggleMode = true;
         _boxSelectBtn.Toggled += (bool value) =>
         {
-            noteEditPanel.IsBoxSelectMode = value;
-            eventEditPanel.IsBoxSelectMode = value;
-            bpmEditPanel.IsBoxSelectMode = value;
+            _context.IsBoxSelectMode = value;
         };
 
         // 统一设置面板取消选择的事件
@@ -725,7 +698,7 @@ public partial class EditorScene : Node
         else
         {
             //否则，时间轴由编辑器面板决定
-            chartPlayer.ExternalTime = _chartTime;
+            chartPlayer.ExternalTime = ChartTime;
         }
 
         #if TOOLS
@@ -776,43 +749,32 @@ public partial class EditorScene : Node
 		}
 
 		//平滑竖直滚动
-        if(Math.Abs(horOffset - horOffsetSmoothed) > 0.001f)
+        if(Math.Abs(_context.HorOffset - _context.HorOffsetSmoothed) > 0.001f)
 		{
-			horOffsetSmoothed += (horOffset - horOffsetSmoothed) * (float)delta * 18f;
+			_context.HorOffsetSmoothed += (_context.HorOffset - _context.HorOffsetSmoothed) * (float)delta * 18f;
 		}
         else
         {
-            horOffsetSmoothed = horOffset;
+            _context.HorOffsetSmoothed = _context.HorOffset;
         }
 
 		//平滑竖直缩放
-		if(Math.Abs(horSeparation - horSeparationSmoothed) > 0.001f)
+		if(Math.Abs(_context.HorSeparation - _context.HorSeparationSmoothed) > 0.001f)
 		{
-            horSeparationSmoothed += (horSeparation - horSeparationSmoothed) * (float)delta * 18f;
+            _context.HorSeparationSmoothed += (_context.HorSeparation - _context.HorSeparationSmoothed) * (float)delta * 18f;
 		}
         else
         {
-            horSeparationSmoothed = horSeparation;
+            _context.HorSeparationSmoothed = _context.HorSeparation;
         }
 
         #if TOOLS
         ulong t5 = Time.GetTicksUsec();
         #endif
 
-        //同步编辑面板
-        noteEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
-        noteEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
-        noteEditPanel.GroundY = groundY;
+        //同步编辑面板（视图状态统一从 EditorContext 读取，无需逐个字段推送）
         noteEditPanel.UpdateVisuals();
-
-        eventEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
-        eventEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
-        eventEditPanel.GroundY = groundY;
         eventEditPanel.UpdateVisuals();
-
-        bpmEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
-        bpmEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
-        bpmEditPanel.GroundY = groundY;
         bpmEditPanel.UpdateVisuals();
 
         #if TOOLS
@@ -1100,8 +1062,8 @@ public partial class EditorScene : Node
 
                 _editorClipboard.lineEventClipBoard = new LineEventClipBoard
                 {
-                    SourceLineId = editingLineId,
-                    SourceLayer = editingLayer,
+                    SourceLineId = EditingLineId,
+                    SourceLayer = EditingLayer,
                     SourceStartBeat = new Beat(earliestEvent.Item2.StartTime),
                     Events = new List<LineEventClipBoardItem>()
                 };
@@ -1191,7 +1153,7 @@ public partial class EditorScene : Node
                 // 执行粘贴
                 _chartEditService.PasteNotes(
                     _editorClipboard.noteClipBoard,
-                    editingLineId,
+                    EditingLineId,
                     noteEditPanel.PasteTargetBeat,
                     noteEditPanel.PasteTargetPosX
                 );
@@ -1201,8 +1163,8 @@ public partial class EditorScene : Node
                 eventEditPanel.ExitPasteMode();
                 _chartEditService.PasteEvents(
                     _editorClipboard.lineEventClipBoard,
-                    editingLineId,
-                    editingLayer,
+                    EditingLineId,
+                    EditingLayer,
                     eventEditPanel.PasteTargetBeat
                 );
                 break;
@@ -1270,24 +1232,27 @@ public partial class EditorScene : Node
             case EditPanelType.NoteEdit:
                 if(noteEditPanel.SelectedNotes != null && noteEditPanel.SelectedNotes.Count != 0)
                 {
-                    _chartEditService.DeleteNotes(editingLineId, noteEditPanel.SelectedNotes);
+                    _chartEditService.DeleteNotes(EditingLineId, noteEditPanel.SelectedNotes);
                 }
                 break;
+
             case EditPanelType.LineEventEdit:
                 if(eventEditPanel.SelectedEventsWithType != null && 
                     eventEditPanel.SelectedEventsWithType.Count != 0)
                 {
                     List<(LineEventEnum Type, LineEvent Evt)> eventsToDelete = eventEditPanel.SelectedEventsWithType
                         .ToList();
-                    DeleteEvents(editingLineId, editingLayer, eventsToDelete);
+                    _chartEditService.DeleteEvents(EditingLineId, EditingLayer, eventsToDelete);
                 }
                 break;
+
             case EditPanelType.BpmEventEdit:
                 if(bpmEditPanel.SelectedEvents != null && bpmEditPanel.SelectedEvents.Count != 0)
                 {
                     _chartEditService.DeleteBpms(bpmEditPanel.SelectedEvents.ToList());
                 }
                 break;
+                
             default:
                 GD.PrintErr($"[{this.Name}] 未知的选中面板类型:{_selectFocusPanel}");
                 isSuccess = false;
@@ -1450,7 +1415,7 @@ public partial class EditorScene : Node
             _inputManager.IsEnable = false;
 
             RefreshChooseLinePanel();
-            chooseLinePanel.SetEventLayer(editingLayer);
+            chooseLinePanel.SetEventLayer(EditingLayer);
         }
         else
         {
@@ -1482,12 +1447,9 @@ public partial class EditorScene : Node
     private void SetEditingLine(int id)
     {
         GD.Print($"[{this.Name}] 用户选择了Line:{id}");
-        editingLineId = id;
 
-        noteEditPanel.EditingLineId = id;
-        eventEditPanel.EditingLineId = id;
-
-        editingLineLabel.Text = $"线{id}";
+        // 判定线只写入 Context，各面板通过 Context 读取；标签由 EditingLineChanged 统一更新
+        EditingLineId = id;
 
         chooseLinePanel.Visible = false;
         _inputManager.IsEnable = true;
@@ -1512,14 +1474,6 @@ public partial class EditorScene : Node
     #endregion
 
     #region Note相关方法
-
-    private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
-    {
-        _chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
-
-        //通知谱面数据产生了变化
-        ChartEventBus.NotifyNoteCountChanged(editingLineId);
-    }
 
     private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
@@ -1588,38 +1542,6 @@ public partial class EditorScene : Node
         IsSelecting = true;
     }
 
-    // 注意：这里不直接执行命令，而是把拖动过程包装成一个事务。
-    // 拖动中仅直接修改共享 Chart，拖动结束时统一压入一条撤销命令。
-    private void BeginNoteDrag(int lineId, Note note)
-    {
-        if (note == null) return;
-        _chartEditService.BeginNoteDrag(lineId, note);
-    }
-
-    private void EndNoteDrag(int lineId, Note note)
-    {
-        if (note == null) return;
-        _chartEditService.EndNoteDrag(lineId, note);
-    }
-
-    private void MoveNote(int lineId, int noteIndex, float chartX)
-    {
-        _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.PosX, chartX);
-    }
-
-    private void SetNoteTime(int lineId, int noteIndex, Beat startBeat, Beat endBeat)
-    {
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        if(!TimeUtil.IsBeatEqual(note.StartTime, startBeat.Values))
-        {
-            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
-        }
-        if(!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
-        {
-            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
-        }
-    }
-
     private void OnNoteChooserDeselected()
     {
         EditModeManager.SetEditMode(EditModeEnum.Normal);
@@ -1636,23 +1558,18 @@ public partial class EditorScene : Node
 
     #region LineEvent相关方法
 
-    private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
-    {
-        _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
-    }
-
     private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
     {
         SelectFocusPanel = EditPanelType.LineEventEdit;
         IsSelecting = true;
         
-        EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
+        EventLayer eventLayer = editingChart.JudgeLineList[EditingLineId].EventLayers[layer];
 		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
 
         // 构建菜单项（使用闭包捕获当前音符信息）
         var items = new List<PopupMenuItem>
         {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, editingLayer, lineEventEnum, eventIndex) },
+            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, EditingLayer, lineEventEnum, eventIndex) },
             new PopupMenuItem { Text = "复制", Callback = () => OnEventCopy(lineId, lineEventEnum, eventIndex) },
             new PopupMenuItem { IsSeparator = true },
             new PopupMenuItem { Text = "删除", Callback = () => OnEventDelete(lineId, lineEventEnum, eventIndex) }
@@ -1688,12 +1605,12 @@ public partial class EditorScene : Node
 
     private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
     {
-        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[editingLayer].GetLineEvents(lineEventEnum)[index];
+        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[EditingLayer].GetLineEvents(lineEventEnum)[index];
 
         _editorClipboard.lineEventClipBoard = new LineEventClipBoard
         {
             SourceLineId = lineId,
-            SourceLayer = editingLayer,
+            SourceLayer = EditingLayer,
             SourceStartBeat = new Beat(lineEvent.StartTime),
             Events = [ new LineEventClipBoardItem(lineEventEnum, LineEventSnapshot.Capture(lineEvent)) ]
         };
@@ -1704,7 +1621,7 @@ public partial class EditorScene : Node
 
     private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
     {
-        _chartEditService.DeleteEvent(lineId, editingLayer, lineEventEnum, index);
+        _chartEditService.DeleteEvent(lineId, EditingLayer, lineEventEnum, index);
 
     }
 
@@ -1712,33 +1629,6 @@ public partial class EditorScene : Node
     {
         SelectFocusPanel = EditPanelType.LineEventEdit;
         IsSelecting = true;
-    }
-
-    private void BeginEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
-    {
-        if (lineEvent == null) return;
-        _chartEditService.BeginEventDrag(lineId, layer, type, lineEvent);
-    }
-
-    private void EndEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
-    {
-        if (lineEvent == null) return;
-        _chartEditService.EndEventDrag(lineId, layer, type, lineEvent);
-    }
-
-    private void SetEventTime(int lineId, int layer, LineEventEnum type, int index, Beat startBeat, Beat endBeat)
-    {
-        List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(type);
-        LineEvent lineEvent = lineEvents[index];
-
-        if(!TimeUtil.IsBeatEqual(lineEvent.StartTime, startBeat.Values))
-        {
-            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.StartTime, startBeat);
-        }
-        if(!TimeUtil.IsBeatEqual(lineEvent.EndTime, endBeat.Values))
-        {
-            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
-        }
     }
 
     #endregion
@@ -1812,38 +1702,6 @@ public partial class EditorScene : Node
         _chartEditService.DeleteBpms(new List<BpmEvent> { bpmEvent });
         bpmEditPanel.DeselectAll();
         IsSelecting = false;
-    }
-
-    private void DeleteEvents(int lineId, int layer, IEnumerable<(LineEventEnum Type, LineEvent Evt)> events)
-    {
-        _chartEditService.DeleteEvents(lineId, layer, events);
-    }
-
-    private void AddBpm(float bpm, Beat startBeat)
-    {
-        _chartEditService.AddBpm(bpm, startBeat);
-    }
-
-    private void DeleteBpms(List<BpmEvent> bpmEvents)
-    {
-        _chartEditService.DeleteBpms(bpmEvents);
-    }
-
-    private void SetBpmTime(int index, Beat startBeat)
-    {
-        _chartEditService.SetBpmTime(index, startBeat);
-    }
-
-    private void BeginBpmDrag(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null) return;
-        _chartEditService.BeginBpmDrag(bpmEvent);
-    }
-
-    private void EndBpmDrag(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null) return;
-        _chartEditService.EndBpmDrag(bpmEvent);
     }
 
     #endregion

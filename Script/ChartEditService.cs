@@ -346,7 +346,7 @@ public partial class ChartEditService : Node
 
     public void DeleteEvent(int lineId, int layer, LineEventEnum lineEventEnum, int index)
     {
-        var list = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+        var list = EditingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
 
         _history.Execute(new DeleteEventsCommand(lineId, layer, [(lineEventEnum, list[index])]), this);
     }
@@ -395,7 +395,19 @@ public partial class ChartEditService : Node
 
     internal void InsertLineEventSorted(List<LineEvent> lineEvents, LineEvent lineEvent)
     {
-        int index = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
-        lineEvents.Insert(index + 1, lineEvent);
+        if(lineEvents is null)
+        {
+            lineEvents = [lineEvent];
+        }
+        else if(lineEvents.Count == 0)
+        {
+            lineEvents.Add(lineEvent);
+        }
+        else
+        {
+            int index = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
+            lineEvents.Insert(index + 1, lineEvent);
+        }
+        
     }
 }

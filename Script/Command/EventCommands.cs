@@ -27,9 +27,9 @@ public class AddEventCommand : IEditCommand
 
     public void Execute(ChartEditService service)
     {
-        var chart = service.EditingChart;
-        var line = chart.JudgeLineList[_lineId];
-        var list = line.EventLayers[_layer].GetLineEvents(_type);
+        Chart chart = service.EditingChart;
+        JudgeLine line = chart.JudgeLineList[_lineId];
+        List<LineEvent> list = line.EventLayers[_layer].GetLineEvents(_type);
 
         if (_created == null)
         {
@@ -68,6 +68,20 @@ public class AddEventCommand : IEditCommand
                 }
             }
         }
+        
+        // 添加LineEvent到事件列表中，并保持列表按时间排序
+        if(list is null)
+        {
+            list = [_created];
+        }
+        else if(list.Count == 0)
+        {
+            list.Add(_created);
+        }
+        else
+        {
+            service.InsertLineEventSorted(list, _created);
+        }
 
         service.InsertLineEventSorted(list, _created);
 
@@ -79,7 +93,10 @@ public class AddEventCommand : IEditCommand
     {
         var line = service.EditingChart.JudgeLineList[_lineId];
         var list = line.EventLayers[_layer].GetLineEvents(_type);
-        list.Remove(_created);
+        bool success = list.Remove(_created);
+
+        if(!success)
+            throw new InvalidOperationException("Undo failed: the event to remove was not found in the list.");
 
         if (_type == LineEventEnum.Speed)
             service.RefreshSpeedDependencies(_lineId);

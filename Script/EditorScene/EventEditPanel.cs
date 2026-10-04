@@ -22,7 +22,12 @@ public partial class EventEditPanel : BaseEditPanel
 
 	private Control _textOverlay; // 用于显示上层的提示文字
 
-	public int EditingLayer { get; set; } = 0;
+	/// <summary>正在编辑的事件层，来自 EditorContext</summary>
+	public int EditingLayer
+	{
+		get => Context?.EditingLayer ?? 0;
+		set { if (Context != null) Context.EditingLayer = value; }
+	}
 
 
 	private readonly HashSet<LineEvent> selectedEvents = new();
@@ -34,22 +39,14 @@ public partial class EventEditPanel : BaseEditPanel
 	/// 当事件被选择时发出，参数:(判定线编号，事件层，事件类型，事件索引，弹窗位置（坐标系：viewportCoord）)
 	/// </summary>
 	public event Action<int, int, LineEventEnum, int, Vector2> EventSelected;
-	/// <summary>
-	/// 请求添加一个事件，参数:(判定线编号，事件层，事件类型，起始Beat，结束Beat)
-	/// </summary>
-	public event Action<int, int, LineEventEnum, Beat, Beat> AddEventRequested;
-
-	/// <summary>
-    /// 请求修改 Event 时间，参数:(判定线编号, 事件层, 事件类型, 事件索引, 新StartTime, 新EndTime)
-    /// </summary>
-    public event Action<int, int, LineEventEnum, int, Beat, Beat> EventTimeChangeRequested;
-    public event Action<int, int, LineEventEnum, LineEvent> EventDragStarted;
-    public event Action<int, int, LineEventEnum, LineEvent> EventDragEnded;
 
 	/// <summary>
 	/// 当有事件被多选时触发
 	/// </summary>
 	public event Action EventMultiSelected;
+
+	// 注意：添加事件、修改事件时间、拖动开始/结束等编辑操作不再抛事件给 EditorScene 转发，
+	// 面板直接通过 EditService（ChartEditService）执行命令。
 
 	private LineEventClipBoard _lineEventClipBoard;
 	private Beat _pasteTargetBeat;
@@ -181,8 +178,8 @@ public partial class EventEditPanel : BaseEditPanel
 		// 如果没有可用的谱面或判定线，则隐藏所有池节点
 		if (editingChart == null || 
 			editingChart.JudgeLineList == null || 
-			editingLineId < 0 || 
-			editingLineId >= editingChart.JudgeLineList.Count)
+			EditingLineId < 0 || 
+			EditingLineId >= editingChart.JudgeLineList.Count)
 		{
 			return;
 		}
@@ -192,7 +189,7 @@ public partial class EventEditPanel : BaseEditPanel
 		foreach(LineEventEnum eventType in AllTypes.allLineEventTypes)
 		{
 			List<LineEvent> lineEvents = 
-				editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer].GetLineEvents(eventType);
+				editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer].GetLineEvents(eventType);
 
 			float ratioX = EventTypeToIndexDic[eventType] * 1f / (AllTypes.allLineEventTypes.Length-1);
 			float panelPosX = VerMargin + ratioX * (Size.X - 2 * VerMargin);
@@ -227,21 +224,21 @@ public partial class EventEditPanel : BaseEditPanel
         // 如果没有可用的谱面或判定线，则隐藏所有
 		if (editingChart == null || 
 			editingChart.JudgeLineList == null || 
-			editingLineId < 0 || 
-			editingLineId >= editingChart.JudgeLineList.Count ||
+			EditingLineId < 0 || 
+			EditingLineId >= editingChart.JudgeLineList.Count ||
 			EditingLayer < 0 ||
-			EditingLayer >= editingChart.JudgeLineList[editingLineId].EventLayers.Count)
+			EditingLayer >= editingChart.JudgeLineList[EditingLineId].EventLayers.Count)
 		{
 			return;
 		}
 
 		GetVisibleBeatRange(out float minBeat, out float maxBeat);
 
-		List<LineEvent> moveXEvents = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer].MoveXEvents;
-		List<LineEvent> moveYEvents = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer].MoveYEvents;
-		List<LineEvent> rotateEvents = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer].RotateEvents;
-		List<LineEvent> alphaEvents = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer].AlphaEvents;
-		List<LineEvent> speedEvents = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer].SpeedEvents;
+		List<LineEvent> moveXEvents = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer].MoveXEvents;
+		List<LineEvent> moveYEvents = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer].MoveYEvents;
+		List<LineEvent> rotateEvents = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer].RotateEvents;
+		List<LineEvent> alphaEvents = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer].AlphaEvents;
+		List<LineEvent> speedEvents = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer].SpeedEvents;
 
 		// int visibleCount = 0;
 
@@ -391,7 +388,7 @@ public partial class EventEditPanel : BaseEditPanel
 
 	private void OnEventTapped(LineEventEnum lineEventEnum, int index, Vector2 localPos)
 	{
-		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
+		EventLayer eventLayer = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer];
 		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[index];
 
 		Vector2 viewportPos = GetGlobalTransformWithCanvas() * localPos;
@@ -406,7 +403,7 @@ public partial class EventEditPanel : BaseEditPanel
 			_selectedEventsWithType.Clear();
 			_selectedEventsWithType.Add((lineEventEnum, lineEvent));
 
-            EventSelected?.Invoke(editingLineId, EditingLayer, lineEventEnum, index, popupPos);
+            EventSelected?.Invoke(EditingLineId, EditingLayer, lineEventEnum, index, popupPos);
         }
         else if(SelectMode == SelectModeEnum.Multi)
         {
@@ -444,7 +441,7 @@ public partial class EventEditPanel : BaseEditPanel
             return;
         }
 
-		if (_isBoxSelectMode)
+		if (IsBoxSelectMode)
 		{
 			Vector2 dataPos = new Vector2(
 				_coordComponent.GetChartPosX(pos.X),
@@ -461,7 +458,7 @@ public partial class EventEditPanel : BaseEditPanel
 
             LineEventEnum evtType = hit.Item1.Value;
             int evtIndex = hit.Item2;
-            EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
+            EventLayer eventLayer = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer];
             LineEvent evt = eventLayer.GetLineEvents(evtType)[evtIndex];
 
 			// 只有已选中的对象才能拖动
@@ -540,7 +537,7 @@ public partial class EventEditPanel : BaseEditPanel
             return;
         }
 
-		if (_isBoxSelectMode)
+		if (IsBoxSelectMode)
 		{
 			Vector2 dataPos = new Vector2(
 				_coordComponent.GetChartPosX(position.X),
@@ -578,7 +575,7 @@ public partial class EventEditPanel : BaseEditPanel
 			return;
 		}
 
-		if (_isBoxSelectMode)
+		if (IsBoxSelectMode)
 		{
 			Vector2 dataPos = new Vector2(
 				_coordComponent.GetChartPosX(pos.X),
@@ -623,13 +620,18 @@ public partial class EventEditPanel : BaseEditPanel
     private void OnEventDragStarted(object targetId, DragMoveComponent.DragMode mode)
     {
         if (targetId is not ValueTuple<LineEventEnum, LineEvent> tuple) return;
-        EventDragStarted?.Invoke(editingLineId, EditingLayer, tuple.Item1, tuple.Item2);
+        EditService?.BeginEventDrag(EditingLineId, EditingLayer, tuple.Item1, tuple.Item2);
     }
 
     private void OnEventDragEnded(object targetId, DragMoveComponent.DragMode mode)
     {
-        if (targetId is not ValueTuple<LineEventEnum, LineEvent> tuple) return;
-        EventDragEnded?.Invoke(editingLineId, EditingLayer, tuple.Item1, tuple.Item2);
+        if (targetId is not ValueTuple<LineEventEnum, LineEvent> tuple)
+		{
+			GD.PushWarning($"[{Name}] OnEventDragEnded() targetId is not ValueTuple<LineEventEnum, LineEvent>");
+			return;
+		}
+		
+        EditService?.EndEventDrag(EditingLineId, EditingLayer, tuple.Item1, tuple.Item2);
     }
 
 	// -------- 拖动响应 --------
@@ -644,7 +646,7 @@ public partial class EventEditPanel : BaseEditPanel
 			return;
 		}
 
-        var eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
+        var eventLayer = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer];
 
         // 通过引用反向查找当前索引和类型（防止列表重排/增删导致索引失效）
         int evtIndex = -1;
@@ -688,7 +690,39 @@ public partial class EventEditPanel : BaseEditPanel
                 break;
         }
 
-        EventTimeChangeRequested?.Invoke(editingLineId, EditingLayer, evtType, evtIndex, newStart, newEnd);
+        SetEventTime(evtType, evtIndex, newStart, newEnd);
+    }
+
+    /// <summary>
+    /// 应用事件时间（拖动中实时预览用，不压入撤销栈）。
+    /// 时间变化会让事件在列表中重排，因此每次都按对象引用重新定位索引。
+    /// </summary>
+    private void SetEventTime(LineEventEnum evtType, int evtIndex, Beat startBeat, Beat endBeat)
+    {
+        if (EditService == null) return;
+
+        var eventLayer = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer];
+        List<LineEvent> list = eventLayer.GetLineEvents(evtType);
+        if (list == null || evtIndex < 0 || evtIndex >= list.Count) return;
+
+        LineEvent evt = list[evtIndex];
+
+        if (!TimeUtil.IsBeatEqual(evt.StartTime, startBeat.Values))
+        {
+            EditService.ApplyEventPropertyDirect(EditingLineId, EditingLayer, evtType,
+                list.IndexOf(evt), LineEventPropertyType.StartTime, startBeat);
+        }
+
+        // 修改 StartTime 后列表可能已经重排，这里按引用重新取索引
+        if (!TimeUtil.IsBeatEqual(evt.EndTime, endBeat.Values))
+        {
+            int index = list.IndexOf(evt);
+            if (index >= 0)
+            {
+                EditService.ApplyEventPropertyDirect(EditingLineId, EditingLayer, evtType,
+                    index, LineEventPropertyType.EndTime, endBeat);
+            }
+        }
     }
 
 	/// <summary>
@@ -698,7 +732,7 @@ public partial class EventEditPanel : BaseEditPanel
 	/// <returns>ValueTuple<LineEventEnum?, int>，参数:(事件类型，索引)，若Item1为null，表示没有找到</returns>
 	private ValueTuple<LineEventEnum?, int> FindNearestEvent(Vector2 pos)
 	{
-		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
+		EventLayer eventLayer = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer];
 		Dictionary<LineEventEnum, List<LineEvent> > allLineEvents = new(){
 			{LineEventEnum.MoveX, eventLayer.MoveXEvents},
 			{LineEventEnum.MoveY, eventLayer.MoveYEvents},
@@ -770,7 +804,7 @@ public partial class EventEditPanel : BaseEditPanel
 		boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
 		boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-		if (_isBoxSelectMode)
+		if (IsBoxSelectMode)
 		{
 			UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
 		}
@@ -781,7 +815,7 @@ public partial class EventEditPanel : BaseEditPanel
 		boxStartPos = _coordComponent.GetPanelPosition(startDataPos.X, startDataPos.Y);
 		boxEndPos = _coordComponent.GetPanelPosition(endDataPos.X, endDataPos.Y);
 
-		if (_isBoxSelectMode)
+		if (IsBoxSelectMode)
 		{
 			UpdateSelectionInRect(RectUtil.TwoPointsToRect(startDataPos, endDataPos));
 		}
@@ -824,15 +858,22 @@ public partial class EventEditPanel : BaseEditPanel
 
     protected override void OnDragEnded(int verLineIndex, Beat startBeat, Beat endBeat)
     {
-        LineEventEnum lineEventEnum = IndexToEventTypeDic[verLineIndex];
+		if(!IndexToEventTypeDic.TryGetValue(verLineIndex, out LineEventEnum lineEventEnum))
+		{
+			throw new ArgumentOutOfRangeException(nameof(verLineIndex), 
+				$"OnDragEnded() verLineIndex不合法:{verLineIndex}");
+		}
 
-		AddEventRequested?.Invoke(editingLineId, EditingLayer, lineEventEnum, startBeat, endBeat);
+        ArgumentNullException.ThrowIfNull(startBeat);
+        ArgumentNullException.ThrowIfNull(endBeat);
+
+        EditService?.AddEvent(EditingLineId, EditingLayer, lineEventEnum, startBeat, endBeat);
 
     }
 
 	private List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> GetEventsInRect(Rect2 rect)
 	{
-		EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[EditingLayer];
+		EventLayer eventLayer = editingChart.JudgeLineList[EditingLineId].EventLayers[EditingLayer];
 
 		List<ValueTuple<float, (LineEventEnum Type, LineEvent Evt)>> allEvents = new();
 

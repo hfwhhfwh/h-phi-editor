@@ -33,8 +33,12 @@ public abstract partial class BaseEditPanel : Panel
 
 	public float GroundY
 	{
-		get => _gridDrawer.GroundY;
-		set { if (_gridDrawer != null) _gridDrawer.GroundY = value; }
+		get => Context?.GroundY ?? (_gridDrawer?.GroundY ?? 0f);
+		set
+		{
+			if (Context != null) Context.GroundY = value;
+			else if (_gridDrawer != null) _gridDrawer.GroundY = value;
+		}
 	}
 	// ---- 网格样式 ----
 	public Color HorColor
@@ -88,17 +92,50 @@ public abstract partial class BaseEditPanel : Panel
 	#endregion
 
 	// ---- 滚动/缩放 ----
-	public float HorOffsetSmoothed { get; set; }
+	// 统一从 EditorContext 读取，EditorScene 不再逐帧推送到面板。
+	public float HorOffsetSmoothed
+	{
+		get => Context?.HorOffsetSmoothed ?? 0f;
+		set { if (Context != null) Context.HorOffsetSmoothed = value; }
+	}
 
-	public float HorSeparationSmoothed { get; set; }
+	public float HorSeparationSmoothed
+	{
+		get => Context?.HorSeparationSmoothed ?? 0f;
+		set { if (Context != null) Context.HorSeparationSmoothed = value; }
+	}
+
+    // ---- 场景级状态中心 / 编辑命令入口（由 EditorScene 注入）----
+
+    /// <summary>场景级状态中心，谱面、判定线、事件层、视图与时间状态都由它统一持有</summary>
+    public EditorContext Context { get; private set; }
+
+    /// <summary>编辑命令入口。面板不再直接修改 Chart，所有修改都通过它执行。</summary>
+    protected ChartEditService EditService { get; private set; }
+
+    /// <summary>
+    /// 由 EditorScene 在初始化时调用，注入场景级依赖。
+    /// </summary>
+    public void Initialize(EditorContext context, ChartEditService editService)
+    {
+        Context = context;
+        EditService = editService;
+
+        OnContextInjected();
+    }
+
+    /// <summary>子类可重写，用于在拿到 Context / EditService 之后做额外初始化</summary>
+    protected virtual void OnContextInjected() { }
 
     // ---- 数据 ----
-    public Chart editingChart;
-    protected int editingLineId;
-	public int EditingLineId
+    /// <summary>正在编辑的谱面，来自 EditorContext</summary>
+    public Chart editingChart => Context?.EditingChart;
+
+    /// <summary>正在编辑的判定线编号，来自 EditorContext</summary>
+    public int EditingLineId
 	{
-		get => editingLineId;
-		set => editingLineId = value;
+		get => Context?.EditingLineId ?? 0;
+		set { if (Context != null) Context.EditingLineId = value; }
 	}
 
     // ---- 字体 ----
@@ -109,18 +146,23 @@ public abstract partial class BaseEditPanel : Panel
         Single, // 单选
         Multi // 多选
     }
-    public SelectModeEnum SelectMode { get; set; } = SelectModeEnum.Single;
+    public SelectModeEnum SelectMode
+    {
+        get => Context?.SelectMode ?? SelectModeEnum.Single;
+        set { if (Context != null) Context.SelectMode = value; }
+    }
 
 	protected bool _isPasteMode = false;
 
-	protected bool _isBoxSelectMode = false;
+	// protected bool _isBoxSelectMode = false;
 
 	public virtual bool IsBoxSelectMode
     {
-        get => _isBoxSelectMode;
+        get => Context?.IsBoxSelectMode ?? false;
         set
         {
-            _isBoxSelectMode = value;
+            // _isBoxSelectMode = value;
+            if (Context != null) Context.IsBoxSelectMode = value;
         }
     }
 
@@ -315,6 +357,7 @@ public abstract partial class BaseEditPanel : Panel
 		// 同步_gridDrawer
 		_gridDrawer.HorOffset = HorOffsetSmoothed;
 		_gridDrawer.HorSeparation = HorSeparationSmoothed;
+		_gridDrawer.GroundY = GroundY;
 
 		if (!ContentDisabled)
 		{
