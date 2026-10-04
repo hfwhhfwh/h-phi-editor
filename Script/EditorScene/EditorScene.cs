@@ -81,6 +81,7 @@ public partial class EditorScene : Node
     private EditorPlaybackController _playbackController;
     private EditorClipboardController _clipboardController;
     private EditorSelectionController _selectionController;
+    private EditorUIManager _uiManager;
 
     // ---- 兼容既有代码的只读访问器：数据实际存放在 EditorContext 中 ----
     private Chart editingChart => _context?.EditingChart;
@@ -302,21 +303,11 @@ public partial class EditorScene : Node
         _context.HorSeparationSmoothed = horSeparation;
         _context.GroundY = groundY;
 
-        Subscribe(
-            OnEditingLineChanged,
-            h => _context.EditingLineChanged += h,
-            h => _context.EditingLineChanged -= h);
-
         // 面板直接依赖 Context（数据）与 ChartEditService（命令）
         foreach (BaseEditPanel panel in new BaseEditPanel[] { noteEditPanel, eventEditPanel, bpmEditPanel })
         {
             panel.Initialize(_context, _chartEditService);
         }
-    }
-
-    private void OnEditingLineChanged(int lineId)
-    {
-        editingLineLabel.Text = $"线{lineId}";
     }
 
     /// <summary>
@@ -360,6 +351,53 @@ public partial class EditorScene : Node
             noteEditPanel, eventEditPanel, bpmEditPanel,
             noteInfoPanel, eventInfoPanel, bpmInfoPanel,
             _deleteBtn);
+
+        // ---- 界面：菜单、按钮、标签、面板显隐（Initialize 在 InitEditor 中调用）----
+        _uiManager = new EditorUIManager { Name = "EditorUIManager" };
+        AddChild(_uiManager);
+    }
+
+    /// <summary>
+    /// 把 EditorScene 上从场景导出的界面节点引用打包交给 EditorUIManager。
+    /// </summary>
+    private EditorViewRefs BuildViewRefs()
+    {
+        return new EditorViewRefs
+        {
+            Theme = theme,
+
+            FileMenu = fileMenuButtion,
+            EditMenu = editMenuButtion,
+            ViewMenu = viewMenuButton,
+            HelpMenu = helpMenuButtion,
+            OthersButton = _othersButton,
+
+            UndoButton = _undoBtn,
+            RedoButton = _redoBtn,
+            CopyButton = _copyBtn,
+            PasteButton = _pasteBtn,
+            MultiSelectButton = _multiSelectBtn,
+            BoxSelectButton = _boxSelectBtn,
+            PasteConfirmButton = _pasteConfirmBtn,
+            PasteCancelButton = _pasteCancelBtn,
+
+            EditingLineLabel = editingLineLabel,
+            EditModeLabel = editModeLabel,
+            FpsLabel = fpsLabel,
+
+            NoteEditPanel = noteEditPanel,
+            EventEditPanel = eventEditPanel,
+            BpmEditPanel = bpmEditPanel,
+
+            NoteInfoPanel = noteInfoPanel,
+            EventInfoPanel = eventInfoPanel,
+            BpmInfoPanel = bpmInfoPanel,
+
+            SettingsPanel = _settingsPanel,
+            EditorSettingsPanel = _editorSettingsPanel,
+
+            NoteChooser = noteChooser,
+        };
     }
 
     private void InitEditor()
@@ -396,159 +434,37 @@ public partial class EditorScene : Node
             GD.Print($"[{Name}] 切换到事件层:{index}");
         };
 
-        editingLineLabel.Text = $"线{0}";
-
-        // 设置NoteEditPanel / EventEditPanel / BpmEditPanel 的初始可用状态
-        // 添加/删除/拖动等编辑操作由面板直接调用 ChartEditService；
-        // 选择焦点、右键菜单、删除按钮由 EditorSelectionController 负责。
-        noteEditPanel.Disabled = false;
-        eventEditPanel.Disabled = false;
-        bpmEditPanel.Disabled = false;
-
-        // 设置noteInfoPanel
-        noteInfoPanel.OnConfirmed += () => noteInfoPanel.Visible = false;
+        // ---- 信息面板：属性修改直接走 ChartEditService ----
         Subscribe(
             SetNoteProperty,
             h => noteInfoPanel.OnNotePropertyChanged += h,
             h => noteInfoPanel.OnNotePropertyChanged -= h);
 
-        // 设置eventInfoPanel
-        eventInfoPanel.OnConfirmed += () => eventInfoPanel.Visible = false;
         Subscribe(
             SetEventProperty,
             h => eventInfoPanel.PropertyChanged += h,
             h => eventInfoPanel.PropertyChanged -= h);
 
-        //设置bpmInfoPanel
-        bpmInfoPanel.OnConfirmed += () => bpmInfoPanel.Visible = false;
         Subscribe(
             SetBpmProperty,
             h => bpmInfoPanel.PropertyChanged += h,
             h => bpmInfoPanel.PropertyChanged -= h);
 
-        //设置弹出菜单
-        PopupMenuHelper.SetTheme(theme);
+        // ---- 界面：菜单栏、工具栏按钮、标签、面板显隐 ----
+        _uiManager.Initialize(
+            BuildViewRefs(),
+            _context,
+            _chartEditService,
+            _clipboardController,
+            SaveChart,
+            SaveAndQuit,
+            OnQuitPressed,
+            OnTestPlay);
 
-        //设置顶部菜单栏
-        //设置“文件”选项
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "保存", Callback = SaveChart},
-                //new PopupMenuItem { Text = "另存为", Callback = null},
-                new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "保存并退出", Callback = SaveAndQuit},
-                new PopupMenuItem { Text = "仅退出", Callback = OnQuitPressed},
-            };
-            PopupMenuHelper.Instance.SetMenuButton(fileMenuButtion, items);
-        }
-        //设置“编辑”选项
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "复制", Callback = null},
-                new PopupMenuItem { Text = "粘贴", Callback = null},
-                new PopupMenuItem { Text = "剪切", Callback = null},
-                new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "全局设置", Callback = _settingsPanel.Show},
-                new PopupMenuItem { Text = "编辑器设置", Callback = _editorSettingsPanel.Show},
-            };
-            PopupMenuHelper.Instance.SetMenuButton(editMenuButtion, items);
-        }
-
-        // 设置“视图”选项
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "音符面板", Checkable = true, 
-                    Checked = noteEditPanel.Visible,
-                    Toggled = (bool value) => noteEditPanel.Visible = value
-                },
-                new PopupMenuItem { Text = "事件面板", Checkable = true, 
-                    Checked = eventEditPanel.Visible,
-                    Toggled = (bool value) => eventEditPanel.Visible = value
-                },
-                new PopupMenuItem { Text = "Bpm面板", Checkable = true, 
-                    Checked = bpmEditPanel.Visible,
-                    Toggled = (bool value) => bpmEditPanel.Visible = value
-                },
-            };
-            PopupMenuHelper.Instance.SetMenuButton(viewMenuButton, items);
-        }
-
-        // 设置左上角“...”按钮
-        _othersButton.Pressed += () =>
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "试玩", Callback = OnTestPlay},
-            };
-
-            PopupMenuHelper.Instance.ShowPopupMenu(this, 
-                GetViewport().GetMousePosition() + new Vector2(30, 30), 
-                items);
-        };
-
-        //设置NoteChooser
-        Subscribe(
-            OnNoteChooserNoteChoosed,
-            h => noteChooser.NoteChoosed += h,
-            h => noteChooser.NoteChoosed -= h
-        );
-
-        Subscribe(
-            OnNoteChooserDeselected,
-            h => noteChooser.Deselected += h,
-            h => noteChooser.Deselected -= h
-        );
-        // noteChooser.DeleteButtonChoosed += OnNoteChooserDeleteChoosed;
-
-        //设置EditModeManager 初始状态默认为常规模式
-        EditModeManager.SetEditMode(EditModeEnum.Normal);
-
-        //设置editModeLabel
-        editModeLabel.Text = "模式：常规模式";
-        Subscribe(
-            OnEditModeChanged,
-            h => EditModeManager.OnEditModeChanged += h,
-            h => EditModeManager.OnEditModeChanged -= h);
-
-        // 谱面播放器与编辑面板此时都已经初始化完成，可以安全进入编辑模式
+        // ---- 谱面播放器与编辑面板此时都已经初始化完成，可以安全进入编辑模式 ----
         _playbackController.EnterEditingMode();
 
         GameSettings.Instance.SettingChanged += OnSettingsChanged;
-
-        // 设置撤销重做按钮
-        _undoBtn.Pressed += OnUndo;
-        _redoBtn.Pressed += OnRedo;
-
-        // 设置复制粘贴按钮
-        _copyBtn.Pressed += _clipboardController.CopySelection;
-        _pasteBtn.Pressed += _clipboardController.StartPaste;
-        _pasteConfirmBtn.Pressed += _clipboardController.ConfirmPaste;
-        _pasteCancelBtn.Pressed += _clipboardController.CancelPaste;
-
-        // 设置多选按钮
-        _multiSelectBtn.ToggleMode = true;
-        _multiSelectBtn.Toggled += (bool value) =>
-        {
-            BaseEditPanel.SelectModeEnum mode = value ? 
-                BaseEditPanel.SelectModeEnum.Multi : BaseEditPanel.SelectModeEnum.Single;
-            
-            // 选择模式由 Context 统一持有，三个面板共享
-            _context.SelectMode = mode;
-        };
-
-        // 设置框选按钮
-        _boxSelectBtn.ToggleMode = true;
-        _boxSelectBtn.Toggled += (bool value) =>
-        {
-            _context.IsBoxSelectMode = value;
-        };
     }
 
     public override void _Process(double delta)
@@ -575,21 +491,6 @@ public partial class EditorScene : Node
         #endif
     }
 
-    private int fpsRefreshCount = 0;
-
-    public override void _PhysicsProcess(double delta)
-    {
-        //GD.Print($"ChartTime:{ChartTime}, BeatValue:{BeatValue}, horOffset:{horOffset}");
-        fpsRefreshCount++;
-        if(fpsRefreshCount > 15)
-        {
-            fpsRefreshCount = 0;
-            fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
-        }
-        
-        // GD.Print($"BeatValue:{BeatValue}, ChartTime:{ChartTime}, bpm:{editingChart.BpmList[0].Bpm}");
-    }
-
     public override void _ExitTree()
     {
         base._ExitTree();
@@ -611,17 +512,6 @@ public partial class EditorScene : Node
         
     }
     
-    private void OnEditModeChanged(EditModeEnum editMode)
-    {
-        editModeLabel.Text = editMode switch
-        {
-            EditModeEnum.Normal => "模式：常规模式",
-            EditModeEnum.Place => "模式：放置模式",
-            // EditModeEnum.Delete => "模式：删除模式",
-            _ => "模式：未知",
-        };
-    }
-
     private void SaveChart()
     {
         _chartService.SaveChart(editingChartId, editingChart);
@@ -798,16 +688,6 @@ public partial class EditorScene : Node
         global.GotoScene("res://Scene/play_scene.tscn");
     }
 
-    private void OnUndo()
-    {
-        _chartEditService.Undo();
-    }
-
-    private void OnRedo()
-    {
-        _chartEditService.Redo();
-    }
-
     #region 播放控制（场景按钮入口）
 
     // editor_scene.tscn 的信号连接直接指向 EditorScene 上的这些方法，因此保留为转发入口。
@@ -906,18 +786,6 @@ public partial class EditorScene : Node
     private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
         _chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
-    }
-
-    private void OnNoteChooserDeselected()
-    {
-        EditModeManager.SetEditMode(EditModeEnum.Normal);
-        // GD.Print($"[{this.Name}] 用户取消选择了note");
-    }
-
-    private void OnNoteChooserNoteChoosed(NoteType noteType)
-    {
-        EditModeManager.SetEditMode(EditModeEnum.Place);
-        noteEditPanel.PlacingNote = noteType;
     }
 
     #endregion
