@@ -178,6 +178,15 @@ public abstract partial class BaseEditPanel : Panel
 	protected DragMoveComponent _dragMoveComponent;
 	protected GridDrawer _gridDrawer;
 
+	/// <summary>GUI 输入过滤器（左键/拖拽/触摸 → InputController）</summary>
+	private PanelInputHandler _panelInputHandler;
+
+	/// <summary>
+	/// MultiMesh 渲染器：注册池、每帧渲染、动态扩容、视口裁剪。
+	/// 子类渲染时用 <c>Meshes.RenderObject(...)</c> / <c>Meshes.RenderLongObject(...)</c>。
+	/// </summary>
+	protected MultiMeshRenderer Meshes { get; private set; }
+
 	/// <summary>
     /// 框选矩形框的起始坐标 坐标系：Control坐标
     /// </summary>
@@ -186,11 +195,6 @@ public abstract partial class BaseEditPanel : Panel
     /// 框选矩形框的结束坐标 坐标系：Control坐标
     /// </summary>
     protected Vector2 boxEndPos;
-
-	// ---- Multimesh ---- 
-	private Dictionary<string, MultiMesh> multiMeshes = new();
-	private Dictionary<string, MultiMeshInstance2D> multiMeshInstances = new();
-	private Dictionary<string, int> visibleCounts = new();
 
 	// 开关
 	public bool Disabled { get; set; } = false; // 禁用所有刷新
@@ -207,53 +211,6 @@ public abstract partial class BaseEditPanel : Panel
 		AllDeselected?.Invoke();
 	}
 
-	protected void RegisterMultiMesh(string key, Texture2D texture, int instanceCount, int zIndex = 1)
-	{
-		//设置Multimesh
-		MultiMesh multiMesh = new MultiMesh
-		{
-			TransformFormat = MultiMesh.TransformFormatEnum.Transform2D,
-			InstanceCount = 0,
-			VisibleInstanceCount = 0,
-			UseColors = true, // 用于提示选中
-		};
-		multiMesh.InstanceCount = instanceCount;
-		multiMeshes[key] = multiMesh;
-
-		MultiMeshInstance2D multiMeshInstance = new MultiMeshInstance2D();
-		multiMeshInstance.Texture = texture;
-		multiMeshInstance.Multimesh = multiMesh;
-		multiMeshInstance.ZIndex = zIndex;
-		multiMeshInstances[key] = multiMeshInstance;
-
-		// 根据纹理实际尺寸创建 QuadMesh
-		var quad = new QuadMesh();
-		quad.Size = new Vector2(texture.GetSize().X, -texture.GetSize().Y);   // 保持宽高比，去掉负值
-		multiMeshInstance.Multimesh.Mesh = quad;
-
-		AddChild(multiMeshInstance);
-		multiMeshInstances[key] = multiMeshInstance;
-		multiMeshes[key] = multiMesh;
-
-		visibleCounts[key] = 0;
-	}
-
-	protected void ResetVisibleCount()
-	{
-		foreach (string key in visibleCounts.Keys)
-		{
-			visibleCounts[key] = 0;
-		}
-	}
-
-	protected void ApplyVisibleCount()
-	{
-		foreach (string key in visibleCounts.Keys)
-		{
-			multiMeshes[key].VisibleInstanceCount = visibleCounts[key];
-		}
-	}
-
     public override void _Ready()
     {
         base._Ready();
@@ -263,6 +220,9 @@ public abstract partial class BaseEditPanel : Panel
         _inputController.PointerDown += OnButtonDown;
         _inputController.PointerUp += OnButtonUp;
         _inputController.PointerDrag += OnMotionInput;
+
+        // 设置_panelInputHandler
+        _panelInputHandler = new PanelInputHandler(_inputController);
 
         // 设置_boxSelectController
         _boxSelectController = new BoxSelectController();
@@ -278,6 +238,9 @@ public abstract partial class BaseEditPanel : Panel
 
 		// 设置_dragMoveComponent
 		_dragMoveComponent = new DragMoveComponent();
+
+		// 设置 MultiMesh 渲染器（依赖 _coordComponent，必须在它之后创建）
+		Meshes = new MultiMeshRenderer(this, _coordComponent);
 
 		// 设置_gridDrawer
 		_gridDrawer = new GridDrawer();
@@ -297,6 +260,9 @@ public abstract partial class BaseEditPanel : Panel
         _inputController.PointerDrag -= OnMotionInput;
         _inputController = null;
 
+        // 设置_panelInputHandler
+        _panelInputHandler = null;
+
         // 设置_boxSelectController
         _boxSelectController.BoxUpdated -= OnBoxUpdated;
         _boxSelectController.BoxEnded -= OnBoxEnded;
@@ -311,6 +277,9 @@ public abstract partial class BaseEditPanel : Panel
 
 		// 设置_dragMoveComponent
 		_dragMoveComponent = null;
+
+		// 设置 MultiMesh 渲染器
+		Meshes = null;
 
 		// 设置_gridDrawer
 		_gridDrawer = null;
@@ -342,7 +311,7 @@ public abstract partial class BaseEditPanel : Panel
 
     public void UpdateVisuals()
 	{
-		if(Disabled) return;
+		if(Disabled || Meshes == null || _coordComponent == null) return;
 
 		//同步_coordinateConverter
         _coordComponent.horMargin = HorMargin;
@@ -362,13 +331,13 @@ public abstract partial class BaseEditPanel : Panel
 		if (!ContentDisabled)
 		{
 			//归零可见数量
-			ResetVisibleCount();
+			Meshes.BeginFrame();
 
 			// 更新渲染内容 (由子类重写)
 			RenderContent();
 
 			// 更新所有 MultiMesh 的可见实例数量
-			ApplyVisibleCount();
+			Meshes.EndFrame();
 		}
 
 		if(!GridDisabled) _gridDrawer.QueueRedraw();// 触发网格重绘
@@ -378,80 +347,6 @@ public abstract partial class BaseEditPanel : Panel
 	}
 
 	protected abstract void RenderContent();
-
-	protected void RenderObject(string key, float localX, Beat beat, Vector2 offset, float scale, Action<MultiMesh, int> renderEffect)
-	{
-		// 动态扩容
-		if(visibleCounts[key] + 1 > multiMeshes[key].InstanceCount)
-		{
-			EnsureMultiMeshCapacity(key, visibleCounts[key] + 1);
-		}
-
-		float beatBalue = beat[0] + beat[1] * 1f / beat[2];
-		float localY = _coordComponent.GetPanelPosY(beatBalue);
-
-		// 裁切：超出面板范围则不渲染
-        if (localX < 0 || localX > Size.X || localY < 0 || localY > Size.Y) return;
-
-		// 构建变换：位置 + 固定缩放
-        // Transform2D transform = Transform2D.Identity;
-        // transform.Origin = new Vector2(localX, localY);
-        // transform.X = new Vector2(scale, 0);
-        // transform.Y = new Vector2(0, scale);
-
-		Transform2D transform = Transform2D.Identity
-			.Translated(offset)                        // 对齐
-			.Scaled(new Vector2(scale, scale))         // 缩放
-			//.Rotated(rad)                            // 旋转
-			.Translated(new Vector2(localX, localY));  // 平移
-
-        multiMeshes[key].SetInstanceTransform2D(visibleCounts[key], transform);
-        multiMeshes[key].SetInstanceColor(visibleCounts[key], Colors.White);
-
-        // 渲染效果
-        renderEffect?.Invoke(multiMeshes[key], visibleCounts[key]);
-
-        visibleCounts[key]++;
-	}
-
-	protected void RenderLongObject(string key, float localX, Beat startBeat, Beat endBeat, Vector2 offset, float scale, Action<MultiMesh, int> renderEffect)
-	{
-		// 动态扩容
-		if(visibleCounts[key] + 1 > multiMeshes[key].InstanceCount)
-		{
-			EnsureMultiMeshCapacity(key, visibleCounts[key] + 1);
-		}
-		
-		float startBeatBalue = startBeat[0] + startBeat[1] * 1f / startBeat[2];
-		float startLocalY = _coordComponent.GetPanelPosY(startBeatBalue);
-
-		float endBeatBalue = endBeat[0] + endBeat[1] * 1f / endBeat[2];
-		float endLocalY = _coordComponent.GetPanelPosY(endBeatBalue);
-
-
-		float bodyLength = startLocalY - endLocalY;   // 正数表示向下延伸
-            
-		float midLocalY = (startLocalY + endLocalY) / 2f;
-
-		// 计算 Y 方向缩放：长度 / 纹理高度（纹理高度可自定，这里假设为 1900，与原注释一致）
-		Texture2D texture = multiMeshInstances[key].Texture;
-		float scaleY = bodyLength / texture.GetSize().Y;
-
-		Transform2D transform = Transform2D.Identity
-			.Translated(offset)                        // 对齐
-			.Scaled(new Vector2(scale, scaleY))         // 缩放
-			//.Rotated(rad)                            // 旋转
-			.Translated(new Vector2(localX, midLocalY));  // 平移
-
-		
-		multiMeshes[key].SetInstanceTransform2D(visibleCounts[key], transform);
-		multiMeshes[key].SetInstanceColor(visibleCounts[key], Colors.White);
-		
-		// 渲染效果
-        renderEffect?.Invoke(multiMeshes[key], visibleCounts[key]);
-
-        visibleCounts[key]++;
-	}
 
 	public Vector2 GetScreenPosition(float beatValue, float posX)
     {
@@ -490,33 +385,11 @@ public abstract partial class BaseEditPanel : Panel
     {
         base._GuiInput(@event);
 
-		if(@event.Device == -1) return; // 拦截模拟输入
-
-        // 只处理左键和触摸，其余事件（滚轮、中键）忽略
-        bool handled = false;
-        if (@event is InputEventMouseButton mouseBtn && mouseBtn.ButtonIndex == MouseButton.Left)
+        // 过滤左键/拖拽/触摸后交给 InputController；已处理则阻止事件继续冒泡
+        if (_panelInputHandler != null && _panelInputHandler.ProcessGuiInput(@event))
         {
-            _inputController.ProcessEvent(@event);
-            handled = true;
+            AcceptEvent();
         }
-        else if (@event is InputEventMouseMotion mouseMotion && Input.IsMouseButtonPressed(MouseButton.Left))
-        {
-            _inputController.ProcessEvent(@event);
-            handled = true;
-        }
-        else if (@event is InputEventScreenTouch touch)
-        {
-            _inputController.ProcessEvent(@event);
-            handled = true;
-        }
-        else if (@event is InputEventScreenDrag drag)
-        {
-            _inputController.ProcessEvent(@event);
-            handled = true;
-        }
-
-        if (handled) AcceptEvent(); // 标记事件已处理，阻止向上冒泡
-        
     }
 
 	/// <summary>
@@ -532,25 +405,10 @@ public abstract partial class BaseEditPanel : Panel
 		if (minBeat < 0) minBeat = 0;
 	}
 
-	/// <summary>
-	/// 动态扩容
-	/// </summary>
-	/// <param name="key"></param>
-	/// <param name="needed"></param>
-	protected void EnsureMultiMeshCapacity(string key, int needed)
-	{
-		if (needed <= 0) return;
-		var mm = multiMeshes[key];
-		if (needed <= mm.InstanceCount) return; // 容量足够，直接返回
-		
-		mm.InstanceCount = MathUtil.NextPowerOfTwo(needed);
-		GD.Print($"[{Name}] MultiMesh '{key}' 扩容至 {mm.InstanceCount}");
-	}
-
 	protected abstract void OnButtonDown(Vector2 pos);
 
     protected abstract void OnButtonUp(Vector2 pos);
-    
+
     protected abstract void OnMotionInput(Vector2 position, Vector2 relative);
 
 	protected abstract void OnBoxUpdated(Vector2 startDataPos, Vector2 endDataPos);

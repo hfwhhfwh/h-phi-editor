@@ -107,7 +107,7 @@ public partial class NoteEditPanel : BaseEditPanel
 				_ => 999
 			};
 
-            RegisterMultiMesh(key, texture, 1024, zIndex);
+            Meshes.Register(key, texture, 1024, zIndex);
 		}
 
         // ---- 订阅拖动事件 ----
@@ -293,7 +293,7 @@ public partial class NoteEditPanel : BaseEditPanel
             _ => "Tap"
         };
 
-        RenderObject(
+        Meshes.RenderObject(
             key: key,
             localX: localX,
             beat: startBeat,
@@ -309,7 +309,7 @@ public partial class NoteEditPanel : BaseEditPanel
         float localX = _coordComponent.GetPanelPosX(chartPosX);
 
         // ---- 1. 渲染 Hold 头部 ----
-        RenderObject(
+        Meshes.RenderObject(
             key: "HoldHead",
             localX: localX,
             beat: startBeat,
@@ -319,7 +319,7 @@ public partial class NoteEditPanel : BaseEditPanel
         );
 
         // ---- 2. 渲染 Hold 身体（拉伸条） ----
-        RenderLongObject(
+        Meshes.RenderLongObject(
             key: "HoldBody",
             localX: localX,
             startBeat: startBeat,
@@ -330,7 +330,7 @@ public partial class NoteEditPanel : BaseEditPanel
         );
 
         // ---- 3. 渲染 Hold 尾部 ----
-        RenderObject(
+        Meshes.RenderObject(
             key: "HoldEnd",
             localX: localX,
             beat: endBeat,

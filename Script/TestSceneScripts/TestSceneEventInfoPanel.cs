@@ -21,11 +21,8 @@ public partial class TestSceneEventInfoPanel : Node
 
         eventInfoPanel.Edit(lineEvent, 0, 0, LineEventEnum.MoveX, 999);
 
-        eventInfoPanel.PropertyChanged += (
-            int lineId, int layer, LineEventEnum type, int idx, LineEventPropertyType prop, object val) =>
-        {
-            GD.Print($"[{Name}] 修改了 {prop}:{val} (line{lineId}_layer{layer}_{type}_{idx})");
-        };
+        // 面板现在直接调用 ChartEditService 执行属性修改命令（面板通过 Initialize 注入服务），
+        // 本测试场景没有谱面数据，因此只做界面展示。
 
         eventInfoPanel.OnConfirmed += () => {
             GD.Print($"用户按下了确认键");

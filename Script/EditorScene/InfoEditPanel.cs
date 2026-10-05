@@ -18,6 +18,9 @@ public partial class InfoEditPanel : Control
 	[Export] private Label _nameLabel;
 	[Export] private Button _confirmButton;
 
+	/// <summary>每个字段的「静默写回控件」委托，供 RefreshValues 使用</summary>
+	private readonly Dictionary<string, Action<object>> _setters = new();
+
 	public Action<string, object> PropertyChanged;
 
 	[Signal] public delegate void OnConfirmedEventHandler();
@@ -52,6 +55,8 @@ public partial class InfoEditPanel : Control
 			child.QueueFree();
 		}
 
+		_setters.Clear();
+
 		foreach (var kvp in _data.Properties)
 		{
 			string key = kvp.Key;
@@ -72,6 +77,27 @@ public partial class InfoEditPanel : Control
 			_vBoxContainer.AddChild(row);
 		}
 
+	}
+
+	/// <summary>
+	/// 不重建控件，只把数据最新值静默写回已有控件。
+	/// 用于撤销/重做后刷新界面 —— 重建控件会打断用户正在进行的拖动。
+	/// </summary>
+	public void RefreshValues(Data data)
+	{
+		if (data == null || _setters.Count == 0) return;
+
+		_data = data;
+
+		_nameLabel.Text = $"正在编辑:{_data.Name}";
+
+		foreach (var kvp in _data.Properties)
+		{
+			if (_setters.TryGetValue(kvp.Key, out Action<object> set))
+			{
+				set(kvp.Value);
+			}
+		}
 	}
 
 	private Control CreateEditorForValue(string key, object value)
@@ -128,6 +154,7 @@ public partial class InfoEditPanel : Control
 			_data.Properties[key] = newText;
 			OnValueChanged(key, newText);
 		};
+		_setters[key] = v => lineEdit.Text = v?.ToString() ?? "";
 		return lineEdit;
 	}
 
@@ -163,6 +190,7 @@ public partial class InfoEditPanel : Control
         	_data.Properties[key] = newInt;
 			OnValueChanged(key, newInt);
         };
+        _setters[key] = v => spinBox.SetValueNoSignal(Convert.ToDouble(Convert.ToInt64(v)));
         return spinBox;
     }
 
@@ -189,6 +217,7 @@ public partial class InfoEditPanel : Control
 			lineEdit.Text = $"{newDouble}";
 			OnValueChanged(key, newDouble);
 		};
+		_setters[key] = v => lineEdit.Text = $"{v}";
 		return lineEdit;
 	}
 
@@ -226,6 +255,7 @@ public partial class InfoEditPanel : Control
 			_data.Properties[key] = pressed;
 			OnValueChanged(key, pressed);
 		};
+        _setters[key] = v => checkBox.SetPressedNoSignal(v is bool b && b);
         return checkBox;
     }
 
@@ -252,6 +282,11 @@ public partial class InfoEditPanel : Control
             _data.Properties[key] = newEnum;
 			OnValueChanged(key, newEnum);
         };
+        _setters[key] = v =>
+        {
+            int idx = Array.IndexOf(values, v);
+            if (idx >= 0) optionButton.Select(idx);
+        };
         return optionButton;
     }
 
@@ -259,8 +294,8 @@ public partial class InfoEditPanel : Control
 	{
 		HBoxContainer hBoxContainer = new();
 
-		//LineEdit[] lineEdits = new LineEdit[3];
-		
+		LineEdit[] lineEdits = new LineEdit[3];
+
 		for(int i = 0; i < 3; i++)
 		{
 			int index = i; // 捕获当前索引
@@ -292,7 +327,18 @@ public partial class InfoEditPanel : Control
 				beat.Values[index] = (int)newInt;
 				OnValueChanged(key, beat);
 			};
+
+			lineEdits[i] = lineEdit;
 		}
+
+		_setters[key] = v =>
+		{
+			if (v is not Beat beat) return;
+			for (int i = 0; i < 3; i++)
+			{
+				lineEdits[i].Text = beat.Values[i].ToString();
+			}
+		};
 
 		return hBoxContainer;
 	}

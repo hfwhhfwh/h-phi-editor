@@ -110,7 +110,7 @@ public partial class EventEditPanel : BaseEditPanel
         VerLineCount = 5;
 
 		//设置multiMesh
-		RegisterMultiMesh("Event", eventHoldTexture, 4096, 1);
+		Meshes.Register("Event", eventHoldTexture, 4096, 1);
 
 		// 设置_textOverlay
 		_textOverlay = new Control();
@@ -260,7 +260,7 @@ public partial class EventEditPanel : BaseEditPanel
 			if(alphaEvents != null) count += alphaEvents.Count;
 			if(speedEvents != null) count += speedEvents.Count;
             
-            EnsureMultiMeshCapacity("Event", count);
+            Meshes.EnsureCapacity("Event", count);
         }
 
 		// 为实际存在的 event 渲染
@@ -293,7 +293,7 @@ public partial class EventEditPanel : BaseEditPanel
 				}
 
 				//使用MultimeshInstance渲染
-				RenderLongObject(
+				Meshes.RenderLongObject(
 					key: "Event",
 					localX: localX,
 					startBeat: startBeat,
@@ -311,7 +311,7 @@ public partial class EventEditPanel : BaseEditPanel
             float chartPosX = -675 + _dragPlaceComponent.verLineIndex * (1350f / (VerLineCount - 1));
 			float localX = _coordComponent.GetPanelPosX(chartPosX);
 
-            RenderLongObject(
+            Meshes.RenderLongObject(
                 key: "Event",
 				localX: localX,
 				startBeat: _dragPlaceComponent.StartBeat, // 确保startBeat和endBeat的大小关系正确
@@ -330,7 +330,7 @@ public partial class EventEditPanel : BaseEditPanel
 				float localX = VerMargin + EventTypeToRatioX(item.Type) * (Size.X - 2 * VerMargin);
 				Beat startBeat = new Beat(item.Snapshot.StartTime) + _pasteBeatDelta;
 				Beat endBeat = new Beat(item.Snapshot.EndTime) + _pasteBeatDelta;
-				RenderLongObject(
+				Meshes.RenderLongObject(
 					key: "Event",
 					localX: localX,
 					startBeat: startBeat,

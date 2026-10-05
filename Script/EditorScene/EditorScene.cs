@@ -83,35 +83,11 @@ public partial class EditorScene : Node
     private EditorSelectionController _selectionController;
     private EditorUIManager _uiManager;
     private SettingsController _settingsController;
+    private EditorJudgeLineController _judgeLineController;
 
-    // ---- 兼容既有代码的只读访问器：数据实际存放在 EditorContext 中 ----
+    // ---- 读取 EditorContext 的便捷访问器（数据实际存放在 Context 中）----
     private Chart editingChart => _context?.EditingChart;
     private string editingChartId => _context?.EditingChartId;
-
-    private int EditingLineId
-    {
-        get => _context?.EditingLineId ?? 0;
-        set { if (_context != null) _context.EditingLineId = value; }
-    }
-
-    private int EditingLayer
-    {
-        get => _context?.EditingLayer ?? 0;
-        set { if (_context != null) _context.EditingLayer = value; }
-    }
-
-    // ---- 视图/时间状态的读写入口，全部转发到 EditorContext ----
-    public float BeatValue
-    {
-        get => _context?.BeatValue ?? 0f;
-        set { if (_context != null) _context.BeatValue = value; }
-    }
-
-    public double ChartTime
-    {
-        get => _context?.ChartTime ?? 0d;
-        set { if (_context != null) _context.ChartTime = value; }
-    }
 
     // 皮肤资源包（由 SettingsController 持有与应用）
     private bool _isReady = false;
@@ -302,6 +278,12 @@ public partial class EditorScene : Node
         {
             panel.Initialize(_context, _chartEditService);
         }
+
+        // 信息面板同样直接持有命令入口，属性修改不再经 EditorScene 转发；
+        // 同时注入 Context，让它们在撤销/重做后能按对象引用重新定位并回填数值。
+        noteInfoPanel.Initialize(_context, _chartEditService);
+        eventInfoPanel.Initialize(_context, _chartEditService);
+        bpmInfoPanel.Initialize(_context, _chartEditService);
     }
 
     /// <summary>
@@ -345,6 +327,11 @@ public partial class EditorScene : Node
             noteEditPanel, eventEditPanel, bpmEditPanel,
             noteInfoPanel, eventInfoPanel, bpmInfoPanel,
             _deleteBtn);
+
+        // ---- 判定线与事件层 ----
+        _judgeLineController = new EditorJudgeLineController { Name = "EditorJudgeLineController" };
+        AddChild(_judgeLineController);
+        _judgeLineController.Initialize(_context, _chartEditService, _inputManager, chooseLinePanel);
 
         // ---- 设置：编辑器设置 / 全局设置 / 资源包 ----
         // 必须在加载任务开始前就绪：读取谱面时会先载入该谱面的编辑器设置。
@@ -405,54 +392,6 @@ public partial class EditorScene : Node
 
     private void InitEditor()
     {
-        // 设置chooseLinePanel
-        chooseLinePanel.Visible = false;
-        chooseLinePanel.LineSelected += SetEditingLine;
-        chooseLinePanel.AddLineRequested += AddLine;
-        chooseLinePanel.DeleteLineRequested += DeleteLine;
-        chooseLinePanel.RefreshRequested += RefreshChooseLinePanel;
-        chooseLinePanel.LayerSelected += (int index) =>
-        {
-            if(index < 0 || index > 4)
-            {
-                GD.PrintErr($"[{Name}] EventLayer索引越界:{index}");
-                return;
-            }
-
-            List<EventLayer> eventLayers = editingChart.JudgeLineList[EditingLineId].EventLayers;
-
-            // 如果列表元素不够，用 null 填充到目标索引
-            while (eventLayers.Count <= index)
-            {
-                eventLayers.Add(null);
-            }
-
-            if (eventLayers[index] == null)
-            {
-                eventLayers[index] = new();
-            }
-
-            EditingLayer = index;
-
-            GD.Print($"[{Name}] 切换到事件层:{index}");
-        };
-
-        // ---- 信息面板：属性修改直接走 ChartEditService ----
-        Subscribe(
-            SetNoteProperty,
-            h => noteInfoPanel.OnNotePropertyChanged += h,
-            h => noteInfoPanel.OnNotePropertyChanged -= h);
-
-        Subscribe(
-            SetEventProperty,
-            h => eventInfoPanel.PropertyChanged += h,
-            h => eventInfoPanel.PropertyChanged -= h);
-
-        Subscribe(
-            SetBpmProperty,
-            h => bpmInfoPanel.PropertyChanged += h,
-            h => bpmInfoPanel.PropertyChanged -= h);
-
         // ---- 界面：菜单栏、工具栏按钮、标签、面板显隐 ----
         _uiManager.Initialize(
             BuildViewRefs(),
@@ -545,9 +484,8 @@ public partial class EditorScene : Node
         global.GotoScene("res://Scene/play_scene.tscn");
     }
 
-    #region 播放控制（场景按钮入口）
+    #region 场景按钮入口（editor_scene.tscn 的信号连接直接指向这些方法）
 
-    // editor_scene.tscn 的信号连接直接指向 EditorScene 上的这些方法，因此保留为转发入口。
     public void OnPlayButtonClicked()
     {
         _playbackController.PlayWithPlayer();
@@ -568,101 +506,9 @@ public partial class EditorScene : Node
         _playbackController.PausePlayer();
     }
 
-    #endregion
-
-    #region JudgeLine相关方法
-
-    private void OnChooseLineClicked()
+    public void OnChooseLineClicked()
     {
-        if(chooseLinePanel.Visible == false)
-        {
-            chooseLinePanel.Visible = true;
-            _inputManager.IsEnable = false;
-
-            RefreshChooseLinePanel();
-            chooseLinePanel.SetEventLayer(EditingLayer);
-        }
-        else
-        {
-            chooseLinePanel.Visible = false;
-            _inputManager.IsEnable = true;
-        }
-    }
-
-    private void RefreshChooseLinePanel()
-    {
-        //准备LineInfo数据
-        List<ChooseLinePanel.LineInfo> lineInfos = new();
-        for (int i = 0; i < editingChart.JudgeLineList.Count; i++)
-        {
-            JudgeLine line = editingChart.JudgeLineList[i];
-
-            lineInfos.Add(new ChooseLinePanel.LineInfo
-            {
-                Id = i, // 判定线的编号从0开始
-                NoteCount = line.NumOfNotes,
-                //NextEventTime = //TODO 在ChooseLinePanel显示下一个事件的时间
-            });
-        }
-
-        //设置LineInfo数据
-        chooseLinePanel.ShowInfos(lineInfos);
-    }
-
-    private void SetEditingLine(int id)
-    {
-        GD.Print($"[{this.Name}] 用户选择了Line:{id}");
-
-        // 判定线只写入 Context，各面板通过 Context 读取；标签由 EditingLineChanged 统一更新
-        EditingLineId = id;
-
-        chooseLinePanel.Visible = false;
-        _inputManager.IsEnable = true;
-    }
-
-    private void AddLine()
-    {
-        _chartEditService.AddLine(editingChart.JudgeLineList, -1);
-    }
-
-    private void DeleteLine(int id)
-    {
-        if(editingChart.JudgeLineList.Count <= 1)
-        {
-            GD.Print($"[{this.Name}] 最少保留一条判定线，删除失败");
-            PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
-            return;
-        }
-        _chartEditService.DeleteLine(editingChart.JudgeLineList, id);
-    }
-
-    #endregion
-
-    #region Note相关方法
-
-    private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
-    {
-        _chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
-    }
-
-    #endregion
-
-    #region LineEvent相关方法
-
-    private void SetEventProperty(
-        int lineId, int layer, LineEventEnum lineEventEnum, int index,
-        LineEventPropertyType propertyType, object value)
-    {
-        _chartEditService.SetEventProperty(lineId, layer, lineEventEnum, index, propertyType, value);
-    }
-
-    #endregion
-
-    #region Bpm相关方法
-
-    private void SetBpmProperty(BpmEvent bpmEvent, string property, object value)
-    {
-        _chartEditService.SetBpmProperty(bpmEvent, property, value);
+        _judgeLineController.ToggleChooseLinePanel();
     }
 
     #endregion

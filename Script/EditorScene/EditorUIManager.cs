@@ -12,7 +12,7 @@ using System.Collections.Generic;
 /// 4. 面板显隐（视图菜单开关、信息面板确认关闭）。
 ///
 /// 约定：它只负责界面本身。修改谱面数据一律通过 ChartEditService，
-/// 复制粘贴交给 EditorClipboardController，判定线增删仍由 EditorScene 协调。
+/// 复制粘贴交给 EditorClipboardController，判定线增删交给 EditorJudgeLineController。
 /// </summary>
 public partial class EditorUIManager : Node
 {

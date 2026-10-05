@@ -360,6 +360,7 @@ eventHoldTexture = ExtResource("21_605qm")
 
 [node name="BpmEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=1178596112]
 visible = false
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("20_e4drf")

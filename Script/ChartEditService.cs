@@ -194,6 +194,15 @@ public partial class ChartEditService : Node
 
     public void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
+        if (EditingChart?.JudgeLineList == null ||
+            lineId < 0 || lineId >= EditingChart.JudgeLineList.Count ||
+            EditingChart.JudgeLineList[lineId].Notes == null ||
+            noteIndex < 0 || noteIndex >= EditingChart.JudgeLineList[lineId].Notes.Count)
+        {
+            GD.PrintErr($"[{Name}] 修改 note 属性失败：索引不合法");
+            return;
+        }
+
         Note note = EditingChart.JudgeLineList[lineId].Notes[noteIndex];
         _history.Execute(new SetNotePropertyCommand(lineId, note, property, value), this);
         GD.Print($"[{Name}] 修改note(line{lineId}_{noteIndex})属性 {property} : {value}");

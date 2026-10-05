@@ -46,7 +46,7 @@ public partial class BpmEditPanel : BaseEditPanel
 		VerLineCount = 2;
 
 		//设置multiMesh
-		RegisterMultiMesh(MultiMeshKey, _texture, 128, 1);
+		Meshes.Register(MultiMeshKey, _texture, 128, 1);
 
         // 设置数值文字
         _textOverlay = new Control
@@ -131,7 +131,7 @@ public partial class BpmEditPanel : BaseEditPanel
 
         // 额外绘制即将创建的BPM事件
         if(_dragPlaceComponent.IsDragging){
-            RenderObject(
+            Meshes.RenderObject(
                 key: MultiMeshKey,
                 localX: VerMargin, // 第一列
                 beat: _dragPlaceComponent.EndBeat,
@@ -145,7 +145,7 @@ public partial class BpmEditPanel : BaseEditPanel
         {
             foreach (BpmEventSnapshot snapshot in _bpmEventClipBoard.Bpms)
             {
-                RenderObject(
+                Meshes.RenderObject(
                     key: MultiMeshKey,
                     localX: VerMargin,
                     beat: new Beat(snapshot.StartTime) + _pasteBeatDelta,
@@ -179,7 +179,7 @@ public partial class BpmEditPanel : BaseEditPanel
                     renderEffect = AboutToDeleteRender;
                 }
 
-                RenderObject(
+                Meshes.RenderObject(
 					key: MultiMeshKey,
 					localX: VerMargin, // 第一列
 					beat: new Beat(bpmEvent.StartTime),
