@@ -17,6 +17,54 @@ public abstract partial class BaseChartPlayer : Node
 
     protected int chartOffset;                        // 谱面偏移（以毫秒计量）
 
+    /// <summary>已订阅的谱面事件总线，null 表示未订阅</summary>
+    private ChartEventBus _eventBus;
+
+    /// <summary>
+    /// 注入谱面结构变化事件总线（传 null 表示取消订阅）。
+    /// 订阅与退订统一放在基类，避免每个子类各写一遍、漏掉就会内存泄漏。
+    /// </summary>
+    public void SetEventBus(ChartEventBus eventBus)
+    {
+        if (_eventBus == eventBus) return;
+
+        UnsubscribeEventBus();
+
+        _eventBus = eventBus;
+        if (_eventBus == null) return;
+
+        _eventBus.LineCountChanged += OnLineCountChanged;
+        _eventBus.LineFatherChanged += OnLineFatherChanged;
+        _eventBus.NoteCountChanged += OnNoteCountChanged;
+    }
+
+    private void UnsubscribeEventBus()
+    {
+        if (_eventBus == null) return;
+
+        _eventBus.LineCountChanged -= OnLineCountChanged;
+        _eventBus.LineFatherChanged -= OnLineFatherChanged;
+        _eventBus.NoteCountChanged -= OnNoteCountChanged;
+        _eventBus = null;
+    }
+
+    public override void _ExitTree()
+    {
+        UnsubscribeEventBus();
+
+        base._ExitTree();
+    }
+
+    /// <summary>判定线数量变化（子类按需重写）</summary>
+    protected virtual void OnLineCountChanged() { }
+
+    /// <summary>判定线父级变化（子类按需重写）</summary>
+    protected virtual void OnLineFatherChanged(int lineId, int father) { }
+
+    /// <summary>某条判定线的音符数量变化（子类按需重写）</summary>
+    protected virtual void OnNoteCountChanged(int lineId) { }
+
+
     // 返回数组 + 有效长度
     public abstract (JudgeLineRenderData[] Data, int Count) GetLineRenderDatas();
     public abstract (NoteRenderData[] Data, int Count) GetNoteRenderDatas();

@@ -237,6 +237,9 @@ public partial class EditorScene : Node
                 chartPlayer.Initialize(chartPlayParent, _context.EditingChart, bgImageBlurred, audioStream, hitEffectPool);
                 chartRenderer.Initialize(chartPlayParent);
 
+                // 订阅谱面结构变化（判定线/音符增删），让播放器重建拓扑与渲染缓冲
+                chartPlayer.SetEventBus(_chartEditService.Events);
+
                 chartPlayParent.ClipContents = true;
 
                 _bgImageRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);
@@ -332,6 +335,9 @@ public partial class EditorScene : Node
         _judgeLineController = new EditorJudgeLineController { Name = "EditorJudgeLineController" };
         AddChild(_judgeLineController);
         _judgeLineController.Initialize(_context, _chartEditService, _inputManager, chooseLinePanel);
+
+        // 判定线面板订阅谱面结构变化（总线实例由 ChartEditService 持有）
+        chooseLinePanel.Initialize(_chartEditService.Events);
 
         // ---- 设置：编辑器设置 / 全局设置 / 资源包 ----
         // 必须在加载任务开始前就绪：读取谱面时会先载入该谱面的编辑器设置。

@@ -51,13 +51,13 @@ public class AddLineCommand : IEditCommand
             _actualIndex = _insertAt;
         }
 
-        ChartEventBus.NotifyLineCountChanged();
+        service.Events.NotifyLineCountChanged();
     }
 
     public void Undo(ChartEditService service)
     {
         service.EditingChart.JudgeLineList.Remove(_created);
-        ChartEventBus.NotifyLineCountChanged();
+        service.Events.NotifyLineCountChanged();
     }
 }
 
@@ -89,7 +89,7 @@ public class DeleteLinesCommand : IEditCommand
         }
 
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyLineCountChanged();
+        service.Events.NotifyLineCountChanged();
     }
 
     public void Undo(ChartEditService service)
@@ -103,6 +103,6 @@ public class DeleteLinesCommand : IEditCommand
             list.Insert(idx, _removed[i]);
         }
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyLineCountChanged();
+        service.Events.NotifyLineCountChanged();
     }
 }

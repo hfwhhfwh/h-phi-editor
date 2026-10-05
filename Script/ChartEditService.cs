@@ -7,6 +7,12 @@ using System.Linq;
 
 public partial class ChartEditService : Node
 {
+    /// <summary>
+    /// 谱面结构变化事件总线。
+    /// 命令在执行/撤销后通过它广播，播放器与判定线面板注入同一个实例。
+    /// </summary>
+    public ChartEventBus Events { get; } = new();
+
     private Chart _editingChart;
     public Chart EditingChart
     {

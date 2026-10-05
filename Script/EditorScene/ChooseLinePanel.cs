@@ -22,6 +22,9 @@ public partial class ChooseLinePanel : Panel
 	[Export] private Button[] layerButtons;
 	private ButtonGroup layerButtonGroup;
 
+	/// <summary>谱面结构变化总线，由 EditorScene 注入</summary>
+	private ChartEventBus _eventBus;
+
 	[Signal] public delegate void RefreshRequestedEventHandler();
 	[Signal] public delegate void CloseButtonClickedEventHandler();
 
@@ -55,19 +58,32 @@ public partial class ChooseLinePanel : Panel
 			};
 			layerButtons[i].ButtonGroup = layerButtonGroup;
 		}
-
-		// 监听谱面结构变化
-		ChartEventBus.LineCountChanged += RequestRefresh;
-		// 音符数量变化时也要刷新（原来只在判定线数量变化时刷新，音符数量会显示过期数据）
-		ChartEventBus.NoteCountChanged += OnNoteCountChanged;
     }
+
+	/// <summary>
+	/// 注入谱面事件总线（由 EditorScene 传入 ChartEditService.Events）。
+	/// 判定线数量或音符数量变化时刷新列表。
+	/// </summary>
+	public void Initialize(ChartEventBus eventBus)
+	{
+		_eventBus = eventBus;
+
+		if (_eventBus == null) return;
+
+		_eventBus.LineCountChanged += RequestRefresh;
+		// 音符数量变化时也要刷新（原来只在判定线数量变化时刷新，音符数量会显示过期数据）
+		_eventBus.NoteCountChanged += OnNoteCountChanged;
+	}
 
     public override void _ExitTree()
     {
         base._ExitTree();
 
-		ChartEventBus.LineCountChanged -= RequestRefresh;
-		ChartEventBus.NoteCountChanged -= OnNoteCountChanged;
+		if (_eventBus == null) return;
+
+		_eventBus.LineCountChanged -= RequestRefresh;
+		_eventBus.NoteCountChanged -= OnNoteCountChanged;
+		_eventBus = null;
     }
 
 	private void OnNoteCountChanged(int lineId)

@@ -55,7 +55,7 @@ public class AddNoteCommand : IEditCommand
 
         line.SortNotes();
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyNoteCountChanged(_lineId);
+        service.Events.NotifyNoteCountChanged(_lineId);
     }
 
     public void Undo(ChartEditService service)
@@ -63,7 +63,7 @@ public class AddNoteCommand : IEditCommand
         var line = service.EditingChart.JudgeLineList[_lineId];
         line.Notes.Remove(_created);
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyNoteCountChanged(_lineId);
+        service.Events.NotifyNoteCountChanged(_lineId);
     }
 }
 
@@ -133,7 +133,7 @@ public class PasteNotesCommand : IEditCommand
 
         line.SortNotes();
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyNoteCountChanged(_targetLineId);
+        service.Events.NotifyNoteCountChanged(_targetLineId);
     }
 
     public void Undo(ChartEditService service)
@@ -146,7 +146,7 @@ public class PasteNotesCommand : IEditCommand
         }
 
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyNoteCountChanged(_targetLineId);
+        service.Events.NotifyNoteCountChanged(_targetLineId);
     }
 
 }
@@ -176,7 +176,7 @@ public class DeleteNotesCommand : IEditCommand
         if (line.Notes == null) return;
         foreach (var n in _notes) line.Notes.Remove(n);
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyNoteCountChanged(_lineId);
+        service.Events.NotifyNoteCountChanged(_lineId);
     }
 
     public void Undo(ChartEditService service)
@@ -190,7 +190,7 @@ public class DeleteNotesCommand : IEditCommand
         }
         line.SortNotes();
         service.RefreshNoteMultiHold();
-        ChartEventBus.NotifyNoteCountChanged(_lineId);
+        service.Events.NotifyNoteCountChanged(_lineId);
     }
 }
 
