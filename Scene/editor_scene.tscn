@@ -53,23 +53,23 @@
 
 [node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "_bgImageRect", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_boxSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "_deleteBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
-slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/SlideJoystick")
-zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
+slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/SlideJoystick")
+zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
 theme = ExtResource("4_v3wio")
-noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer/NoteEditPanel")
-eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer/EventEditPanel")
-bpmEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/BpmEditPanel")
-chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
-chartRenderer = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/ChartRenderer")
-chartPlayParent = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/Parent")
-_bgImageRect = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/Parent/BgImage")
-editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel")
-rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel")
-chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChooseLinePanel")
-noteInfoPanel = NodePath("EditorPanel/SafeArea/NoteInfoPanel")
-eventInfoPanel = NodePath("EditorPanel/SafeArea/EventInfoPanel")
-bpmInfoPanel = NodePath("EditorPanel/SafeArea/BpmInfoPanel")
-noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/NoteChooser")
+noteEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel/SplitContainer/NoteEditPanel")
+eventEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel/SplitContainer/EventEditPanel")
+bpmEditPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel/BpmEditPanel")
+chartPlayer = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer/ChartPlayer")
+chartRenderer = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer/ChartRenderer")
+chartPlayParent = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer/Parent")
+_bgImageRect = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer/Parent/BgImage")
+editPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel")
+rightPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel")
+chooseLinePanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChooseLinePanel")
+noteInfoPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/NoteInfoPanel")
+eventInfoPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/EventInfoPanel")
+bpmInfoPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/BpmInfoPanel")
+noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/NoteChooser")
 fileMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/FileButton")
 editMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/EditButton")
 viewMenuButton = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/ViewButton")
@@ -81,13 +81,13 @@ _undoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuB
 _redoBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/RedoButton")
 _copyBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control/Copy")
 _pasteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control2/Paste")
-_multiSelectBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/MultiSelect")
-_boxSelectBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft/BoxSelect")
+_multiSelectBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/MultiSelect")
+_boxSelectBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/BoxSelect")
 _pasteConfirmBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control2/PasteApply")
 _pasteCancelBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control/PasteCancel")
-_deleteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Delete")
+_deleteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Delete")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
-fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/FPSLabel")
+fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/FPSLabel")
 editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
 
 [node name="EditorPanel" type="PanelContainer" parent="." unique_id=302158127]
@@ -235,28 +235,37 @@ layout_mode = 2
 theme = ExtResource("4_v3wio")
 text = "模式：XXXX"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer" unique_id=1705874636]
-custom_minimum_size = Vector2(0, 70)
+[node name="Control" type="Control" parent="EditorPanel/SafeArea/VBoxContainer" unique_id=752107780]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="VBoxContainerLeft" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=2085138348]
+[node name="HBoxContainer" type="HBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control" unique_id=1705874636]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainerLeft" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer" unique_id=2085138348]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 
-[node name="SlideJoystick" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1523606408 instance=ExtResource("3_fkvcd")]
+[node name="SlideJoystick" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft" unique_id=1523606408 instance=ExtResource("3_fkvcd")]
 custom_minimum_size = Vector2(60, 150)
 layout_mode = 2
 MaxRadius = 90.0
 joystickDir = 2
 
-[node name="ZoomJoystick" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=701843517 instance=ExtResource("3_fkvcd")]
+[node name="ZoomJoystick" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft" unique_id=701843517 instance=ExtResource("3_fkvcd")]
 custom_minimum_size = Vector2(60, 120)
 layout_mode = 2
 MaxRadius = 80.0
 joystickDir = 2
 
-[node name="MultiSelect" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=1012652481]
+[node name="MultiSelect" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft" unique_id=1012652481]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme = ExtResource("4_v3wio")
@@ -265,7 +274,7 @@ icon = ExtResource("10_d50ot")
 icon_alignment = 1
 expand_icon = true
 
-[node name="BoxSelect" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/VBoxContainerLeft" unique_id=565744039]
+[node name="BoxSelect" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft" unique_id=565744039]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme = ExtResource("4_v3wio")
@@ -274,26 +283,26 @@ icon = ExtResource("12_u8jxy")
 icon_alignment = 1
 expand_icon = true
 
-[node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=1479048648]
+[node name="MainPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer" unique_id=1479048648]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="DebugText" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1197970040]
+[node name="DebugText" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel" unique_id=1197970040]
 visible = false
 layout_mode = 2
 size_flags_vertical = 0
 theme = ExtResource("4_v3wio")
 text = "DebugText"
 
-[node name="ChartPlayerContainer" type="AspectRatioContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1664464024]
+[node name="ChartPlayerContainer" type="AspectRatioContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel" unique_id=1664464024]
 layout_mode = 2
 ratio = 1.5
 
-[node name="Parent" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1661683536]
+[node name="Parent" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1661683536]
 clip_contents = true
 layout_mode = 2
 
-[node name="BgImage" type="TextureRect" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer/Parent" unique_id=1566319886]
+[node name="BgImage" type="TextureRect" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer/Parent" unique_id=1566319886]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -303,14 +312,14 @@ grow_vertical = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854]
+[node name="ChartPlayer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1974837854]
 script = ExtResource("7_75obp")
 _defaultTapSound = ExtResource("7_r1xvh")
 _defaultDragSound = ExtResource("8_wx7m8")
 _defaultFlickSound = ExtResource("9_3s8ev")
 _defaultHitFrames = ExtResource("10_wx7m8")
 
-[node name="ChartRenderer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1497791091]
+[node name="ChartRenderer" type="Node" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ChartPlayerContainer" unique_id=1497791091]
 script = ExtResource("12_roijs")
 _defaultTapTexture = ExtResource("5_57v2d")
 _defaultDragTexture = ExtResource("6_qdb1r")
@@ -326,17 +335,17 @@ _defaultHoldBodyTextureMh = ExtResource("22_c8bod")
 _defaultHoldEndTextureMh = ExtResource("23_d50ot")
 lineTexture = ExtResource("11_khybl")
 
-[node name="EditPanel" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1358625496]
+[node name="EditPanel" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel" unique_id=1358625496]
 layout_mode = 2
 touch_dragger_enabled = true
 
-[node name="SplitContainer" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=1525291669]
+[node name="SplitContainer" type="SplitContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel" unique_id=1525291669]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 4.0
 touch_dragger_enabled = true
 
-[node name="NoteEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer" unique_id=2038816721]
+[node name="NoteEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel/SplitContainer" unique_id=2038816721]
 clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -351,14 +360,14 @@ holdHeadTexture = ExtResource("8_63sjd")
 holdBodyTexture = ExtResource("9_gi1tw")
 holdEndTexture = ExtResource("10_4d80g")
 
-[node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel/SplitContainer" unique_id=825080562]
+[node name="EventEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel/SplitContainer" unique_id=825080562]
 clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("12_qdb1r")
 eventHoldTexture = ExtResource("21_605qm")
 
-[node name="BpmEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/EditPanel" unique_id=1178596112]
+[node name="BpmEditPanel" type="Panel" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/EditPanel" unique_id=1178596112]
 visible = false
 clip_contents = true
 layout_mode = 2
@@ -366,32 +375,32 @@ size_flags_horizontal = 3
 script = ExtResource("20_e4drf")
 _texture = ExtResource("23_fayi4")
 
-[node name="ChooseLinePanel" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=143035431 instance=ExtResource("16_qrq2u")]
+[node name="ChooseLinePanel" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel" unique_id=143035431 instance=ExtResource("16_qrq2u")]
 visible = false
 z_index = 10
 layout_mode = 2
 
-[node name="ToolsPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel" unique_id=1074437693]
+[node name="ToolsPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel" unique_id=1074437693]
 visible = false
 layout_mode = 2
 theme = ExtResource("4_v3wio")
 
-[node name="MarginContainer" type="MarginContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel" unique_id=640421563]
+[node name="MarginContainer" type="MarginContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ToolsPanel" unique_id=640421563]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="ScrollContainer" type="ScrollContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer" unique_id=620970614]
+[node name="ScrollContainer" type="ScrollContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ToolsPanel/MarginContainer" unique_id=620970614]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer" unique_id=588577172]
+[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel/ToolsPanel/MarginContainer/ScrollContainer" unique_id=588577172]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="RightPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer" unique_id=254800668 node_paths=PackedStringArray("normalPanel", "playingPanel", "dragPlayPanel", "tabContainer")]
+[node name="RightPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer" unique_id=254800668 node_paths=PackedStringArray("normalPanel", "playingPanel", "dragPlayPanel", "tabContainer")]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 script = ExtResource("16_khybl")
@@ -400,21 +409,21 @@ playingPanel = NodePath("TabContainer/AutoPlay")
 dragPlayPanel = NodePath("TabContainer/DragPlay")
 tabContainer = NodePath("TabContainer")
 
-[node name="TabContainer" type="TabContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel" unique_id=1742320984]
+[node name="TabContainer" type="TabContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel" unique_id=1742320984]
 layout_mode = 2
 current_tab = 0
 tabs_visible = false
 
-[node name="Normal" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer" unique_id=1556796578]
+[node name="Normal" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer" unique_id=1556796578]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal" unique_id=418662244]
+[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal" unique_id=418662244]
 layout_mode = 0
 offset_right = 80.0
 offset_bottom = 522.0
 
-[node name="Play" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=901016877]
+[node name="Play" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=901016877]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_vertical = 0
@@ -424,7 +433,7 @@ icon = ExtResource("37_j3vvy")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Play2" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=2012319992]
+[node name="Play2" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=2012319992]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_vertical = 0
@@ -434,7 +443,7 @@ icon = ExtResource("38_x7a0t")
 icon_alignment = 1
 expand_icon = true
 
-[node name="ChooseLine" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=745194988]
+[node name="ChooseLine" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=745194988]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_vertical = 0
@@ -444,7 +453,7 @@ icon = ExtResource("39_u8jxy")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Layer" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=501032959]
+[node name="Layer" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=501032959]
 visible = false
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -453,10 +462,10 @@ theme_override_font_sizes/font_size = 30
 icon_alignment = 1
 expand_icon = true
 
-[node name="NoteChooser" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=1507138121 instance=ExtResource("6_p0vr8")]
+[node name="NoteChooser" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=1507138121 instance=ExtResource("6_p0vr8")]
 layout_mode = 2
 
-[node name="Delete" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=942629998]
+[node name="Delete" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer" unique_id=942629998]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme = ExtResource("4_v3wio")
@@ -464,17 +473,17 @@ icon = ExtResource("42_x7a0t")
 icon_alignment = 1
 expand_icon = true
 
-[node name="AutoPlay" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer" unique_id=1799361546]
+[node name="AutoPlay" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer" unique_id=1799361546]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/AutoPlay" unique_id=283714633]
+[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/AutoPlay" unique_id=283714633]
 layout_mode = 0
 offset_right = 80.0
 offset_bottom = 522.0
 
-[node name="Stop" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer" unique_id=1143620097]
+[node name="Stop" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer" unique_id=1143620097]
 texture_filter = 1
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -485,7 +494,7 @@ icon = ExtResource("42_j3vvy")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Pause" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer" unique_id=683003616]
+[node name="Pause" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer" unique_id=683003616]
 texture_filter = 1
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -496,17 +505,17 @@ icon = ExtResource("43_x7a0t")
 icon_alignment = 1
 expand_icon = true
 
-[node name="DragPlay" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer" unique_id=751141413]
+[node name="DragPlay" type="Control" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer" unique_id=751141413]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/DragPlay" unique_id=983686144]
+[node name="VBoxContainer" type="VBoxContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/DragPlay" unique_id=983686144]
 layout_mode = 0
 offset_right = 80.0
 offset_bottom = 522.0
 
-[node name="Play" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer" unique_id=355995277]
+[node name="Play" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer" unique_id=355995277]
 texture_filter = 1
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -517,7 +526,7 @@ icon = ExtResource("37_j3vvy")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Back" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer" unique_id=705931336]
+[node name="Back" type="Button" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer" unique_id=705931336]
 texture_filter = 1
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -528,7 +537,7 @@ icon = ExtResource("5_d50ot")
 icon_alignment = 1
 expand_icon = true
 
-[node name="FPSLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel" unique_id=2096550141]
+[node name="FPSLabel" type="Label" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel" unique_id=2096550141]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 size_flags_vertical = 8
@@ -539,20 +548,20 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 1
 
-[node name="NoteInfoPanel" parent="EditorPanel/SafeArea" unique_id=1318802048 instance=ExtResource("20_mm2kl")]
+[node name="NoteInfoPanel" parent="EditorPanel/SafeArea/VBoxContainer/Control" unique_id=1318802048 instance=ExtResource("20_mm2kl")]
 visible = false
 z_index = 10
-layout_mode = 2
+layout_mode = 1
 
-[node name="EventInfoPanel" parent="EditorPanel/SafeArea" unique_id=1587088222 instance=ExtResource("28_605qm")]
+[node name="EventInfoPanel" parent="EditorPanel/SafeArea/VBoxContainer/Control" unique_id=1587088222 instance=ExtResource("28_605qm")]
 visible = false
 z_index = 10
-layout_mode = 2
+layout_mode = 1
 
-[node name="BpmInfoPanel" parent="EditorPanel/SafeArea" unique_id=818055099 instance=ExtResource("36_lc344")]
+[node name="BpmInfoPanel" parent="EditorPanel/SafeArea/VBoxContainer/Control" unique_id=818055099 instance=ExtResource("36_lc344")]
 visible = false
 z_index = 10
-layout_mode = 2
+layout_mode = 1
 
 [node name="SettingsPanel" parent="EditorPanel/SafeArea" unique_id=134848781 instance=ExtResource("34_kheud")]
 visible = false
@@ -570,10 +579,10 @@ position = Vector2(576, 324)
 enabled = false
 zoom = Vector2(0.5, 0.5)
 
-[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
-[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play2" to="." method="PlayInEditPanel"]
-[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/ChooseLine" to="." method="OnChooseLineClicked"]
-[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer/Stop" to="." method="OnStopButtonClicked"]
-[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer/Pause" to="." method="OnPauseClicked"]
-[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
-[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer/Back" to="." method="OnStopButtonClicked"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play2" to="." method="PlayInEditPanel"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/ChooseLine" to="." method="OnChooseLineClicked"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer/Stop" to="." method="OnStopButtonClicked"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/AutoPlay/VBoxContainer/Pause" to="." method="OnPauseClicked"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
+[connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/DragPlay/VBoxContainer/Back" to="." method="OnStopButtonClicked"]

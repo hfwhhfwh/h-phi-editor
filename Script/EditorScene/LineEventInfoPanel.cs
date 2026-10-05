@@ -257,19 +257,14 @@ public partial class LineEventInfoPanel : Panel
         {
             int type = EasingHelper.Convert.EasingToNumber(neo.EasingFunc, neo.EasingIO);
             int validType = type == -1 ? 1 : type;
-            
-            _lineEvent.EasingType = validType;
             NotifyPropertyChanged(LineEventPropertyType.EasingType, validType);
-            
         }
         if (neo.EasingLeft != _lastEasing.EasingLeft)
         {
-            _lineEvent.EasingLeft = neo.EasingLeft;
             NotifyPropertyChanged(LineEventPropertyType.EasingLeft, neo.EasingLeft);
         }
         if (neo.EasingRight != _lastEasing.EasingRight)
         {
-            _lineEvent.EasingRight = neo.EasingRight;
             NotifyPropertyChanged(LineEventPropertyType.EasingRight, neo.EasingRight);
         }
 
