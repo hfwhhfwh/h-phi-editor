@@ -37,7 +37,6 @@ ImageBlur="*uid://q6jaa43qjmt8"
 
 [display]
 
-window/size/always_on_top=true
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/vsync/vsync_mode=3

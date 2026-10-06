@@ -176,8 +176,8 @@ public partial class ChartService : Node
                 infoTempPath = Path.Combine(tempDir, "info.txt");
                 if (!Godot.FileAccess.FileExists(infoTempPath))
                 {
-                    GD.PrintErr("无法找到info.txt文件");
-                    PopupHelper.Instance.ShowAlert("错误", "谱面导入失败：未找到 info.txt");
+                    GD.PrintErr($"[{Name}] 无法找到info.txt文件, 临时目录: {tempDir}");
+                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt临时目录: {tempDir}");
                     return;
                 }
 

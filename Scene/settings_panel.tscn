@@ -2,12 +2,12 @@
 
 [ext_resource type="Script" uid="uid://7kr1x7y3sa1v" path="res://Script/Settings/SettingsPanel.cs" id="1_ivhfp"]
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_ykn2r"]
-[ext_resource type="StyleBox" uid="uid://2eir3yfwt18w" path="res://PanelGrey.tres" id="3_bnfmk"]
+[ext_resource type="StyleBox" uid="uid://2eir3yfwt18w" path="res://Themes/PanelGrey.tres" id="3_bnfmk"]
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
-[ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://刷新.png" id="6_iis6y"]
+[ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://Textures/刷新.png" id="6_iis6y"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_resetVSyncBtn", "_maxFpsEdit", "_resetMaxFpsBtn", "_packOptionBtn", "_resetPackBtn", "_useDefaultResourceBtn", "_resetUseDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_resetMhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit", "_resetVerLineColorBtn", "_resetVerLineWidthBtn", "_resetHorSubLineColorBtn", "_resetHorSubLineWidthBtn", "_resetHorLineColorBtn", "_resetHorLineWidthBtn", "_resetGroundLineColorBtn", "_resetGroundLineWidthBtn")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_resetVSyncBtn", "_maxFpsEdit", "_resetMaxFpsBtn", "_packOptionBtn", "_resetPackBtn", "_useDefaultResourceBtn", "_resetUseDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_userDataDirLabel", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_resetMhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit", "_resetVerLineColorBtn", "_resetVerLineWidthBtn", "_resetHorSubLineColorBtn", "_resetHorSubLineWidthBtn", "_resetHorLineColorBtn", "_resetHorLineWidthBtn", "_resetGroundLineColorBtn", "_resetGroundLineWidthBtn")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -29,6 +29,7 @@ _deletePackBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitCo
 _applyBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Apply")
 _confirmBtn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Confirm")
 _clearCasheBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer2/ClearCashe")
+_userDataDirLabel = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/UserDataDir")
 _casheSizeLabel = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer/Label2")
 _packOverview = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/ResourcePackOverview")
 _mhHighlightBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight/CheckButton")
@@ -286,11 +287,16 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="Storage" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=913838793]
-visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage" unique_id=781547910]
 layout_mode = 2
+
+[node name="UserDataDir" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer" unique_id=1434664447]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+text = "用户数据目录：XXX"
+autowrap_mode = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer" unique_id=1693687767]
 layout_mode = 2
@@ -338,6 +344,7 @@ icon_alignment = 1
 expand_icon = true
 
 [node name="Editor" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1495793183]
+visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor" unique_id=179680598]

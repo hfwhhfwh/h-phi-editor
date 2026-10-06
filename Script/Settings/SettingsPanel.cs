@@ -31,6 +31,7 @@ public partial class SettingsPanel : Control
     [Export] private Button _applyBtn;
     [Export] private Button _confirmBtn;
     [Export] private Button _clearCasheBtn;
+    [Export] private Label _userDataDirLabel;
     [Export] private Label _casheSizeLabel;
 
     [Export] private ResourcePackOverview _packOverview;
@@ -90,6 +91,7 @@ public partial class SettingsPanel : Control
             GD.Print($"成功清除缓存");
             PopupHelper.Instance.ShowAlert("提示", "成功清除缓存");
         };
+        _userDataDirLabel.Text = "用户数据目录: " + ProjectSettings.GlobalizePath("user://");
 
         VisibilityChanged += () =>
         {

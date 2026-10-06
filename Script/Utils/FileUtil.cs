@@ -193,8 +193,15 @@ public static class FileUtil
             // ZipFile.ExtractToDirectory(absoluteZipPath, absoluteExtractPath);
         }
         
+        // ① Android 上从系统文件选择器拿到的 content:// URI 先落地成真实文件
+        string localZipPath = NormalizeZipPath(zipPath);
+        if (localZipPath == null)
+        {
+            GD.PrintErr($"[UnzipFileTo] 无法获取可用的 zip 路径: {zipPath}");
+            return;
+        }
 
-        string absoluteZipPath = ProjectSettings.GlobalizePath(zipPath);
+        string absoluteZipPath = ProjectSettings.GlobalizePath(localZipPath);
         string absoluteExtractPath = ProjectSettings.GlobalizePath(extractBasePath);
 
         List<ZipNameDecoder.RawEntryInfo> rawEntries = null;
@@ -262,7 +269,61 @@ public static class FileUtil
             }
         }
 
+        // 用完删掉临时文件
+        CleanupTempZip(localZipPath);
+
         GD.Print($"解压完成: {zipPath} -> {extractBasePath}");
+    }
+
+    /// <summary>
+    /// 如果是 content:// URI（Android 文件选择器返回），就复制到 user:// 下作为临时文件。
+    /// 否则返回原路径。
+    /// </summary>
+    private static string NormalizeZipPath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        // 已经是普通路径 / user:// / res:// 直接返回
+        if (!path.StartsWith("content://", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        // 用 Godot FileAccess 打开 content:// URI（Godot 在 Android 会走 ContentResolver）
+        using var src = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
+        if (src == null)
+        {
+            GD.PrintErr($"[{Name}] NormalizeZipPath() 无法打开 content URI: {path}, 错误: {Godot.FileAccess.GetOpenError()}");
+            return null;
+        }
+
+        // 生成一个临时路径
+        string ext = ".zip";
+        string tempName = $"user://temp_import_{Guid.NewGuid():N}{ext}";
+        FileUtil.EnsureDirectoryExists(tempName.GetBaseDir());
+
+        byte[] data = src.GetBuffer((long)src.GetLength());
+        src.Close();
+
+        using var dst = Godot.FileAccess.Open(tempName, Godot.FileAccess.ModeFlags.Write);
+        if (dst == null)
+        {
+            GD.PrintErr($"[{Name}] NormalizeZipPath() 无法写入临时文件: {tempName}, 错误: {Godot.FileAccess.GetOpenError()}");
+            return null;
+        }
+        dst.StoreBuffer(data);
+        dst.Close();
+
+        GD.Print($"[{Name}] NormalizeZipPath() 已把 content URI 落地到: {tempName} ({data.Length} 字节)");
+        return tempName;
+    }
+
+    private static void CleanupTempZip(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+        if (!path.StartsWith("user://temp_import_", StringComparison.Ordinal))
+            return; // 不是我们创建的临时文件就不删
+
+        DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(path));
     }
 
     /// <summary>
