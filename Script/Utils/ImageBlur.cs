@@ -58,7 +58,16 @@ public partial class ImageBlur : Node
         }
 
         // 设置模糊材质shader
-        var shader = GD.Load<Shader>("res://Shader/blur.gdshader");
+        var shader = GD.Load<Shader>("uid://dxvyy5evfk7uh");
+        if(shader == null)
+        {
+            shader = GD.Load<Shader>("res://Shader/blur.gdshader");
+        }
+        if(shader == null)
+        {
+            GD.PushError($"[{Name}] shader 加载失败，模糊将失效");
+        }
+        
         _matH = new ShaderMaterial { Shader = shader };
         _matV = new ShaderMaterial { Shader = shader };
         _rectH.Material = _matH;
