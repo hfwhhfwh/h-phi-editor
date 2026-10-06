@@ -22,6 +22,9 @@ public partial class ChooseLinePanel : Panel
 	[Export] private Button[] layerButtons;
 	private ButtonGroup layerButtonGroup;
 
+	/// <summary>谱面结构变化总线，由 EditorScene 注入</summary>
+	private ChartEventBus _eventBus;
+
 	[Signal] public delegate void RefreshRequestedEventHandler();
 	[Signal] public delegate void CloseButtonClickedEventHandler();
 
@@ -55,17 +58,38 @@ public partial class ChooseLinePanel : Panel
 			};
 			layerButtons[i].ButtonGroup = layerButtonGroup;
 		}
-
-		// 监听谱面数据变化
-		ChartEventBus.LineCountChanged += RequestRefresh;
     }
+
+	/// <summary>
+	/// 注入谱面事件总线（由 EditorScene 传入 ChartEditService.Events）。
+	/// 判定线数量或音符数量变化时刷新列表。
+	/// </summary>
+	public void Initialize(ChartEventBus eventBus)
+	{
+		_eventBus = eventBus;
+
+		if (_eventBus == null) return;
+
+		_eventBus.LineCountChanged += RequestRefresh;
+		// 音符数量变化时也要刷新（原来只在判定线数量变化时刷新，音符数量会显示过期数据）
+		_eventBus.NoteCountChanged += OnNoteCountChanged;
+	}
 
     public override void _ExitTree()
     {
         base._ExitTree();
 
-		ChartEventBus.LineCountChanged -= RequestRefresh;
+		if (_eventBus == null) return;
+
+		_eventBus.LineCountChanged -= RequestRefresh;
+		_eventBus.NoteCountChanged -= OnNoteCountChanged;
+		_eventBus = null;
     }
+
+	private void OnNoteCountChanged(int lineId)
+	{
+		RequestRefresh();
+	}
 
 
 
@@ -128,6 +152,9 @@ public partial class ChooseLinePanel : Panel
 	/// </summary>
 	private void RequestRefresh()
 	{
+		// 面板不可见时不需要重建按钮列表
+		if (!Visible) return;
+
 		EmitSignal(SignalName.RefreshRequested);
 	}
 

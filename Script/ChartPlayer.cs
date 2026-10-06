@@ -267,11 +267,7 @@ public partial class ChartPlayer : BaseChartPlayer
         audioPool = new AudioPool(parent);
         parent.AddChild(audioPool);
 
-        //监听谱面数据变化
-        // ChartEventBus.ChartStructureChanged += OnChartStructureChanged;
-        ChartEventBus.LineCountChanged += OnLineCountChanged;
-        ChartEventBus.LineFatherChanged += OnLineFatherChanged;
-        ChartEventBus.NoteCountChanged += OnNoteCountChanged;
+        //监听谱面数据变化：总线由 EditorScene 通过 SetEventBus 注入，基类负责订阅/退订
 
         //预计算所有事件时间的秒数
         ChartDataHelper.RefreshAllEventSec(chart);
@@ -303,28 +299,22 @@ public partial class ChartPlayer : BaseChartPlayer
         base._ExitTree();
 
         _holdEffectData.Clear();
-
-        //取消订阅事件，防止内存泄漏
-        // ChartEventBus.ChartStructureChanged -= OnChartStructureChanged;
-        ChartEventBus.LineCountChanged -= OnLineCountChanged;
-        ChartEventBus.LineFatherChanged -= OnLineFatherChanged;
-        ChartEventBus.NoteCountChanged -= OnNoteCountChanged;
     }
 
-    private void OnLineCountChanged()
+    protected override void OnLineCountChanged()
     {
         // 标记需要重新生成判定线拓扑排序，在每帧更新时处理
         _needsTopologyRebuild = true;
         // _playedNotes.Clear(); // 结构变化时重置打击记录
     }
 
-    private void OnLineFatherChanged(int lineId, int father)
+    protected override void OnLineFatherChanged(int lineId, int father)
     {
         // 标记需要重新生成判定线拓扑排序，在每帧更新时处理
         _needsTopologyRebuild = true;
     }
 
-    private void OnNoteCountChanged(int lineId)
+    protected override void OnNoteCountChanged(int lineId)
     {
         // 音符数量变化不需要重建拓扑序，只需确保渲染缓冲区够大
         EnsureNoteBufferCapacity();

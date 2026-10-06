@@ -7,6 +7,12 @@ using System.Linq;
 
 public partial class ChartEditService : Node
 {
+    /// <summary>
+    /// 谱面结构变化事件总线。
+    /// 命令在执行/撤销后通过它广播，播放器与判定线面板注入同一个实例。
+    /// </summary>
+    public ChartEventBus Events { get; } = new();
+
     private Chart _editingChart;
     public Chart EditingChart
     {
@@ -194,6 +200,15 @@ public partial class ChartEditService : Node
 
     public void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
     {
+        if (EditingChart?.JudgeLineList == null ||
+            lineId < 0 || lineId >= EditingChart.JudgeLineList.Count ||
+            EditingChart.JudgeLineList[lineId].Notes == null ||
+            noteIndex < 0 || noteIndex >= EditingChart.JudgeLineList[lineId].Notes.Count)
+        {
+            GD.PrintErr($"[{Name}] 修改 note 属性失败：索引不合法");
+            return;
+        }
+
         Note note = EditingChart.JudgeLineList[lineId].Notes[noteIndex];
         _history.Execute(new SetNotePropertyCommand(lineId, note, property, value), this);
         GD.Print($"[{Name}] 修改note(line{lineId}_{noteIndex})属性 {property} : {value}");
@@ -346,7 +361,7 @@ public partial class ChartEditService : Node
 
     public void DeleteEvent(int lineId, int layer, LineEventEnum lineEventEnum, int index)
     {
-        var list = EditingChart.JudgeLineList[lineId].EventLayers[0].GetLineEvents(lineEventEnum);
+        var list = EditingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum);
 
         _history.Execute(new DeleteEventsCommand(lineId, layer, [(lineEventEnum, list[index])]), this);
     }
@@ -395,7 +410,19 @@ public partial class ChartEditService : Node
 
     internal void InsertLineEventSorted(List<LineEvent> lineEvents, LineEvent lineEvent)
     {
-        int index = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
-        lineEvents.Insert(index + 1, lineEvent);
+        if(lineEvents is null)
+        {
+            lineEvents = [lineEvent];
+        }
+        else if(lineEvents.Count == 0)
+        {
+            lineEvents.Add(lineEvent);
+        }
+        else
+        {
+            int index = ChartDataHelper.BinarySearchLatestEvent(lineEvents, lineEvent.startSec);
+            lineEvents.Insert(index + 1, lineEvent);
+        }
+        
     }
 }

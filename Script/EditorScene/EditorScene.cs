@@ -7,13 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-public enum EditPanelType
-{
-    NoteEdit,
-    LineEventEdit,
-    BpmEventEdit
-}
-
 public partial class EditorScene : Node
 {
     [ExportGroup("虚拟摇杆引用")]
@@ -68,115 +61,36 @@ public partial class EditorScene : Node
     [Export] private Label fpsLabel;
     [Export] private Label editModeLabel;
 
-    private string editingChartId; // 正在编辑的铺面的ID
-    private Chart editingChart; // 正在编辑的铺面
-    private int editingLineId; // 正在编辑的判定线编号
-    private int editingLayer = 0; // 正在编辑的事件层
-
     private InputManager _inputManager;
     private ChartService _chartService;
     private ChartEditService _chartEditService;
     private EditorSettings _editorSettings;
 
+    /// <summary>
+    /// 场景级状态中心：谱面、判定线、事件层、视图与时间状态的唯一来源。
+    /// </summary>
+    private EditorContext _context;
+
+    // 场景中可调的视图初值，在 _Ready 中写入 EditorContext；此后视图状态只存在于 Context。
     [Export] private float horOffset;
 	[Export] private float horSeparation = 100f;
-    private float horOffsetSmoothed; // 用于使竖直滚动更平滑
-	private float horSeparationSmoothed; // 用于使竖直缩放更平滑
     [Export] private float groundY = 450f; // 当前时间点在EditPanel上的Y坐标（向下偏移）
 
-    private bool isPlaying; // 是否正在播放铺面
-    private float _horBeatOffset;
-    private double _chartTime; // 谱面当前时间
+    // ---- 场景级控制器（EditorScene 只负责组装与生命周期）----
+    private EditorInputController _inputController;
+    private EditorPlaybackController _playbackController;
+    private EditorClipboardController _clipboardController;
+    private EditorSelectionController _selectionController;
+    private EditorUIManager _uiManager;
+    private SettingsController _settingsController;
+    private EditorJudgeLineController _judgeLineController;
 
-    public float BeatValue
-    {
-        get
-        {
-            return _horBeatOffset;
-        }
-        set
-        {
-            // 谱面还没加载完成时，先只更新 beat 偏移，等加载完再由 _Process 同步时间
-            if (editingChart?.BpmList == null)
-                return;
+    // ---- 读取 EditorContext 的便捷访问器（数据实际存放在 Context 中）----
+    private Chart editingChart => _context?.EditingChart;
+    private string editingChartId => _context?.EditingChartId;
 
-            _horBeatOffset = value;
-            _chartTime = TimeUtil.BeatToSecond(_horBeatOffset, editingChart.BpmList);
-        }
-    }
-
-    public double ChartTime
-    {
-        get
-        {
-            return _chartTime;
-        }
-        set
-        {
-            // 谱面还没加载完成时，先只更新 beat 偏移，等加载完再由 _Process 同步时间
-            if (editingChart?.BpmList == null)
-                return;
-
-            _chartTime = value;
-            _horBeatOffset = TimeUtil.SecondToBeat((float)_chartTime, editingChart.BpmList);
-            horOffset = _horBeatOffset * horSeparation;
-        }
-    }
-
-    // 皮肤资源包
-    private ResourcePack _resourcePack;
-
+    // 皮肤资源包（由 SettingsController 持有与应用）
     private bool _isReady = false;
-
-    // 剪切板
-    private EditorClipboard _editorClipboard = new();
-
-    /// <summary>
-    /// 当前哪一个面板正在进行多选
-    /// </summary>
-    private EditPanelType _selectFocusPanel;
-
-    public EditPanelType SelectFocusPanel 
-    {
-        get => _selectFocusPanel;
-        set
-        {
-            _selectFocusPanel = value;
-
-            // 同时设置所有面板是否选择对象
-            List<BaseEditPanel> editPanels = [noteEditPanel, eventEditPanel, bpmEditPanel];
-            List<EditPanelType> editPanelTypes = [EditPanelType.NoteEdit, EditPanelType.LineEventEdit, EditPanelType.BpmEventEdit];
-            
-            for(int i = 0; i < editPanels.Count; i++)
-            {
-                BaseEditPanel panel = editPanels[i];
-                EditPanelType type = editPanelTypes[i];
-
-                if(type != _selectFocusPanel) panel.DeselectAll();
-            }
-        }
-    }
-
-    /// <summary>
-    /// 对当前哪一个面板正在进行粘贴操作
-    /// </summary>
-    private EditPanelType _pasteFocusPanel;
-
-
-    private bool _isSelecting = false;
-
-    /// <summary>
-    /// 是否正在选择某些对象（Note、Event等），单选多选都算
-    /// </summary>
-    private bool IsSelecting
-    {
-        get => _isSelecting;
-        set
-        {
-            _isSelecting = value;
-            _deleteBtn.Visible = value;
-        }
-    }
 
     private readonly List<Action> _unsubscribes = new();
 
@@ -184,56 +98,9 @@ public partial class EditorScene : Node
 
     #if TOOLS
     // ---- 性能分析 ----
-    private double _setChartTimeTimeUs = 0;
-    private double _logicTimeUs = 0;
-    private double _renderTimeUs = 0;
-    private double _uiTimeUs = 0;
-    private double _drawEditPanelTimeUs = 0;
+    private double _panelSyncTimeUs = 0;
 
     #endif
-
-    /// <summary>
-	/// 用于缩放
-	/// </summary>
-	/// <param name="zoomDelta">缩放比例</param>
-	public void Zoom(float zoomDelta)
-	{
-		horSeparation *= 1f + zoomDelta;
-
-        // 限制不能缩放到负数
-        if(horSeparation < 0) horSeparation = -horSeparation;
-
-		//确保当前处于的beat不变
-		horOffset = BeatValue * horSeparation;
-	}
-
-    /// <summary>
-    /// 按照编辑面板的距离滚动
-    /// </summary>
-    /// <param name="deltaY"></param>
-    public void Slide(float deltaY)
-	{
-        horOffset += deltaY;
-        //限制不能滚动到0以下
-        if(horOffset < 0) horOffset = 0;
-
-        BeatValue = horOffset / horSeparation;
-	}
-
-    /// <summary>
-    /// 按照时间单位滚动
-    /// </summary>
-    /// <param name="deltaTime"></param>
-    private void SlideTime(float deltaTime)
-    {
-        ChartTime = ChartTime + deltaTime;
-
-        //限制不能滚动到0以下
-        if(ChartTime < 0) ChartTime = 0;
-
-        // 此时BeatValue收到牵连改变，需要更新horOffset
-        horOffset = BeatValue * horSeparation;
-    }
 
     private void Subscribe<THandler>(THandler handler,
                                      Action<THandler> add,
@@ -255,11 +122,7 @@ public partial class EditorScene : Node
     {
         #if TOOLS
         // 注册自定义监视器
-        Performance.AddCustomMonitor("EditorScene/SetChartTimeTimeUs", Callable.From(() => _setChartTimeTimeUs));
-        Performance.AddCustomMonitor("EditorScene/LogicTimeUs", Callable.From(() => _logicTimeUs));
-        Performance.AddCustomMonitor("EditorScene/RenderTimeUs", Callable.From(() => _renderTimeUs));
-        Performance.AddCustomMonitor("EditorScene/UITimeUs", Callable.From(() => _uiTimeUs));
-        Performance.AddCustomMonitor("EditorScene/DrawEditPanelTimeUs", Callable.From(() => _drawEditPanelTimeUs));
+        Performance.AddCustomMonitor("EditorScene/PanelSyncUs", Callable.From(() => _panelSyncTimeUs));
         #endif
 
         //获取节点引用
@@ -287,23 +150,15 @@ public partial class EditorScene : Node
         {
             GD.PrintErr($"[{this.Name}] EditorSettings is null");
         }
-        else
-        {
-            // 监听编辑器设置变化事件
-            _editorSettings.SettingChanged += OnEditorSettingChanged;
-        }
 
-		//绑定事件
-		_inputManager.Slide += (float x) =>
-        {
-            Slide(x * verMouseSensitivity);
-        };
-		_inputManager.Zoom += (float x) =>
-        {
-            Zoom(x * zoomMouseSensitivity);
-        };
+        // 创建场景级状态中心(EditorContext)，并把 Context / ChartEditService 注入各面板
+        InitContext();
+
+        // 创建各场景级控制器（输入、播放、剪贴板、选择、设置）
+        InitControllers();
 
         ChartInfo chartInfo = null;
+        string chartId = "";
         Image bgImage = null;
         Image bgImageBlurred = null;
         AudioStream audioStream = null;
@@ -312,30 +167,30 @@ public partial class EditorScene : Node
             ("正在读取谱面...", async () => {
                 //从global中同步数据
                 var global = GetNode<Global>("/root/Global");
-                editingChartId = global.editingChartId;
+                chartId = global.editingChartId;
 
                 // 谱面加载完成前先恢复该谱面的编辑器布局设置。
-                _editorSettings.Load(editingChartId);
+                _settingsController.LoadForChart(chartId);
 
                 // 设置正在编辑的铺面
-                chartInfo = _chartService.GetChartInfo(editingChartId);
+                chartInfo = _chartService.GetChartInfo(chartId);
 
                 // 这里 ChartLoader.LoadChart 可能涉及文件读取和 Json 解析，可以改为异步后台
                 var sw = Stopwatch.StartNew();
-                editingChart = await Task.Run(() => ChartLoader.LoadChart(chartInfo.ChartPath));
+                Chart chart = await Task.Run(() => ChartLoader.LoadChart(chartInfo.ChartPath));
                 GD.Print($"[{Name}] 读取谱面用时:{sw.ElapsedMilliseconds} ms");
-                //editingChart = ChartLoader.LoadChart(chartInfo.ChartPath);
 
-                noteEditPanel.editingChart = editingChart;
-                eventEditPanel.editingChart = editingChart;
-                bpmEditPanel.editingChart = editingChart;
+                // 谱面只在 EditorContext 中保存一份，面板通过 Context 读取
+                _context.SetChart(chartId, chart);
+                _chartEditService.EditingChart = chart;
+
                 // 将持久化设置应用到所有使用同一网格的编辑面板。
-                ApplyEditorSettings();
+                _settingsController.ApplyEditorSettings();
                 
             }),
             ("正在加载资源包...", async () => {
                 // ================ 加载资源包 ================
-                await Task.Run(() => LoadResourcePack());
+                await Task.Run(() => _settingsController.LoadResourcePack());
                 
             }),
             ("正在加载背景和音乐...", async () => {
@@ -349,7 +204,7 @@ public partial class EditorScene : Node
                 }
                 
                 // 加载模糊图片
-                string blurredPath = Path.Combine("user://ChartSaves", editingChartId, $"img_blur_{BlurRadius}.png");
+                string blurredPath = Path.Combine("user://ChartSaves", chartId, $"img_blur_{BlurRadius}.png");
                 string blurredPathAbs = ProjectSettings.GlobalizePath(blurredPath);
 
                 if(!Godot.FileAccess.FileExists(blurredPathAbs))
@@ -379,15 +234,18 @@ public partial class EditorScene : Node
                 // 这一行需要保证已经设置过资源包
                 hitEffectPool.Initialize(chartPlayParent, chartPlayer.HitFrames, 50);
 
-                chartPlayer.Initialize(chartPlayParent, editingChart, bgImageBlurred, audioStream, hitEffectPool);
+                chartPlayer.Initialize(chartPlayParent, _context.EditingChart, bgImageBlurred, audioStream, hitEffectPool);
                 chartRenderer.Initialize(chartPlayParent);
+
+                // 订阅谱面结构变化（判定线/音符增删），让播放器重建拓扑与渲染缓冲
+                chartPlayer.SetEventBus(_chartEditService.Events);
 
                 chartPlayParent.ClipContents = true;
 
                 _bgImageRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);
                 _bgImageRect.SelfModulate = new Color(0.3f, 0.3f ,0.3f ,1);
 
-                SetChartPlayerVisible(false); // 初始不显示
+                _playbackController.SetPlayerVisible(false); // 初始不显示
                 
             }),
             ("正在初始化编辑器...", async () => {
@@ -402,461 +260,190 @@ public partial class EditorScene : Node
         
     }
 
+    /// <summary>
+    /// 创建场景级状态中心(EditorContext)，并把依赖注入各面板。
+    /// 必须在 _Ready 中第一个 await 之前完成，避免 _Process 提前运行。
+    /// </summary>
+    private void InitContext()
+    {
+        _context = new EditorContext { Name = "EditorContext" };
+        AddChild(_context);
+
+        // 把场景中导出的视图初值写入 Context
+        _context.HorOffset = horOffset;
+        _context.HorOffsetSmoothed = horOffset;
+        _context.HorSeparation = horSeparation;
+        _context.HorSeparationSmoothed = horSeparation;
+        _context.GroundY = groundY;
+
+        // 面板直接依赖 Context（数据）与 ChartEditService（命令）
+        foreach (BaseEditPanel panel in new BaseEditPanel[] { noteEditPanel, eventEditPanel, bpmEditPanel })
+        {
+            panel.Initialize(_context, _chartEditService);
+        }
+
+        // 信息面板同样直接持有命令入口，属性修改不再经 EditorScene 转发；
+        // 同时注入 Context，让它们在撤销/重做后能按对象引用重新定位并回填数值。
+        noteInfoPanel.Initialize(_context, _chartEditService);
+        eventInfoPanel.Initialize(_context, _chartEditService);
+        bpmInfoPanel.Initialize(_context, _chartEditService);
+    }
+
+    /// <summary>
+    /// 创建场景级控制器并把节点引用注入进去。
+    /// EditorScene 只做组装，具体行为由各控制器负责；
+    /// 控制器作为子节点存在，便于在远程场景树里观察，生命周期随场景一起结束。
+    /// </summary>
+    private void InitControllers()
+    {
+        BaseEditPanel[] editPanels = [noteEditPanel, eventEditPanel, bpmEditPanel];
+
+        // ---- 输入：摇杆、滚轮、快捷键 ----
+        _inputController = new EditorInputController { Name = "EditorInputController" };
+        AddChild(_inputController);
+        _inputController.Initialize(
+            _context, _inputManager, _chartEditService,
+            slideJoystick, zoomJoystick,
+            verMouseSensitivity, zoomMouseSensitivity,
+            verJoystickSensitivity, zoomJoystickSensitivity, verJoystickTimeSens);
+
+        // ---- 播放：播放/暂停/停止、模式切换、每帧逻辑与渲染 ----
+        _playbackController = new EditorPlaybackController { Name = "EditorPlaybackController" };
+        AddChild(_playbackController);
+        _playbackController.Initialize(
+            _context, chartPlayer, chartRenderer, chartPlayParent,
+            editPanel, editPanels, rightPanel);
+
+        // ---- 剪贴板：复制/粘贴/粘贴确认 ----
+        _clipboardController = new EditorClipboardController { Name = "EditorClipboardController" };
+        AddChild(_clipboardController);
+        _clipboardController.Initialize(
+            _context, _chartEditService,
+            noteEditPanel, eventEditPanel, bpmEditPanel,
+            _copyBtn, _pasteBtn, _pasteConfirmBtn, _pasteCancelBtn);
+
+        // ---- 选择：选择焦点、右键菜单、删除按钮 ----
+        _selectionController = new EditorSelectionController { Name = "EditorSelectionController" };
+        AddChild(_selectionController);
+        _selectionController.Initialize(
+            _context, _chartEditService, _clipboardController,
+            noteEditPanel, eventEditPanel, bpmEditPanel,
+            noteInfoPanel, eventInfoPanel, bpmInfoPanel,
+            _deleteBtn);
+
+        // ---- 判定线与事件层 ----
+        _judgeLineController = new EditorJudgeLineController { Name = "EditorJudgeLineController" };
+        AddChild(_judgeLineController);
+        _judgeLineController.Initialize(_context, _chartEditService, _inputManager, chooseLinePanel);
+
+        // 判定线面板订阅谱面结构变化（总线实例由 ChartEditService 持有）
+        chooseLinePanel.Initialize(_chartEditService.Events);
+
+        // ---- 设置：编辑器设置 / 全局设置 / 资源包 ----
+        // 必须在加载任务开始前就绪：读取谱面时会先载入该谱面的编辑器设置。
+        _settingsController = new SettingsController { Name = "SettingsController" };
+        AddChild(_settingsController);
+        _settingsController.Initialize(
+            _editorSettings, _context,
+            noteEditPanel, eventEditPanel, bpmEditPanel,
+            _playbackController);
+
+        // ---- 界面：菜单、按钮、标签、面板显隐（Initialize 在 InitEditor 中调用）----
+        _uiManager = new EditorUIManager { Name = "EditorUIManager" };
+        AddChild(_uiManager);
+    }
+
+    /// <summary>
+    /// 把 EditorScene 上从场景导出的界面节点引用打包交给 EditorUIManager。
+    /// </summary>
+    private EditorViewRefs BuildViewRefs()
+    {
+        return new EditorViewRefs
+        {
+            Theme = theme,
+
+            FileMenu = fileMenuButtion,
+            EditMenu = editMenuButtion,
+            ViewMenu = viewMenuButton,
+            HelpMenu = helpMenuButtion,
+            OthersButton = _othersButton,
+
+            UndoButton = _undoBtn,
+            RedoButton = _redoBtn,
+            CopyButton = _copyBtn,
+            PasteButton = _pasteBtn,
+            MultiSelectButton = _multiSelectBtn,
+            BoxSelectButton = _boxSelectBtn,
+            PasteConfirmButton = _pasteConfirmBtn,
+            PasteCancelButton = _pasteCancelBtn,
+
+            EditingLineLabel = editingLineLabel,
+            EditModeLabel = editModeLabel,
+            FpsLabel = fpsLabel,
+
+            NoteEditPanel = noteEditPanel,
+            EventEditPanel = eventEditPanel,
+            BpmEditPanel = bpmEditPanel,
+
+            NoteInfoPanel = noteInfoPanel,
+            EventInfoPanel = eventInfoPanel,
+            BpmInfoPanel = bpmInfoPanel,
+
+            SettingsPanel = _settingsPanel,
+            EditorSettingsPanel = _editorSettingsPanel,
+
+            NoteChooser = noteChooser,
+        };
+    }
+
     private void InitEditor()
     {
-        // 设置chooseLinePanel
-        chooseLinePanel.Visible = false;
-        chooseLinePanel.LineSelected += SetEditingLine;
-        chooseLinePanel.AddLineRequested += AddLine;
-        chooseLinePanel.DeleteLineRequested += DeleteLine;
-        chooseLinePanel.RefreshRequested += RefreshChooseLinePanel;
-        chooseLinePanel.LayerSelected += (int index) =>
-        {
-            if(index < 0 || index > 4)
-            {
-                GD.PrintErr($"[{Name}] EventLayer索引越界:{index}");
-                return;
-            }
+        // ---- 界面：菜单栏、工具栏按钮、标签、面板显隐 ----
+        _uiManager.Initialize(
+            BuildViewRefs(),
+            _context,
+            _chartEditService,
+            _clipboardController,
+            SaveChart,
+            SaveAndQuit,
+            OnQuitPressed,
+            OnTestPlay);
 
-            List<EventLayer> eventLayers = editingChart.JudgeLineList[editingLineId].EventLayers;
-
-            // 如果列表元素不够，用 null 填充到目标索引
-            while (eventLayers.Count <= index)
-            {
-                eventLayers.Add(null);
-            }
-
-            if (eventLayers[index] == null)
-            {
-                eventLayers[index] = new();
-            }
-
-            editingLayer = index;
-            eventEditPanel.EditingLayer = index;
-
-            GD.Print($"切换到事件层:{index}");
-        };
-
-        editingLineLabel.Text = $"线{0}";
-
-        // 设置NoteEditPanel
-        noteEditPanel.OnNoteSelected += OnNoteSelected;
-        Subscribe(
-            AddNote,
-            h => noteEditPanel.NoteAddRequested += h,
-            h => noteEditPanel.NoteAddRequested -= h);
-        // Subscribe(
-        //     OnNotesDelete,
-        //     h => noteEditPanel.NoteDeleteRequested += h,
-        //     h => noteEditPanel.NoteDeleteRequested -= h);
-        Subscribe(
-            BeginNoteDrag,
-            h => noteEditPanel.NoteDragStarted += h,
-            h => noteEditPanel.NoteDragStarted -= h);
-        Subscribe(
-            EndNoteDrag,
-            h => noteEditPanel.NoteDragEnded += h,
-            h => noteEditPanel.NoteDragEnded -= h);
-        Subscribe(
-            MoveNote,
-            h => noteEditPanel.NoteMoved += h,
-            h => noteEditPanel.NoteMoved -= h);
-        Subscribe(
-            SetNoteTime,
-            h => noteEditPanel.NoteTimeChanged += h,
-            h => noteEditPanel.NoteTimeChanged -= h);
-        Subscribe(
-            OnNoteMultiSelected,
-            h => noteEditPanel.NoteMultiSelected += h,
-            h => noteEditPanel.NoteMultiSelected -= h);
-        noteEditPanel.Disabled = false;
-
-        // 设置eventEditPanel
-        Subscribe(
-            OnEventSelected,
-            h => eventEditPanel.EventSelected += h,
-            h => eventEditPanel.EventSelected -= h);
-        Subscribe(
-            AddEvent,
-            h => eventEditPanel.AddEventRequested += h,
-            h => eventEditPanel.AddEventRequested -= h);
-        Subscribe(
-            BeginEventDrag,
-            h => eventEditPanel.EventDragStarted += h,
-            h => eventEditPanel.EventDragStarted -= h);
-        Subscribe(
-            EndEventDrag,
-            h => eventEditPanel.EventDragEnded += h,
-            h => eventEditPanel.EventDragEnded -= h);
-        Subscribe(
-            SetEventTime,
-            h => eventEditPanel.EventTimeChangeRequested += h,
-            h => eventEditPanel.EventTimeChangeRequested -= h);
-        Subscribe(
-            OnEventMultiSelected,
-            h => eventEditPanel.EventMultiSelected += h,
-            h => eventEditPanel.EventMultiSelected -= h);
-        eventEditPanel.Disabled = false;
-
-        // 设置bpmEditPanel
-        Subscribe(
-            OnBpmSelected,
-            h => bpmEditPanel.EventSelected += h,
-            h => bpmEditPanel.EventSelected -= h);
-        Subscribe(
-            OnBpmMultiSelected,
-            h => bpmEditPanel.BpmMultiSelected += h,
-            h => bpmEditPanel.BpmMultiSelected -= h);
-        bpmEditPanel.Disabled = false;
-        Subscribe(
-            BeginBpmDrag,
-            h => bpmEditPanel.BpmDragStarted += h,
-            h => bpmEditPanel.BpmDragStarted -= h);
-        Subscribe(
-            EndBpmDrag,
-            h => bpmEditPanel.BpmDragEnded += h,
-            h => bpmEditPanel.BpmDragEnded -= h);
-        Subscribe(
-            AddBpm,
-            h => bpmEditPanel.EventAddRequested += h,
-            h => bpmEditPanel.EventAddRequested -= h);
-        Subscribe(
-            SetBpmTime,
-            h => bpmEditPanel.EventTimeChanged += h,
-            h => bpmEditPanel.EventTimeChanged -= h);
-
-        SetEditPanelVisible(true); // 初始默认显示
-
-        // 设置noteInfoPanel
-        noteInfoPanel.OnConfirmed += () => noteInfoPanel.Visible = false;
-        Subscribe(
-            SetNoteProperty,
-            h => noteInfoPanel.OnNotePropertyChanged += h,
-            h => noteInfoPanel.OnNotePropertyChanged -= h);
-
-        // 设置eventInfoPanel
-        eventInfoPanel.OnConfirmed += () => eventInfoPanel.Visible = false;
-        Subscribe(
-            SetEventProperty,
-            h => eventInfoPanel.PropertyChanged += h,
-            h => eventInfoPanel.PropertyChanged -= h);
-
-        //设置bpmInfoPanel
-        bpmInfoPanel.OnConfirmed += () => bpmInfoPanel.Visible = false;
-        Subscribe(
-            SetBpmProperty,
-            h => bpmInfoPanel.PropertyChanged += h,
-            h => bpmInfoPanel.PropertyChanged -= h);
-
-        //设置弹出菜单
-        PopupMenuHelper.SetTheme(theme);
-
-        //设置ChartEditService
-        _chartEditService.EditingChart = editingChart;
-
-        //设置顶部菜单栏
-        //设置“文件”选项
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "保存", Callback = SaveChart},
-                //new PopupMenuItem { Text = "另存为", Callback = null},
-                new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "保存并退出", Callback = SaveAndQuit},
-                new PopupMenuItem { Text = "仅退出", Callback = OnQuitPressed},
-            };
-            PopupMenuHelper.Instance.SetMenuButton(fileMenuButtion, items);
-        }
-        //设置“编辑”选项
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "复制", Callback = null},
-                new PopupMenuItem { Text = "粘贴", Callback = null},
-                new PopupMenuItem { Text = "剪切", Callback = null},
-                new PopupMenuItem { IsSeparator = true},
-                new PopupMenuItem { Text = "全局设置", Callback = _settingsPanel.Show},
-                new PopupMenuItem { Text = "编辑器设置", Callback = _editorSettingsPanel.Show},
-            };
-            PopupMenuHelper.Instance.SetMenuButton(editMenuButtion, items);
-        }
-
-        // 设置“视图”选项
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "音符面板", Checkable = true, 
-                    Checked = noteEditPanel.Visible,
-                    Toggled = (bool value) => noteEditPanel.Visible = value
-                },
-                new PopupMenuItem { Text = "事件面板", Checkable = true, 
-                    Checked = eventEditPanel.Visible,
-                    Toggled = (bool value) => eventEditPanel.Visible = value
-                },
-                new PopupMenuItem { Text = "Bpm面板", Checkable = true, 
-                    Checked = bpmEditPanel.Visible,
-                    Toggled = (bool value) => bpmEditPanel.Visible = value
-                },
-            };
-            PopupMenuHelper.Instance.SetMenuButton(viewMenuButton, items);
-        }
-
-        // 设置左上角“...”按钮
-        _othersButton.Pressed += () =>
-        {
-            // 构建菜单项
-            var items = new List<PopupMenuItem>
-            {
-                new PopupMenuItem { Text = "试玩", Callback = OnTestPlay},
-            };
-
-            PopupMenuHelper.Instance.ShowPopupMenu(this, 
-                GetViewport().GetMousePosition() + new Vector2(30, 30), 
-                items);
-        };
-
-        //设置NoteChooser
-        Subscribe(
-            OnNoteChooserNoteChoosed,
-            h => noteChooser.NoteChoosed += h,
-            h => noteChooser.NoteChoosed -= h
-        );
-
-        Subscribe(
-            OnNoteChooserDeselected,
-            h => noteChooser.Deselected += h,
-            h => noteChooser.Deselected -= h
-        );
-        // noteChooser.DeleteButtonChoosed += OnNoteChooserDeleteChoosed;
-
-        // 设置_deleteBtn
-        _deleteBtn.Visible = false; // 默认不显示
-        Subscribe(
-            OnDeletePressed,
-            h => _deleteBtn.Pressed += h,
-            h => _deleteBtn.Pressed -= h
-        );
-
-        //设置EditModeManager 初始状态默认为常规模式
-        EditModeManager.SetEditMode(EditModeEnum.Normal);
-
-        //设置editModeLabel
-        editModeLabel.Text = "模式：常规模式";
-        Subscribe(
-            OnEditModeChanged,
-            h => EditModeManager.OnEditModeChanged += h,
-            h => EditModeManager.OnEditModeChanged -= h);
-
-        // 设置PlayModeManager
-        Subscribe(
-            OnPlayModeChanged,
-            h => PlayModeManager.PlayModeChanged += h,
-            h => PlayModeManager.PlayModeChanged -= h);
-        PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
-
-        GameSettings.Instance.SettingChanged += OnSettingsChanged;
-
-        // 设置撤销重做按钮
-        _undoBtn.Pressed += OnUndo;
-        _redoBtn.Pressed += OnRedo;
-
-        // 设置复制粘贴按钮
-        _copyBtn.Pressed += OnCopyPressed;
-        _pasteBtn.Pressed += OnPastePressed;
-        _pasteConfirmBtn.Pressed += OnPasteConfirm;
-        _pasteCancelBtn.Pressed += OnPasteCancelPressed;
-
-        // 设置多选按钮
-        _multiSelectBtn.ToggleMode = true;
-        _multiSelectBtn.Toggled += (bool value) =>
-        {
-            BaseEditPanel.SelectModeEnum mode = value ? 
-                BaseEditPanel.SelectModeEnum.Multi : BaseEditPanel.SelectModeEnum.Single;
-            
-            noteEditPanel.SelectMode = mode;
-            eventEditPanel.SelectMode = mode;
-            bpmEditPanel.SelectMode = mode;
-        };
-
-        // 设置框选按钮
-        _boxSelectBtn.ToggleMode = true;
-        _boxSelectBtn.Toggled += (bool value) =>
-        {
-            noteEditPanel.IsBoxSelectMode = value;
-            eventEditPanel.IsBoxSelectMode = value;
-            bpmEditPanel.IsBoxSelectMode = value;
-        };
-
-        // 统一设置面板取消选择的事件
-        Subscribe(
-            () => {IsSelecting = false;},
-            h => noteEditPanel.AllDeselected += h,
-            h => noteEditPanel.AllDeselected -= h
-        );
-        Subscribe(
-            () => {IsSelecting = false;},
-            h => eventEditPanel.AllDeselected += h,
-            h => eventEditPanel.AllDeselected -= h
-        );
-        Subscribe(
-            () => {IsSelecting = false;},
-            h => bpmEditPanel.AllDeselected += h,
-            h => bpmEditPanel.AllDeselected -= h
-        );
-        
+        // ---- 谱面播放器与编辑面板此时都已经初始化完成，可以安全进入编辑模式 ----
+        _playbackController.EnterEditingMode();
     }
 
     public override void _Process(double delta)
     {
         if(!_isReady) return;
 
+        // 播放器：时间轴同步 + 逻辑更新 + 渲染
+        _playbackController.ProcessPlayback(delta);
+
+        // 输入：摇杆与视图平滑（更新 EditorContext 上的视图状态）
+        _inputController.ProcessInput(delta);
+
         #if TOOLS
         ulong t1 = Time.GetTicksUsec();
         #endif
 
-        if (isPlaying)
-        {
-            //正在播放时，时间轴由音乐决定
-            ChartTime = chartPlayer.ChartTime;
-        }
-        else
-        {
-            //否则，时间轴由编辑器面板决定
-            chartPlayer.ExternalTime = _chartTime;
-        }
-
-        #if TOOLS
-        ulong t2 = Time.GetTicksUsec();
-        #endif
-        
-        chartPlayer.UpdateLogic(delta);
-
-        #if TOOLS
-        ulong t3 = Time.GetTicksUsec();
-        #endif
-
-        if(!chartPlayer.Disabled && !chartRenderer.Disabled)
-        {
-            (JudgeLineRenderData[] lineData, int lineCount) = chartPlayer.GetLineRenderDatas();
-            (NoteRenderData[] noteData, int noteCount) = chartPlayer.GetNoteRenderDatas();
-
-            chartRenderer.Render(lineData, lineCount, noteData, noteCount);
-        }
-
-        #if TOOLS
-        ulong t4 = Time.GetTicksUsec();
-        #endif
-
-        //处理摇杆垂直滚动
-		if(slideJoystick.Output != Vector2.Zero)
-		{
-            if(PlayModeManager.PlayMode == PlayModeEnum.PlayerPause)
-            {
-                SlideTime(-slideJoystick.Output.Y * verJoystickTimeSens * (float)delta);
-            }
-            else
-            {
-                Slide(-slideJoystick.Output.Y * verJoystickSensitivity * (float)delta);
-            }
-			// horOffset -= ;
-			// //限制不能滚动到0以下
-			// if(horOffset < 0) horOffset = 0;
-
-			// BeatValue = horOffset / horSeparation;
-            // GD.Print($"output:{slideJoystick.Output.Y}");
-		}
-
-		//处理摇杆缩放
-		if(zoomJoystick.Output != Vector2.Zero)
-		{
-			Zoom(zoomJoystick.Output.Y * zoomJoystickSensitivity * (float)delta);
-		}
-
-		//平滑竖直滚动
-        if(Math.Abs(horOffset - horOffsetSmoothed) > 0.001f)
-		{
-			horOffsetSmoothed += (horOffset - horOffsetSmoothed) * (float)delta * 18f;
-		}
-        else
-        {
-            horOffsetSmoothed = horOffset;
-        }
-
-		//平滑竖直缩放
-		if(Math.Abs(horSeparation - horSeparationSmoothed) > 0.001f)
-		{
-            horSeparationSmoothed += (horSeparation - horSeparationSmoothed) * (float)delta * 18f;
-		}
-        else
-        {
-            horSeparationSmoothed = horSeparation;
-        }
-
-        #if TOOLS
-        ulong t5 = Time.GetTicksUsec();
-        #endif
-
-        //同步编辑面板
-        noteEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
-        noteEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
-        noteEditPanel.GroundY = groundY;
+        //同步编辑面板（视图状态统一从 EditorContext 读取，无需逐个字段推送）
         noteEditPanel.UpdateVisuals();
-
-        eventEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
-        eventEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
-        eventEditPanel.GroundY = groundY;
         eventEditPanel.UpdateVisuals();
-
-        bpmEditPanel.HorOffsetSmoothed = horOffsetSmoothed;
-        bpmEditPanel.HorSeparationSmoothed = horSeparationSmoothed;
-        bpmEditPanel.GroundY = groundY;
         bpmEditPanel.UpdateVisuals();
 
         #if TOOLS
-        ulong t6 = Time.GetTicksUsec();
-
-        _setChartTimeTimeUs = t2 - t1;
-        _logicTimeUs = t3 - t2;
-        _renderTimeUs = t4 - t3;
-        _uiTimeUs = t5 - t4;
-        _drawEditPanelTimeUs = t6 - t5;
+        _panelSyncTimeUs = Time.GetTicksUsec() - t1;
         #endif
-
-    }
-
-    private int fpsRefreshCount = 0;
-    public override void _PhysicsProcess(double delta)
-    {
-        //GD.Print($"ChartTime:{ChartTime}, BeatValue:{BeatValue}, horOffset:{horOffset}");
-        fpsRefreshCount++;
-        if(fpsRefreshCount > 15)
-        {
-            fpsRefreshCount = 0;
-            fpsLabel.Text = $"FPS:{Performance.GetMonitor(Performance.Monitor.TimeFps)}";
-        }
-        
-        // GD.Print($"BeatValue:{BeatValue}, ChartTime:{ChartTime}, bpm:{editingChart.BpmList[0].Bpm}");
     }
 
     public override void _ExitTree()
     {
         base._ExitTree();
 
-        // if (_editorSettings != null)
-        // {
-        //     _editorSettings.SettingChanged -= OnEditorSettingChanged;
-        // }
-
         #if TOOLS
         // 取消注册自定义监视器 小心lambda诡异的生命周期问题
-        Performance.RemoveCustomMonitor("EditorScene/SetChartTimeTimeUs");
-        Performance.RemoveCustomMonitor("EditorScene/LogicTimeUs");
-        Performance.RemoveCustomMonitor("EditorScene/RenderTimeUs");
-        Performance.RemoveCustomMonitor("EditorScene/UITimeUs");
-        Performance.RemoveCustomMonitor("EditorScene/DrawEditPanelTimeUs");
+        Performance.RemoveCustomMonitor("EditorScene/PanelSyncUs");
         #endif
 
         // 取消订阅所有事件
@@ -866,150 +453,21 @@ public partial class EditorScene : Node
         
     }
     
-    private void OnEditModeChanged(EditModeEnum editMode)
-    {
-        editModeLabel.Text = editMode switch
-        {
-            EditModeEnum.Normal => "模式：常规模式",
-            EditModeEnum.Place => "模式：放置模式",
-            // EditModeEnum.Delete => "模式：删除模式",
-            _ => "模式：未知",
-        };
-    }
-
     private void SaveChart()
     {
         _chartService.SaveChart(editingChartId, editingChart);
         // 谱面和编辑器视图设置一起保存，避免退出后丢失网格状态。
-        SaveEditorSettings();
+        _settingsController.SaveEditorSettings();
         // TODO 保存成功后弹出Toast提示
     }
 
     private void Quit()
     {
-        SaveEditorSettings();
+        _settingsController.SaveEditorSettings();
         var global = GetNode<Global>("/root/Global");
         global.editingChartId = "";
         global.GotoScene("res://Scene/start_menu.tscn");
     }
-
-    #region 编辑器设置
-    private void ApplyGridAppearanceSettings()
-    {
-        if (GameSettings.Instance == null || GameSettings.Instance.Current == null)
-        {
-            return;
-        }
-
-        SettingsData settings = GameSettings.Instance.Current;
-
-        noteEditPanel.HorColor = settings.HorColor;
-        noteEditPanel.HorWidth = settings.HorWidth;
-        noteEditPanel.HorSubColor = settings.HorSubColor;
-        noteEditPanel.HorSubWidth = settings.HorSubWidth;
-        noteEditPanel.VerColor = settings.VerColor;
-        noteEditPanel.VerWidth = settings.VerWidth;
-        noteEditPanel.GroundLineColor = settings.GroundLineColor;
-        noteEditPanel.GroundLineWidth = settings.GroundLineWidth;
-
-        eventEditPanel.HorColor = settings.HorColor;
-        eventEditPanel.HorWidth = settings.HorWidth;
-        eventEditPanel.HorSubColor = settings.HorSubColor;
-        eventEditPanel.HorSubWidth = settings.HorSubWidth;
-        eventEditPanel.VerColor = settings.VerColor;
-        eventEditPanel.VerWidth = settings.VerWidth;
-        eventEditPanel.GroundLineColor = settings.GroundLineColor;
-        eventEditPanel.GroundLineWidth = settings.GroundLineWidth;
-
-        bpmEditPanel.HorColor = settings.HorColor;
-        bpmEditPanel.HorWidth = settings.HorWidth;
-        bpmEditPanel.HorSubColor = settings.HorSubColor;
-        bpmEditPanel.HorSubWidth = settings.HorSubWidth;
-        bpmEditPanel.VerColor = settings.VerColor;
-        bpmEditPanel.VerWidth = settings.VerWidth;
-        bpmEditPanel.GroundLineColor = settings.GroundLineColor;
-        bpmEditPanel.GroundLineWidth = settings.GroundLineWidth;
-    }
-
-    private void ApplyEditorSettings()
-    {
-        if(_editorSettings == null)
-        {
-            GD.PrintErr($"[{this.Name}] EditorSettings is null");
-            return;
-        }
-        
-        int verLineCount = _editorSettings.Current.VerLineCount;
-        int subBeatCount = _editorSettings.Current.SubBeatCount;
-
-        noteEditPanel.VerLineCount = verLineCount;
-        noteEditPanel.SubBeatCount = subBeatCount;
-        
-        eventEditPanel.SubBeatCount = subBeatCount;
-        
-        bpmEditPanel.SubBeatCount = subBeatCount;
-
-        ApplyGridAppearanceSettings();
-    }
-
-    private void OnEditorSettingChanged(string key, Variant value)
-    {
-        if(_editorSettings == null)
-        {
-            GD.PrintErr($"[{this.Name}] EditorSettings is null");
-            return;
-        }
-
-        switch (key)
-        {
-            case nameof(EditorSettingsData.VerLineCount):
-                int verLineCount = _editorSettings.Current.VerLineCount;
-                noteEditPanel.VerLineCount = verLineCount;
-                break;
-            
-            case nameof(EditorSettingsData.SubBeatCount):
-                int subBeatCount = _editorSettings.Current.SubBeatCount;
-                noteEditPanel.SubBeatCount = subBeatCount;
-                eventEditPanel.SubBeatCount = subBeatCount;
-                bpmEditPanel.SubBeatCount = subBeatCount;
-                break;
-            
-            default:
-                GD.PrintErr($"[{this.Name}] 未知的EditorSettings设置项:{key}");
-                ApplyEditorSettings();
-                break;
-        }
-    }
-
-    private void SaveEditorSettings()
-    {
-        if (_editorSettings == null || string.IsNullOrEmpty(editingChartId)) return;
-
-        _editorSettings.Save();
-    }
-
-    private void OnSettingsChanged(string key, Variant value)
-    {
-        if (key == nameof(SettingsData.ResourcePackId) || key == nameof(SettingsData.UseDefaultResource))
-        {
-            LoadResourcePack();
-            return;
-        }
-
-        if (key == nameof(SettingsData.HorColor)
-            || key == nameof(SettingsData.HorWidth)
-            || key == nameof(SettingsData.HorSubColor)
-            || key == nameof(SettingsData.HorSubWidth)
-            || key == nameof(SettingsData.VerColor)
-            || key == nameof(SettingsData.VerWidth)
-            || key == nameof(SettingsData.GroundLineColor)
-            || key == nameof(SettingsData.GroundLineWidth))
-        {
-            ApplyGridAppearanceSettings();
-        }
-    }
-
-    #endregion
 
     private void OnQuitPressed()
     {
@@ -1026,824 +484,37 @@ public partial class EditorScene : Node
         Quit();
     }
 
-    private void LoadResourcePack()
-    {
-        bool useDefault = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource));
-        if (useDefault)
-        {
-            chartPlayer.UseDefaultResource();
-            chartRenderer.UseDefaultResource();
-        }
-        else
-        {
-            string id = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
-            _resourcePack = ResourcePackLoader.LoadFromLocal(id);
-            if(_resourcePack == null)
-            {
-                GD.PrintErr($"[{Name}] 加载资源包失败, id:{id}");
-            }
-            chartPlayer.Pack = _resourcePack;
-            chartRenderer.Pack = _resourcePack;
-        }
-
-        GD.Print($"[{Name}] 成功重新加载资源包!");
-    }
-
     private void OnTestPlay()
     {
         var global = GetNode<Global>("/root/Global");
         global.GotoScene("res://Scene/play_scene.tscn");
     }
 
-    private void OnUndo()
-    {
-        _chartEditService.Undo();
-    }
-
-    private void OnRedo()
-    {
-        _chartEditService.Redo();
-    }
-
-    private void OnCopyPressed()
-    {
-        switch (_selectFocusPanel)
-        {
-            case EditPanelType.NoteEdit:
-
-                if(noteEditPanel.SelectedNotes == null || noteEditPanel.SelectedNotes.Count == 0) break;
-                
-                _editorClipboard.noteClipBoard.SourceLineId = noteEditPanel.EditingLineId;
-                _editorClipboard.noteClipBoard.SourceStartBeat = new Beat(noteEditPanel.SelectedNotes.First().StartTime);
-                _editorClipboard.noteClipBoard.SourcePosX = noteEditPanel.SelectedNotes.First().PositionX;
-                _editorClipboard.noteClipBoard.Notes.Clear();
-
-                foreach(Note note in noteEditPanel.SelectedNotes)
-                {
-                    _editorClipboard.noteClipBoard.Notes.Add(NoteSnapshot.Capture(note));
-                }
-
-                _editorClipboard.LatestClipBoard = EditPanelType.NoteEdit;
-
-                GD.Print($"[{Name}] 成功复制{noteEditPanel.SelectedNotes.Count}个Note");
-                break;
-
-            case EditPanelType.LineEventEdit:
-                if (eventEditPanel.SelectedEventsWithType == null || eventEditPanel.SelectedEventsWithType.Count == 0)
-                    break;
-
-                var eventList = eventEditPanel.SelectedEventsWithType;
-
-                ValueTuple<LineEventEnum, LineEvent> earliestEvent = eventList
-                    .OrderBy((ValueTuple<LineEventEnum, LineEvent> kvp) => kvp.Item2.StartTime[0] + kvp.Item2.StartTime[1] * 1f / kvp.Item2.StartTime[2])
-                    .First();
-
-                _editorClipboard.lineEventClipBoard = new LineEventClipBoard
-                {
-                    SourceLineId = editingLineId,
-                    SourceLayer = editingLayer,
-                    SourceStartBeat = new Beat(earliestEvent.Item2.StartTime),
-                    Events = new List<LineEventClipBoardItem>()
-                };
-                
-                // 将事件添加到剪切板
-                foreach ((LineEventEnum type, LineEvent evt) in eventList)
-                {
-                    _editorClipboard.lineEventClipBoard.Events.Add(
-                        new LineEventClipBoardItem(type, LineEventSnapshot.Capture(evt)));
-                }
-
-                _editorClipboard.LatestClipBoard = EditPanelType.LineEventEdit;
-                GD.Print($"[{Name}] 成功复制{eventList.Count}个Event");
-                break;
-
-            case EditPanelType.BpmEventEdit:
-                IReadOnlyCollection<BpmEvent> selectedBpms = bpmEditPanel.SelectedEvents;
-                if (selectedBpms == null || selectedBpms.Count == 0)
-                    break;
-
-                BpmEvent earliestBpm = selectedBpms
-                    .OrderBy(bpm => bpm.StartTime[0] + bpm.StartTime[1] * 1f / bpm.StartTime[2])
-                    .First();
-
-                _editorClipboard.bpmEventClipBoard = new BpmEventClipBoard
-                {
-                    SourceStartBeat = new Beat(earliestBpm.StartTime),
-                    Bpms = new List<BpmEventSnapshot>()
-                };
-
-                foreach (BpmEvent bpmEvent in selectedBpms)
-                {
-                    _editorClipboard.bpmEventClipBoard.Bpms.Add(BpmEventSnapshot.Capture(bpmEvent));
-                }
-
-                _editorClipboard.LatestClipBoard = EditPanelType.BpmEventEdit;
-                GD.Print($"[{Name}] 成功复制{selectedBpms.Count}个BPM事件");
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void OnPastePressed()
-    {
-        bool isSuccess = true;
-        switch (_editorClipboard.LatestClipBoard)
-        {
-            case EditPanelType.NoteEdit:
-                noteEditPanel.StartPaste(_editorClipboard.noteClipBoard);
-                _pasteFocusPanel = EditPanelType.NoteEdit;
-                break;
-            case EditPanelType.LineEventEdit:
-                eventEditPanel.StartPaste(_editorClipboard.lineEventClipBoard);
-                _pasteFocusPanel = EditPanelType.LineEventEdit;
-                break;
-            case EditPanelType.BpmEventEdit:
-                if (_editorClipboard.bpmEventClipBoard?.Bpms == null || _editorClipboard.bpmEventClipBoard.Bpms.Count == 0)
-                {
-                    isSuccess = false;
-                    break;
-                }
-
-                bpmEditPanel.StartPaste(_editorClipboard.bpmEventClipBoard);
-                _pasteFocusPanel = EditPanelType.BpmEventEdit;
-                break;
-            default:
-                isSuccess = false;
-                break;
-        }
-
-        if (isSuccess)
-        {
-            SetPasteApplyButtonVisibility(true);
-        }
-    }
-
-    private void OnPasteConfirm()
-    {
-        SetPasteApplyButtonVisibility(false);
-
-        // 应用粘贴
-        switch (_pasteFocusPanel)
-        {
-            case EditPanelType.NoteEdit:
-                noteEditPanel.ExitPasteMode();
-                // 执行粘贴
-                _chartEditService.PasteNotes(
-                    _editorClipboard.noteClipBoard,
-                    editingLineId,
-                    noteEditPanel.PasteTargetBeat,
-                    noteEditPanel.PasteTargetPosX
-                );
-                break;
-
-            case EditPanelType.LineEventEdit:
-                eventEditPanel.ExitPasteMode();
-                _chartEditService.PasteEvents(
-                    _editorClipboard.lineEventClipBoard,
-                    editingLineId,
-                    editingLayer,
-                    eventEditPanel.PasteTargetBeat
-                );
-                break;
-
-            case EditPanelType.BpmEventEdit:
-                bpmEditPanel.ExitPasteMode();
-                if (_editorClipboard.bpmEventClipBoard != null && _editorClipboard.bpmEventClipBoard.Bpms.Count > 0)
-                {
-                    _chartEditService.PasteBpmEvents(_editorClipboard.bpmEventClipBoard, bpmEditPanel.PasteTargetBeat);
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void OnPasteCancelPressed()
-    {
-        SetPasteApplyButtonVisibility(false);
-
-        noteEditPanel.ExitPasteMode();
-        eventEditPanel.ExitPasteMode();
-        bpmEditPanel.ExitPasteMode();
-    }
-
-    private void SetPasteApplyButtonVisibility(bool value)
-    {
-        _pasteBtn.Visible = !value;
-        _copyBtn.Visible = !value;
-
-        _pasteConfirmBtn.Visible = value;
-        _pasteCancelBtn.Visible = value;
-    }
-
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (@event is InputEventKey { Pressed: true, Echo: false } key)
-        {
-            bool ctrl = key.CtrlPressed || key.MetaPressed;
-
-            if (ctrl && key.Keycode == Key.Z)
-            {
-                if (key.ShiftPressed) _chartEditService.Redo();
-                else                  _chartEditService.Undo();
-                GetViewport().SetInputAsHandled();
-            }
-            else if (ctrl && key.Keycode == Key.Y)
-            {
-                _chartEditService.Redo();
-                GetViewport().SetInputAsHandled();
-            }
-        }
-    }
-
-    /// <summary>
-    /// 当删除按钮被按下时调用
-    /// </summary>
-    private void OnDeletePressed()
-    {
-        bool isSuccess = true;
-
-        // 由于删除按钮只有一个，需要判断当前选中的对象位于哪个面板
-        switch (_selectFocusPanel)
-        {
-            case EditPanelType.NoteEdit:
-                if(noteEditPanel.SelectedNotes != null && noteEditPanel.SelectedNotes.Count != 0)
-                {
-                    _chartEditService.DeleteNotes(editingLineId, noteEditPanel.SelectedNotes);
-                }
-                break;
-            case EditPanelType.LineEventEdit:
-                if(eventEditPanel.SelectedEventsWithType != null && 
-                    eventEditPanel.SelectedEventsWithType.Count != 0)
-                {
-                    List<(LineEventEnum Type, LineEvent Evt)> eventsToDelete = eventEditPanel.SelectedEventsWithType
-                        .ToList();
-                    DeleteEvents(editingLineId, editingLayer, eventsToDelete);
-                }
-                break;
-            case EditPanelType.BpmEventEdit:
-                if(bpmEditPanel.SelectedEvents != null && bpmEditPanel.SelectedEvents.Count != 0)
-                {
-                    _chartEditService.DeleteBpms(bpmEditPanel.SelectedEvents.ToList());
-                }
-                break;
-            default:
-                GD.PrintErr($"[{this.Name}] 未知的选中面板类型:{_selectFocusPanel}");
-                isSuccess = false;
-                break;
-        }
-
-        if (isSuccess)
-        {
-            IsSelecting = false;
-            noteEditPanel.DeselectAll();
-            eventEditPanel.DeselectAll();
-            bpmEditPanel.DeselectAll();
-
-        }
-    }
-
-    private void OnMultiSelectPressed()
-    {
-        
-    }
-
-
-    #region 播放控制
-
-    private void SetEditPanelVisible(bool value)
-    {
-        editPanel.Visible = value;
-        noteEditPanel.Disabled = !value;
-        eventEditPanel.Disabled = !value;
-        bpmEditPanel.Disabled = !value;
-    }
-
-    private void SetChartPlayerVisible(bool value)
-    {
-        chartPlayParent.Visible = value;
-        chartPlayer.Disabled = !value;
-        chartRenderer.Disabled = !value;
-    }
-
-    private void SetIsPlaying(bool value)
-    {
-        isPlaying = value;
-        if(value) chartPlayer.Play((float)ChartTime);
-        else chartPlayer.Pause();
-    }
+    #region 场景按钮入口（editor_scene.tscn 的信号连接直接指向这些方法）
 
     public void OnPlayButtonClicked()
     {
-        // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPlaying);
-
-        // // 开始播放
-        // chartPlayer.Play((float)ChartTime);
-        // chartPlayer.IsPlaying = true;
-        // isPlaying = true;
-
-        // //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
+        _playbackController.PlayWithPlayer();
     }
 
     public void PlayInEditPanel()
     {
-        if(PlayModeManager.PlayMode == PlayModeEnum.EditorPlaying)
-        {
-            PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
-        }
-        else
-        {
-            // 切换播放模式
-            PlayModeManager.SetPlayMode(PlayModeEnum.EditorPlaying);
-        }
-        
-
-        // // 开始播放
-        // chartPlayer.Play((float)ChartTime);
-        // chartPlayer.IsPlaying = true;
-        // isPlaying = true;
-
-        //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
+        _playbackController.TogglePlayInEditPanel();
     }
 
     public void OnStopButtonClicked()
     {
-        // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.Editing);
-
-        // // 暂停播放
-        // chartPlayer.Pause();
-        // chartPlayer.IsPlaying = false;
-        // isPlaying = false;
-
-        //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
+        _playbackController.Stop();
     }
 
     public void OnPauseClicked()
     {
-        // 切换播放模式
-        PlayModeManager.SetPlayMode(PlayModeEnum.PlayerPause);
-
-        // // 暂停播放
-        // chartPlayer.IsPlaying = false;
-        // chartPlayer.Pause();
-        // isPlaying = false;
-
-        //更新右侧面板
-        // rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
-
+        _playbackController.PausePlayer();
     }
 
-    private void OnPlayModeChanged(PlayModeEnum playMode)
+    public void OnChooseLineClicked()
     {
-        switch (playMode)
-        {
-            case PlayModeEnum.Editing:
-                SetChartPlayerVisible(false);
-                SetEditPanelVisible(true);
-                SetIsPlaying(false);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
-                break;
-
-            case PlayModeEnum.PlayerPlaying:
-                SetChartPlayerVisible(true);
-                SetEditPanelVisible(false);
-                SetIsPlaying(true);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.AutoPlay);
-                break;
-
-            case PlayModeEnum.PlayerPause:
-                SetChartPlayerVisible(true);
-                SetEditPanelVisible(false);
-                SetIsPlaying(false);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Pause);
-                break;
-            case PlayModeEnum.EditorPlaying:
-                SetChartPlayerVisible(false);
-                SetEditPanelVisible(true);
-                SetIsPlaying(true);
-                rightPanel.SwitchToTab(RightPanel.RightPanelTabPage.Normal);
-                break;
-            case PlayModeEnum.EditorAndPlayerPlaying:
-                SetChartPlayerVisible(true);
-                SetEditPanelVisible(true);
-                SetIsPlaying(true);
-                // TODO
-                break;
-        }
-    }
-
-    #endregion
-
-    #region JudgeLine相关方法
-
-    private void OnChooseLineClicked()
-    {
-        if(chooseLinePanel.Visible == false)
-        {
-            chooseLinePanel.Visible = true;
-            _inputManager.IsEnable = false;
-
-            RefreshChooseLinePanel();
-            chooseLinePanel.SetEventLayer(editingLayer);
-        }
-        else
-        {
-            chooseLinePanel.Visible = false;
-            _inputManager.IsEnable = true;
-        }
-    }
-
-    private void RefreshChooseLinePanel()
-    {
-        //准备LineInfo数据
-        List<ChooseLinePanel.LineInfo> lineInfos = new();
-        for (int i = 0; i < editingChart.JudgeLineList.Count; i++)
-        {
-            JudgeLine line = editingChart.JudgeLineList[i];
-
-            lineInfos.Add(new ChooseLinePanel.LineInfo
-            {
-                Id = i, // 判定线的编号从0开始
-                NoteCount = line.NumOfNotes,
-                //NextEventTime = //TODO 在ChooseLinePanel显示下一个事件的时间
-            });
-        }
-
-        //设置LineInfo数据
-        chooseLinePanel.ShowInfos(lineInfos);
-    }
-
-    private void SetEditingLine(int id)
-    {
-        GD.Print($"[{this.Name}] 用户选择了Line:{id}");
-        editingLineId = id;
-
-        noteEditPanel.EditingLineId = id;
-        eventEditPanel.EditingLineId = id;
-
-        editingLineLabel.Text = $"线{id}";
-
-        chooseLinePanel.Visible = false;
-        _inputManager.IsEnable = true;
-    }
-
-    private void AddLine()
-    {
-        _chartEditService.AddLine(editingChart.JudgeLineList, -1);
-    }
-
-    private void DeleteLine(int id)
-    {
-        if(editingChart.JudgeLineList.Count <= 1)
-        {
-            GD.Print($"[{this.Name}] 最少保留一条判定线，删除失败");
-            PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
-            return;
-        }
-        _chartEditService.DeleteLine(editingChart.JudgeLineList, id);
-    }
-
-    #endregion
-
-    #region Note相关方法
-
-    private void AddNote(NoteType noteType, Beat startBeatValue, Beat EndBeatValue, float posX)
-    {
-        _chartEditService.AddNote(editingLineId, noteType, startBeatValue, EndBeatValue, posX);
-
-        //通知谱面数据产生了变化
-        ChartEventBus.NotifyNoteCountChanged(editingLineId);
-    }
-
-    private void SetNoteProperty(int lineId, int noteIndex, NotePropertyEnum property, object value)
-    {
-        _chartEditService.SetNoteProperty(lineId, noteIndex, property, value);
-    }
-
-    private void OnNoteSelected(int lineId, int noteIndex, Vector2 popupViewportPos)
-    {
-        SelectFocusPanel = EditPanelType.NoteEdit;
-        IsSelecting = true;
-
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-
-        float beatValue = note.StartTime[0] + note.StartTime[1] * 1f / note.StartTime[2];
-        //Vector2 popupPos = noteEditPanel.GetScreenPosition(beatValue, note.PositionX)
-        //    + new Vector2(30,30);
-
-        // 构建菜单项（使用闭包捕获当前音符信息）
-        var items = new List<PopupMenuItem>
-        {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnNoteEdit(lineId, noteIndex) },
-            new PopupMenuItem { Text = "复制", Callback = () => OnNoteCopy(lineId, noteIndex) },
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "删除", Callback = () => OnNoteDelete(lineId, noteIndex) }
-        };
-
-        // 弹出菜单
-        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        // popupMenu.PopupHide += () =>
-        // {
-        //     noteEditPanel.DeselectAll();
-        //     IsSelecting = false;
-        // };
-    }
-
-    private void OnNoteEdit(int lineId, int noteIndex)
-    {
-        noteInfoPanel.Visible = true;
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        noteInfoPanel.ShowInfo(note, lineId, noteIndex);
-    }
-
-    private void OnNoteCopy(int lineId, int noteIndex)
-    {
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-
-        _editorClipboard.noteClipBoard.Notes = [NoteSnapshot.Capture(note)];
-        _editorClipboard.noteClipBoard.SourceLineId = lineId;
-        _editorClipboard.noteClipBoard.SourceStartBeat = new Beat(note.StartTime);
-        _editorClipboard.noteClipBoard.SourcePosX = note.PositionX;
-
-        _editorClipboard.LatestClipBoard = EditPanelType.NoteEdit;
-
-        GD.Print($"[{Name}] 复制Note: Line{lineId}_{noteIndex} {(NoteType)note.Type}");
-    }
-
-    private void OnNoteDelete(int lineId, int noteIndex)
-    {
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        _chartEditService.DeleteNote(lineId, note);
-    }
-
-    private void OnNoteMultiSelected()
-    {
-        SelectFocusPanel = EditPanelType.NoteEdit;
-        IsSelecting = true;
-    }
-
-    // 注意：这里不直接执行命令，而是把拖动过程包装成一个事务。
-    // 拖动中仅直接修改共享 Chart，拖动结束时统一压入一条撤销命令。
-    private void BeginNoteDrag(int lineId, Note note)
-    {
-        if (note == null) return;
-        _chartEditService.BeginNoteDrag(lineId, note);
-    }
-
-    private void EndNoteDrag(int lineId, Note note)
-    {
-        if (note == null) return;
-        _chartEditService.EndNoteDrag(lineId, note);
-    }
-
-    private void MoveNote(int lineId, int noteIndex, float chartX)
-    {
-        _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.PosX, chartX);
-    }
-
-    private void SetNoteTime(int lineId, int noteIndex, Beat startBeat, Beat endBeat)
-    {
-        Note note = editingChart.JudgeLineList[lineId].Notes[noteIndex];
-        if(!TimeUtil.IsBeatEqual(note.StartTime, startBeat.Values))
-        {
-            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.StartTime, startBeat);
-        }
-        if(!TimeUtil.IsBeatEqual(note.EndTime, endBeat.Values))
-        {
-            _chartEditService.ApplyNotePropertyDirect(lineId, noteIndex, NotePropertyEnum.EndTime, endBeat);
-        }
-    }
-
-    private void OnNoteChooserDeselected()
-    {
-        EditModeManager.SetEditMode(EditModeEnum.Normal);
-        // GD.Print($"[{this.Name}] 用户取消选择了note");
-    }
-
-    private void OnNoteChooserNoteChoosed(NoteType noteType)
-    {
-        EditModeManager.SetEditMode(EditModeEnum.Place);
-        noteEditPanel.PlacingNote = noteType;
-    }
-
-    #endregion
-
-    #region LineEvent相关方法
-
-    private void AddEvent(int lineId, int layer, LineEventEnum lineEventEnum, Beat startBeat, Beat endBeat)
-    {
-        _chartEditService.AddEvent(lineId, layer, lineEventEnum, startBeat, endBeat);
-    }
-
-    private void OnEventSelected(int lineId, int layer, LineEventEnum lineEventEnum, int eventIndex, Vector2 popupViewportPos)
-    {
-        SelectFocusPanel = EditPanelType.LineEventEdit;
-        IsSelecting = true;
-        
-        EventLayer eventLayer = editingChart.JudgeLineList[editingLineId].EventLayers[layer];
-		LineEvent lineEvent = eventLayer.GetLineEvents(lineEventEnum)[eventIndex];
-
-        // 构建菜单项（使用闭包捕获当前音符信息）
-        var items = new List<PopupMenuItem>
-        {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnEventEdit(lineId, editingLayer, lineEventEnum, eventIndex) },
-            new PopupMenuItem { Text = "复制", Callback = () => OnEventCopy(lineId, lineEventEnum, eventIndex) },
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "删除", Callback = () => OnEventDelete(lineId, lineEventEnum, eventIndex) }
-        };
-
-        // 弹出菜单
-        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        // popupMenu.PopupHide += () =>
-        // {
-        //     eventEditPanel.DeselectAll();
-        //     IsSelecting = false;
-        // };
-    }
-
-    private void OnEventEdit(int lineId, int layer, LineEventEnum lineEventEnum, int index)
-    {
-        GD.Print($"[{this.Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-        eventInfoPanel.Visible = true;
-        eventEditPanel.DeselectAll();
-        IsSelecting = false;
-
-        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum)[index];
-
-        eventInfoPanel.Edit(lineEvent, lineId, layer, lineEventEnum, index);
-    }
-
-    private void SetEventProperty(
-        int lineId, int layer, LineEventEnum lineEventEnum, int index,
-        LineEventPropertyType propertyType, object value)
-    {
-        _chartEditService.SetEventProperty(lineId, layer, lineEventEnum, index, propertyType, value);
-    }
-
-    private void OnEventCopy(int lineId, LineEventEnum lineEventEnum, int index)
-    {
-        LineEvent lineEvent = editingChart.JudgeLineList[lineId].EventLayers[editingLayer].GetLineEvents(lineEventEnum)[index];
-
-        _editorClipboard.lineEventClipBoard = new LineEventClipBoard
-        {
-            SourceLineId = lineId,
-            SourceLayer = editingLayer,
-            SourceStartBeat = new Beat(lineEvent.StartTime),
-            Events = [ new LineEventClipBoardItem(lineEventEnum, LineEventSnapshot.Capture(lineEvent)) ]
-        };
-
-        _editorClipboard.LatestClipBoard = EditPanelType.LineEventEdit;
-        GD.Print($"[{this.Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
-    }
-
-    private void OnEventDelete(int lineId, LineEventEnum lineEventEnum, int index)
-    {
-        _chartEditService.DeleteEvent(lineId, editingLayer, lineEventEnum, index);
-
-    }
-
-    private void OnEventMultiSelected()
-    {
-        SelectFocusPanel = EditPanelType.LineEventEdit;
-        IsSelecting = true;
-    }
-
-    private void BeginEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
-    {
-        if (lineEvent == null) return;
-        _chartEditService.BeginEventDrag(lineId, layer, type, lineEvent);
-    }
-
-    private void EndEventDrag(int lineId, int layer, LineEventEnum type, LineEvent lineEvent)
-    {
-        if (lineEvent == null) return;
-        _chartEditService.EndEventDrag(lineId, layer, type, lineEvent);
-    }
-
-    private void SetEventTime(int lineId, int layer, LineEventEnum type, int index, Beat startBeat, Beat endBeat)
-    {
-        List<LineEvent> lineEvents = editingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(type);
-        LineEvent lineEvent = lineEvents[index];
-
-        if(!TimeUtil.IsBeatEqual(lineEvent.StartTime, startBeat.Values))
-        {
-            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.StartTime, startBeat);
-        }
-        if(!TimeUtil.IsBeatEqual(lineEvent.EndTime, endBeat.Values))
-        {
-            _chartEditService.ApplyEventPropertyDirect(lineId, layer, type, index, LineEventPropertyType.EndTime, endBeat);
-        }
-    }
-
-    #endregion
-
-    #region Bpm相关方法
-
-    private void OnBpmSelected(int index, Vector2 popupViewportPos)
-    {
-        if (editingChart?.BpmList == null || index < 0 || index >= editingChart.BpmList.Count)
-        {
-            return;
-        }
-
-        SelectFocusPanel = EditPanelType.BpmEventEdit;
-        IsSelecting = true;
-
-        BpmEvent bpmEvent = editingChart.BpmList[index];
-        var items = new List<PopupMenuItem>
-        {
-            new PopupMenuItem { Text = "编辑", Callback = () => OnBpmEdit(bpmEvent) },
-            new PopupMenuItem { Text = "复制", Callback = () => OnBpmCopy(bpmEvent) },
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "删除", Callback = () => OnBpmDelete(bpmEvent) }
-        };
-
-        PopupMenu popupMenu = PopupMenuHelper.Instance.ShowPopupMenu(this, popupViewportPos, items);
-        // popupMenu.PopupHide += () => {
-        //     bpmEditPanel.DeselectAll();
-        //     IsSelecting = false;
-        // };
-    }
-
-    private void OnBpmMultiSelected()
-    {
-        SelectFocusPanel = EditPanelType.BpmEventEdit;
-        IsSelecting = true;
-    }
-
-    private void OnBpmEdit(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null || !editingChart.BpmList.Contains(bpmEvent))
-        {
-            return;
-        }
-
-        bpmEditPanel.DeselectAll();
-        IsSelecting = false;
-
-        bpmInfoPanel.Visible = true;
-        bpmInfoPanel.Edit(bpmEvent, editingChart.BpmList.IndexOf(bpmEvent));
-    }
-
-    private void SetBpmProperty(BpmEvent bpmEvent, string property, object value)
-    {
-        _chartEditService.SetBpmProperty(bpmEvent, property, value);
-    }
-
-    private void OnBpmCopy(BpmEvent bpmEvent)
-    {
-        _editorClipboard.bpmEventClipBoard = new BpmEventClipBoard
-        {
-            SourceStartBeat = new Beat(bpmEvent.StartTime),
-            Bpms = [ BpmEventSnapshot.Capture(bpmEvent) ]
-        };
-        _editorClipboard.LatestClipBoard = EditPanelType.BpmEventEdit;
-        GD.Print($"[{Name}] 复制 BPM:{bpmEvent?.Bpm}");
-    }
-
-    private void OnBpmDelete(BpmEvent bpmEvent)
-    {
-        _chartEditService.DeleteBpms(new List<BpmEvent> { bpmEvent });
-        bpmEditPanel.DeselectAll();
-        IsSelecting = false;
-    }
-
-    private void DeleteEvents(int lineId, int layer, IEnumerable<(LineEventEnum Type, LineEvent Evt)> events)
-    {
-        _chartEditService.DeleteEvents(lineId, layer, events);
-    }
-
-    private void AddBpm(float bpm, Beat startBeat)
-    {
-        _chartEditService.AddBpm(bpm, startBeat);
-    }
-
-    private void DeleteBpms(List<BpmEvent> bpmEvents)
-    {
-        _chartEditService.DeleteBpms(bpmEvents);
-    }
-
-    private void SetBpmTime(int index, Beat startBeat)
-    {
-        _chartEditService.SetBpmTime(index, startBeat);
-    }
-
-    private void BeginBpmDrag(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null) return;
-        _chartEditService.BeginBpmDrag(bpmEvent);
-    }
-
-    private void EndBpmDrag(BpmEvent bpmEvent)
-    {
-        if (bpmEvent == null) return;
-        _chartEditService.EndBpmDrag(bpmEvent);
+        _judgeLineController.ToggleChooseLinePanel();
     }
 
     #endregion
