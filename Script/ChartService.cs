@@ -177,7 +177,7 @@ public partial class ChartService : Node
                 if (!Godot.FileAccess.FileExists(infoTempPath))
                 {
                     GD.PrintErr($"[{Name}] 无法找到info.txt文件, 临时目录: {tempDir}");
-                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt临时目录: {tempDir}");
+                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt, 临时目录: {tempDir}");
                     return;
                 }
 
@@ -223,7 +223,7 @@ public partial class ChartService : Node
             }),
         ];
 
-        await LoadingManager.Instance.RunTasksAsync("正在导入谱面", tasks);
+        await LoadingManager.Instance.RunTasksAsync("正在导入谱面", tasks, null);
         
         GD.Print($"[{this.Name}] 铺面导入成功, id:{id}");
 

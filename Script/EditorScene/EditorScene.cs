@@ -201,6 +201,8 @@ public partial class EditorScene : Node
                 if (bgImage == null)
                 {
                     GD.PrintErr($"[{this.Name}] 背景图片导入失败: {chartInfo.PicturePath}");
+                    PopupHelper.Instance.ShowAlert("错误",$"背景图片导入失败: {chartInfo.PicturePath}");
+                    throw new Exception($"背景图片导入失败: {chartInfo.PicturePath}");
                 }
                 
                 // 加载模糊图片
@@ -216,6 +218,8 @@ public partial class EditorScene : Node
                 if (bgImageBlurred == null)
                 {
                     GD.PrintErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
+                    PopupHelper.Instance.ShowAlert("错误", $"模糊化背景图片导入失败: {blurredPath}");
+                    // 这里可以不throw报错，因为模糊化背景图片不是必须的
                 }
 
                 // 音乐
@@ -224,6 +228,8 @@ public partial class EditorScene : Node
                 if (audioStream == null)
                 {
                     GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
+                    PopupHelper.Instance.ShowAlert("错误", $"音乐文件加载失败: {chartInfo.SongPath}");
+                    throw new Exception($"音乐文件加载失败: {chartInfo.SongPath}");
                 }
             }),
             ("正在初始化谱面播放器...", async () => {
@@ -253,7 +259,7 @@ public partial class EditorScene : Node
             }),
         ];
 
-        await LoadingManager.Instance.RunTasksAsync("正在进入编辑界面", tasks);
+        await LoadingManager.Instance.RunTasksAsync("正在进入编辑界面", tasks, Quit);
         
         GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
         _isReady = true;
