@@ -123,6 +123,13 @@ public partial class CreateChartPanel : PanelContainer
 
     private void PickImageGalleryIOS()
     {
+        if (IOSPhotoPicker.Instance == null)
+        {
+            GD.PrintErr($"[{Name}] IOSPhotoPicker 自动加载节点不存在");
+            PopupHelper.Instance?.ShowAlert("选择图片失败", "IOSPhotoPicker 未加载");
+            return;
+        }
+
         IOSPhotoPicker.Instance.PickImageFromGallery(
             (Image image) =>
             {
