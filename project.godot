@@ -34,6 +34,7 @@ IosPhotoPicker="*uid://cvl10oovvfsnx"
 PopupHelper="*uid://vokpe42lhbej"
 LoadingManager="*uid://b57um3paj7g87"
 ImageBlur="*uid://q6jaa43qjmt8"
+FileLogger="*uid://dsijuqa7kbo5j"
 
 [display]
 
@@ -47,7 +48,7 @@ project/assembly_name="HPhiEditor"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/GodotGetImage/plugin.cfg", "res://addons/Todo_Manager/plugin.cfg")
+enabled=PackedStringArray("res://addons/GMPShared/menu/plugin.cfg", "res://addons/GodotGetImage/plugin.cfg", "res://addons/SharePlugin/plugin.cfg", "res://addons/Todo_Manager/plugin.cfg", "res://addons/android-device-explorer/plugin.cfg")
 
 [gui]
 

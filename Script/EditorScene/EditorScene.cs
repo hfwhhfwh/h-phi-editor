@@ -129,26 +129,26 @@ public partial class EditorScene : Node
         _inputManager = GetNode<InputManager>("/root/InputManager");
         if(_inputManager == null)
         {
-            GD.PrintErr($"[{this.Name}] inputManager is null");
+            FileLogger.Instance.PrintErr($"[{this.Name}] inputManager is null");
         }
         _inputManager.IsEnable = true;
         
         _chartService = GetNode<ChartService>("/root/ChartService");
         if(_chartService == null)
         {
-            GD.PrintErr($"[{this.Name}] ChartService is null");
+            FileLogger.Instance.PrintErr($"[{this.Name}] ChartService is null");
         }
 
         _chartEditService = GetNode<ChartEditService>("/root/ChartEditService");
         if(_chartEditService == null)
         {
-            GD.PrintErr($"[{this.Name}] ChartEditService is null");
+            FileLogger.Instance.PrintErr($"[{this.Name}] ChartEditService is null");
         }
 
         _editorSettings = GetNode<EditorSettings>("/root/EditorSettings");
         if (_editorSettings == null)
         {
-            GD.PrintErr($"[{this.Name}] EditorSettings is null");
+            FileLogger.Instance.PrintErr($"[{this.Name}] EditorSettings is null");
         }
 
         // 创建场景级状态中心(EditorContext)，并把 Context / ChartEditService 注入各面板
@@ -178,7 +178,7 @@ public partial class EditorScene : Node
                 // 这里 ChartLoader.LoadChart 可能涉及文件读取和 Json 解析，可以改为异步后台
                 var sw = Stopwatch.StartNew();
                 Chart chart = await Task.Run(() => ChartLoader.LoadChart(chartInfo.ChartPath));
-                GD.Print($"[{Name}] 读取谱面用时:{sw.ElapsedMilliseconds} ms");
+                FileLogger.Instance.Print($"[{Name}] 读取谱面用时:{sw.ElapsedMilliseconds} ms");
 
                 // 谱面只在 EditorContext 中保存一份，面板通过 Context 读取
                 _context.SetChart(chartId, chart);
@@ -200,7 +200,7 @@ public partial class EditorScene : Node
                 // await Task.Run(() => bgImage = Image.LoadFromFile(chartInfo.PicturePath));
                 if (bgImage == null)
                 {
-                    GD.PrintErr($"[{this.Name}] 背景图片导入失败: {chartInfo.PicturePath}");
+                    FileLogger.Instance.PrintErr($"[{this.Name}] 背景图片导入失败: {chartInfo.PicturePath}");
                     PopupHelper.Instance.ShowAlert("错误",$"背景图片导入失败: {chartInfo.PicturePath}");
                     throw new Exception($"背景图片导入失败: {chartInfo.PicturePath}");
                 }
@@ -217,7 +217,7 @@ public partial class EditorScene : Node
                 (bgImageBlurred, _) = await FileUtil.LoadImageFromFileAsync(blurredPathAbs);
                 if (bgImageBlurred == null)
                 {
-                    GD.PrintErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
+                    FileLogger.Instance.PrintErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
                     PopupHelper.Instance.ShowAlert("错误", $"模糊化背景图片导入失败: {blurredPath}");
                     // 这里可以不throw报错，因为模糊化背景图片不是必须的
                 }
@@ -227,7 +227,7 @@ public partial class EditorScene : Node
                 await Task.Run(() => audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath));
                 if (audioStream == null)
                 {
-                    GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
+                    FileLogger.Instance.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
                     PopupHelper.Instance.ShowAlert("错误", $"音乐文件加载失败: {chartInfo.SongPath}");
                     throw new Exception($"音乐文件加载失败: {chartInfo.SongPath}");
                 }
@@ -261,7 +261,7 @@ public partial class EditorScene : Node
 
         await LoadingManager.Instance.RunTasksAsync("正在进入编辑界面", tasks, Quit);
         
-        GD.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
+        FileLogger.Instance.Print($"[{this.Name}] 初始化成功 谱面id:{editingChartId}");
         _isReady = true;
         
     }
@@ -455,7 +455,7 @@ public partial class EditorScene : Node
         // 取消订阅所有事件
         UnsubscribeAll();
 
-        GD.Print($"[{Name}] 成功退出EditorScene");
+        FileLogger.Instance.Print($"[{Name}] 成功退出EditorScene");
         
     }
     
