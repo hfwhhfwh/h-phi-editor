@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 [ext_resource type="Texture2D" uid="uid://doeh14lfbp4sw" path="res://Textures/刷新.png" id="6_iis6y"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_resetVSyncBtn", "_maxFpsEdit", "_resetMaxFpsBtn", "_packOptionBtn", "_resetPackBtn", "_useDefaultResourceBtn", "_resetUseDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_userDataDirLabel", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_resetMhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit", "_resetVerLineColorBtn", "_resetVerLineWidthBtn", "_resetHorSubLineColorBtn", "_resetHorSubLineWidthBtn", "_resetHorLineColorBtn", "_resetHorLineWidthBtn", "_resetGroundLineColorBtn", "_resetGroundLineWidthBtn")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_resetVSyncBtn", "_maxFpsEdit", "_resetMaxFpsBtn", "_packOptionBtn", "_resetPackBtn", "_useDefaultResourceBtn", "_resetUseDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_userDataDirLabel", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_resetMhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit", "_resetVerLineColorBtn", "_resetVerLineWidthBtn", "_resetHorSubLineColorBtn", "_resetHorSubLineWidthBtn", "_resetHorLineColorBtn", "_resetHorLineWidthBtn", "_resetGroundLineColorBtn", "_resetGroundLineWidthBtn", "_exportLogBtn")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -50,6 +50,7 @@ _resetHorLineColorBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/
 _resetHorLineWidthBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Width/Reset")
 _resetGroundLineColorBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Color/Reset")
 _resetGroundLineWidthBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/GroundLine/Width/Reset")
+_exportLogBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Log/VBoxContainer/ExportLog")
 
 [node name="TabManager" type="Node" parent="." unique_id=1686546388 node_paths=PackedStringArray("TabMap", "defaultButton")]
 script = ExtResource("3_j4nhx")
@@ -58,7 +59,8 @@ NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Sectio
 NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Pack"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack"),
 NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Storage"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage"),
 NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Play"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play"),
-NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Editor"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor")
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Editor"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor"),
+NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Log"): NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Log")
 }
 defaultButton = NodePath("../MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section/Display")
 
@@ -165,6 +167,10 @@ text = "谱面播放"
 [node name="Editor" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section" unique_id=1858156545]
 layout_mode = 2
 text = "编辑器"
+
+[node name="Log" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Section/MarginContainer/ScrollContainer/Section" unique_id=210000010]
+layout_mode = 2
+text = "运行日志"
 
 [node name="Properties" type="PanelContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer" unique_id=924282429]
 layout_mode = 2
@@ -287,6 +293,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="Storage" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=913838793]
+visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage" unique_id=781547910]
@@ -537,6 +544,24 @@ layout_mode = 2
 icon = ExtResource("6_iis6y")
 icon_alignment = 1
 expand_icon = true
+
+[node name="Log" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=210000011]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Log" unique_id=210000012]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Desc" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Log/VBoxContainer" unique_id=210000013]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+text = "导出当前运行日志，并通过系统分享发送"
+autowrap_mode = 3
+
+[node name="ExportLog" type="Button" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Log/VBoxContainer" unique_id=210000014]
+layout_mode = 2
+text = "导出日志"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=240990376]
 layout_mode = 2

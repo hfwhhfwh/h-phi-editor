@@ -87,4 +87,13 @@ public partial class FileLogger : Node, ILogger
     /// 获取当前日志文件的绝对路径，便于调试时定位。
     /// </summary>
     public string GetLogPath() => ProjectSettings.GlobalizePath(_logFilePath);
+
+    /// <summary>
+    /// 获取当前日志文件的绝对路径（供外部直接调用，无需强转 ILogger）。
+    /// 日志器尚未就绪时返回 null。
+    /// </summary>
+    public static string GetCurrentLogPath()
+    {
+        return (Instance as FileLogger)?.GetLogPath();
+    }
 }

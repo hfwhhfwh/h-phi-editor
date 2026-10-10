@@ -59,6 +59,9 @@ public partial class SettingsPanel : Control
     [Export] private Button _resetGroundLineColorBtn;
     [Export] private Button _resetGroundLineWidthBtn;
 
+    // ---------------- 运行日志 ----------------
+    [Export] private Button _exportLogBtn;
+
     public override void _Ready()
     {
 
@@ -178,6 +181,15 @@ public partial class SettingsPanel : Control
         _horSubLineWidthEdit.ValueChanged += OnHorSubLineWidthChanged;
         _horLineWidthEdit.ValueChanged += OnHorLineWidthChanged;
         _groundLineWidthEdit.ValueChanged += OnGroundLineWidthChanged;
+
+        if (_exportLogBtn != null)
+        {
+            _exportLogBtn.Pressed += OnExportLogClicked;
+        }
+        else
+        {
+            GD.PushWarning("[SettingsPanel] _exportLogBtn 未绑定，无法导出日志");
+        }
 
         _applyBtn.Pressed += () => GameSettings.Instance.Save();
         _confirmBtn.Pressed += () =>
@@ -344,6 +356,68 @@ public partial class SettingsPanel : Control
                 // RefreshUI();
             }
         );
+    }
+
+    // ---------- 运行日志 ----------
+
+    /// <summary>
+    /// 导出当前运行日志：复制到 user://export/ 下并通过 ShareHelper 调用系统分享。
+    /// Android 上 ShareFileProvider 暴露的是 files 根目录，因此 user:// 下的文件都可分享。
+    /// </summary>
+    private void OnExportLogClicked()
+    {
+        string logPath = FileLogger.GetCurrentLogPath();
+        if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
+        {
+            GD.PrintErr("[SettingsPanel] 未找到可导出的日志文件");
+            PopupHelper.Instance.ShowAlert("提示", "未找到可导出的日志文件");
+            return;
+        }
+
+        string exportPath;
+        try
+        {
+            exportPath = CopyLogToExportDir(logPath);
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"[SettingsPanel] 导出日志失败: {ex.Message}");
+            PopupHelper.Instance.ShowAlert("提示", $"导出日志失败：{ex.Message}");
+            return;
+        }
+
+        if (ShareHelper.Instance == null || !ShareHelper.IsAvailable)
+        {
+            GD.Print("[SettingsPanel] 当前平台不支持系统分享，日志已导出但未分享");
+            PopupHelper.Instance.ShowAlert("提示", $"当前平台不支持系统分享，日志已保存至：\n{exportPath}");
+            return;
+        }
+
+        ShareHelper.Instance.ShareFile(
+            exportPath,
+            "text/plain",
+            "运行日志",
+            "HPhi Editor 运行日志",
+            $"导出时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}"
+        );
+
+        PopupHelper.Instance.ShowAlert("提示", $"日志已发起分享：\n{exportPath}");
+    }
+
+    /// <summary>
+    /// 把当前日志复制到 user://export/，返回可直接用于分享的绝对路径。
+    /// </summary>
+    private static string CopyLogToExportDir(string logPath)
+    {
+        const string exportDir = "user://export";
+        DirAccess.MakeDirRecursiveAbsolute(exportDir);
+
+        string fileName = $"HPhiEditor_Log_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log";
+        string targetVirtualPath = $"{exportDir}/{fileName}";
+        string targetAbsPath = ProjectSettings.GlobalizePath(targetVirtualPath);
+
+        File.Copy(logPath, targetAbsPath, true);
+        return targetAbsPath;
     }
 
     private void OnDeletePackClicked()

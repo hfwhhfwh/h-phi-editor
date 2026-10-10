@@ -38,7 +38,7 @@ func _update_plugin() -> void:
 		if Engine.has_singleton(PLUGIN_SINGLETON_NAME):
 			_plugin_singleton = Engine.get_singleton(PLUGIN_SINGLETON_NAME)
 			_connect_signals()
-		elif not OS.has_feature("editor_hint"):
+		elif not Engine.is_editor_hint():
 			log_error("%s singleton not found!" % PLUGIN_SINGLETON_NAME)
 
 
