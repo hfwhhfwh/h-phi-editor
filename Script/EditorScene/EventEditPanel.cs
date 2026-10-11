@@ -375,7 +375,7 @@ public partial class EventEditPanel : BaseEditPanel
 		_isPasteMode = true;
 		_lineEventClipBoard = lineEventClipBoard;
 
-		GD.Print($"[{Name}] 正在粘贴事件: Line{lineEventClipBoard.SourceLineId} Layer{lineEventClipBoard.SourceLayer} Beat:{lineEventClipBoard.SourceStartBeat}");
+		FileLogger.Log($"[{Name}] 正在粘贴事件: Line{lineEventClipBoard.SourceLineId} Layer{lineEventClipBoard.SourceLayer} Beat:{lineEventClipBoard.SourceStartBeat}");
 	}
 
 	public void ExitPasteMode()
@@ -383,7 +383,7 @@ public partial class EventEditPanel : BaseEditPanel
 		if (!_isPasteMode) return;
 		_isPasteMode = false;
 
-		GD.Print($"[{Name}] 用户退出了事件粘贴模式");
+		FileLogger.Log($"[{Name}] 用户退出了事件粘贴模式");
 	}
 
 	private void OnEventTapped(LineEventEnum lineEventEnum, int index, Vector2 localPos)
@@ -393,7 +393,7 @@ public partial class EventEditPanel : BaseEditPanel
 
 		Vector2 viewportPos = GetGlobalTransformWithCanvas() * localPos;
 		Vector2 popupPos = viewportPos + new Vector2(30, 30);
-		// GD.Print($"pos:{localPos}, viewportPos:{GetGlobalTransformWithCanvas() * localPos}, ab em pos:{GetScreenTransform() * localPos} screenPos:{screenPos}");
+		// FileLogger.Log($"pos:{localPos}, viewportPos:{GetGlobalTransformWithCanvas() * localPos}, ab em pos:{GetScreenTransform() * localPos} screenPos:{screenPos}");
         
         if(SelectMode == SelectModeEnum.Single)
         {
@@ -424,7 +424,7 @@ public partial class EventEditPanel : BaseEditPanel
         }
         else
         {
-            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
+            FileLogger.LogErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
         }
 	}
 
@@ -498,7 +498,7 @@ public partial class EventEditPanel : BaseEditPanel
             // }
             else
             {
-				GD.Print($"未选中Event头尾, 不滑动Event:{evtIndex}");
+				FileLogger.Log($"未选中Event头尾, 不滑动Event:{evtIndex}");
                 return; // 未命中有效区域
             }
 
@@ -627,7 +627,7 @@ public partial class EventEditPanel : BaseEditPanel
     {
         if (targetId is not ValueTuple<LineEventEnum, LineEvent> tuple)
 		{
-			GD.PushWarning($"[{Name}] OnEventDragEnded() targetId is not ValueTuple<LineEventEnum, LineEvent>");
+			FileLogger.LogWarning($"[{Name}] OnEventDragEnded() targetId is not ValueTuple<LineEventEnum, LineEvent>");
 			return;
 		}
 		
@@ -642,7 +642,7 @@ public partial class EventEditPanel : BaseEditPanel
 		(LineEventEnum evtType, LineEvent evt) = (ValueTuple<LineEventEnum, LineEvent>)targetId;
         if (evt == null)
 		{
-			GD.Print($"OnEventDragMoved() evt == null");
+			FileLogger.Log($"OnEventDragMoved() evt == null");
 			return;
 		}
 
@@ -667,7 +667,7 @@ public partial class EventEditPanel : BaseEditPanel
         // 如果对象已被删除，优雅终止拖动，避免崩溃
         if (evtIndex < 0)
         {
-            GD.Print($"[{Name}] 拖动的事件已被删除或不在当前层，终止拖动");
+            FileLogger.Log($"[{Name}] 拖动的事件已被删除或不在当前层，终止拖动");
             _dragMoveComponent.End();
             return;
         }
@@ -791,11 +791,11 @@ public partial class EventEditPanel : BaseEditPanel
         float distance = (float)Math.Sqrt(nearestDistSquared);
         if(distance > distanceThreshold)
         {
-            // GD.Print($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
+            // FileLogger.Log($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
             return new (null, -1);
         }
 
-        // GD.Print($"[{this.Name}] 点击位置:{pos} 最近的event:{nearestEventType}-{nearestEventIndex}, 距离:{distance}");
+        // FileLogger.Log($"[{this.Name}] 点击位置:{pos} 最近的event:{nearestEventType}-{nearestEventIndex}, 距离:{distance}");
         return new(nearestEventType, nearestEventIndex);
 	}
 

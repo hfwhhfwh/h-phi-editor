@@ -366,7 +366,7 @@ public abstract partial class BaseEditPanel : Panel
         // 3. 按顺序相乘：屏幕变换 * 全局画布变换 * 局部坐标
         Vector2 screenPos = screenTransform * (globalCanvasTransform * localPos);
 
-		// GD.Print($"localPos:{localPos}, viewportPos:{globalCanvasTransform * localPos}, screenPos:{screenPos}");
+		// FileLogger.Log($"localPos:{localPos}, viewportPos:{globalCanvasTransform * localPos}, screenPos:{screenPos}");
 
         return screenPos;
 	}

@@ -25,7 +25,7 @@ public partial class TestSceneEventInfoPanel : Node
         // 本测试场景没有谱面数据，因此只做界面展示。
 
         eventInfoPanel.OnConfirmed += () => {
-            GD.Print($"用户按下了确认键");
+            FileLogger.Log($"用户按下了确认键");
         };
 
         //CallDeferred(MethodName.ShowInfo);

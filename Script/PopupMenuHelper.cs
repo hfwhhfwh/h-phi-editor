@@ -13,7 +13,7 @@ public partial class PopupMenuHelper : Node
         // ========== 单例保护 ==========
         if (Instance != null && GodotObject.IsInstanceValid(Instance))
         {
-            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            FileLogger.LogWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
             QueueFree();  // 自杀，保留旧实例
             return;
         }
@@ -128,7 +128,7 @@ public partial class PopupMenuHelper : Node
                 popupMenu.SetItemChecked(index, !currentState);
                 item.Toggled?.Invoke(!currentState);
 
-                //GD.Print($"index:{index}, currentState:{currentState}");
+                //FileLogger.Log($"index:{index}, currentState:{currentState}");
             }
             else // 如果是普通按钮，调用无参数的回调
             {

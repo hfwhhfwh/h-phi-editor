@@ -96,7 +96,7 @@ public partial class StartMenu : Node
                 newInfo.PictureFileName = dPath.GetFile();
                 _chartService.SaveChartInfo(newInfo);
 
-                GD.Print($"[{Name}] 成功修正了曲绘文件格式:{oPath} -> {dPath}");
+                FileLogger.Log($"[{Name}] 成功修正了曲绘文件格式:{oPath} -> {dPath}");
             }
 
             datas.Add(new ChartList.Data
@@ -158,7 +158,7 @@ public partial class StartMenu : Node
             ChartInfo chartInfo = _chartService.GetChartInfo(_currentSelectedChartId);
             if(chartInfo == null)
             {
-                GD.PrintErr($"{this.Name} OnEditInfoPressed() chartInfo == null");
+                FileLogger.LogErr($"{this.Name} OnEditInfoPressed() chartInfo == null");
                 return;
             }
             //显示基本信息面板
@@ -196,7 +196,7 @@ public partial class StartMenu : Node
             ChartInfo chartInfo = _chartService.GetChartInfo(_currentSelectedChartId);
             if(chartInfo == null)
             {
-                GD.PrintErr($"{this.Name} OnDeleteButtonPressed() chartInfo == null");
+                FileLogger.LogErr($"{this.Name} OnDeleteButtonPressed() chartInfo == null");
                 return;
             }
 
@@ -222,7 +222,7 @@ public partial class StartMenu : Node
             ChartInfo chartInfo = _chartService.GetChartInfo(_currentSelectedChartId);
             if(chartInfo == null)
             {
-                GD.PrintErr($"[{this.Name}] OnExportPressed() chartInfo == null");
+                FileLogger.LogErr($"[{this.Name}] OnExportPressed() chartInfo == null");
                 return;
             }
             //显示基本信息面板
@@ -234,7 +234,7 @@ public partial class StartMenu : Node
 
     private void OnExportConfirmed(string chartId)
     {
-        GD.Print($"[{this.Name}] OnExportConfirmed(), chartID:{chartId}");
+        FileLogger.Log($"[{this.Name}] OnExportConfirmed(), chartID:{chartId}");
 
         _chartService.ExportChart(chartId);
 
@@ -253,7 +253,7 @@ public partial class StartMenu : Node
     {
         if (string.IsNullOrEmpty(_currentSelectedChartId))
         {
-            GD.Print($"[{Name}] 未选中任何谱面");
+            FileLogger.Log($"[{Name}] 未选中任何谱面");
             return;
         }
         

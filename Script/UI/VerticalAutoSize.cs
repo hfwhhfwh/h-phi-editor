@@ -19,7 +19,7 @@ public partial class VerticalAutoSize : Button
 		newSize.Y = child.Size.Y;
 		CustomMinimumSize = newSize;
 
-		//GD.Print($"{Name} newSize.Y:{newSize.Y}, child.Size.Y:{child.Size.Y}");
+		//FileLogger.Log($"{Name} newSize.Y:{newSize.Y}, child.Size.Y:{child.Size.Y}");
 	}
 
 	

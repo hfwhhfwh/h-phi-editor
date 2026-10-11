@@ -43,7 +43,7 @@ public partial class ChartService : Node
             ChartFileName = $"{data.Id}.json"
         };
 
-        //GD.Print($"data.Id:{data.Id}, Path.GetExtension(data.PicturePath):{Path.GetExtension(data.PicturePath)}, PictureFileName:{chartInfo.PictureFileName}");
+        //FileLogger.Log($"data.Id:{data.Id}, Path.GetExtension(data.PicturePath):{Path.GetExtension(data.PicturePath)}, PictureFileName:{chartInfo.PictureFileName}");
 
         // 创建目录
         FileUtil.EnsureDirectoryExists(chartInfo.FolderPath);
@@ -101,7 +101,7 @@ public partial class ChartService : Node
             ChartFileName = $"{data.Id}.json"
         };
 
-        //GD.Print($"data.Id:{data.Id}, Path.GetExtension(data.PicturePath):{Path.GetExtension(data.PicturePath)}, PictureFileName:{chartInfo.PictureFileName}");
+        //FileLogger.Log($"data.Id:{data.Id}, Path.GetExtension(data.PicturePath):{Path.GetExtension(data.PicturePath)}, PictureFileName:{chartInfo.PictureFileName}");
 
         // 创建目录
         FileUtil.EnsureDirectoryExists(chartInfo.FolderPath);
@@ -168,7 +168,7 @@ public partial class ChartService : Node
         List<(string, Func<Task>)> tasks = [
             ("正在解压谱面文件...", async () => {
                 // 2. 解压 ZIP 到临时目录
-                GD.Print($"开始解压: {path} -> {tempDir}");
+                FileLogger.Log($"开始解压: {path} -> {tempDir}");
                 await Task.Run(() => FileUtil.UnzipFileTo(path, tempDir)); // 解压完成会在内部打印
             }),
             ("正在读取info.txt...", async () => {
@@ -176,7 +176,7 @@ public partial class ChartService : Node
                 infoTempPath = Path.Combine(tempDir, "info.txt");
                 if (!Godot.FileAccess.FileExists(infoTempPath))
                 {
-                    GD.PrintErr($"[{Name}] 无法找到info.txt文件, 临时目录: {tempDir}");
+                    FileLogger.LogErr($"[{Name}] 无法找到info.txt文件, 临时目录: {tempDir}");
                     PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt, 临时目录: {tempDir}");
                     return;
                 }
@@ -189,7 +189,7 @@ public partial class ChartService : Node
             ("正在创建导入目录...", async () => {
                 //创建导入目录
                 dir = Path.Combine(chartRepository.GetSavesDir(), id);
-                // GD.Print($"dir:{dir}");
+                // FileLogger.Log($"dir:{dir}");
                 await Task.Run(() => FileUtil.EnsureDirectoryExists(dir));
                 
             }),
@@ -225,7 +225,7 @@ public partial class ChartService : Node
 
         await LoadingManager.Instance.RunTasksAsync("正在导入谱面", tasks, null);
         
-        GD.Print($"[{this.Name}] 铺面导入成功, id:{id}");
+        FileLogger.Log($"[{this.Name}] 铺面导入成功, id:{id}");
 
     }
 
@@ -238,7 +238,7 @@ public partial class ChartService : Node
         string dirAbsolute = ProjectSettings.GlobalizePath(dir);
         if (!Godot.DirAccess.DirExistsAbsolute(dirAbsolute))
         {
-            GD.PrintErr($"[{Name}] 未找到谱面id:{chartId}");
+            FileLogger.LogErr($"[{Name}] 未找到谱面id:{chartId}");
             return;
         }
 
@@ -246,7 +246,7 @@ public partial class ChartService : Node
         string infoPath = Path.Combine(dirAbsolute, "info.txt");
         if (!Godot.FileAccess.FileExists(infoPath))
         {
-            GD.PrintErr("无法找到info.txt文件");
+            FileLogger.LogErr("无法找到info.txt文件");
             return;
         }
 
@@ -279,7 +279,7 @@ public partial class ChartService : Node
     {
         if (!Godot.FileAccess.FileExists(path))
         {
-            GD.PrintErr($"[ChartService] 曲绘路径不存在:{path}");
+            FileLogger.LogErr($"[ChartService] 曲绘路径不存在:{path}");
             return;
         }
         //找到谱面路径
@@ -306,7 +306,7 @@ public partial class ChartService : Node
     {
         if (!Godot.FileAccess.FileExists(path))
         {
-            GD.PrintErr($"[ChartService] 音乐路径不存在:{path}");
+            FileLogger.LogErr($"[ChartService] 音乐路径不存在:{path}");
             return;
         }
         //找到谱面路径
@@ -343,7 +343,7 @@ public partial class ChartService : Node
         ChartInfo info = chartRepository.LoadChartInfo(chartId);
         if(info == null)
         {
-            GD.PrintErr($"{this.Name} GetChartInfo(string chartId) chartInfo == null");
+            FileLogger.LogErr($"{this.Name} GetChartInfo(string chartId) chartInfo == null");
         }
         return info;
     }
@@ -379,7 +379,7 @@ public partial class ChartService : Node
             onFileSelected: (zipPath) =>
             {
                 FileUtil.CreateZip(filePaths, zipPath);
-                GD.Print($"[{this.Name}] 成功创建zip文件:{zipPath}");
+                FileLogger.Log($"[{this.Name}] 成功创建zip文件:{zipPath}");
             },
             defaultName: chartInfo.Name + ".zip",
             filters: filters
@@ -399,7 +399,7 @@ public partial class ChartService : Node
 
         ChartLoader.SaveChart(chart, chartPath);
 
-        GD.Print($"[{this.Name}] 谱面保存成功！谱面id:{chartId}");
+        FileLogger.Log($"[{this.Name}] 谱面保存成功！谱面id:{chartId}");
     }
 
     public void SaveChartInfo(ChartInfo info)

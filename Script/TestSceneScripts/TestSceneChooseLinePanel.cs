@@ -81,22 +81,22 @@ public partial class TestSceneChooseLinePanel : Node
 
         chooseLinePanel.LineSelected += (id) =>
         {
-            GD.Print($"[{this.Name}] 用户选择了Line:{id}");
+            FileLogger.Log($"[{this.Name}] 用户选择了Line:{id}");
         };
 
         chooseLinePanel.DeleteLineRequested += (id) =>
         {
-            GD.Print($"[{this.Name}] 请求删除Line:{id}");
+            FileLogger.Log($"[{this.Name}] 请求删除Line:{id}");
         };
 
         chooseLinePanel.AddLineRequested += () =>
         {
-            GD.Print($"[{this.Name}] 请求添加Line");
+            FileLogger.Log($"[{this.Name}] 请求添加Line");
         };
 
         chooseLinePanel.LayerSelected += (int index) =>
         {
-            GD.Print($"[{this.Name}] 用户选择了事件层:{index}");
+            FileLogger.Log($"[{this.Name}] 用户选择了事件层:{index}");
         };
 
     }

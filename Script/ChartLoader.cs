@@ -18,12 +18,12 @@ public partial class ChartLoader : Node
 
         // if (chart == null)
         // {
-        //     GD.PrintErr("铺面导入失败");
+        //     FileLogger.LogErr("铺面导入失败");
         // }
         // else
         // {
-        //     GD.Print("铺面导入成功");
-        //     GD.Print(chart.ChartTime);
+        //     FileLogger.Log("铺面导入成功");
+        //     FileLogger.Log(chart.ChartTime);
         // }
 
         // // 保存到另一个路径
@@ -44,14 +44,14 @@ public partial class ChartLoader : Node
         // 1. 参数校验
         if (string.IsNullOrEmpty(path))
         {
-            GD.PrintErr("文件路径不能为空");
+            FileLogger.LogErr("文件路径不能为空");
             return null;
         }
 
         // 2. 检查文件是否存在
         if (!FileAccess.FileExists(path))
         {
-            GD.PrintErr($"文件不存在: {path}");
+            FileLogger.LogErr($"文件不存在: {path}");
             return null;
         }
 
@@ -59,7 +59,7 @@ public partial class ChartLoader : Node
         var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
         if (file == null)
         {
-            GD.PrintErr($"无法打开文件: {path}");
+            FileLogger.LogErr($"无法打开文件: {path}");
             return null;
         }
 
@@ -75,7 +75,7 @@ public partial class ChartLoader : Node
         }
         catch (Exception ex)
         {
-            GD.PrintErr($"反序列化失败: {ex.Message}\n路径: {path}");
+            FileLogger.LogErr($"反序列化失败: {ex.Message}\n路径: {path}");
             return null;
         }
     }
@@ -89,13 +89,13 @@ public partial class ChartLoader : Node
     {
         if (data == null)
         {
-            GD.PrintErr("保存失败：Chart 数据为 null");
+            FileLogger.LogErr("保存失败：Chart 数据为 null");
             return;
         }
 
         if (string.IsNullOrEmpty(path))
         {
-            GD.PrintErr("保存路径不能为空");
+            FileLogger.LogErr("保存路径不能为空");
             return;
         }
 
@@ -105,13 +105,13 @@ public partial class ChartLoader : Node
         var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
         if (file == null)
         {
-            GD.PrintErr($"无法创建/写入文件: {path}");
+            FileLogger.LogErr($"无法创建/写入文件: {path}");
             return;
         }
 
         file.StoreString(jsonData);
         file.Dispose();
-        GD.Print($"Chart 已保存到: {path}");
+        FileLogger.Log($"Chart 已保存到: {path}");
     }
     
 }

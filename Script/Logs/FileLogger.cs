@@ -10,29 +10,74 @@ public partial class FileLogger : Node, ILogger
 
     public static ILogger Instance;
 
+    // ==================== 静态快捷 API ====================
+    // 约定：
+    //  - 命名用 Log*/ 而不是 Print*，避免与实例方法（Print/PrintErr/PrintWarning）冲突
+    //  - Instance 未就绪（_Ready 之前 / 已退出）时回退到 GD.Print*，保证不丢日志
+    //  - 具体落盘/加锁由实例方法负责，静态层只做分发
+
+    /// <summary>日志器是否已就绪（Instance 可用）。</summary>
+    public static bool IsReady => Instance != null;
+
+    /// <summary>普通信息日志。</summary>
+    public static void Log(string message)
+    {
+        if (Instance != null) Instance.Print(message);
+        else GD.Print(message); // 回退，避免丢日志
+    }
+
+    /// <summary>错误日志。</summary>
+    public static void LogErr(string message)
+    {
+        if (Instance != null) Instance.PrintErr(message);
+        else GD.PrintErr(message);
+    }
+
+    /// <summary>警告日志。</summary>
+    public static void LogWarning(string message)
+    {
+        if (Instance != null) Instance.PrintWarning(message);
+        else GD.PrintRich($"[color=yellow]{message}[/color]");
+    }
+
+    // 可选：格式化重载，省得调用方到处写 $"..."
+    public static void Log(string format, params object[] args)
+        => Log(string.Format(format, args));
+
+    public static void LogErr(string format, params object[] args)
+        => LogErr(string.Format(format, args));
+
+    public static void LogWarning(string format, params object[] args)
+        => LogWarning(string.Format(format, args));
+    // ======================================================
+
     public override void _Ready()
     {
         // ========== 单例保护 ==========
         if (Instance != null)
         {
-            GD.PushWarning($"[{Name}] 单例已存在（ILogger），销毁当前重复实例");
-            QueueFree();  // 自杀，保留旧实例
+            FileLogger.LogWarning($"[{Name}] 单例已存在（ILogger），销毁当前重复实例");
+            QueueFree();
             return;
         }
 
         Instance = this;
         // =============================
 
-        // 确保目录存在
         DirAccess.MakeDirRecursiveAbsolute(LogDir);
 
-        // 每次运行新建文件，写入启动头
+        // 先用 Write 模式创建空文件（若已存在会截断，符合"每次运行新文件"的设计）
+        using (var f = FileAccess.Open(_logFilePath, FileAccess.ModeFlags.Write))
+        {
+            if (f == null)
+                GD.PrintErr($"无法创建日志文件: {FileAccess.GetOpenError()}");
+        }
+
         WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ===== Log Started =====");
     }
 
     public override void _ExitTree()
     {
-        // 先清自己的引用，再交给 base
         if (Instance == this)
         {
             Instance = null;
@@ -42,7 +87,6 @@ public partial class FileLogger : Node, ILogger
 
     public FileLogger()
     {
-        // 文件名：GameLog_2026-10-07_14-30-25.log
         string fileName = $"GameLog_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log";
         _logFilePath = $"{LogDir}/{fileName}";
     }
@@ -63,16 +107,14 @@ public partial class FileLogger : Node, ILogger
     {
         WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [WARN] {message}");
         GD.PrintRich($"[color=yellow]{message}[/color]");
+        GD.PushWarning(message);
     }
 
-    /// <summary>
-    /// 同步写入一行日志。使用 lock 防止多线程并发写入冲突。
-    /// </summary>
     private void WriteLine(string line)
     {
         lock (_lock)
         {
-            using var file = FileAccess.Open(_logFilePath, FileAccess.ModeFlags.WriteRead);
+            using var file = FileAccess.Open(_logFilePath, FileAccess.ModeFlags.ReadWrite);
             if (file == null)
             {
                 GD.PrintErr($"无法打开日志文件: {FileAccess.GetOpenError()}");
@@ -83,15 +125,8 @@ public partial class FileLogger : Node, ILogger
         }
     }
 
-    /// <summary>
-    /// 获取当前日志文件的绝对路径，便于调试时定位。
-    /// </summary>
     public string GetLogPath() => ProjectSettings.GlobalizePath(_logFilePath);
 
-    /// <summary>
-    /// 获取当前日志文件的绝对路径（供外部直接调用，无需强转 ILogger）。
-    /// 日志器尚未就绪时返回 null。
-    /// </summary>
     public static string GetCurrentLogPath()
     {
         return (Instance as FileLogger)?.GetLogPath();

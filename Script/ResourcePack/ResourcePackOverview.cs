@@ -70,7 +70,7 @@ public partial class ResourcePackOverview : Control
 		//设置偏移
 		if(pack.holdHeadTexture == null)
 		{
-			GD.PrintErr($"[{Name}] holdHeadTexture为null");
+			FileLogger.LogErr($"[{Name}] holdHeadTexture为null");
 		}
 		holdHeadSprite.Offset = new Vector2(0, pack.holdHeadTexture.GetSize().Y / 2f);
 		holdHeadSpriteMh.Offset = new Vector2(0, pack.holdHeadTextureMh.GetSize().Y / 2f);
@@ -95,8 +95,8 @@ public partial class ResourcePackOverview : Control
 		float scaleYMh = holdHeadSpriteMh.GlobalPosition.DistanceTo(holdEndSpriteMh.GlobalPosition) / _resourcePack.holdBodyTextureMh.GetSize().Y;
 		holdBodySpriteMh.Scale = new Vector2(widthScale, scaleYMh);
 
-		// GD.Print($"holdHeadSprite.GlobalPosition:{holdHeadSprite.GlobalPosition}, holdEndSprite.GlobalPosition:{holdEndSprite.GlobalPosition}, holdBodySprite.GlobalPosition:{holdBodySprite.GlobalPosition}");
-		// GD.Print($"sizeY:{_resourcePack.holdBodyTexture.GetSize().Y}");
+		// FileLogger.Log($"holdHeadSprite.GlobalPosition:{holdHeadSprite.GlobalPosition}, holdEndSprite.GlobalPosition:{holdEndSprite.GlobalPosition}, holdBodySprite.GlobalPosition:{holdBodySprite.GlobalPosition}");
+		// FileLogger.Log($"sizeY:{_resourcePack.holdBodyTexture.GetSize().Y}");
 	}
 
 

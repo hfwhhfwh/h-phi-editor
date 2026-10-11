@@ -31,7 +31,7 @@ public partial class PlayTestParent : Control
 
             Vector2 velocity = (_pressedMousePos - _prevMousePos) / (float)delta;
 
-            // GD.Print($"滑动 Velocity:{velocity}");
+            // FileLogger.Log($"滑动 Velocity:{velocity}");
             if (velocity.Length() >= FlickSpeedThreshold)
             {
                 Flicked?.Invoke(_pressedMousePos);
@@ -49,7 +49,7 @@ public partial class PlayTestParent : Control
             if (_prevTouchPos.TryGetValue(idx, out Vector2 prevPos))
             {
                 Vector2 velocity = (currentPos - prevPos) / (float)delta;
-                // GD.Print($"滑动 Velocity:{velocity}");
+                // FileLogger.Log($"滑动 Velocity:{velocity}");
                 if (velocity.Length() >= FlickSpeedThreshold)
                 {
                     Flicked?.Invoke(currentPos);
@@ -94,7 +94,7 @@ public partial class PlayTestParent : Control
             {
                 _pressedMousePos = mouseMotion.Position;
 
-                // GD.Print($"滑动速度:{mouseMotion.Velocity}");
+                // FileLogger.Log($"滑动速度:{mouseMotion.Velocity}");
 
                 // if(mouseMotion.Velocity.Length() >= FlickSpeedThreshold)
                 // {
@@ -126,7 +126,7 @@ public partial class PlayTestParent : Control
                 _pressedTouch[screenDrag.Index] = screenDrag.Position;
             }
 
-            // GD.Print($"滑动速度:{screenDrag.Velocity}");
+            // FileLogger.Log($"滑动速度:{screenDrag.Velocity}");
 
             // if(screenDrag.Velocity.Length() >= FlickSpeedThreshold)
             // {

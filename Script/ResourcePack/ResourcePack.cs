@@ -86,7 +86,7 @@ public partial class ResourcePack : Resource
     // /// </summary>
     // private static void CompressPackTextures(ResourcePack pack)
     // {
-    //     GD.Print("[ResourcePack] 正在压缩资源包纹理...");
+    //     FileLogger.Log("[ResourcePack] 正在压缩资源包纹理...");
     //     // 1. 基础纹理字典（hit_fx 等）
     //     foreach (string key in new List<string>(pack.textureDic.Keys))
     //     {
@@ -117,7 +117,7 @@ public partial class ResourcePack : Resource
     //         }
     //     }
 
-    //     GD.Print("[ResourcePack] 压缩资源包纹理完成!");
+    //     FileLogger.Log("[ResourcePack] 压缩资源包纹理完成!");
     // }
 
     private static Texture2D CompressTexture(Texture2D source)
@@ -139,7 +139,7 @@ public partial class ResourcePack : Resource
         }
         if(err != Error.Ok)
         {
-            GD.PushWarning($"无法压缩图片, 可能导致白色纹理渲染不正确, 详情见issue#117181");
+            FileLogger.LogWarning($"无法压缩图片, 可能导致白色纹理渲染不正确, 详情见issue#117181");
             return source;
         }
 

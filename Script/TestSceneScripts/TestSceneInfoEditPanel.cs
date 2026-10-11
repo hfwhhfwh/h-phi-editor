@@ -26,17 +26,17 @@ public partial class TestSceneInfoEditPanel : Node
             Type type = value.GetType();
             if (type.IsEnum)
             {
-                GD.Print($"[{this.Name}] 用户修改了属性{key}:{Enum.ToObject(type, (int)value)}");
+                FileLogger.Log($"[{this.Name}] 用户修改了属性{key}:{Enum.ToObject(type, (int)value)}");
             }
             else
             {
-                GD.Print($"[{this.Name}] 用户修改了属性{key}:{value}");
+                FileLogger.Log($"[{this.Name}] 用户修改了属性{key}:{value}");
             }
         };
         
         infoEditPanel.OnConfirmed += () =>
         {
-            GD.Print($"[{this.Name}] 用户按下了确定");
+            FileLogger.Log($"[{this.Name}] 用户按下了确定");
         };
 
     }

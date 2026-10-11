@@ -24,6 +24,6 @@ public static class EditModeManager
 
         OnEditModeChanged?.Invoke(editMode);
 
-        GD.Print($"[EditModeManager] 切换到编辑模式:{editMode}");
+        FileLogger.Log($"[EditModeManager] 切换到编辑模式:{editMode}");
     }
 }

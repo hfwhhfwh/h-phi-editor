@@ -12,7 +12,7 @@ public partial class FileDialogManager : Node
         // 防止重复实例化
         if (Instance != null)
         {
-            GD.PrintErr("FileDialogManager 单例已存在，销毁重复实例");
+            FileLogger.LogErr("FileDialogManager 单例已存在，销毁重复实例");
             QueueFree();
             return;
         }
@@ -77,12 +77,12 @@ public partial class FileDialogManager : Node
                 if (status && paths.Length > 0)
                 {
                     string filePath = paths[0];
-                    GD.Print($"原生对话框选择的文件: {filePath}");
+                    FileLogger.Log($"原生对话框选择的文件: {filePath}");
                     onFileSelected?.Invoke(filePath); // 调用回调
                 }
                 else
                 {
-                    GD.Print("用户取消了选择或发生错误");
+                    FileLogger.Log("用户取消了选择或发生错误");
                     onFileSelected?.Invoke(null); // 传递 null 表示取消
                 }
             }
@@ -145,14 +145,14 @@ public partial class FileDialogManager : Node
 
         dialog.FileSelected += (path) =>
         {
-            GD.Print($"对话框保存路径: {path}");
+            FileLogger.Log($"对话框保存路径: {path}");
             onFileSelected?.Invoke(path);
             dialog.QueueFree();
         };
 
         dialog.Canceled += () =>
         {
-            GD.Print("用户取消了保存");
+            FileLogger.Log("用户取消了保存");
             onCalceled?.Invoke();
             dialog.QueueFree();
         };
@@ -180,12 +180,12 @@ public partial class FileDialogManager : Node
                     if (status && paths.Length > 0)
                     {
                         string filePath = paths[0];
-                        GD.Print($"原生对话框选择的文件: {filePath}");
+                        FileLogger.Log($"原生对话框选择的文件: {filePath}");
                         onFileSelected?.Invoke(filePath); // 调用回调
                     }
                     else
                     {
-                        GD.Print("用户取消了选择或发生错误");
+                        FileLogger.Log("用户取消了选择或发生错误");
                         onCalceled?.Invoke(); // 取消
                     }
                 }
@@ -220,14 +220,14 @@ public partial class FileDialogManager : Node
 
         dialog.FileSelected += (path) =>
         {
-            GD.Print($"对话框保存路径: {path}");
+            FileLogger.Log($"对话框保存路径: {path}");
             onFileSelected?.Invoke(path);
             dialog.QueueFree();
         };
 
         dialog.Canceled += () =>
         {
-            GD.Print("用户取消了保存");
+            FileLogger.Log("用户取消了保存");
             onCalceled?.Invoke();
             dialog.QueueFree();
         };

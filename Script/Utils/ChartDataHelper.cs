@@ -169,7 +169,7 @@ public static class ChartDataHelper
 
     //             totalX += lastX + gapX;
 
-    //             //GD.Print($"lastX:{lastX}, gapX:{gapX}");
+    //             //FileLogger.Log($"lastX:{lastX}, gapX:{gapX}");
 
     //             //赋值给前缀和
     //             ev.prefixX = totalX;
@@ -364,7 +364,7 @@ public static class ChartDataHelper
         }
         else
         {
-            GD.PrintErr($"[ChartDataHelper] InterpolateEvent() Error! time:{time}");
+            FileLogger.LogErr($"[ChartDataHelper] InterpolateEvent() Error! time:{time}");
             return 0f;
         }
     }
@@ -444,7 +444,7 @@ public static class ChartDataHelper
     //     }
     //     else
     //     {
-    //         GD.PrintErr($"[ChartDataHelper] GetSpeedAtTime() Error!");
+    //         FileLogger.LogErr($"[ChartDataHelper] GetSpeedAtTime() Error!");
     //         return 0f;
     //     }
 

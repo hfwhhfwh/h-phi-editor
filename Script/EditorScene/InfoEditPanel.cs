@@ -183,7 +183,7 @@ public partial class InfoEditPanel : Control
 			}
 			catch(Exception e)
 			{
-				GD.PrintErr($"[{this.Name}] 输入整数非法:{e.Message}");
+				FileLogger.LogErr($"[{this.Name}] 输入整数非法:{e.Message}");
 				//lineEdit.Text = $"{Convert.ToDouble(_data.Properties[key])}";
 				return;
 			}
@@ -208,7 +208,7 @@ public partial class InfoEditPanel : Control
 			}
 			catch(Exception e)
 			{
-				GD.PrintErr($"[{this.Name}] 输入浮点数非法:{e.Message}");
+				FileLogger.LogErr($"[{this.Name}] 输入浮点数非法:{e.Message}");
 				lineEdit.Text = $"{Convert.ToDouble(_data.Properties[key])}";
 				return;
 			}
@@ -277,7 +277,7 @@ public partial class InfoEditPanel : Control
 
         optionButton.ItemSelected += (index) =>
         {
-			//GD.Print($"ItemSelected:{index}");
+			//FileLogger.Log($"ItemSelected:{index}");
             object newEnum = values.GetValue((int)index);
             _data.Properties[key] = newEnum;
 			OnValueChanged(key, newEnum);
@@ -316,7 +316,7 @@ public partial class InfoEditPanel : Control
 				}
 				catch(Exception e)
 				{
-					GD.PrintErr($"[{this.Name}] 输入整数非法:{e.Message}");
+					FileLogger.LogErr($"[{this.Name}] 输入整数非法:{e.Message}");
 					// 恢复为当前值（从 _data 中取对应索引）
 					Beat currentBeat = (Beat)_data.Properties[key];
 					lineEdit.Text = currentBeat.Values[index].ToString();

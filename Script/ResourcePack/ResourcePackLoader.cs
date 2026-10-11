@@ -64,7 +64,7 @@ public static class ResourcePackLoader
         
         // 6. 清理临时文件
 
-        GD.Print($"[{Name}] 成功加载资源包:{pack.Manifest.Name}");
+        FileLogger.Log($"[{Name}] 成功加载资源包:{pack.Manifest.Name}");
         
         return pack;
     }
@@ -94,13 +94,13 @@ public static class ResourcePackLoader
     //             Image img = kvp.Value?.GetImage();
     //             if (img == null)
     //             {
-    //                 GD.PrintErr($"[{Name}] 无法获取纹理图像: {kvp.Key}");
+    //                 FileLogger.LogErr($"[{Name}] 无法获取纹理图像: {kvp.Key}");
     //                 continue;
     //             }
                 
     //             Error err = img.SavePng(outputPath);
     //             if (err != Error.Ok)
-    //                 GD.PrintErr($"[{Name}] 保存纹理失败: {kvp.Key}, 错误: {err}");
+    //                 FileLogger.LogErr($"[{Name}] 保存纹理失败: {kvp.Key}, 错误: {err}");
     //         }
 
     //         // 3. 导出音频（使用缓存的原始字节）
@@ -116,11 +116,11 @@ public static class ResourcePackLoader
 
     //         ZipFile.CreateFromDirectory(tempDir, zipPath, CompressionLevel.Optimal, false);
 
-    //         GD.Print($"[{Name}] 成功导出资源包到: {zipPath}");
+    //         FileLogger.Log($"[{Name}] 成功导出资源包到: {zipPath}");
     //     }
     //     catch (Exception e)
     //     {
-    //         GD.PrintErr($"[{Name}] 导出资源包失败: {e.Message}");
+    //         FileLogger.LogErr($"[{Name}] 导出资源包失败: {e.Message}");
     //         throw;
     //     }
     //     finally
@@ -133,7 +133,7 @@ public static class ResourcePackLoader
     //         // }
     //         // catch (Exception e)
     //         // {
-    //         //     GD.PrintErr($"[{Name}] 清理临时目录失败: {e.Message}");
+    //         //     FileLogger.LogErr($"[{Name}] 清理临时目录失败: {e.Message}");
     //         // }
     //     }
     // }
@@ -152,7 +152,7 @@ public static class ResourcePackLoader
 
         FileUtil.UnzipFileTo(zipPath, localDir);
         
-        GD.Print($"[{Name}] 成功导入资源包{zipPath}, id:{id}");
+        FileLogger.Log($"[{Name}] 成功导入资源包{zipPath}, id:{id}");
 
         return id;
     }
@@ -164,7 +164,7 @@ public static class ResourcePackLoader
         string localDir = Path.Combine(LocalPackDir, id);
         if (!FileUtil.DirExists(localDir))
         {
-            GD.PrintErr($"[{Name}] 导出失败, 未找到资源包id:{id}");
+            FileLogger.LogErr($"[{Name}] 导出失败, 未找到资源包id:{id}");
             return;
         }
 
@@ -182,7 +182,7 @@ public static class ResourcePackLoader
         string localDir = Path.Combine(LocalPackDir, id);
         if (!FileUtil.DirExists(localDir))
         {
-            GD.PrintErr($"[{Name}] 加载资源包失败, 未找到资源包id:{id}");
+            FileLogger.LogErr($"[{Name}] 加载资源包失败, 未找到资源包id:{id}");
             return null;
         }
 
@@ -231,7 +231,7 @@ public static class ResourcePackLoader
                 }
                 catch(Exception e)
                 {
-                    GD.PrintErr($"无法解析资源包属性: {optional[i]}, 错误:{e.Message}");
+                    FileLogger.LogErr($"无法解析资源包属性: {optional[i]}, 错误:{e.Message}");
                 }
             }
         }
@@ -271,7 +271,7 @@ public static class ResourcePackLoader
         
         // 6. 清理临时文件
 
-        GD.Print($"[{Name}] 成功导入资源包:{pack.Manifest.Name}");
+        FileLogger.Log($"[{Name}] 成功导入资源包:{pack.Manifest.Name}");
         
         return pack;
     }
@@ -308,13 +308,13 @@ public static class ResourcePackLoader
         string localDir = Path.Combine(LocalPackDir, id);
         if (!FileUtil.DirExists(localDir))
         {
-            GD.PrintErr($"[{Name}] 删除资源包失败, 未找到资源包id:{id}");
+            FileLogger.LogErr($"[{Name}] 删除资源包失败, 未找到资源包id:{id}");
             return;
         }
 
         FileUtil.DeleteDirectoryRecursive(localDir);
 
-        GD.Print($"[{Name}] 成功删除资源包:{id}");
+        FileLogger.Log($"[{Name}] 成功删除资源包:{id}");
     }
 
     private static void InitPath()
@@ -389,7 +389,7 @@ public static class ResourcePackLoader
                 }
                 catch(Exception e)
                 {
-                    GD.PrintErr($"无法解析资源包属性: {optional[i]}, 错误:{e.Message}");
+                    FileLogger.LogErr($"无法解析资源包属性: {optional[i]}, 错误:{e.Message}");
                 }
             }
         }

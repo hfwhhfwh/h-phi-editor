@@ -92,7 +92,7 @@ public partial class SettingsPanel : Control
 
             _ = RefreshUI();
 
-            GD.Print($"成功清除缓存");
+            FileLogger.Log($"成功清除缓存");
             PopupHelper.Instance.ShowAlert("提示", "成功清除缓存");
         };
         _userDataDirLabel.Text = "用户数据目录: " + ProjectSettings.GlobalizePath("user://");
@@ -189,7 +189,7 @@ public partial class SettingsPanel : Control
         }
         else
         {
-            GD.PushWarning("[SettingsPanel] _shareLogBtn 未绑定，无法分享日志");
+            FileLogger.LogWarning("[SettingsPanel] _shareLogBtn 未绑定，无法分享日志");
         }
 
         if( _exportLogBtn != null)
@@ -198,7 +198,7 @@ public partial class SettingsPanel : Control
         }
         else
         {
-            GD.PushWarning("[SettingsPanel] _exportLogBtn 未绑定，无法导出日志");
+            FileLogger.LogWarning("[SettingsPanel] _exportLogBtn 未绑定，无法导出日志");
         }
 
         _applyBtn.Pressed += () => GameSettings.Instance.Save();
@@ -379,7 +379,7 @@ public partial class SettingsPanel : Control
         string logPath = FileLogger.GetCurrentLogPath();
         if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
         {
-            GD.PrintErr("[SettingsPanel] 未找到可导出的日志文件");
+            FileLogger.LogErr("[SettingsPanel] 未找到可导出的日志文件");
             PopupHelper.Instance.ShowAlert("提示", "未找到可导出的日志文件");
             return;
         }
@@ -391,14 +391,14 @@ public partial class SettingsPanel : Control
         }
         catch (Exception ex)
         {
-            GD.PrintErr($"[SettingsPanel] 导出日志失败: {ex.Message}");
+            FileLogger.LogErr($"[SettingsPanel] 导出日志失败: {ex.Message}");
             PopupHelper.Instance.ShowAlert("提示", $"导出日志失败：{ex.Message}");
             return;
         }
 
         if (ShareHelper.Instance == null || !ShareHelper.IsAvailable)
         {
-            GD.Print("[SettingsPanel] 当前平台不支持系统分享，日志已导出但未分享");
+            FileLogger.Log("[SettingsPanel] 当前平台不支持系统分享，日志已导出但未分享");
             PopupHelper.Instance.ShowAlert("提示", $"当前平台不支持系统分享，日志已保存至：\n{exportPath}");
             return;
         }
@@ -419,7 +419,7 @@ public partial class SettingsPanel : Control
         string logPath = FileLogger.GetCurrentLogPath();
         if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
         {
-            GD.PrintErr("[SettingsPanel] 未找到可导出的日志文件");
+            FileLogger.LogErr("[SettingsPanel] 未找到可导出的日志文件");
             PopupHelper.Instance.ShowAlert("提示", "未找到可导出的日志文件");
             return;
         }
@@ -431,12 +431,12 @@ public partial class SettingsPanel : Control
         }
         catch (Exception ex)
         {
-            GD.PrintErr($"[SettingsPanel] 导出日志失败: {ex.Message}");
+            FileLogger.LogErr($"[SettingsPanel] 导出日志失败: {ex.Message}");
             PopupHelper.Instance.ShowAlert("提示", $"导出日志失败：{ex.Message}");
             return;
         }
 
-        GD.Print($"[SettingsPanel] 日志已导出至：{exportPath}");
+        FileLogger.Log($"[SettingsPanel] 日志已导出至：{exportPath}");
         // PopupHelper.Instance.ShowAlert("提示", $"日志已导出至：\n{exportPath}");
         
         FileDialogManager.Instance.ShowSaveDialog(
@@ -544,11 +544,11 @@ public partial class SettingsPanel : Control
             // _fullscreenCheck.ButtonPressed = cur.Fullscreen;
             // _resolutionOption.Select(cur.ResolutionIndex);
 
-            GD.Print($"[{Name}] 成功重建UI");
+            FileLogger.Log($"[{Name}] 成功重建UI");
         }
         catch (Exception ex)
         {
-            GD.PrintErr($"[SettingsPanel] RefreshUI 发生异常: {ex.Message}");
+            FileLogger.LogErr($"[SettingsPanel] RefreshUI 发生异常: {ex.Message}");
         }
         
     }
@@ -593,7 +593,7 @@ public partial class SettingsPanel : Control
         _useDefaultResourceBtn.SetPressedNoSignal(
             GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
 
-        // GD.Print($"[{Name}] 成功刷新资源包设置界面");
+        // FileLogger.Log($"[{Name}] 成功刷新资源包设置界面");
 
     }
 
@@ -633,11 +633,11 @@ public partial class SettingsPanel : Control
         }
         catch (OperationCanceledException)
         {
-            GD.Print("缓存扫描已取消");
+            FileLogger.Log("缓存扫描已取消");
         }
         catch (Exception ex)
         {
-            GD.PrintErr($"扫描缓存失败: {ex.Message}");
+            FileLogger.LogErr($"扫描缓存失败: {ex.Message}");
         }
     }
 

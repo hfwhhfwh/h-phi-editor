@@ -20,7 +20,7 @@ public static class FileUtil
 
         if (error != Error.Ok)
         {
-            GD.PrintErr($"无法打开ZIP文件: {zipPath}, 错误码: {error}");
+            FileLogger.LogErr($"无法打开ZIP文件: {zipPath}, 错误码: {error}");
             return;
         }
 
@@ -33,7 +33,7 @@ public static class FileUtil
         DirAccess dir = DirAccess.Open(zipDirectory);
         if (dir == null)
         {
-            GD.PrintErr($"无法访问目录: {zipDirectory}");
+            FileLogger.LogErr($"无法访问目录: {zipDirectory}");
             zipReader.Close();
             return;
         }
@@ -41,7 +41,7 @@ public static class FileUtil
         Error makeDirError = dir.MakeDir(zipFileName);
         if (makeDirError != Error.Ok && makeDirError != Error.AlreadyExists)
         {
-            GD.PrintErr($"无法创建目录: {extractBasePath}, 错误码: {makeDirError}");
+            FileLogger.LogErr($"无法创建目录: {extractBasePath}, 错误码: {makeDirError}");
             zipReader.Close();
             return;
         }
@@ -65,21 +65,21 @@ public static class FileUtil
                 if (file != null)
                 {
                     file.StoreBuffer(fileData);
-                    GD.Print($"已解压: {filePath}");
+                    FileLogger.Log($"已解压: {filePath}");
                 }
                 else
                 {
-                    GD.PrintErr($"无法创建输出文件: {fullOutputPath}");
+                    FileLogger.LogErr($"无法创建输出文件: {fullOutputPath}");
                 }
             }
             else
             {
-                GD.PrintErr($"无法从ZIP读取文件: {filePath}");
+                FileLogger.LogErr($"无法从ZIP读取文件: {filePath}");
             }
         }
 
         zipReader.Close();
-        GD.Print("解压完成！");
+        FileLogger.Log("解压完成！");
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public static class FileUtil
 
             // if (error != Error.Ok)
             // {
-            //     GD.PrintErr($"无法打开ZIP文件: {zipPath}, 错误码: {error}");
+            //     FileLogger.LogErr($"无法打开ZIP文件: {zipPath}, 错误码: {error}");
             //     return;
             // }
 
@@ -119,16 +119,16 @@ public static class FileUtil
             //         if (file != null)
             //         {
             //             file.StoreBuffer(fileData);
-            //             GD.Print($"已解压: {filePath}");
+            //             FileLogger.Log($"已解压: {filePath}");
             //         }
             //         else
             //         {
-            //             GD.PrintErr($"无法创建输出文件: {fullOutputPath}");
+            //             FileLogger.LogErr($"无法创建输出文件: {fullOutputPath}");
             //         }
             //     }
             //     else
             //     {
-            //         GD.PrintErr($"无法从ZIP读取文件: {filePath}");
+            //         FileLogger.LogErr($"无法从ZIP读取文件: {filePath}");
             //     }
             // }
 
@@ -174,14 +174,14 @@ public static class FileUtil
 
             //             // 6. 解压文件（true 表示覆盖已存在的文件）
             //             entry.ExtractToFile(destinationPath, true);
-            //             GD.Print($"已解压: {entry.FullName}");
+            //             FileLogger.Log($"已解压: {entry.FullName}");
             //         }
             //     }
-            //     GD.Print($"解压完成:{zipPath} -> {extractBasePath}");
+            //     FileLogger.Log($"解压完成:{zipPath} -> {extractBasePath}");
             // }
             // catch (Exception e)
             // {
-            //     GD.PrintErr($"解压失败:{zipPath} -> {extractBasePath}, 错误:\n{e}");
+            //     FileLogger.LogErr($"解压失败:{zipPath} -> {extractBasePath}, 错误:\n{e}");
             // }
         }
         
@@ -197,7 +197,7 @@ public static class FileUtil
         string localZipPath = NormalizeZipPath(zipPath);
         if (localZipPath == null)
         {
-            GD.PrintErr($"[UnzipFileTo] 无法获取可用的 zip 路径: {zipPath}");
+            FileLogger.LogErr($"[UnzipFileTo] 无法获取可用的 zip 路径: {zipPath}");
             return;
         }
 
@@ -211,7 +211,7 @@ public static class FileUtil
         }
         catch (Exception e)
         {
-            GD.PrintErr($"解析 ZIP 目录失败: {zipPath}, {e.Message}");
+            FileLogger.LogErr($"解析 ZIP 目录失败: {zipPath}, {e.Message}");
             return;
         }
 
@@ -249,7 +249,7 @@ public static class FileUtil
             string destPath = Path.GetFullPath(Path.Combine(absoluteExtractPath, decodedName));
             if (!destPath.StartsWith(extractRoot, StringComparison.Ordinal))
             {
-                GD.PrintErr($"跳过不安全路径: {decodedName}");
+                FileLogger.LogErr($"跳过不安全路径: {decodedName}");
                 continue;
             }
 
@@ -261,18 +261,18 @@ public static class FileUtil
                 using var input = entry.Open();
                 using var output = new FileStream(destPath, System.IO.FileMode.Create, System.IO.FileAccess.Write);
                 input.CopyTo(output);
-                GD.Print($"已解压: {decodedName}");
+                FileLogger.Log($"已解压: {decodedName}");
             }
             catch (Exception e)
             {
-                GD.PrintErr($"解压条目失败: {decodedName}, {e.Message}");
+                FileLogger.LogErr($"解压条目失败: {decodedName}, {e.Message}");
             }
         }
 
         // 用完删掉临时文件
         CleanupTempZip(localZipPath);
 
-        GD.Print($"解压完成: {zipPath} -> {extractBasePath}");
+        FileLogger.Log($"解压完成: {zipPath} -> {extractBasePath}");
     }
 
     /// <summary>
@@ -292,7 +292,7 @@ public static class FileUtil
         using var src = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
         if (src == null)
         {
-            GD.PrintErr($"[{Name}] NormalizeZipPath() 无法打开 content URI: {path}, 错误: {Godot.FileAccess.GetOpenError()}");
+            FileLogger.LogErr($"[{Name}] NormalizeZipPath() 无法打开 content URI: {path}, 错误: {Godot.FileAccess.GetOpenError()}");
             return null;
         }
 
@@ -307,13 +307,13 @@ public static class FileUtil
         using var dst = Godot.FileAccess.Open(tempName, Godot.FileAccess.ModeFlags.Write);
         if (dst == null)
         {
-            GD.PrintErr($"[{Name}] NormalizeZipPath() 无法写入临时文件: {tempName}, 错误: {Godot.FileAccess.GetOpenError()}");
+            FileLogger.LogErr($"[{Name}] NormalizeZipPath() 无法写入临时文件: {tempName}, 错误: {Godot.FileAccess.GetOpenError()}");
             return null;
         }
         dst.StoreBuffer(data);
         dst.Close();
 
-        GD.Print($"[{Name}] NormalizeZipPath() 已把 content URI 落地到: {tempName} ({data.Length} 字节)");
+        FileLogger.Log($"[{Name}] NormalizeZipPath() 已把 content URI 落地到: {tempName} ({data.Length} 字节)");
         return tempName;
     }
 
@@ -336,7 +336,7 @@ public static class FileUtil
 		// 参数校验
 		if (properties == null)
 		{
-			GD.PrintErr("属性字典为 null, 无法写入文件。");
+			FileLogger.LogErr("属性字典为 null, 无法写入文件。");
 			return;
 		}
 
@@ -351,7 +351,7 @@ public static class FileUtil
 		using var file = Godot.FileAccess.Open(filePath, Godot.FileAccess.ModeFlags.Write);
 		if (file == null)
 		{
-			GD.PrintErr($"无法打开文件进行写入: {filePath}");
+			FileLogger.LogErr($"无法打开文件进行写入: {filePath}");
 			return;
 		}
 
@@ -366,7 +366,7 @@ public static class FileUtil
 		}
 
 		// 文件会在 using 块结束时自动关闭
-		GD.Print($"成功写入 {properties.Count} 条属性到文件: {filePath}");
+		FileLogger.Log($"成功写入 {properties.Count} 条属性到文件: {filePath}");
 	}
 
     /// <summary>
@@ -381,7 +381,7 @@ public static class FileUtil
 		// 检查文件是否存在
 		if (!Godot.FileAccess.FileExists(filePath))
 		{
-			GD.PrintErr($"文件不存在: {filePath}");
+			FileLogger.LogErr($"文件不存在: {filePath}");
 			return properties;
 		}
 
@@ -424,7 +424,7 @@ public static class FileUtil
 		// 检查源文件是否存在
 		if (!Godot.FileAccess.FileExists(sourcePath))
 		{
-			GD.PrintErr($"[FileUtil] 源文件不存在: {sourcePath}");
+			FileLogger.LogErr($"[FileUtil] 源文件不存在: {sourcePath}");
 			return false;
 		}
 
@@ -441,7 +441,7 @@ public static class FileUtil
 			using var sourceFile = Godot.FileAccess.Open(sourcePath, Godot.FileAccess.ModeFlags.Read);
 			if (sourceFile == null)
 			{
-				GD.PrintErr($"[FileUtil] 无法打开源文件: {sourcePath}");
+				FileLogger.LogErr($"[FileUtil] 无法打开源文件: {sourcePath}");
 				return false;
 			}
 
@@ -449,7 +449,7 @@ public static class FileUtil
 			using var destFile = Godot.FileAccess.Open(destinationPath, Godot.FileAccess.ModeFlags.Write);
 			if (destFile == null)
 			{
-				GD.PrintErr($"[FileUtil] 无法创建或打开目标文件: {destinationPath}");
+				FileLogger.LogErr($"[FileUtil] 无法创建或打开目标文件: {destinationPath}");
 				return false;
 			}
 
@@ -467,12 +467,12 @@ public static class FileUtil
 				bytesRemaining -= bytesToRead;
 			}
 
-			GD.Print($"[FileUtil] 文件复制成功: {sourcePath} -> {destinationPath}");
+			FileLogger.Log($"[FileUtil] 文件复制成功: {sourcePath} -> {destinationPath}");
 			return true;
 		}
 		catch (Exception e)
 		{
-			GD.PrintErr($"[FileUtil] 复制文件时发生异常: {e.Message}");
+			FileLogger.LogErr($"[FileUtil] 复制文件时发生异常: {e.Message}");
 			return false;
 		}
 	}
@@ -509,7 +509,7 @@ public static class FileUtil
         using var dir = DirAccess.Open(path);
         if (dir == null)
         {
-            GD.PrintErr($"无法打开目录: {path}");
+            FileLogger.LogErr($"无法打开目录: {path}");
             return;
         }
 
@@ -549,7 +549,7 @@ public static class FileUtil
         using DirAccess dir = DirAccess.Open(path);
         if (dir == null)
         {
-            GD.PrintErr($"无法打开目录: {path}");
+            FileLogger.LogErr($"无法打开目录: {path}");
             return;
         }
 
@@ -596,7 +596,7 @@ public static class FileUtil
         var err = packer.Open(zipPath, ZipPacker.ZipAppend.Create);
         if (err != Error.Ok)
         {
-            GD.PrintErr($"无法创建 ZIP 文件 '{zipPath}'，错误代码: {err}");
+            FileLogger.LogErr($"无法创建 ZIP 文件 '{zipPath}'，错误代码: {err}");
             return false;
         }
 
@@ -606,7 +606,7 @@ public static class FileUtil
             // 检查源文件是否存在
             if (!Godot.FileAccess.FileExists(filePath))
             {
-                GD.PrintErr($"错误：文件未找到，已跳过 '{filePath}'");
+                FileLogger.LogErr($"错误：文件未找到，已跳过 '{filePath}'");
                 continue;
             }
 
@@ -618,7 +618,7 @@ public static class FileUtil
             }
             catch (Exception e)
             {
-                GD.PrintErr($"读取文件 '{filePath}' 时出错: {e.Message}");
+                FileLogger.LogErr($"读取文件 '{filePath}' 时出错: {e.Message}");
                 continue;
             }
 
@@ -631,7 +631,7 @@ public static class FileUtil
             err = packer.StartFile(targetPath);
             if (err != Error.Ok)
             {
-                GD.PrintErr($"无法在压缩包中开始写入文件 '{targetPath}'，错误代码: {err}");
+                FileLogger.LogErr($"无法在压缩包中开始写入文件 '{targetPath}'，错误代码: {err}");
                 continue;
             }
 
@@ -639,14 +639,14 @@ public static class FileUtil
             err = packer.WriteFile(fileData);
             if (err != Error.Ok)
             {
-                GD.PrintErr($"写入文件数据 '{targetPath}' 时出错，错误代码: {err}");
+                FileLogger.LogErr($"写入文件数据 '{targetPath}' 时出错，错误代码: {err}");
             }
 
             // 2.5. 关闭当前文件（必须配对调用）
             err = packer.CloseFile();
             if (err != Error.Ok)
             {
-                GD.PrintErr($"关闭文件 '{targetPath}' 时出错，错误代码: {err}");
+                FileLogger.LogErr($"关闭文件 '{targetPath}' 时出错，错误代码: {err}");
             }
         }
 
@@ -654,11 +654,11 @@ public static class FileUtil
         err = packer.Close();
         if (err != Error.Ok)
         {
-            GD.PrintErr($"最终化 ZIP 文件 '{zipPath}' 时出错，错误代码: {err}");
+            FileLogger.LogErr($"最终化 ZIP 文件 '{zipPath}' 时出错，错误代码: {err}");
         	return false;
         }
 		
-		GD.Print($"成功创建 ZIP 文件: '{zipPath}'");
+		FileLogger.Log($"成功创建 ZIP 文件: '{zipPath}'");
         return true;
 
         
@@ -673,7 +673,7 @@ public static class FileUtil
         using var dir = DirAccess.Open(dirPath);
         if (dir == null)
         {
-            GD.PrintErr($"无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            FileLogger.LogErr($"无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
             return null;
         }
 
@@ -706,7 +706,7 @@ public static class FileUtil
         using var dir = DirAccess.Open(dirPath);
         if (dir == null)
         {
-            GD.PrintErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            FileLogger.LogErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
             return null;
         }
 
@@ -729,7 +729,7 @@ public static class FileUtil
         using var dir = DirAccess.Open(dirPath);
         if (dir == null)
         {
-            GD.PrintErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
+            FileLogger.LogErr($"[{Name}] 无法打开目录: {dirPath}, 错误码: {DirAccess.GetOpenError()}");
             return null;
         }
 
@@ -762,7 +762,7 @@ public static class FileUtil
     {
         if (!Godot.FileAccess.FileExists(path))
         {
-            GD.PrintErr($"[Util] 音频文件不存在: {path}");
+            FileLogger.LogErr($"[Util] 音频文件不存在: {path}");
             return null;
         }
 
@@ -781,17 +781,17 @@ public static class FileUtil
             case ".ogg":
                 var oggStream = AudioStreamOggVorbis.LoadFromFile(path);
                 if (oggStream == null)
-                    GD.PrintErr($"[Util] 加载 OGG 文件失败: {path}");
+                    FileLogger.LogErr($"[Util] 加载 OGG 文件失败: {path}");
                 return oggStream;
 
             case ".wav":
                 var wavStream = AudioStreamWav.LoadFromFile(path);
                 if (wavStream == null)
-                    GD.PrintErr($"[Util] 加载 WAV 文件失败: {path}");
+                    FileLogger.LogErr($"[Util] 加载 WAV 文件失败: {path}");
                 return wavStream;
 
             default:
-                GD.PrintErr($"[Util] 不支持的音频格式: {extension}");
+                FileLogger.LogErr($"[Util] 不支持的音频格式: {extension}");
                 return null;
         }
     }
@@ -864,7 +864,7 @@ public static class FileUtil
         // 检查文件存在
         if (!Godot.FileAccess.FileExists(picPath))
         {
-            GD.PrintErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
+            FileLogger.LogErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
             return null;
         }
 
@@ -877,7 +877,7 @@ public static class FileUtil
         // 2. 失败则回退到 Buffer + 格式检测
         if (err != Error.Ok)
         {
-            GD.Print($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
+            FileLogger.Log($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
             
             // 重新创建实例，避免之前失败的状态残留
             image = new Image();
@@ -887,7 +887,7 @@ public static class FileUtil
             byte[] buffer = file.GetBuffer((long)fileSize);
 
             string format = DetectImageFormat(buffer);
-            GD.Print($"[{Name}] 检测到真实格式: {format}, 大小: {fileSize} bytes");
+            FileLogger.Log($"[{Name}] 检测到真实格式: {format}, 大小: {fileSize} bytes");
             realFormat = format;
 
             switch (format)
@@ -925,14 +925,14 @@ public static class FileUtil
 
         if (err != Error.Ok)
         {
-            GD.PrintErr($"[{Name}] 所有格式解码均失败:{picPath}");
+            FileLogger.LogErr($"[{Name}] 所有格式解码均失败:{picPath}");
             return null;
         }
 
         // 检查尺寸
         if (image.GetWidth() > 16384 || image.GetHeight() > 16384)
         {
-            GD.PrintErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
+            FileLogger.LogErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
             return null;
         }
 
@@ -942,7 +942,7 @@ public static class FileUtil
             err = image.GenerateMipmaps();
             if (err != Error.Ok)
             {
-                GD.PushWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
+                FileLogger.LogWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
             }
         }
 
@@ -950,7 +950,7 @@ public static class FileUtil
         ImageTexture texture = ImageTexture.CreateFromImage(image);
         if(texture == null)
         {
-            GD.PrintErr($"[{Name}] UpdateItemDisplay() texture == null picturePath:{picPath}");
+            FileLogger.LogErr($"[{Name}] UpdateItemDisplay() texture == null picturePath:{picPath}");
             return null;
         }
 
@@ -966,7 +966,7 @@ public static class FileUtil
     //     // 检查文件存在
     //     if (!Godot.FileAccess.FileExists(picPath))
     //     {
-    //         GD.PrintErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
+    //         FileLogger.LogErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
     //         return (null, null);
     //     }
 
@@ -979,7 +979,7 @@ public static class FileUtil
     //     // 2. 失败则回退到 Buffer + 格式检测
     //     if (err != Error.Ok)
     //     {
-    //         GD.Print($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
+    //         FileLogger.Log($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
 
     //         // 后台线程读取文件字节 + 检测真实格式
     //         (byte[] buffer, string format) = await Task.Run(() =>
@@ -989,7 +989,7 @@ public static class FileUtil
     //             return (data, detectedFormat);
     //         });
             
-    //         GD.Print($"[{Name}] 检测到真实格式: {format}");
+    //         FileLogger.Log($"[{Name}] 检测到真实格式: {format}");
     //         realFormat = format;
             
     //         // 重新创建实例，避免之前失败的状态残留
@@ -1030,14 +1030,14 @@ public static class FileUtil
 
     //     if (err != Error.Ok)
     //     {
-    //         GD.PrintErr($"[{Name}] 所有格式解码均失败:{picPath}");
+    //         FileLogger.LogErr($"[{Name}] 所有格式解码均失败:{picPath}");
     //         return (null, realFormat);
     //     }
 
     //     // 检查尺寸
     //     if (image.GetWidth() > 16384 || image.GetHeight() > 16384)
     //     {
-    //         GD.PrintErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
+    //         FileLogger.LogErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
     //         return (null, realFormat);
     //     }
 
@@ -1047,7 +1047,7 @@ public static class FileUtil
     //         err = image.GenerateMipmaps();
     //         if (err != Error.Ok)
     //         {
-    //             GD.PushWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
+    //             FileLogger.LogWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
     //         }
     //     }
 
@@ -1055,7 +1055,7 @@ public static class FileUtil
     //     ImageTexture texture = ImageTexture.CreateFromImage(image);
     //     if(texture == null)
     //     {
-    //         GD.PrintErr($"[{Name}] 无法将Image转换为ImageTexture:{picPath}");
+    //         FileLogger.LogErr($"[{Name}] 无法将Image转换为ImageTexture:{picPath}");
     //         return (null, realFormat);
     //     }
 
@@ -1073,7 +1073,7 @@ public static class FileUtil
         // 检查文件存在
         if (!Godot.FileAccess.FileExists(picPathAbsolute))
         {
-            GD.PrintErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
+            FileLogger.LogErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
             return (null, null);
         }
 
@@ -1086,7 +1086,7 @@ public static class FileUtil
         // 2. 失败则回退到 Buffer + 格式检测
         if (err != Error.Ok)
         {
-            GD.Print($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
+            FileLogger.Log($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
 
             // 后台线程读取文件字节 + 检测真实格式
             (byte[] buffer, string format) = await Task.Run(() =>
@@ -1096,7 +1096,7 @@ public static class FileUtil
                 return (data, detectedFormat);
             });
             
-            GD.Print($"[{Name}] 检测到真实格式: {format}");
+            FileLogger.Log($"[{Name}] 检测到真实格式: {format}");
             realFormat = format;
             
             // 重新创建实例，避免之前失败的状态残留
@@ -1137,14 +1137,14 @@ public static class FileUtil
 
         if (err != Error.Ok)
         {
-            GD.PrintErr($"[{Name}] (图片)所有格式解码均失败:{picPath}");
+            FileLogger.LogErr($"[{Name}] (图片)所有格式解码均失败:{picPath}");
             return (null, realFormat);
         }
 
         // 检查尺寸
         if (image.GetWidth() > 16384 || image.GetHeight() > 16384)
         {
-            GD.PrintErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
+            FileLogger.LogErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
             return (null, realFormat);
         }
 
@@ -1154,7 +1154,7 @@ public static class FileUtil
             err = image.GenerateMipmaps();
             if (err != Error.Ok)
             {
-                GD.PushWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
+                FileLogger.LogWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
             }
         }
 

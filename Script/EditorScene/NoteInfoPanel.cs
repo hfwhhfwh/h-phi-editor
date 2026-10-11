@@ -189,7 +189,7 @@ public partial class NoteInfoPanel : Panel
 				break;
 
 			default:
-				GD.PrintErr($"[{this.Name}] 未知的键: {key}");
+				FileLogger.LogErr($"[{this.Name}] 未知的键: {key}");
 				return;
 		}
 

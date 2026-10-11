@@ -14,7 +14,7 @@ public partial class PopupHelper : Node
         // ========== 单例保护 ==========
         if (Instance != null && GodotObject.IsInstanceValid(Instance))
         {
-            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            FileLogger.LogWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
             QueueFree();  // 自杀，保留旧实例
             return;
         }
@@ -62,14 +62,14 @@ public partial class PopupHelper : Node
         
         dialog.Confirmed += () =>
         {
-            GD.Print("用户点击了 确定");
+            FileLogger.Log("用户点击了 确定");
             onConfirm?.Invoke();
             dialog.QueueFree();
         };
         
         dialog.Canceled += () =>
         {
-            GD.Print("用户点击了 取消");
+            FileLogger.Log("用户点击了 取消");
             onCancel?.Invoke();
             dialog.QueueFree();
         };

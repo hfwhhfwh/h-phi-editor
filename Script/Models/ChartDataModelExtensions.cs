@@ -52,7 +52,7 @@ namespace QuickType
                 }
                 else
                 {
-                    //GD.PrintErr($"");
+                    //FileLogger.LogErr($"");
                     throw new Exception("GetSpeedAtTime() Error!");
                     //return 0f;
                 }
@@ -304,7 +304,7 @@ namespace QuickType
 
                     totalX += lastX + gapX;
 
-                    //GD.Print($"lastX:{lastX}, gapX:{gapX}");
+                    //FileLogger.Log($"lastX:{lastX}, gapX:{gapX}");
 
                     //赋值给前缀和
                     ev.prefixX = totalX;

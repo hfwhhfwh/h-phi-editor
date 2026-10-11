@@ -118,12 +118,12 @@ public partial class ChartEditService : Node
         if (!TimeUtil.IsValidBpm(bpm) || startBeat == null || startBeat.IntegerPart < 0 ||
             TimeUtil.GetBeatValue(startBeat) <= 0)
         {
-            GD.PrintErr($"[{Name}] 添加 BPM 失败: BPM 或起始拍不合法");
+            FileLogger.LogErr($"[{Name}] 添加 BPM 失败: BPM 或起始拍不合法");
             return;
         }
 
         _history.Execute(new AddBpmCommand(bpm, startBeat), this);
-        GD.Print($"[{Name}] 成功添加 BPM:{bpm}, startBeat:{startBeat}");
+        FileLogger.Log($"[{Name}] 成功添加 BPM:{bpm}, startBeat:{startBeat}");
     }
 
     public void SetBpmTime(int index, Beat startBeat)
@@ -132,12 +132,12 @@ public partial class ChartEditService : Node
             index >= EditingChart.BpmList.Count || startBeat == null ||
             startBeat.IntegerPart < 0 || TimeUtil.GetBeatValue(startBeat) <= 0)
         {
-            GD.PrintErr($"[{Name}] 修改 BPM 时间失败：索引或起始拍不合法");
+            FileLogger.LogErr($"[{Name}] 修改 BPM 时间失败：索引或起始拍不合法");
             return;
         }
         if (index == 0)
         {
-            GD.Print($"[{Name}] 首个 BPM 是基准事件，不允许移动");
+            FileLogger.Log($"[{Name}] 首个 BPM 是基准事件，不允许移动");
             return;
         }
 
@@ -163,13 +163,13 @@ public partial class ChartEditService : Node
         if (EditingChart?.BpmList == null || bpmEvent == null ||
             !EditingChart.BpmList.Contains(bpmEvent))
         {
-            GD.PrintErr($"[{Name}] 修改 BPM 属性失败：事件不存在");
+            FileLogger.LogErr($"[{Name}] 修改 BPM 属性失败：事件不存在");
             return;
         }
 
         if (property == "Bpm" && !TimeUtil.IsValidBpm(Convert.ToSingle(value)))
         {
-            GD.PrintErr($"[{Name}] 修改 BPM 数值失败: BPM 不合法");
+            FileLogger.LogErr($"[{Name}] 修改 BPM 数值失败: BPM 不合法");
             return;
         }
         if (property == "StartTime")
@@ -177,12 +177,12 @@ public partial class ChartEditService : Node
             var beat = value as Beat;
             if (beat == null || beat.IntegerPart < 0 || TimeUtil.GetBeatValue(beat) <= 0)
             {
-                GD.PrintErr($"[{Name}] 修改 BPM 时间失败：起始拍不合法");
+                FileLogger.LogErr($"[{Name}] 修改 BPM 时间失败：起始拍不合法");
                 return;
             }
             if (EditingChart.BpmList.IndexOf(bpmEvent) == 0)
             {
-                GD.Print($"[{Name}] 首个 BPM 是基准事件，不允许移动");
+                FileLogger.Log($"[{Name}] 首个 BPM 是基准事件，不允许移动");
                 return;
             }
         }
@@ -205,13 +205,13 @@ public partial class ChartEditService : Node
             EditingChart.JudgeLineList[lineId].Notes == null ||
             noteIndex < 0 || noteIndex >= EditingChart.JudgeLineList[lineId].Notes.Count)
         {
-            GD.PrintErr($"[{Name}] 修改 note 属性失败：索引不合法");
+            FileLogger.LogErr($"[{Name}] 修改 note 属性失败：索引不合法");
             return;
         }
 
         Note note = EditingChart.JudgeLineList[lineId].Notes[noteIndex];
         _history.Execute(new SetNotePropertyCommand(lineId, note, property, value), this);
-        GD.Print($"[{Name}] 修改note(line{lineId}_{noteIndex})属性 {property} : {value}");
+        FileLogger.Log($"[{Name}] 修改note(line{lineId}_{noteIndex})属性 {property} : {value}");
     }
 
     // 直接修改属性：
@@ -251,14 +251,14 @@ public partial class ChartEditService : Node
     public void DeleteNote(int lineId, Note note)
     {
         _history.Execute(new DeleteNotesCommand(lineId, new[] { note }), this);
-        GD.Print($"[{Name}] 删除note(line{lineId})");
+        FileLogger.Log($"[{Name}] 删除note(line{lineId})");
     }
 
     public void DeleteNotes(int lineId, IEnumerable<Note> notes)
     {
         if (notes == null || !notes.Any()) return;
         _history.Execute(new DeleteNotesCommand(lineId, notes), this);
-        GD.Print($"[{Name}] 删除note: {notes.Count()} 个");
+        FileLogger.Log($"[{Name}] 删除note: {notes.Count()} 个");
     }
 
     public void AddNote(int lineId, NoteType noteType, Beat startBeat, Beat endBeat, float posX)

@@ -39,19 +39,19 @@ public partial class PlayScene : Node
         _chartService = GetNode<ChartService>("/root/ChartService");
         if (_chartService == null)
         {
-            GD.PrintErr($"[{Name}] ChartService is null");
+            FileLogger.LogErr($"[{Name}] ChartService is null");
             return;
         }
 
         if (chartPlayer == null)
         {
-            GD.PrintErr($"[{Name}] chartPlayer is null");
+            FileLogger.LogErr($"[{Name}] chartPlayer is null");
             return;
         }
 
         if (chartRenderer == null)
         {
-            GD.PrintErr($"[{Name}] chartRenderer is null");
+            FileLogger.LogErr($"[{Name}] chartRenderer is null");
             return;
         }
 
@@ -137,7 +137,7 @@ public partial class PlayScene : Node
         var chartInfo = _chartService.GetChartInfo(chartId);
         if (chartInfo == null)
         {
-            GD.PrintErr($"[{Name}] 未找到谱面 {chartId}");
+            FileLogger.LogErr($"[{Name}] 未找到谱面 {chartId}");
             return;
         }
 
@@ -156,7 +156,7 @@ public partial class PlayScene : Node
         (Image bgImageBlurred, _) = await FileUtil.LoadImageFromFileAsync(blurredPathAbs);
         if (bgImageBlurred == null)
         {
-            GD.PrintErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
+            FileLogger.LogErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
         }
 
         _judge = new ChartJudge();
@@ -250,7 +250,7 @@ public partial class PlayScene : Node
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
 
-        // GD.Print($"Click {_gameTime:F2}, {pos}");
+        // FileLogger.Log($"Click {_gameTime:F2}, {pos}");
         _judge.OnTapInput(pos, _gameTime);
     }
 
@@ -275,21 +275,21 @@ public partial class PlayScene : Node
         var info = _chartService.GetChartInfo(chartId);
         if (info == null)
         {
-            GD.PrintErr($"[{Name}] 未找到谱面 {chartId}");
+            FileLogger.LogErr($"[{Name}] 未找到谱面 {chartId}");
             return;
         }
 
         _chart = ChartLoader.LoadChart(info.ChartPath);
         if (_chart == null)
         {
-            GD.PrintErr($"[{Name}] 谱面加载失败: {info.ChartPath}");
+            FileLogger.LogErr($"[{Name}] 谱面加载失败: {info.ChartPath}");
             return;
         }
     }
 
     private void OnJudgeResult(JudgeResult result)
     {
-        //GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        //FileLogger.Log($"{result.Grade} {result.TimeDeltaMs:F0}ms");
 
         if (statusLabel != null)
         {
@@ -310,13 +310,13 @@ public partial class PlayScene : Node
         }
         else
         {
-            // GD.Print($"Miss at {result.TimeDeltaMs}ms");
+            // FileLogger.Log($"Miss at {result.TimeDeltaMs}ms");
         }
     }
 
     private void OnHoldEndJudgeResult(JudgeResult result)
     {
-        //GD.Print($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        //FileLogger.Log($"{result.Grade} {result.TimeDeltaMs:F0}ms");
         
         if (statusLabel != null)
         {

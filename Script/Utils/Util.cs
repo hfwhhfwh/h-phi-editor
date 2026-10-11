@@ -60,7 +60,7 @@ public static class Util
 		if (audioStream == null)
 		{
 			// 资源加载失败时输出错误并返回 0
-			GD.PrintErr($"无法加载音频文件: {path}");
+			FileLogger.LogErr($"无法加载音频文件: {path}");
 			return 0f;
 		}
 

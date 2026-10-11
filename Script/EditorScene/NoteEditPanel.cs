@@ -141,7 +141,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
         _noteClipBoard = noteClipBoard;
 
-        GD.Print($"[{Name}] 正在粘贴Note: Line{noteClipBoard.SourceLineId} Beat:{noteClipBoard.SourceStartBeat}");
+        FileLogger.Log($"[{Name}] 正在粘贴Note: Line{noteClipBoard.SourceLineId} Beat:{noteClipBoard.SourceStartBeat}");
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public partial class NoteEditPanel : BaseEditPanel
 
         _isPasteMode = false;
 
-        GD.Print($"[{Name}] 用户退出了粘贴模式");
+        FileLogger.Log($"[{Name}] 用户退出了粘贴模式");
     }
 
     public override bool IsBoxSelectMode
@@ -430,7 +430,7 @@ public partial class NoteEditPanel : BaseEditPanel
                                     : DragMoveComponent.DragMode.Head;
                     initialBeat = dragTail ? new Beat(note.EndTime) : new Beat(note.StartTime);
 
-                    // GD.Print($"开始滑动Hold音符:{noteIndex}, 拖动尾部:{_draggingHoldEnd}");
+                    // FileLogger.Log($"开始滑动Hold音符:{noteIndex}, 拖动尾部:{_draggingHoldEnd}");
                 }
                 else
                 {
@@ -439,7 +439,7 @@ public partial class NoteEditPanel : BaseEditPanel
                     // _draggingNoteIndex = -1;
 
                     // 没点头尾，不启动拖动
-                    //GD.Print($"未选中Hold头尾, 不滑动Hold音符:{noteIndex}");
+                    //FileLogger.Log($"未选中Hold头尾, 不滑动Hold音符:{noteIndex}");
                     return;
                 }
             }
@@ -596,7 +596,7 @@ public partial class NoteEditPanel : BaseEditPanel
         }
         else
         {
-            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
+            FileLogger.LogErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
         }
     }
 
@@ -733,11 +733,11 @@ public partial class NoteEditPanel : BaseEditPanel
         float distance = (float)Math.Sqrt(nearestDistSquared);
         if(distance > distanceThreshold)
         {
-            // GD.Print($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
+            // FileLogger.Log($"[{this.Name}] 点击位置:{pos}, 未选中, 距离过大:{distance}");
             return -1;
         }
 
-        // GD.Print($"[{this.Name}] 点击位置:{pos} 最近的note:{nearestNoteIndex}, 距离:{distance}");
+        // FileLogger.Log($"[{this.Name}] 点击位置:{pos} 最近的note:{nearestNoteIndex}, 距离:{distance}");
         return nearestNoteIndex;
 
         
@@ -772,13 +772,13 @@ public partial class NoteEditPanel : BaseEditPanel
                 {
                     EmitAllDeselected();
 
-                    // GD.Print($"[{Name}] 事件触发：AllDeselected");
+                    // FileLogger.Log($"[{Name}] 事件触发：AllDeselected");
                 }
                 else
                 {
                     NoteMultiSelected?.Invoke();
 
-                    // GD.Print($"[{Name}] 事件触发: NoteMultiSelected");
+                    // FileLogger.Log($"[{Name}] 事件触发: NoteMultiSelected");
                 }
             }
 

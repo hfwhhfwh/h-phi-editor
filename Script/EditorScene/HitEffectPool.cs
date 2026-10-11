@@ -30,7 +30,7 @@ public partial class HitEffectPool : Node
         if(_parent == null || _frames == null)
         {
             HxScale = 1f;
-            GD.PrintErr($"[{Name}] 无法设置打击特效缩放:_parent == null || _frames == null");
+            FileLogger.LogErr($"[{Name}] 无法设置打击特效缩放:_parent == null || _frames == null");
             return;
         }
 
@@ -38,7 +38,7 @@ public partial class HitEffectPool : Node
         if(frame == null)
         {
             HxScale = 1f;
-            GD.PrintErr($"[{Name}] 无法设置打击特效缩放: 未找到动画帧");
+            FileLogger.LogErr($"[{Name}] 无法设置打击特效缩放: 未找到动画帧");
             return;
         }
 
@@ -46,7 +46,7 @@ public partial class HitEffectPool : Node
         if (textureWidth <= 0f)
         {
             HxScale = 1f;
-            GD.PrintErr($"[{Name}] 无法设置打击特效缩放: 图片宽度不合法");
+            FileLogger.LogErr($"[{Name}] 无法设置打击特效缩放: 图片宽度不合法");
             return;
         }
 
@@ -55,11 +55,11 @@ public partial class HitEffectPool : Node
         if (float.IsNaN(HxScale) || float.IsInfinity(HxScale) || HxScale <= 0f)
         {
             HxScale = 1f;
-            GD.PrintErr($"[{Name}] 无法设置打击特效缩放: 缩放数值不合法, HxScale:{HxScale}, _parent.Size:{_parent.Size}, textureWidth:{textureWidth}");
+            FileLogger.LogErr($"[{Name}] 无法设置打击特效缩放: 缩放数值不合法, HxScale:{HxScale}, _parent.Size:{_parent.Size}, textureWidth:{textureWidth}");
             return;
         }
 
-        GD.Print($"[{Name}] 成功设置打击特效缩放: HxScale:{HxScale}, _parent.Size:{_parent.Size}, textureWidth:{textureWidth}");
+        FileLogger.Log($"[{Name}] 成功设置打击特效缩放: HxScale:{HxScale}, _parent.Size:{_parent.Size}, textureWidth:{textureWidth}");
 
     }
 

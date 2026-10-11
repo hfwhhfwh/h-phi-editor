@@ -76,7 +76,7 @@ public static class TimeUtil
         // 处理空列表或无效输入
         if (BpmList == null || BpmList.Count == 0 || secondValue < 0)
         {
-            GD.PrintErr($"[Util] SecondToBeat() 输入不合法");
+            FileLogger.LogErr($"[Util] SecondToBeat() 输入不合法");
             return 0f;
         }
 

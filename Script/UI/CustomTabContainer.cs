@@ -18,13 +18,13 @@ public partial class CustomTabContainer : Node
     {
         if (TabMap == null || TabMap.Count == 0)
         {
-            GD.PrintErr($"[{Name}] TabMap 为空，请在编辑器中配置映射。");
+            FileLogger.LogErr($"[{Name}] TabMap 为空，请在编辑器中配置映射。");
             return;
         }
 
         if(defaultButton == null)
         {
-            GD.PrintErr($"[{Name}] defaultButton 为空，请在编辑器中配置默认界面。");
+            FileLogger.LogErr($"[{Name}] defaultButton 为空，请在编辑器中配置默认界面。");
             return;
         }
 
@@ -56,12 +56,12 @@ public partial class CustomTabContainer : Node
     {
         // if(button == null)
         // {
-        //     GD.PrintErr($"[{Name}] OnTabToggled() button为空!");
+        //     FileLogger.LogErr($"[{Name}] OnTabToggled() button为空!");
         //     return;
         // }
         // if(!TabMap.TryGetValue(button, out Control selectedPage))
         // {
-        //     GD.PrintErr($"[{Name}] OnTabToggled() button不再字典中");
+        //     FileLogger.LogErr($"[{Name}] OnTabToggled() button不再字典中");
         //     return;
         // }
 
@@ -75,12 +75,12 @@ public partial class CustomTabContainer : Node
     {
         if(button == null)
         {
-            GD.PrintErr($"[{Name}] button为空!");
+            FileLogger.LogErr($"[{Name}] button为空!");
             return;
         }
         if(!TabMap.TryGetValue(button, out Control selectedPage))
         {
-            GD.PrintErr($"[{Name}] button不再字典中");
+            FileLogger.LogErr($"[{Name}] button不再字典中");
             return;
         }
         

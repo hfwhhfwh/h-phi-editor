@@ -36,22 +36,22 @@ public partial class TestSceneEasingEditor : Node
 
     private void OnEasingFuncChanged(EasingFunc easingFunc)
     {
-        GD.Print($"用户修改了缓动函数:{easingFunc}");
+        FileLogger.Log($"用户修改了缓动函数:{easingFunc}");
     }
 
     private void OnEasingIOChanged(EasingIO easingIO)
     {
-        GD.Print($"用户修改了缓动IO:{easingIO}");
+        FileLogger.Log($"用户修改了缓动IO:{easingIO}");
     }
 
     private void OnEasingLeftChanged(float easingLeft)
     {
-        GD.Print($"用户修改了缓动左边界:{easingLeft}");
+        FileLogger.Log($"用户修改了缓动左边界:{easingLeft}");
     }
 
     private void OnEasingRightChanged(float easingRight)
     {
-        GD.Print($"用户修改了缓动右边界:{easingRight}");
+        FileLogger.Log($"用户修改了缓动右边界:{easingRight}");
     }
 
 }

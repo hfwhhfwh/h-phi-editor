@@ -27,17 +27,17 @@ public partial class TestSceneNoteChooser : Node
 
     private void OnNoteChoosed(NoteType noteType)
     {
-        GD.Print($"用户选择了note:{noteType}");
+        FileLogger.Log($"用户选择了note:{noteType}");
     }
 
     private void OnDeselected()
     {
-        GD.Print($"用户取消选择");
+        FileLogger.Log($"用户取消选择");
     }
 
     private void OnDeleteButtonChoosed()
     {
-        GD.Print($"用户选择了删除模式");
+        FileLogger.Log($"用户选择了删除模式");
     }
 
 }

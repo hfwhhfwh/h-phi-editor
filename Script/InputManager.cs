@@ -95,7 +95,7 @@ public partial class InputManager : Node
                             deltaY = -deltaY;
                         }
                         EmitSignal(SignalName.Slide, deltaY);
-                        //GD.Print($"[{Name}] Scroll deltaY: {deltaY}");
+                        //FileLogger.Log($"[{Name}] Scroll deltaY: {deltaY}");
                     }
                     
                 }
@@ -108,7 +108,7 @@ public partial class InputManager : Node
         //     lastMousePosition = mouseMotion.Position;
         //     if (delta.Y != 0)
         //         EmitSignal(SignalName.Slide, delta.Y);
-        //         //GD.Print($"[{this.Name}] MiddleButtonDrag {delta}");
+        //         //FileLogger.Log($"[{this.Name}] MiddleButtonDrag {delta}");
         // }
     }
 

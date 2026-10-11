@@ -27,7 +27,7 @@ public partial class ShareHelper : Node, IShareHelper
         //    “SharePlugin singleton not found!” 报错，因此直接跳过。
         if (!OS.HasFeature("android"))
         {
-            GD.Print("[ShareHelper] 当前平台不支持系统分享，分享功能已禁用");
+            FileLogger.Log("[ShareHelper] 当前平台不支持系统分享，分享功能已禁用");
             return;
         }
 
@@ -39,7 +39,7 @@ public partial class ShareHelper : Node, IShareHelper
         }
         if (shareScript == null)
         {
-            GD.PrintErr("[ShareHelper] 未找到 Share 插件，请确认已启用并安装到 addons/share/ 目录");
+            FileLogger.LogErr("[ShareHelper] 未找到 Share 插件，请确认已启用并安装到 addons/share/ 目录");
             return;
         }
 
@@ -83,7 +83,7 @@ public partial class ShareHelper : Node, IShareHelper
         var err = image.SavePng(tempPath);
         if (err != Error.Ok)
         {
-            GD.PrintErr($"[ShareHelper] 保存临时图片失败: {err}");
+            FileLogger.LogErr($"[ShareHelper] 保存临时图片失败: {err}");
             return;
         }
 
@@ -103,7 +103,7 @@ public partial class ShareHelper : Node, IShareHelper
     {
         if (_shareNode == null)
         {
-            GD.PrintErr("[ShareHelper] Share 节点尚未就绪，无法调用分享功能");
+            FileLogger.LogErr("[ShareHelper] Share 节点尚未就绪，无法调用分享功能");
             return false;
         }
         return true;

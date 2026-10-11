@@ -69,7 +69,7 @@ public partial class IOSPhotoPicker : Node
     {
         if (Instance != null && GodotObject.IsInstanceValid(Instance))
         {
-            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            FileLogger.LogWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
             QueueFree();
             return;
         }
@@ -84,12 +84,12 @@ public partial class IOSPhotoPicker : Node
         if (!Engine.HasSingleton(PluginName))
         {
             LastError = $"{PluginName} 插件单例不存在（插件未链接 / 初始化失败）";
-            GD.PrintErr($"[{Name}] {LastError}");
+            FileLogger.LogErr($"[{Name}] {LastError}");
             return;
         }
 
         _plugin = Engine.GetSingleton(PluginName);
-        GD.Print($"[{Name}] registering photo picker: {PluginName}");
+        FileLogger.Log($"[{Name}] registering photo picker: {PluginName}");
 
         _plugin.Connect(SignalImagePicked, Callable.From<Image>(OnImagePicked));
         _plugin.Connect(SignalPermissionUpdated, Callable.From<long, long>(OnPermissionUpdated));
@@ -123,7 +123,7 @@ public partial class IOSPhotoPicker : Node
         }
 
         _waitingPermission = false;
-        GD.PushWarning($"[{Name}] 等待 permission_updated 超时，直接 present 兜底");
+        FileLogger.LogWarning($"[{Name}] 等待 permission_updated 超时，直接 present 兜底");
         PresentPendingSource();
     }
 
@@ -183,7 +183,7 @@ public partial class IOSPhotoPicker : Node
         long allowed = GetEnum(ConstStatusAllowed, FallbackStatusAllowed);
         long denied = GetEnum(ConstStatusDenied, FallbackStatusDenied);
 
-        GD.Print($"[{Name}] {sourceConstant}: permission_status={status} (allowed={allowed})");
+        FileLogger.Log($"[{Name}] {sourceConstant}: permission_status={status} (allowed={allowed})");
 
         if (status == allowed)
         {
@@ -200,7 +200,7 @@ public partial class IOSPhotoPicker : Node
         // UNKNOWN 或状态读不到：先请求权限，由 permission_updated 回调触发 present
         _waitingPermission = true;
         _permissionDeadline = PermissionFallbackSeconds;
-        GD.Print($"[{Name}] request_permission({targetConstant})");
+        FileLogger.Log($"[{Name}] request_permission({targetConstant})");
         CallPlugin(PropRequestPermission, Variant.From(target));
     }
 
@@ -212,7 +212,7 @@ public partial class IOSPhotoPicker : Node
             return;
         }
 
-        GD.Print($"[{Name}] present(source={_pendingSourceType})");
+        FileLogger.Log($"[{Name}] present(source={_pendingSourceType})");
         CallPlugin(PropPresent, Variant.From(_pendingSourceType));
     }
 
@@ -220,7 +220,7 @@ public partial class IOSPhotoPicker : Node
     {
         if (!_plugin.HasMethod(PropPermissionStatus))
         {
-            GD.PushWarning($"[{Name}] 插件没有 permission_status()，按 UNKNOWN 处理");
+            FileLogger.LogWarning($"[{Name}] 插件没有 permission_status()，按 UNKNOWN 处理");
             return GetEnum(ConstStatusUnknown, -1);
         }
 
@@ -252,7 +252,7 @@ public partial class IOSPhotoPicker : Node
         _imageLoaded = null;
         _waitingPermission = false;
         _pendingSourceType = -1;
-        GD.PrintErr($"[{Name}] {message}");
+        FileLogger.LogErr($"[{Name}] {message}");
         PopupHelper.Instance?.ShowAlert("选择图片失败", message);
     }
 
@@ -280,7 +280,7 @@ public partial class IOSPhotoPicker : Node
 
         if (fallback == long.MinValue)
         {
-            GD.PushWarning($"[{Name}] 读不到插件枚举 {constantName}");
+            FileLogger.LogWarning($"[{Name}] 读不到插件枚举 {constantName}");
         }
 
         return fallback;
@@ -347,12 +347,12 @@ public partial class IOSPhotoPicker : Node
     {
         if (image == null)
         {
-            GD.Print($"[{Name}] 用户取消了选择");
+            FileLogger.Log($"[{Name}] 用户取消了选择");
             _imageLoaded = null;
             return;
         }
 
-        GD.Print($"[{Name}] 收到图片，尺寸: {image.GetWidth()}x{image.GetHeight()}");
+        FileLogger.Log($"[{Name}] 收到图片，尺寸: {image.GetWidth()}x{image.GetHeight()}");
 
         Action<Image> callback = _imageLoaded;
         _imageLoaded = null;
@@ -363,7 +363,7 @@ public partial class IOSPhotoPicker : Node
     /// <summary>真实签名是 (target, status) 两个 int；写成 (bool granted) 会导致连接无效</summary>
     private void OnPermissionUpdated(long target, long status)
     {
-        GD.Print($"[{Name}] permission_updated: target={target}, status={status}");
+        FileLogger.Log($"[{Name}] permission_updated: target={target}, status={status}");
 
         if (!_waitingPermission)
         {
@@ -385,8 +385,8 @@ public partial class IOSPhotoPicker : Node
 
     private void LogPluginApi()
     {
-        GD.Print($"[{Name}] {PluginName} 方法: {DescribeClassMembers(ClassDB.ClassGetMethodList(PluginName, true))}");
-        GD.Print($"[{Name}] {PluginName} 信号: {DescribeClassMembers(ClassDB.ClassGetSignalList(PluginName, true))}");
+        FileLogger.Log($"[{Name}] {PluginName} 方法: {DescribeClassMembers(ClassDB.ClassGetMethodList(PluginName, true))}");
+        FileLogger.Log($"[{Name}] {PluginName} 信号: {DescribeClassMembers(ClassDB.ClassGetSignalList(PluginName, true))}");
     }
 
     private static string DescribeClassMembers(Godot.Collections.Array<Godot.Collections.Dictionary> infos)

@@ -53,7 +53,7 @@ public static class RectUtil
             // 2. Y 轴有重叠（矩形与 Hold 区间相交）
             bool yOverlap = !(rect.Position.Y > endBeatValue || rect.End.Y < startBeatValue);
 
-            // GD.Print($"xInRange:{xInRange}, yOverlap:{yOverlap}");
+            // FileLogger.Log($"xInRange:{xInRange}, yOverlap:{yOverlap}");
 
             return xInRange && yOverlap;
         }
@@ -93,7 +93,7 @@ public static class RectUtil
         // 2. Y 轴有重叠（矩形与 Hold 区间相交）
         bool yOverlap = !(rect.Position.Y > endBeatValue || rect.End.Y < startBeatValue);
 
-        // GD.Print($"xInRange:{xInRange}, yOverlap:{yOverlap}");
+        // FileLogger.Log($"xInRange:{xInRange}, yOverlap:{yOverlap}");
 
         return xInRange && yOverlap;
     }

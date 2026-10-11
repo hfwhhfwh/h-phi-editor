@@ -198,7 +198,7 @@ public partial class EditorSelectionController : Node
         Note note = _context.EditingChart.JudgeLineList[lineId].Notes[noteIndex];
         _clipboard?.CopySingleNote(lineId, note);
 
-        GD.Print($"[{Name}] 复制Note: Line{lineId}_{noteIndex} {(NoteType)note.Type}");
+        FileLogger.Log($"[{Name}] 复制Note: Line{lineId}_{noteIndex} {(NoteType)note.Type}");
     }
 
     private void OnNoteDelete(int lineId, int noteIndex)
@@ -238,7 +238,7 @@ public partial class EditorSelectionController : Node
 
     private void OnEventEdit(int lineId, int layer, LineEventEnum lineEventEnum, int index)
     {
-        GD.Print($"[{Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+        FileLogger.Log($"[{Name}] 编辑事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
 
         if (_eventInfoPanel == null || !IsChartReady()) return;
 
@@ -258,7 +258,7 @@ public partial class EditorSelectionController : Node
         LineEvent lineEvent = _context.EditingChart.JudgeLineList[lineId].EventLayers[layer].GetLineEvents(lineEventEnum)[index];
         _clipboard?.CopySingleEvent(lineId, layer, lineEventEnum, lineEvent);
 
-        GD.Print($"[{Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
+        FileLogger.Log($"[{Name}] 复制事件 line:{lineId}, type:{lineEventEnum}, index:{index}");
     }
 
     private void OnEventDelete(int lineId, int layer, LineEventEnum lineEventEnum, int index)
@@ -323,7 +323,7 @@ public partial class EditorSelectionController : Node
     private void OnBpmCopy(BpmEvent bpmEvent)
     {
         _clipboard?.CopySingleBpm(bpmEvent);
-        GD.Print($"[{Name}] 复制 BPM:{bpmEvent?.Bpm}");
+        FileLogger.Log($"[{Name}] 复制 BPM:{bpmEvent?.Bpm}");
     }
 
     private void OnBpmDelete(BpmEvent bpmEvent)
@@ -370,7 +370,7 @@ public partial class EditorSelectionController : Node
                 break;
 
             default:
-                GD.PrintErr($"[{Name}] 未知的选中面板类型:{_context.SelectFocusPanel}");
+                FileLogger.LogErr($"[{Name}] 未知的选中面板类型:{_context.SelectFocusPanel}");
                 isSuccess = false;
                 break;
         }

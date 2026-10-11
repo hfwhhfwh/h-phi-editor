@@ -85,7 +85,7 @@ public partial class NoteChooser : VBoxContainer
 	// 		// selectedButton = null;
 			
 	// 		// 否则意味着用户选择了另一个按钮，此按钮自动取消选择，不应该触发取消事件
-	// 		// GD.Print($"按钮被松开，不触发事件");
+	// 		// FileLogger.Log($"按钮被松开，不触发事件");
     //     }
 	// }
 	

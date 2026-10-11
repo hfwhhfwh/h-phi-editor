@@ -27,7 +27,7 @@ public partial class GameSettings : Node
         _defaultSettings = new SettingsData();
         if (!Godot.FileAccess.FileExists(SettingsPath))
         {
-            GD.Print($"[{Name}] 不存在设置文件, 将会新建一个");
+            FileLogger.Log($"[{Name}] 不存在设置文件, 将会新建一个");
             CreateNew();
         }
         Load();
@@ -63,7 +63,7 @@ public partial class GameSettings : Node
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
         if (property == null || !property.CanWrite || !property.CanRead)
         {
-            GD.PushWarning($"[{Name}] 无法恢复未知或只读设置: {key}");
+            FileLogger.LogWarning($"[{Name}] 无法恢复未知或只读设置: {key}");
             return;
         }
 
@@ -73,7 +73,7 @@ public partial class GameSettings : Node
 
         Current.Set(key, defaultValue);
         EmitSignal(SignalName.SettingChanged, key, defaultValue);
-        GD.Print($"[{Name}] 成功将属性 {key} 恢复为默认值:{defaultValue}");
+        FileLogger.Log($"[{Name}] 成功将属性 {key} 恢复为默认值:{defaultValue}");
 
         SaveDeferred();
     }
@@ -85,7 +85,7 @@ public partial class GameSettings : Node
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
         if (property == null || !property.CanRead)
         {
-            GD.PushWarning($"[{Name}] 无法检查未知或不可读设置: {key}");
+            FileLogger.LogWarning($"[{Name}] 无法检查未知或不可读设置: {key}");
             return true;
         }
 
@@ -108,7 +108,7 @@ public partial class GameSettings : Node
         Error err = config.Load(SettingsPath);
         if (err != Error.Ok)
         {
-            GD.PrintErr($"[{Name}] 使用默认设置(首次运行或读取失败: {err})");
+            FileLogger.LogErr($"[{Name}] 使用默认设置(首次运行或读取失败: {err})");
             ApplyToEngine(); // 应用默认值到引擎
             return;
         }
@@ -130,11 +130,11 @@ public partial class GameSettings : Node
                     // object typedValue = Convert.ChangeType(value.Obj, prop.PropertyType);
                     // prop.SetValue(Current, typedValue);
                     Current.Set(prop.Name, value);
-                    // GD.Print($"加载属性{prop.Name}: {value}");
+                    // FileLogger.Log($"加载属性{prop.Name}: {value}");
                 }
                 catch (Exception e)
                 {
-                    GD.PushWarning($"[{Name}] 加载设置 {prop.Name} 失败: {e.Message}");
+                    FileLogger.LogWarning($"[{Name}] 加载设置 {prop.Name} 失败: {e.Message}");
                 }
             }
         }
@@ -148,7 +148,7 @@ public partial class GameSettings : Node
         Current = _defaultSettings.Clone();
         EnsureDirectoryExists();
         SaveInternal();
-        GD.Print($"[{Name}] 新建设置文件成功");
+        FileLogger.Log($"[{Name}] 新建设置文件成功");
     }
 
     /// <summary>确保设置文件所在目录存在</summary>
@@ -170,7 +170,7 @@ public partial class GameSettings : Node
     {
         EnsureDirectoryExists();
         SaveInternal();
-        GD.Print($"[{Name}] 设置已保存");
+        FileLogger.Log($"[{Name}] 设置已保存");
     }
 
     private void SaveInternal()
@@ -227,7 +227,7 @@ public partial class GameSettings : Node
         // 语言
         // TranslationServer.SetLocale(Current.Language);
 
-        GD.Print($"[{Name}] 成功将设置应用到引擎");
+        FileLogger.Log($"[{Name}] 成功将设置应用到引擎");
     }
 
     // 重置为默认

@@ -110,7 +110,7 @@ public partial class InfoPanel : PanelContainer
         // 发出信号，由上层处理
         EmitSignal(SignalName.Confirmed, newInfo, newSongPath, newPicPath);
 
-        GD.Print($"[InfoPanel] 修改 newSongPath:{newSongPath} newPicPath:{newPicPath}");
+        FileLogger.Log($"[InfoPanel] 修改 newSongPath:{newSongPath} newPicPath:{newPicPath}");
     }
 
     public void OnCancel() => EmitSignal(SignalName.Cancelled);

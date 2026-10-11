@@ -20,7 +20,7 @@ public partial class ImagePicker : Node
         // ========== 单例保护 ==========
         if (Instance != null && GodotObject.IsInstanceValid(Instance))
         {
-            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            FileLogger.LogWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
             QueueFree();  // 自杀，保留旧实例
             return;
         }
@@ -34,11 +34,11 @@ public partial class ImagePicker : Node
         if (Engine.HasSingleton(PluginName))
         {
             _plugin = Engine.GetSingleton(PluginName);
-            GD.Print("GodotGetImage 插件加载成功");
+            FileLogger.Log("GodotGetImage 插件加载成功");
         }
         else
         {
-            GD.PrintErr("无法加载插件: ", PluginName);
+            FileLogger.LogErr("无法加载插件: ", PluginName);
             return;
         }
 
@@ -113,14 +113,14 @@ public partial class ImagePicker : Node
     // 图片选择完成回调
     private void OnImageRequestCompleted(Dictionary result)
     {
-        GD.Print("收到图片数据，键: ", result.Keys);
+        FileLogger.Log("收到图片数据，键: ", result.Keys);
 
         foreach (var key in result.Keys)
         {
             var imageData = result[key].As<byte[]>();
             if (imageData == null || imageData.Length == 0)
             {
-                GD.PrintErr("图片数据为空，键: ", key);
+                FileLogger.LogErr("图片数据为空，键: ", key);
                 continue;
             }
 
@@ -137,11 +137,11 @@ public partial class ImagePicker : Node
                 var texture = ImageTexture.CreateFromImage(image);
                 ImageLoaded?.Invoke(texture);
                 ImageLoaded = null;
-                GD.Print("图片加载成功，尺寸: ", image.GetSize());
+                FileLogger.Log("图片加载成功，尺寸: ", image.GetSize());
             }
             else
             {
-                GD.PrintErr("图片加载失败: ", err);
+                FileLogger.LogErr("图片加载失败: ", err);
                 PopupHelper.Instance.ShowAlert("错误", $"图片加载失败: {err}");
             }
         }
@@ -150,14 +150,14 @@ public partial class ImagePicker : Node
     // 错误回调
     private void OnImageError(string error)
     {
-        GD.PrintErr("图片选择错误: ", error);
+        FileLogger.LogErr("图片选择错误: ", error);
         PopupHelper.Instance.ShowAlert("错误", $"图片选择错误: {error}");
     }
 
     // 权限被拒绝回调
     private void OnPermissionDenied()
     {
-        GD.Print("用户拒绝了权限，尝试重新请求...");
+        FileLogger.Log("用户拒绝了权限，尝试重新请求...");
         _plugin?.Call("resendPermission");
     }
 }

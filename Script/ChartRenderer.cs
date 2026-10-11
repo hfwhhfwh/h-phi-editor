@@ -245,7 +245,7 @@ public partial class ChartRenderer : BaseChartRenderer
 		
 		mm.InstanceCount = MathUtil.NextPowerOfTwo(needed);
 
-		GD.Print($"[{Name}] MultiMesh '{type}' 扩容至 {mm.InstanceCount}");
+		FileLogger.Log($"[{Name}] MultiMesh '{type}' 扩容至 {mm.InstanceCount}");
 	}
 
     /// <summary>
@@ -263,7 +263,7 @@ public partial class ChartRenderer : BaseChartRenderer
 		
 		mm.InstanceCount = MathUtil.NextPowerOfTwo(needed);
 
-		GD.Print($"[{Name}] MultiMesh 'Line' 扩容至 {mm.InstanceCount}");
+		FileLogger.Log($"[{Name}] MultiMesh 'Line' 扩容至 {mm.InstanceCount}");
 	}
 
     public override void Render(

@@ -101,7 +101,7 @@ public sealed class MultiMeshRenderer
         if (needed <= mm.InstanceCount) return; // 容量足够，直接返回
 
         mm.InstanceCount = MathUtil.NextPowerOfTwo(needed);
-        GD.Print($"[{_parent?.Name}] MultiMesh '{key}' 扩容至 {mm.InstanceCount}");
+        FileLogger.Log($"[{_parent?.Name}] MultiMesh '{key}' 扩容至 {mm.InstanceCount}");
     }
 
     /// <summary>

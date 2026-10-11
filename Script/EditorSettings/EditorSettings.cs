@@ -79,7 +79,7 @@ public partial class EditorSettings : Node
         Error error = config.Load(settingsPath);
         if (error != Error.Ok)
         {
-            GD.PushWarning($"[{Name}] 读取编辑器设置失败，使用默认值: {error}");
+            FileLogger.LogWarning($"[{Name}] 读取编辑器设置失败，使用默认值: {error}");
             Save();
             EmitSignal(SignalName.SettingsApplied);
             return;
@@ -161,7 +161,7 @@ public partial class EditorSettings : Node
             }
             catch (Exception exception)
             {
-                GD.PushWarning($"[{Name}] 加载编辑器设置 {property.Name} 失败: {exception.Message}");
+                FileLogger.LogWarning($"[{Name}] 加载编辑器设置 {property.Name} 失败: {exception.Message}");
             }
         }
     }
@@ -171,7 +171,7 @@ public partial class EditorSettings : Node
         // 未来旧版本字段转换应集中放在这里。
         if (version > EditorSettingsData.CurrentVersion)
         {
-            GD.PushWarning($"[{Name}] 编辑器设置版本 {version} 高于当前版本，尝试读取兼容字段");
+            FileLogger.LogWarning($"[{Name}] 编辑器设置版本 {version} 高于当前版本，尝试读取兼容字段");
         }
     }
 

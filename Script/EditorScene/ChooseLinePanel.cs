@@ -161,7 +161,7 @@ public partial class ChooseLinePanel : Panel
 	public void OnMainButtonPressed(Button button)
 	{
 		// OnButtonClicked((int)button.GetMeta("id"));
-		// GD.Print($"OnButtonClicked:{id}");
+		// FileLogger.Log($"OnButtonClicked:{id}");
 		if(isDragging) return;
 		
 		EmitSignal(SignalName.LineSelected, (int)button.GetMeta("id"));
@@ -184,14 +184,14 @@ public partial class ChooseLinePanel : Panel
 
 		PopupMenuHelper.Instance.ShowPopupMenu(this, screenPos + new Vector2(30, 30), items);
 
-		// GD.Print($"localPos:{localPos}, globalPos:{globalPos}, screenPos:{screenPos}");
+		// FileLogger.Log($"localPos:{localPos}, globalPos:{globalPos}, screenPos:{screenPos}");
 	}
 
 	public void SetEventLayer(int index)
 	{
 		if(index < 0 || index > 4)
 		{
-			GD.PrintErr($"[{Name}] EventLayer索引越界:{index}");
+			FileLogger.LogErr($"[{Name}] EventLayer索引越界:{index}");
 			return;
 		}
 

@@ -92,7 +92,7 @@ public partial class CreateChartPanel : PanelContainer
                 if(textureImage == null)
                 {
                     // 用户取消选择
-                    // GD.PrintErr($"[ExportPanel] SetInfo() textureImage == null picturePath:{path}");
+                    // FileLogger.LogErr($"[ExportPanel] SetInfo() textureImage == null picturePath:{path}");
                     return;
                 }
                 ImageTexture texture = ImageTexture.CreateFromImage(textureImage);
@@ -112,7 +112,7 @@ public partial class CreateChartPanel : PanelContainer
                 if(texture == null)
                 {
                     // 用户取消选择
-                    // GD.PrintErr($"[ExportPanel] SetInfo() texture == null");
+                    // FileLogger.LogErr($"[ExportPanel] SetInfo() texture == null");
                     return;
                 }
                 _picTexture = texture;
@@ -125,7 +125,7 @@ public partial class CreateChartPanel : PanelContainer
     {
         if (IOSPhotoPicker.Instance == null)
         {
-            GD.PrintErr($"[{Name}] IOSPhotoPicker 自动加载节点不存在");
+            FileLogger.LogErr($"[{Name}] IOSPhotoPicker 自动加载节点不存在");
             PopupHelper.Instance?.ShowAlert("选择图片失败", "IOSPhotoPicker 未加载");
             return;
         }
@@ -142,7 +142,7 @@ public partial class CreateChartPanel : PanelContainer
                 ImageTexture texture = ImageTexture.CreateFromImage(image);
                 if(texture == null)
                 {
-                    GD.PrintErr($"[{Name}] 从Image转换为ImageTexture失败");
+                    FileLogger.LogErr($"[{Name}] 从Image转换为ImageTexture失败");
                     return;
                 }
 
@@ -157,21 +157,21 @@ public partial class CreateChartPanel : PanelContainer
         // 核实信息有效
         if(!float.TryParse(_bpmEdit.Text, out float bpm))
         {
-            GD.Print($"[{Name}] 输入的Bpm无效");
+            FileLogger.Log($"[{Name}] 输入的Bpm无效");
             PopupHelper.Instance.ShowAlert("提示", "请输入有效的 BPM");
             return;
         }
 
         if (string.IsNullOrEmpty(_musicPathEdit.Text))
         {
-            GD.Print($"[{Name}] 输入的音乐路径无效");
+            FileLogger.Log($"[{Name}] 输入的音乐路径无效");
             PopupHelper.Instance.ShowAlert("提示", "请选择音乐文件");
             return;
         }
 
         if(_picTexture == null)
         {
-            GD.Print($"[{Name}] 未选择曲绘图片");
+            FileLogger.Log($"[{Name}] 未选择曲绘图片");
             PopupHelper.Instance.ShowAlert("提示", "请选择曲绘图片");
             return;
         }

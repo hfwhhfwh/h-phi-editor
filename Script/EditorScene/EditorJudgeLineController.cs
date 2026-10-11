@@ -111,7 +111,7 @@ public partial class EditorJudgeLineController : Node
 
     private void OnLineSelected(int id)
     {
-        GD.Print($"[{Name}] 用户选择了Line:{id}");
+        FileLogger.Log($"[{Name}] 用户选择了Line:{id}");
 
         // 判定线只写入 Context，各面板通过 Context 读取；标签由 EditingLineChanged 统一更新
         _context.EditingLineId = id;
@@ -135,7 +135,7 @@ public partial class EditorJudgeLineController : Node
 
         if (chart.JudgeLineList.Count <= 1)
         {
-            GD.Print($"[{Name}] 最少保留一条判定线，删除失败");
+            FileLogger.Log($"[{Name}] 最少保留一条判定线，删除失败");
             PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
             return;
         }
@@ -147,7 +147,7 @@ public partial class EditorJudgeLineController : Node
     {
         if (index < 0 || index > 4)
         {
-            GD.PrintErr($"[{Name}] EventLayer索引越界:{index}");
+            FileLogger.LogErr($"[{Name}] EventLayer索引越界:{index}");
             return;
         }
 
@@ -169,6 +169,6 @@ public partial class EditorJudgeLineController : Node
 
         _context.EditingLayer = index;
 
-        GD.Print($"[{Name}] 切换到事件层:{index}");
+        FileLogger.Log($"[{Name}] 切换到事件层:{index}");
     }
 }

@@ -35,7 +35,7 @@ public partial class VirtualJoystick : Control
         baseNode = GetNode<Control>("Base");
         tipNode = GetNode<Control>("Tip");
         
-		GD.Print($"[{this.Name}] centerGPosition:{CenterGPosition}");
+		//GD.Print($"[{this.Name}] centerGPosition:{CenterGPosition}");
     }
 
     // 处理所有输入事件

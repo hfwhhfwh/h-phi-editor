@@ -207,7 +207,7 @@ public partial class ChartJudge : Node
             // 3. 判断miss
             if (data.Timer < 0)
             {
-                // GD.Print($"Hold中断");
+                // FileLogger.Log($"Hold中断");
                 // 准备触发miss
                 _removePressingHoldCashe.Add(hold);
                 Player.StopHoldHitEffect(hold);
@@ -593,7 +593,7 @@ public partial class ChartJudge : Node
         }
         else
         {
-            GD.PrintErr($"[{Name}] 未知的Note类型:{note.Type}");
+            FileLogger.LogErr($"[{Name}] 未知的Note类型:{note.Type}");
             grade = JudgeGrade.Perfect;
         }
 

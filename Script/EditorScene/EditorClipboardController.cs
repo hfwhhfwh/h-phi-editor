@@ -96,7 +96,7 @@ public partial class EditorClipboardController : Node
         }
 
         Clipboard.LatestClipBoard = EditPanelType.NoteEdit;
-        GD.Print($"[{Name}] 成功复制{_noteEditPanel.SelectedNotes.Count}个Note");
+        FileLogger.Log($"[{Name}] 成功复制{_noteEditPanel.SelectedNotes.Count}个Note");
     }
 
     private void CopySelectedEvents()
@@ -126,7 +126,7 @@ public partial class EditorClipboardController : Node
         }
 
         Clipboard.LatestClipBoard = EditPanelType.LineEventEdit;
-        GD.Print($"[{Name}] 成功复制{eventList.Count}个Event");
+        FileLogger.Log($"[{Name}] 成功复制{eventList.Count}个Event");
     }
 
     private void CopySelectedBpms()
@@ -150,7 +150,7 @@ public partial class EditorClipboardController : Node
         }
 
         Clipboard.LatestClipBoard = EditPanelType.BpmEventEdit;
-        GD.Print($"[{Name}] 成功复制{selectedBpms.Count}个BPM事件");
+        FileLogger.Log($"[{Name}] 成功复制{selectedBpms.Count}个BPM事件");
     }
 
     // ==================== 单对象复制（右键菜单用） ====================

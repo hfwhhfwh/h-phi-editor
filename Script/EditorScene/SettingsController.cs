@@ -94,7 +94,7 @@ public partial class SettingsController : Node
     {
         if (_editorSettings == null)
         {
-            GD.PrintErr($"[{Name}] EditorSettings is null");
+            FileLogger.LogErr($"[{Name}] EditorSettings is null");
             return;
         }
 
@@ -125,7 +125,7 @@ public partial class SettingsController : Node
     {
         if (_editorSettings == null)
         {
-            GD.PrintErr($"[{Name}] EditorSettings is null");
+            FileLogger.LogErr($"[{Name}] EditorSettings is null");
             return;
         }
 
@@ -143,7 +143,7 @@ public partial class SettingsController : Node
                 break;
 
             default:
-                GD.PrintErr($"[{Name}] 未知的EditorSettings设置项:{key}");
+                FileLogger.LogErr($"[{Name}] 未知的EditorSettings设置项:{key}");
                 ApplyEditorSettings();
                 break;
         }
@@ -217,11 +217,11 @@ public partial class SettingsController : Node
             _resourcePack = ResourcePackLoader.LoadFromLocal(id);
             if (_resourcePack == null)
             {
-                GD.PrintErr($"[{Name}] 加载资源包失败, id:{id}");
+                FileLogger.LogErr($"[{Name}] 加载资源包失败, id:{id}");
             }
             _playbackController?.SetResourcePack(_resourcePack);
         }
 
-        GD.Print($"[{Name}] 成功重新加载资源包!");
+        FileLogger.Log($"[{Name}] 成功重新加载资源包!");
     }
 }

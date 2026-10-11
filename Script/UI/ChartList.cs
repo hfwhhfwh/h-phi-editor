@@ -79,7 +79,7 @@ public partial class ChartList : VBoxContainer
         if (pressed)
         {
             string id = button.GetMeta("chart_id").AsString();
-            GD.Print($"选中按钮 ID: {id}");
+            FileLogger.Log($"选中按钮 ID: {id}");
             EmitSignal(SignalName.ChartSelected, id);
         }
     }

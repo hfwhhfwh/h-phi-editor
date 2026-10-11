@@ -30,7 +30,7 @@ public partial class ExportPanel : PanelContainer
 		Image textureImage = Image.LoadFromFile(chartInfo.PicturePath);
         if(textureImage == null)
         {
-            GD.PrintErr($"[ExportPanel] SetInfo() textureImage == null picturePath:{chartInfo.PicturePath}");
+            FileLogger.LogErr($"[ExportPanel] SetInfo() textureImage == null picturePath:{chartInfo.PicturePath}");
         }
 		_picTextureRect.Texture = ImageTexture.CreateFromImage(textureImage);
 

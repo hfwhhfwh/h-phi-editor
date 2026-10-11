@@ -17,7 +17,7 @@ public partial class LoadingManager : Node
         // ========== 单例保护 ==========
         if (Instance != null && GodotObject.IsInstanceValid(Instance))
         {
-            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            FileLogger.LogWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
             QueueFree();  // 自杀，保留旧实例
             return;
         }
@@ -70,7 +70,7 @@ public partial class LoadingManager : Node
         }
         catch(Exception e)
         {
-            GD.PrintErr($"[{Name}] 任务执行失败, 错误: {e.Message}");
+            FileLogger.LogErr($"[{Name}] 任务执行失败, 错误: {e.Message}");
             onFailed?.Invoke();
             _loadingBar.Visible = false;
             return;

@@ -402,7 +402,7 @@ public partial class BpmEditPanel : BaseEditPanel
         }
         else
         {
-            GD.PrintErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
+            FileLogger.LogErr($"[{this.Name}] 未设置的选择模式:{SelectMode}");
         }
     }
 
@@ -427,7 +427,7 @@ public partial class BpmEditPanel : BaseEditPanel
         // 如果对象已被删除，优雅终止拖动，避免崩溃
         if (eventIndex < 0)
         {
-            GD.Print($"[{Name}] 拖动的事件已被删除，终止拖动");
+            FileLogger.Log($"[{Name}] 拖动的事件已被删除，终止拖动");
             _dragMoveComponent.End();
             return;
         }

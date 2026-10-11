@@ -22,7 +22,7 @@ public partial class ImageBlur : Node
         // ========== 单例保护 ==========
         if (Instance != null && GodotObject.IsInstanceValid(Instance))
         {
-            GD.PushWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
+            FileLogger.LogWarning($"[{Name}] 单例已存在（{Instance.Name}），销毁当前重复实例");
             QueueFree();  // 自杀，保留旧实例
             return;
         }
@@ -83,9 +83,9 @@ public partial class ImageBlur : Node
         _vpH.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
         _vpV.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
 
-        GD.Print("src: ", src.GetSize(), " format: ", src.GetFormat());
+        FileLogger.Log("src: ", src.GetSize(), " format: ", src.GetFormat());
         _rectH.Texture = ImageTexture.CreateFromImage(src);
-        GD.Print("rect texture: ", _rectH.Texture.GetSize());
+        FileLogger.Log("rect texture: ", _rectH.Texture.GetSize());
 
         // 第一遍：横向
         _rectH.Texture = ImageTexture.CreateFromImage(src);
@@ -126,7 +126,7 @@ public partial class ImageBlur : Node
 
         Error err = await RunOnMainThreadAsync(() => blurred.SavePng(blurredPath));
         if (err != Error.Ok)
-            GD.PrintErr($"模糊图保存失败: {err}");
+            FileLogger.LogErr($"模糊图保存失败: {err}");
     }
 
     public override void _ExitTree()

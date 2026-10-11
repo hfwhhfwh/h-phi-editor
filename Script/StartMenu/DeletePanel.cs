@@ -19,7 +19,7 @@ public partial class DeletePanel : PanelContainer
 	{
 		if(chartInfo == null)
 		{
-			GD.PrintErr($"{this.Name} SetInfo() chartInfo == null");
+			FileLogger.LogErr($"{this.Name} SetInfo() chartInfo == null");
 			return;
 		}
 		selectedChartId = chartInfo.Id;

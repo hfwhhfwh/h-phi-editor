@@ -248,7 +248,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         //2. 设置背景图片
         if (bgImage == null)
         {
-            GD.PrintErr($"[{this.Name}] 背景图片导入失败: bgImage == null");
+            FileLogger.LogErr($"[{this.Name}] 背景图片导入失败: bgImage == null");
             return;
         }
         BgImage = bgImage;
@@ -268,7 +268,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         //3. 设置音乐
         if (audio == null)
         {
-            GD.PrintErr($"[{this.Name}] 音乐导入失败: audio == null");
+            FileLogger.LogErr($"[{this.Name}] 音乐导入失败: audio == null");
             return;
         }
         MusicAudio = audio;
@@ -277,7 +277,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         audioStreamPlayer.Stream = MusicAudio;
         if (audioStreamPlayer.Stream == null)
         {
-            GD.PrintErr($"[{this.Name}] 音乐文件加载失败");
+            FileLogger.LogErr($"[{this.Name}] 音乐文件加载失败");
             return;
         }
 
@@ -604,7 +604,7 @@ public partial class GameChartPlayer : BaseChartPlayer
             //设定位置
             Position = new Vector2(localChartX,localChartY);
 
-            //GD.Print($"time:{gameTime:F3}, localChartX:{localChartX:F3}, allDisplacement:{allDisplacement:F3}, nowDisplacement:{nowDisplacement:F3}, localChartY:{localChartY:F3}, globalPos:{globalPos:F3}");
+            //FileLogger.Log($"time:{gameTime:F3}, localChartX:{localChartX:F3}, allDisplacement:{allDisplacement:F3}, nowDisplacement:{nowDisplacement:F3}, localChartY:{localChartY:F3}, globalPos:{globalPos:F3}");
         }
 
         //设置透明度
@@ -644,7 +644,7 @@ public partial class GameChartPlayer : BaseChartPlayer
                 BodyPosition = bodyPos; // 坐标系: 谱面坐标[-675,675] [-450,450]
             }
 
-            //GD.Print($"time:{gameTime:F3}, HeadPosition:{Position}, EndPosition:{EndPosition}, BodyScale:{BodyScale}");
+            //FileLogger.Log($"time:{gameTime:F3}, HeadPosition:{Position}, EndPosition:{EndPosition}, BodyScale:{BodyScale}");
         }
 
         // ================ 直接生成 NoteRenderData 写入缓冲 ================
@@ -863,7 +863,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         // 防御：如果存在循环引用（理论上不应有），回退到原始顺序
         if (_topologicalOrder.Count != n)
         {
-            GD.PrintErr($"[{Name}] 判定线存在循环引用，拓扑排序失败，回退到原始顺序");
+            FileLogger.LogErr($"[{Name}] 判定线存在循环引用，拓扑排序失败，回退到原始顺序");
             _topologicalOrder.Clear();
             for (int i = 0; i < n; i++) _topologicalOrder.Add(i);
         }

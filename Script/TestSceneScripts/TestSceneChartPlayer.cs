@@ -24,7 +24,7 @@ public partial class TestSceneChartPlayer : Node
         chartService = GetNode<ChartService>("/root/ChartService");
         if(chartService == null)
         {
-            GD.PrintErr($"[{this.Name}] ChartService is null");
+            FileLogger.LogErr($"[{this.Name}] ChartService is null");
         }
 
         // 设置正在编辑的铺面
@@ -36,7 +36,7 @@ public partial class TestSceneChartPlayer : Node
         Image bgImage = Image.LoadFromFile(chartInfo.PicturePath);
         if (bgImage == null)
         {
-            GD.PrintErr($"[{this.Name}] 背景图片导入失败");
+            FileLogger.LogErr($"[{this.Name}] 背景图片导入失败");
             return;
         }
 
@@ -45,7 +45,7 @@ public partial class TestSceneChartPlayer : Node
         AudioStream audioStream = FileUtil.LoadAudioFromFile(chartInfo.SongPath);
         if (audioStream == null)
         {
-            GD.PrintErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
+            FileLogger.LogErr($"[{this.Name}] 音乐文件加载失败: {chartInfo.SongPath}");
             return;
         }
 
