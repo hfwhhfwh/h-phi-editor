@@ -60,6 +60,7 @@ public partial class SettingsPanel : Control
     [Export] private Button _resetGroundLineWidthBtn;
 
     // ---------------- 运行日志 ----------------
+    [Export] private Button _shareLogBtn;
     [Export] private Button _exportLogBtn;
 
     public override void _Ready()
@@ -182,7 +183,16 @@ public partial class SettingsPanel : Control
         _horLineWidthEdit.ValueChanged += OnHorLineWidthChanged;
         _groundLineWidthEdit.ValueChanged += OnGroundLineWidthChanged;
 
-        if (_exportLogBtn != null)
+        if (_shareLogBtn != null)
+        {
+            _shareLogBtn.Pressed += OnShareLogClicked;
+        }
+        else
+        {
+            GD.PushWarning("[SettingsPanel] _shareLogBtn 未绑定，无法分享日志");
+        }
+
+        if( _exportLogBtn != null)
         {
             _exportLogBtn.Pressed += OnExportLogClicked;
         }
@@ -364,7 +374,7 @@ public partial class SettingsPanel : Control
     /// 导出当前运行日志：复制到 user://export/ 下并通过 ShareHelper 调用系统分享。
     /// Android 上 ShareFileProvider 暴露的是 files 根目录，因此 user:// 下的文件都可分享。
     /// </summary>
-    private void OnExportLogClicked()
+    private void OnShareLogClicked()
     {
         string logPath = FileLogger.GetCurrentLogPath();
         if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
@@ -402,6 +412,41 @@ public partial class SettingsPanel : Control
         );
 
         PopupHelper.Instance.ShowAlert("提示", $"日志已发起分享：\n{exportPath}");
+    }
+
+    private void OnExportLogClicked()
+    {
+        string logPath = FileLogger.GetCurrentLogPath();
+        if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
+        {
+            GD.PrintErr("[SettingsPanel] 未找到可导出的日志文件");
+            PopupHelper.Instance.ShowAlert("提示", "未找到可导出的日志文件");
+            return;
+        }
+
+        string exportPath;
+        try
+        {
+            exportPath = CopyLogToExportDir(logPath);
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"[SettingsPanel] 导出日志失败: {ex.Message}");
+            PopupHelper.Instance.ShowAlert("提示", $"导出日志失败：{ex.Message}");
+            return;
+        }
+
+        GD.Print($"[SettingsPanel] 日志已导出至：{exportPath}");
+        // PopupHelper.Instance.ShowAlert("提示", $"日志已导出至：\n{exportPath}");
+        
+        FileDialogManager.Instance.ShowSaveDialog(
+            onFileSelected: (string path) =>
+            {
+                if(string.IsNullOrEmpty(path)) return;
+                FileUtil.CopyFile(exportPath, path);
+            },
+            defaultName: exportPath.GetFile()
+        );
     }
 
     /// <summary>

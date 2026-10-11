@@ -118,29 +118,60 @@ public partial class FileDialogManager : Node
     }
 
 
-    public void SaveFile(Action<string> onFileSelected, string[] filters)
+    public void ShowSaveDialog(Action<string> onFileSelected, 
+        Action onCalceled = null, 
+        string[] filters = null, 
+        string defaultName = "请输入文件名称",
+        string openDir = null)
     {
-        if (IsIOS())
+        var dialog = new FileDialog();
+        dialog.FileMode = FileDialog.FileModeEnum.SaveFile;
+        dialog.Access = FileDialog.AccessEnum.Filesystem;
+        dialog.UseNativeDialog = true;
+        dialog.Title = "保存文件";
+
+        openDir ??= OS.GetUserDataDir() + "/";
+        dialog.CurrentPath = openDir;
+
+        dialog.CurrentFile = defaultName;
+
+        if (filters != null)
         {
-            ShowBuiltInSaveDialog(onFileSelected, filters);
+            foreach (var filter in filters)
+            {
+                dialog.AddFilter(filter);
+            }
         }
-        else
+
+        dialog.FileSelected += (path) =>
         {
-            ShowNativeSaveDialog(onFileSelected, filters);
-        }
+            GD.Print($"对话框保存路径: {path}");
+            onFileSelected?.Invoke(path);
+            dialog.QueueFree();
+        };
+
+        dialog.Canceled += () =>
+        {
+            GD.Print("用户取消了保存");
+            onCalceled?.Invoke();
+            dialog.QueueFree();
+        };
+
+        AddChild(dialog);
+        dialog.PopupCentered(new Vector2I(900, 700));
+        
     }
 
-    public void SaveFile(Action<string> onFileSelected)
-    {
-        SaveFile(onFileSelected, new[] { "*.*" });
-    }
-
-    private void ShowNativeSaveDialog(Action<string> onFileSelected, string[] filters)
+    public void ShowNativeSaveDialog(Action<string> onFileSelected, 
+        Action onCalceled = null, 
+        string[] filters = null, 
+        string defaultName = "请输入文件名称",
+        string openDir = null)
     {
         DisplayServer.FileDialogShow(
-            "选择一个文件",
-            OS.GetSystemDir(OS.SystemDir.Documents),
-            "",
+            "保存文件",
+            openDir ?? OS.GetSystemDir(OS.SystemDir.Documents),
+            defaultName,
             false,
             DisplayServer.FileDialogMode.SaveFile,
             filters:filters,
@@ -155,14 +186,18 @@ public partial class FileDialogManager : Node
                     else
                     {
                         GD.Print("用户取消了选择或发生错误");
-                        onFileSelected?.Invoke(null); // 传递 null 表示取消
+                        onCalceled?.Invoke(); // 取消
                     }
                 }
             )
         );
     }
 
-    private void ShowBuiltInSaveDialog(Action<string> onFileSelected, string[] filters)
+    public void ShowBuiltInSaveDialog(Action<string> onFileSelected, 
+        Action onCalceled = null, 
+        string[] filters = null, 
+        string defaultName = "请输入文件名称",
+        string openDir = null)
     {
         var dialog = new FileDialog();
         dialog.FileMode = FileDialog.FileModeEnum.SaveFile;
@@ -170,8 +205,10 @@ public partial class FileDialogManager : Node
         dialog.UseNativeDialog = false;
         dialog.Title = "保存文件";
 
-        // 关键修复：iOS 上用 OS.GetUserDataDir() 代替 OS.GetSystemDir()
-        dialog.CurrentPath = OS.GetUserDataDir() + "/";
+        openDir ??= OS.GetUserDataDir() + "/";
+        dialog.CurrentPath = openDir;
+
+        dialog.CurrentFile = defaultName;
 
         if (filters != null)
         {
@@ -183,7 +220,7 @@ public partial class FileDialogManager : Node
 
         dialog.FileSelected += (path) =>
         {
-            GD.Print($"内置对话框保存路径: {path}");
+            GD.Print($"对话框保存路径: {path}");
             onFileSelected?.Invoke(path);
             dialog.QueueFree();
         };
@@ -191,7 +228,7 @@ public partial class FileDialogManager : Node
         dialog.Canceled += () =>
         {
             GD.Print("用户取消了保存");
-            onFileSelected?.Invoke(null);
+            onCalceled?.Invoke();
             dialog.QueueFree();
         };
 
@@ -199,44 +236,4 @@ public partial class FileDialogManager : Node
         dialog.PopupCentered(new Vector2I(900, 700));
     }
     
-    // public void SaveFile(Action<string> onFileSelected, string[] filters)
-    // {
-    //     DisplayServer.FileDialogShow(
-    //     "选择一个文件",
-    //     OS.GetSystemDir(OS.SystemDir.Documents),
-    //     "",
-    //     false,
-    //     DisplayServer.FileDialogMode.SaveFile,
-    //     filters:filters,
-    //     Callable.From((bool status, string[] paths, int filterIndex) =>
-    //     {
-    //         if (status && paths.Length > 0)
-    //         {
-    //             string filePath = paths[0];
-    //             GD.Print($"原生对话框选择的文件: {filePath}");
-    //             onFileSelected?.Invoke(filePath); // 调用回调
-    //         }
-    //         else
-    //         {
-    //             GD.Print("用户取消了选择或发生错误");
-    //             onFileSelected?.Invoke(null); // 传递 null 表示取消
-    //         }
-    //     }));
-    // }
-
-    
-    
-    // // 回调函数接收选中状态、路径和索引
-    // private void OnNativeDialogCallback(bool status, string[] selectedPaths, int filterIndex)
-    // {
-    //     if (status && selectedPaths.Length > 0)
-    //     {
-    //         string filePath = selectedPaths[0];
-    //         GD.Print($"原生对话框选择的文件: {filePath}");
-    //     }
-    //     else
-    //     {
-    //         GD.Print("用户取消了选择或发生错误");
-    //     }
-    // }
 }

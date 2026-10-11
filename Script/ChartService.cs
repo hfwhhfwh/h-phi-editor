@@ -375,13 +375,14 @@ public partial class ChartService : Node
 
         //5. 调用原生文件对话框
         string[] filters = {"*.*;所有文件;"};
-        fileDialogManager.SaveFile(
-            (zipPath) =>
+        fileDialogManager.ShowSaveDialog(
+            onFileSelected: (zipPath) =>
             {
                 FileUtil.CreateZip(filePaths, zipPath);
                 GD.Print($"[{this.Name}] 成功创建zip文件:{zipPath}");
             },
-            filters
+            defaultName: chartInfo.Name + ".zip",
+            filters: filters
         );
     }
 
