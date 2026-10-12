@@ -376,6 +376,8 @@ public partial class SettingsPanel : Control
     /// </summary>
     private void OnShareLogClicked()
     {
+        FileLogger.Flush(); // 确保日志已落盘
+
         string logPath = FileLogger.GetCurrentLogPath();
         if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
         {
@@ -416,6 +418,8 @@ public partial class SettingsPanel : Control
 
     private void OnExportLogClicked()
     {
+        FileLogger.Flush(); // 确保日志已落盘
+        
         string logPath = FileLogger.GetCurrentLogPath();
         if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
         {

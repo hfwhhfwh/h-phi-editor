@@ -7,8 +7,9 @@ public partial class FileLogger : Node, ILogger
 
     private readonly string _logFilePath;
     private readonly object _lock = new object();
+    private FileAccess _file;
 
-    public static ILogger Instance;
+    public static FileLogger Instance { get; private set; }
 
     // ==================== 静态快捷 API ====================
     // 约定：
@@ -40,6 +41,11 @@ public partial class FileLogger : Node, ILogger
         else GD.PrintRich($"[color=yellow]{message}[/color]");
     }
 
+    public static void Flush()
+    {
+        if (Instance != null) Instance.FlushInstance();
+    }
+
     // 可选：格式化重载，省得调用方到处写 $"..."
     public static void Log(string format, params object[] args)
         => Log(string.Format(format, args));
@@ -53,34 +59,35 @@ public partial class FileLogger : Node, ILogger
 
     public override void _Ready()
     {
-        // ========== 单例保护 ==========
-        if (Instance != null)
+        var err = DirAccess.MakeDirRecursiveAbsolute(LogDir);
+        if (err != Error.Ok)
         {
-            FileLogger.LogWarning($"[{Name}] 单例已存在（ILogger），销毁当前重复实例");
-            QueueFree();
+            GD.PrintErr($"创建日志目录失败: {err}");
+            return;
+        }
+
+        // Write 模式：创建 + 清空（符合"每次运行新文件"）
+        _file = FileAccess.Open(_logFilePath, FileAccess.ModeFlags.Write);
+        if (_file == null)
+        {
+            GD.PrintErr($"无法创建日志文件: {FileAccess.GetOpenError()}");
             return;
         }
 
         Instance = this;
-        // =============================
-
-        DirAccess.MakeDirRecursiveAbsolute(LogDir);
-
-        // 先用 Write 模式创建空文件（若已存在会截断，符合"每次运行新文件"的设计）
-        using (var f = FileAccess.Open(_logFilePath, FileAccess.ModeFlags.Write))
-        {
-            if (f == null)
-                GD.PrintErr($"无法创建日志文件: {FileAccess.GetOpenError()}");
-        }
 
         WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ===== Log Started =====");
     }
 
     public override void _ExitTree()
     {
-        if (Instance == this)
+        Instance = null;
+
+        lock (_lock)
         {
-            Instance = null;
+            _file?.Flush();
+            _file?.Dispose();
+            _file = null;
         }
         base._ExitTree();
     }
@@ -110,18 +117,31 @@ public partial class FileLogger : Node, ILogger
         GD.PushWarning(message);
     }
 
+    /// <summary>
+    /// Flush the log file to ensure all buffered log entries are written to disk.
+    /// </summary>
+    public void FlushInstance()
+    {
+        lock (_lock)
+        {
+            _file?.Flush();
+        }
+    }
+
+    /// <summary>
+    /// Writes a line to the log file.
+    /// </summary>
+    /// <param name="line">The line to write.</param>
     private void WriteLine(string line)
     {
         lock (_lock)
         {
-            using var file = FileAccess.Open(_logFilePath, FileAccess.ModeFlags.ReadWrite);
-            if (file == null)
+            if (_file == null)
             {
-                GD.PrintErr($"无法打开日志文件: {FileAccess.GetOpenError()}");
+                GD.PrintErr($"日志文件未正确初始化: {_logFilePath}");
                 return;
             }
-            file.SeekEnd();
-            file.StoreLine(line);
+            _file.StoreLine(line);   // 句柄指针持续在末尾，天然追加
         }
     }
 
