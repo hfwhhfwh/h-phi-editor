@@ -83,9 +83,9 @@ public partial class ImageBlur : Node
         _vpH.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
         _vpV.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
 
-        FileLogger.Log("src: ", src.GetSize(), " format: ", src.GetFormat());
+        // FileLogger.Log("src: ", src.GetSize(), " format: ", src.GetFormat());
         _rectH.Texture = ImageTexture.CreateFromImage(src);
-        FileLogger.Log("rect texture: ", _rectH.Texture.GetSize());
+        // FileLogger.Log("rect texture: ", _rectH.Texture.GetSize());
 
         // 第一遍：横向
         _rectH.Texture = ImageTexture.CreateFromImage(src);

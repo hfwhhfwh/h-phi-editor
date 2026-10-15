@@ -160,10 +160,14 @@ public partial class ChartService : Node
         string tempDir = Path.Combine("user://temp_import", id);
         FileUtil.EnsureDirectoryExists(tempDir);
 
-        Dictionary<string, string> infoDic = new Dictionary<string, string>();;
+        // Dictionary<string, string> infoDic = new Dictionary<string, string>();
+        ChartInfo chartInfo = null;
         string songTempPath = null, picTempPath = null, jsonTempPath = null;
-        string infoTempPath = null;
+        string infoTxtTempPath = null, infoYmlTempPath = null;
         string dir = null;
+
+        bool hasInfoTxt = false;
+        bool hasInfoYml = false;
 
         List<(string, Func<Task>)> tasks = [
             ("正在解压谱面文件...", async () => {
@@ -171,20 +175,97 @@ public partial class ChartService : Node
                 FileLogger.Log($"开始解压: {path} -> {tempDir}");
                 await Task.Run(() => FileUtil.UnzipFileTo(path, tempDir)); // 解压完成会在内部打印
             }),
-            ("正在读取info.txt...", async () => {
+            ("正在读取info文件", async () => {
                 //3. 寻找info.txt文件，读取其他3个文件的路径
-                infoTempPath = Path.Combine(tempDir, "info.txt");
-                if (!Godot.FileAccess.FileExists(infoTempPath))
+                infoTxtTempPath = Path.Combine(tempDir, "info.txt");
+                if (Godot.FileAccess.FileExists(infoTxtTempPath))
                 {
-                    FileLogger.LogErr($"[{Name}] 无法找到info.txt文件, 临时目录: {tempDir}");
-                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt, 临时目录: {tempDir}");
+                    // FileLogger.LogErr($"[{Name}] 无法找到info.txt文件, 临时目录: {tempDir}");
+                    // PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt, 临时目录: {tempDir}");
+                    hasInfoTxt = true;
+                }
+                else
+                {
+                    hasInfoTxt = false;
+                }
+
+                // 寻找info.yml文件，读取其他3个文件的路径
+                infoYmlTempPath = Path.Combine(tempDir, "info.yml");
+                if (Godot.FileAccess.FileExists(infoYmlTempPath))
+                {
+                    hasInfoYml = true;
+                }
+                else
+                {
+                    hasInfoYml = false;
+                }
+
+                hasInfoYml = true;
+
+                string infoPath;
+                if(hasInfoYml) infoPath = infoYmlTempPath; // 优先读取info.yml，因为信息更全
+                else if(hasInfoTxt) infoPath = infoTxtTempPath;
+                else
+                {
+                    FileLogger.LogErr($"[{Name}] 无法找到info.txt或info.yml文件, 临时目录: {tempDir}");
+                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt 或 info.yml, 临时目录: {tempDir}");
                     return;
                 }
 
-                await Task.Run(() => infoDic = FileUtil.ReadInfoFile(infoTempPath));
-                jsonTempPath = Path.Combine(tempDir, infoDic["Chart"]);
-                picTempPath = Path.Combine(tempDir, infoDic["Picture"]);
-                songTempPath = Path.Combine(tempDir, infoDic["Song"]);
+                
+                // await Task.Run(() => infoDic = FileUtil.ReadInfoFile(infoYmlTempPath));
+                chartInfo = await Task.Run(() => chartRepository.ReadChartInfoFromYml(infoPath));
+                // if(infoDic.TryGetValue("chart", out string chartPath))
+                if(!string.IsNullOrEmpty(chartInfo.ChartFileName))
+                {
+                    jsonTempPath = Path.Combine(tempDir, chartInfo.ChartFileName);
+                }
+                else
+                {
+                    FileLogger.LogErr($"[{Name}] info.yml中未找到 chart 字段, 临时目录: {tempDir}");
+                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：info.yml中未找到 chart 字段, 临时目录: {tempDir}");
+                    return;
+                }
+                
+                if(!string.IsNullOrEmpty(chartInfo.PictureFileName))
+                {
+                    picTempPath = Path.Combine(tempDir, chartInfo.PictureFileName);
+                }
+                else
+                {
+                    FileLogger.LogErr($"[{Name}] info.yml中未找到 illustration 字段, 临时目录: {tempDir}");
+                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：info.yml中未找到 illustration 字段, 临时目录: {tempDir}");
+                    return;
+                }
+
+                if(!string.IsNullOrEmpty(chartInfo.SongFileName))
+                {
+                    songTempPath = Path.Combine(tempDir, chartInfo.SongFileName);
+                }
+                else
+                {
+                    FileLogger.LogErr($"[{Name}] info.yml中未找到 music 字段, 临时目录: {tempDir}");
+                    PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：info.yml中未找到 music 字段, 临时目录: {tempDir}");
+                    return;
+                }
+                
+                // else if(hasInfoTxt)
+                // {
+                //     await Task.Run(() => infoDic = FileUtil.ReadInfoFile(infoTxtTempPath));
+
+                //     if(!infoDic.ContainsKey("Chart") || !infoDic.ContainsKey("Picture") || !infoDic.ContainsKey("Song"))
+                //     {
+                //         FileLogger.LogErr($"[{Name}] info.txt中缺少 Chart、Picture 或 Song 字段, 临时目录: {tempDir}");
+                //         PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：info.txt中缺少 Chart、Picture 或 Song 字段, 临时目录: {tempDir}");
+                //         return;
+                //     }
+                    
+                //     jsonTempPath = Path.Combine(tempDir, infoDic["Chart"]);
+                //     picTempPath = Path.Combine(tempDir, infoDic["Picture"]);
+                //     songTempPath = Path.Combine(tempDir, infoDic["Song"]);
+                // }
+
+                
             }),
             ("正在创建导入目录...", async () => {
                 //创建导入目录
@@ -195,28 +276,48 @@ public partial class ChartService : Node
             }),
             ("正在设置id信息...", async () => {
                 //修改id信息
-                infoDic["Path"] = id;
-                infoDic["Chart"] = $"{id}.json";
-                infoDic["Song"] = $"{id}.{songTempPath.GetExtension()}";
-                infoDic["Picture"] = $"{id}.{picTempPath.GetExtension()}";
-                await Task.Run(() => FileUtil.WriteInfoFile(infoTempPath, infoDic));
+                // infoDic["Path"] = id;
+                // infoDic["Chart"] = $"{id}.json";
+                // infoDic["Song"] = $"{id}.{songTempPath.GetExtension()}";
+                // infoDic["Picture"] = $"{id}.{picTempPath.GetExtension()}";
+                chartInfo.Id = id;
+                chartInfo.ChartFileName = id + ".json";
+                chartInfo.SongFileName = $"{id}.{songTempPath.GetExtension()}";
+                chartInfo.PictureFileName = $"{id}.{picTempPath.GetExtension()}";
+
+                // await Task.Run(() => FileUtil.WriteInfoTxtFile(infoTxtTempPath, infoDic));
+                // await Task.Run(() => FileUtil.WriteInfoYmlFile(infoYmlTempPath, infoDic));
+
+                if(hasInfoYml)
+                {
+                    await Task.Run(() => chartRepository.WriteInfoYml(chartInfo, infoYmlTempPath));
+                }
+                if(hasInfoTxt)
+                {
+                    await Task.Run(() => chartRepository.WriteInfoTxt(chartInfo, infoTxtTempPath));
+                }
                 
             }),
             ("正在复制info.txt...", async () => {
-                await Task.Run(() => FileUtil.CopyFile(infoTempPath, Path.Combine(dir, "info.txt")));
+                if(!hasInfoTxt) return;
+                await Task.Run(() => FileUtil.CopyFile(infoTxtTempPath, Path.Combine(dir, "info.txt")));
+            }),
+            ("正在复制info.yml...", async () => {
+                if(!hasInfoYml) return;
+                await Task.Run(() => FileUtil.CopyFile(infoYmlTempPath, Path.Combine(dir, "info.yml")));
             }),
             ("正在复制谱面...", async () => {
-                await Task.Run(() => FileUtil.CopyFile(jsonTempPath, Path.Combine(dir, infoDic["Chart"])));
+                await Task.Run(() => FileUtil.CopyFile(jsonTempPath, Path.Combine(dir, chartInfo.ChartFileName)));
             }),
             ("正在复制背景图片...", async () => {
-                await Task.Run(() => FileUtil.CopyFile(picTempPath, Path.Combine(dir, infoDic["Picture"])));
+                await Task.Run(() => FileUtil.CopyFile(picTempPath, Path.Combine(dir, chartInfo.PictureFileName)));
             }),
             ("正在复制音乐...", async () => {
-                await Task.Run(() => FileUtil.CopyFile(songTempPath, Path.Combine(dir, infoDic["Song"])));
+                await Task.Run(() => FileUtil.CopyFile(songTempPath, Path.Combine(dir, chartInfo.SongFileName)));
             }),
             ("正在生成模糊曲绘...", async () => {
                 await ImageBlur.Instance.BlurPicture(
-                    picPath: Path.Combine(dir, infoDic["Picture"]),
+                    picPath: Path.Combine(dir, chartInfo.PictureFileName),
                     radius: 200,
                     outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_200.png"))// ← 注意加 .png
                 );

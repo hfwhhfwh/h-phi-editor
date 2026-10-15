@@ -48,13 +48,18 @@ public partial class LoadingManager : Node
     /// </summary>
     public async Task RunTasksAsync(string title, List<(string Description, Func<Task> Work)> steps, Action onFailed)
     {
+        if(steps == null || steps.Count == 0)
+        {
+            throw new ArgumentException("steps 不能为空或空列表", nameof(steps));
+        }
+        
         _loadingBar.Visible = true;
 
         _loadingBar.Title = title;
 
         int total = steps.Count;
 
-        try
+        //try
         {
             for (int i = 0; i < total; i++)
             {
@@ -63,18 +68,23 @@ public partial class LoadingManager : Node
                 _loadingBar.SetProgress(i, total, desc); // 开始这一步前先更新文字
                 await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
                 
+                if(work == null)
+                {
+                    FileLogger.LogWarning($"[{Name}] 任务步骤 {i} 的 work 为 null: {desc}");
+                    continue;
+                }
                 await work(); // 执行实际任务
                 
                 _loadingBar.SetProgress(i + 1, total, desc);
             }
         }
-        catch(Exception e)
-        {
-            FileLogger.LogErr($"[{Name}] 任务执行失败, 错误: {e.Message}");
-            onFailed?.Invoke();
-            _loadingBar.Visible = false;
-            return;
-        }
+        // catch(Exception e)
+        // {
+        //     FileLogger.LogErr($"[{Name}] 任务执行失败, 错误: {e.Message}");
+        //     onFailed?.Invoke();
+        //     _loadingBar.Visible = false;
+        //     return;
+        // }
         
 
         // 等待一段时间，让用户看到加载结束

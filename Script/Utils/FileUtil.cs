@@ -331,7 +331,7 @@ public static class FileUtil
 	/// </summary>
 	/// <param name="filePath">info.txt的路径</param>
 	/// <param name="properties">属性字典</param>
-	public static void WriteInfoFile(string filePath, Dictionary<string, string> properties)
+	public static void WriteInfoTxtFile(string filePath, Dictionary<string, string> properties)
 	{
 		// 参数校验
 		if (properties == null)
@@ -358,15 +358,71 @@ public static class FileUtil
 		// 第一行必须以#开头
 		file.StoreLine("#");
 
+        // 只写入某些特定字段
+        string[] stringsToWrite = ["Name", "Path", "Song", "Picture", "Chart", "Level", "Composer", "Charter"];
+
 		// 写入所有键值对
-		foreach (var kvp in properties)
+		foreach (var key in stringsToWrite)
 		{
-			string line = $"{kvp.Key}: {kvp.Value}";
-			file.StoreLine(line);
+			if (properties.TryGetValue(key, out string value))
+			{
+				string line = $"{key}: {value}";
+				file.StoreLine(line);
+			}
 		}
 
 		// 文件会在 using 块结束时自动关闭
 		FileLogger.Log($"成功写入 {properties.Count} 条属性到文件: {filePath}");
+	}
+
+    /// <summary>
+	/// 根据属性字典生成info.yml文件
+	/// </summary>
+	/// <param name="filePath">info.yml的路径</param>
+	/// <param name="properties">属性字典</param>
+	public static void WriteInfoYmlFile(string filePath, Dictionary<string, string> properties)
+	{
+		// 参数校验
+		if (properties == null)
+		{
+			FileLogger.LogErr("属性字典为 null, 无法写入文件。");
+			return;
+		}
+
+		// 确保文件所在的目录存在
+		string directory = filePath.GetBaseDir();
+		if (!string.IsNullOrEmpty(directory) && !DirAccess.DirExistsAbsolute(directory))
+		{
+			DirAccess.MakeDirRecursiveAbsolute(directory);
+		}
+
+		// 打开文件（写入模式），如果文件已存在则覆盖
+		using var file = Godot.FileAccess.Open(filePath, Godot.FileAccess.ModeFlags.Write);
+		if (file == null)
+		{
+			FileLogger.LogErr($"无法打开文件进行写入: {filePath}");
+			return;
+		}
+
+        string[] keysToWrite =
+        [
+            "id", "uploader", "name", "difficulty", "level", "charter", "composer", "illustrator",
+            "chart", "format", "music", "illustration", "unlockVideo", "previewStart", "previewEnd",
+            "aspectRatio", "backgroundDim", "lineLength", "offset", "tip", "tags", "intro",
+            "holdPartialCover", "created", "updated", "chartUpdated"
+        ];
+
+        int writtenCount = 0;
+        foreach (string key in keysToWrite)
+        {
+            if (!properties.TryGetValue(key, out string value))
+                continue;
+
+            file.StoreLine($"{key}: {value ?? "null"}");
+            writtenCount++;
+        }
+
+        FileLogger.Log($"成功写入 {writtenCount} 条属性到文件: {filePath}");
 	}
 
     /// <summary>
