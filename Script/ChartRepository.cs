@@ -46,168 +46,202 @@ public partial class ChartRepository : Node
         };
     }
 
-    public ChartInfo ReadChartInfoFromTxt(string path)
-    {
-        var infoDic = FileUtil.ReadInfoFile(path);
+    // public ChartInfo ReadChartInfoFromTxt(string path)
+    // {
+    //     var infoDic = FileUtil.ReadInfoFile(path);
 
-        ChartInfo info = new ChartInfo
-        {
-            Id = infoDic.GetValueOrDefault("Path"),
-            Name = infoDic.GetValueOrDefault("Name"),
-            Composer = infoDic.GetValueOrDefault("Composer"),
-            Charter = infoDic.GetValueOrDefault("Charter"),
-            Level = infoDic.GetValueOrDefault("Level", "0"),
-            Bpm = ParseFloatSafe(infoDic.GetValueOrDefault("Bpm", "0")),
-            Offset = ParseFloatSafe(infoDic.GetValueOrDefault("Offset", "0")),
-            Duration = ParseFloatSafe(infoDic.GetValueOrDefault("Length", "0")),
-            SongFileName = infoDic.GetValueOrDefault("Song"),
-            PictureFileName = infoDic.GetValueOrDefault("Picture"),
-            ChartFileName = infoDic.GetValueOrDefault("Chart")
-        };
-        return info;
-    }
+    //     ChartInfo info = new ChartInfo
+    //     {
+    //         Id = infoDic.GetValueOrDefault("Path"),
+    //         Name = infoDic.GetValueOrDefault("Name"),
+    //         Composer = infoDic.GetValueOrDefault("Composer"),
+    //         Charter = infoDic.GetValueOrDefault("Charter"),
+    //         Level = infoDic.GetValueOrDefault("Level", "0"),
+    //         Bpm = ParseFloatSafe(infoDic.GetValueOrDefault("Bpm", "0")),
+    //         Offset = ParseFloatSafe(infoDic.GetValueOrDefault("Offset", "0")),
+    //         Duration = ParseFloatSafe(infoDic.GetValueOrDefault("Length", "0")),
+    //         SongFileName = infoDic.GetValueOrDefault("Song"),
+    //         PictureFileName = infoDic.GetValueOrDefault("Picture"),
+    //         ChartFileName = infoDic.GetValueOrDefault("Chart")
+    //     };
+    //     return info;
+    // }
     
 
-    public ChartInfo ReadChartInfoFromYml(string path)
-    {
-        // Phira info.yml属性:
-        // "id", "uploader", "name", "difficulty", "level", "charter", "composer", "illustrator",
-        // "chart", "format", "music", "illustration", "unlockVideo", "previewStart", "previewEnd",
-        // "aspectRatio", "backgroundDim", "lineLength", "offset", "tip", "tags", "intro",
-        // "holdPartialCover", "created", "updated", "chartUpdated"
+    // public ChartInfo ReadChartInfoFromYml(string path)
+    // {
+    //     // Phira info.yml属性:
+    //     // "id", "uploader", "name", "difficulty", "level", "charter", "composer", "illustrator",
+    //     // "chart", "format", "music", "illustration", "unlockVideo", "previewStart", "previewEnd",
+    //     // "aspectRatio", "backgroundDim", "lineLength", "offset", "tip", "tags", "intro",
+    //     // "holdPartialCover", "created", "updated", "chartUpdated"
 
-        var infoDic = FileUtil.ReadInfoFile(path);
+    //     var infoDic = FileUtil.ReadInfoFile(path);
 
-        ChartInfo info = new ChartInfo
-        {
-            // Id = infoDic.GetValueOrDefault("id"),
-            // 注意：Phira info.yml中的id不是文件夹名，而是谱面唯一标识
-            Name = infoDic.GetValueOrDefault("name"),
-            Composer = infoDic.GetValueOrDefault("composer"),
-            Charter = infoDic.GetValueOrDefault("charter"),
-            Level = infoDic.GetValueOrDefault("level", "0"),
-            Bpm = ParseFloatSafe(infoDic.GetValueOrDefault("Bpm", "0")),
-            Offset = ParseFloatSafe(infoDic.GetValueOrDefault("offset", "0")),
-            Duration = ParseFloatSafe(infoDic.GetValueOrDefault("Length", "0")),
-            SongFileName = infoDic.GetValueOrDefault("music"),
-            PictureFileName = infoDic.GetValueOrDefault("illustration"),
-            ChartFileName = infoDic.GetValueOrDefault("chart"),
-            Difficulty = ParseFloatSafe(infoDic.GetValueOrDefault("difficulty", "0")),
-            Format = infoDic.GetValueOrDefault("format"),
-            UnlockVideo = infoDic.GetValueOrDefault("unlockVideo"),
-            PreviewStart = ParseFloatSafe(infoDic.GetValueOrDefault("previewStart", "0")),
-            PreviewEnd = ParseFloatSafe(infoDic.GetValueOrDefault("previewEnd", "0")),
-            AspectRatio = ParseFloatSafe(infoDic.GetValueOrDefault("aspectRatio", "0")),
-            BackgroundDim = ParseFloatSafe(infoDic.GetValueOrDefault("backgroundDim", "0")),
-            LineLength = ParseFloatSafe(infoDic.GetValueOrDefault("lineLength", "0")),
-            Tip = infoDic.GetValueOrDefault("tip"),
-            Intro = infoDic.GetValueOrDefault("intro")
-        };
-        return info;
-    }
+    //     ChartInfo info = new ChartInfo
+    //     {
+    //         // Id = infoDic.GetValueOrDefault("id"),
+    //         // 注意：Phira info.yml中的id不是文件夹名，而是谱面唯一标识
+    //         Name = infoDic.GetValueOrDefault("name"),
+    //         Composer = infoDic.GetValueOrDefault("composer"),
+    //         Charter = infoDic.GetValueOrDefault("charter"),
+    //         Level = infoDic.GetValueOrDefault("level", "0"),
+    //         Bpm = ParseFloatSafe(infoDic.GetValueOrDefault("Bpm", "0")),
+    //         Offset = ParseFloatSafe(infoDic.GetValueOrDefault("offset", "0")),
+    //         Duration = ParseFloatSafe(infoDic.GetValueOrDefault("Length", "0")),
+    //         SongFileName = infoDic.GetValueOrDefault("music"),
+    //         PictureFileName = infoDic.GetValueOrDefault("illustration"),
+    //         ChartFileName = infoDic.GetValueOrDefault("chart"),
+    //         Difficulty = ParseFloatSafe(infoDic.GetValueOrDefault("difficulty", "0")),
+    //         Format = infoDic.GetValueOrDefault("format"),
+    //         UnlockVideo = infoDic.GetValueOrDefault("unlockVideo"),
+    //         PreviewStart = ParseFloatSafe(infoDic.GetValueOrDefault("previewStart", "0")),
+    //         PreviewEnd = ParseFloatSafe(infoDic.GetValueOrDefault("previewEnd", "0")),
+    //         AspectRatio = ParseFloatSafe(infoDic.GetValueOrDefault("aspectRatio", "0")),
+    //         BackgroundDim = ParseFloatSafe(infoDic.GetValueOrDefault("backgroundDim", "0")),
+    //         LineLength = ParseFloatSafe(infoDic.GetValueOrDefault("lineLength", "0")),
+    //         Tip = infoDic.GetValueOrDefault("tip"),
+    //         Intro = infoDic.GetValueOrDefault("intro")
+    //     };
+    //     return info;
+    // }
 
 
-    private static float ParseFloatSafe(string value, float defaultValue = 0f)
-    {
-        if (string.IsNullOrWhiteSpace(value) || value.Equals("null", StringComparison.OrdinalIgnoreCase))
-            return defaultValue;
-        return float.TryParse(value, out float result) ? result : defaultValue;
-    }
+    // private static float? ParseFloatSafe(string value, float? defaultValue = null)
+    // {
+    //     if (string.IsNullOrWhiteSpace(value) || value.Equals("null", StringComparison.OrdinalIgnoreCase))
+    //         return defaultValue;
+    //     return float.TryParse(value, out float result) ? result : defaultValue;
+    // }
 
-    public void WriteInfoTxt(ChartInfo info, string path)
-    {
-        ArgumentNullException.ThrowIfNull(info);
-        ArgumentException.ThrowIfNullOrEmpty(path);
+    // public void WriteInfoTxt(ChartInfo info, string path)
+    // {
+    //     ArgumentNullException.ThrowIfNull(info);
+    //     ArgumentException.ThrowIfNullOrEmpty(path);
 
-        // "Name", "Path", "Song", "Picture", "Chart", "Level", "Composer", "Charter"
-        Dictionary<string, string> properties = new()
-        {
-            {"Name", info.Name},
-            {"Path", info.Id},
-            {"Song", info.SongFileName},
-            {"Picture", info.PictureFileName},
-            {"Chart", info.ChartFileName},
-            {"Level", info.Level},
-            {"Composer", info.Composer},
-            {"Charter", info.Charter},
-        };
+    //     // "Name", "Path", "Song", "Picture", "Chart", "Level", "Composer", "Charter"
+    //     Dictionary<string, string> properties = new()
+    //     {
+    //         {"Name", info.Name},
+    //         {"Path", info.Id},
+    //         {"Song", info.SongFileName},
+    //         {"Picture", info.PictureFileName},
+    //         {"Chart", info.ChartFileName},
+    //         {"Level", info.Level},
+    //         {"Composer", info.Composer},
+    //         {"Charter", info.Charter},
+    //     };
 
-        FileUtil.WriteInfoTxtFile(path, properties);
+    //     FileUtil.WriteInfoTxtFile(path, properties);
 
-    }
+    // }
 
-    public void WriteInfoYml(ChartInfo info, string path)
-    {
-        ArgumentNullException.ThrowIfNull(info);
-        ArgumentException.ThrowIfNullOrEmpty(path);
+    // public void WriteInfoYml(ChartInfo info, string path)
+    // {
+    //     ArgumentNullException.ThrowIfNull(info);
+    //     ArgumentException.ThrowIfNullOrEmpty(path);
 
-        // "id", "uploader", "name", "difficulty", "level", "charter", "composer", "illustrator",
-        // "chart", "format", "music", "illustration", "unlockVideo", "previewStart", "previewEnd",
-        // "aspectRatio", "backgroundDim", "lineLength", "offset", "tip", "tags", "intro",
-        // "holdPartialCover", "created", "updated", "chartUpdated"
-        Dictionary<string, string> properties = new()
-        {
-            {"id", info.Id},
-            {"name", info.Name},
-            {"difficulty", info.Difficulty.ToString()},
-            {"level", info.Level},
-            {"charter", info.Charter},
-            {"composer", info.Composer},
-            {"chart", info.ChartFileName},
-            {"format", info.Format},
-            {"music", info.SongFileName},
-            {"illustration", info.PictureFileName},
-            {"unlockVideo", info.UnlockVideo},
-            {"previewStart", info.PreviewStart.ToString()},
-            {"previewEnd", info.PreviewEnd.ToString()},
-            {"aspectRatio", info.AspectRatio.ToString()},
-            {"backgroundDim", info.BackgroundDim.ToString()},
-            {"lineLength", info.LineLength.ToString()},
-            {"offset", info.Offset.ToString()},
-            {"tip", info.Tip},
-            {"intro", info.Intro}
-        };
+    //     // "id", "uploader", "name", "difficulty", "level", "charter", "composer", "illustrator",
+    //     // "chart", "format", "music", "illustration", "unlockVideo", "previewStart", "previewEnd",
+    //     // "aspectRatio", "backgroundDim", "lineLength", "offset", "tip", "tags", "intro",
+    //     // "holdPartialCover", "created", "updated", "chartUpdated"
+    //     Dictionary<string, string> properties = new()
+    //     {
+    //         {"id", info.Id},
+    //         {"name", info.Name},
+    //         {"difficulty", info.Difficulty.ToString()},
+    //         {"level", info.Level},
+    //         {"charter", info.Charter},
+    //         {"composer", info.Composer},
+    //         {"chart", info.ChartFileName},
+    //         {"format", info.Format},
+    //         {"music", info.SongFileName},
+    //         {"illustration", info.PictureFileName},
+    //         {"unlockVideo", info.UnlockVideo},
+    //         {"previewStart", info.PreviewStart.HasValue ? info.PreviewStart.ToString() : "null"},
+    //         {"previewEnd", info.PreviewEnd.HasValue ? info.PreviewEnd.ToString() : "null"},
+    //         {"aspectRatio", info.AspectRatio.HasValue ? info.AspectRatio.ToString() : "null"},
+    //         {"backgroundDim", info.BackgroundDim.HasValue ? info.BackgroundDim.ToString() : "null"},
+    //         {"lineLength", info.LineLength.HasValue ? info.LineLength.ToString() : "null"},
+    //         {"offset", info.Offset.HasValue ? info.Offset.ToString() : "null"},
+    //         {"tip", info.Tip},
+    //         {"intro", info.Intro}
+    //     };
 
-        FileUtil.WriteInfoYmlFile(path, properties);
-    }
+    //     FileUtil.WriteInfoYmlFile(path, properties);
+    // }
 
-    public void SaveChartInfo(ChartInfo info)
-    {
-        /*
-        #
-        Name: Snow Desert
-        Path: 9091515374590503
-        Song: 9091515374590503.mp3
-        Picture: 9091515374590503.jpg
-        Chart: 9091515374590503.json
-        Level: IN Lv.13
-        Composer: WyvernP
-        Charter: hfwh
-        LastEditTime: 2026_2_21_22_6_36_
-        Length: 142.341
-        EditTime: 50462.879
-        Group: Default
-        */
-        var dict = new Dictionary<string, string>
-        {
-            ["Name"] = info.Name,
-            ["Path"] = info.Id,
-            ["Song"] = info.SongFileName,
-            ["Picture"] = info.PictureFileName,
-            ["Chart"] = info.ChartFileName,
-            ["Level"] = info.Level,
-            ["Composer"] = info.Composer,
-            ["Charter"] = info.Charter,
-            //["LastEditTime"] = 
-            ["Length"] = info.Duration.ToString(),
-            //["EditTime"] = 
-            //["Group"] = 
-            ["Bpm"] = info.Bpm.ToString(),
-            ["Offset"] = info.Offset.ToString(),
+    // public void SaveChartInfoTxt(ChartInfo info)
+    // {
+    //     /*
+    //     #
+    //     Name: Snow Desert
+    //     Path: 9091515374590503
+    //     Song: 9091515374590503.mp3
+    //     Picture: 9091515374590503.jpg
+    //     Chart: 9091515374590503.json
+    //     Level: IN Lv.13
+    //     Composer: WyvernP
+    //     Charter: hfwh
+    //     LastEditTime: 2026_2_21_22_6_36_
+    //     Length: 142.341
+    //     EditTime: 50462.879
+    //     Group: Default
+    //     */
+    //     var dict = new Dictionary<string, string>
+    //     {
+    //         ["Name"] = info.Name,
+    //         ["Path"] = info.Id,
+    //         ["Song"] = info.SongFileName,
+    //         ["Picture"] = info.PictureFileName,
+    //         ["Chart"] = info.ChartFileName,
+    //         ["Level"] = info.Level,
+    //         ["Composer"] = info.Composer,
+    //         ["Charter"] = info.Charter,
+    //         //["LastEditTime"] = 
+    //         ["Length"] = info.Duration.ToString(),
+    //         //["EditTime"] = 
+    //         //["Group"] = 
+    //         ["Bpm"] = info.Bpm.ToString(),
+    //         ["Offset"] = info.Offset.ToString(),
             
-        };
-        FileUtil.WriteInfoTxtFile(info.InfoFilePath, dict);
-    }
+    //     };
+    //     FileUtil.WriteInfoTxtFile(info.InfoTxtPath, dict);
+    // }
+
+    // public void SaveChartInfoYml(ChartInfo info)
+    // {
+    //     // Phira info.yml属性:
+    //     // "id", "uploader", "name", "difficulty", "level", "charter", "composer", "illustrator",
+    //     // "chart", "format", "music", "illustration", "unlockVideo", "previewStart", "previewEnd",
+    //     // "aspectRatio", "backgroundDim", "lineLength", "offset", "tip", "tags", "intro",
+    //     // "holdPartialCover", "created", "updated", "chartUpdated"
+
+    //     var dict = new Dictionary<string, string>
+    //     {
+    //         ["id"] = info.Id,
+    //         ["name"] = info.Name,
+    //         ["difficulty"] = info.Difficulty.ToString(),
+    //         ["level"] = info.Level,
+    //         ["charter"] = info.Charter,
+    //         ["composer"] = info.Composer,
+    //         ["chart"] = info.ChartFileName,
+    //         ["format"] = info.Format,
+    //         ["music"] = info.SongFileName,
+    //         ["illustration"] = info.PictureFileName,
+    //         ["unlockVideo"] = info.UnlockVideo,
+    //         ["previewStart"] = info.PreviewStart.HasValue ? info.PreviewStart.ToString() : "null",
+    //         ["previewEnd"] = info.PreviewEnd.HasValue ? info.PreviewEnd.ToString() : "null",
+    //         ["aspectRatio"] = info.AspectRatio.HasValue ? info.AspectRatio.ToString() : "null",
+    //         ["backgroundDim"] = info.BackgroundDim.HasValue ? info.BackgroundDim.ToString() : "null",
+    //         ["lineLength"] = info.LineLength.HasValue ? info.LineLength.ToString() : "null",
+    //         ["offset"] = info.Offset.HasValue ? info.Offset.ToString() : "null",
+    //         ["tip"] = info.Tip,
+    //         ["intro"] = info.Intro
+    //     };
+
+    //     FileUtil.WriteInfoYmlFile(info.InfoYmlPath, dict);
+    // }
 
     public void DeleteChart(string chartId)
     {

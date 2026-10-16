@@ -91,10 +91,10 @@ public partial class StartMenu : Node
                 // 删除原来的错误文件
                 DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(oPath));
 
-                // 2. 修改info.txt
+                // 2. 修改info文件
                 ChartInfo newInfo = info.Duplicate();
                 newInfo.PictureFileName = dPath.GetFile();
-                _chartService.SaveChartInfo(newInfo);
+                _chartService.SaveChartInfo(info.Id, info);
 
                 FileLogger.Log($"[{Name}] 成功修正了曲绘文件格式:{oPath} -> {dPath}");
             }
@@ -180,8 +180,8 @@ public partial class StartMenu : Node
             _chartService.SetChartSong(_currentSelectedChartId, newSongPath);
         }
 
-        //修改info.txt
-        _chartService.SetChartInfo(_currentSelectedChartId, data);
+        //修改info文件
+        _chartService.SaveChartInfo(_currentSelectedChartId, data);
         
 
         RefreshChartList();

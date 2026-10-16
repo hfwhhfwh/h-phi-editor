@@ -56,13 +56,13 @@ public partial class ChartService : Node
         string templatePath = "res://TemplateChart.json";
         FileUtil.CopyFile(templatePath, chartInfo.ChartPath);
         var chart = ChartLoader.LoadChart(chartInfo.ChartPath);
-        chart.BpmList[0].Bpm = chartInfo.Bpm;
+        chart.BpmList[0].Bpm = chartInfo.Bpm ?? 180;
         chart.Meta = new Meta
         {
             Background = data.PictureFileName,
             Charter = data.Charter,
             Composer = data.Composer,
-            Duration = data.Duration,
+            Duration = data.Duration ?? 0f,
             Id = data.Id,
             Illustration = "", // TODO
             Level = data.Level,
@@ -73,7 +73,8 @@ public partial class ChartService : Node
         ChartLoader.SaveChart(chart, chartInfo.ChartPath);
 
         // 保存info.txt
-        chartRepository.SaveChartInfo(chartInfo);
+        // chartRepository.SaveChartInfoTxt(chartInfo);
+        ChartInfoCodec.Save(chartInfo, chartInfo.InfoTxtPath, ChartInfoFormat.Txt);
 
         return chartInfo;
     }
@@ -116,13 +117,13 @@ public partial class ChartService : Node
         string templatePath = "res://TemplateChart.json";
         FileUtil.CopyFile(templatePath, chartInfo.ChartPath);
         var chart = ChartLoader.LoadChart(chartInfo.ChartPath);
-        chart.BpmList[0].Bpm = chartInfo.Bpm;
+        chart.BpmList[0].Bpm = chartInfo.Bpm ?? 180;
         chart.Meta = new Meta
         {
             Background = data.PictureFileName,
             Charter = data.Charter,
             Composer = data.Composer,
-            Duration = data.Duration,
+            Duration = data.Duration ?? 0f,
             Id = data.Id,
             Illustration = "", // TODO
             Level = data.Level,
@@ -133,7 +134,8 @@ public partial class ChartService : Node
         ChartLoader.SaveChart(chart, chartInfo.ChartPath);
 
         // 保存info.txt
-        chartRepository.SaveChartInfo(chartInfo);
+        // chartRepository.SaveChartInfoTxt(chartInfo);
+        ChartInfoCodec.Save(chartInfo, chartInfo.InfoTxtPath, ChartInfoFormat.Txt);
 
         return chartInfo;
     }
@@ -200,8 +202,6 @@ public partial class ChartService : Node
                     hasInfoYml = false;
                 }
 
-                hasInfoYml = true;
-
                 string infoPath;
                 if(hasInfoYml) infoPath = infoYmlTempPath; // 优先读取info.yml，因为信息更全
                 else if(hasInfoTxt) infoPath = infoTxtTempPath;
@@ -214,7 +214,16 @@ public partial class ChartService : Node
 
                 
                 // await Task.Run(() => infoDic = FileUtil.ReadInfoFile(infoYmlTempPath));
-                chartInfo = await Task.Run(() => chartRepository.ReadChartInfoFromYml(infoPath));
+                // chartInfo = await Task.Run(() => chartRepository.ReadChartInfoFromYml(infoPath));
+                if(hasInfoYml)
+                {
+                    chartInfo = await Task.Run(() => ChartInfoCodec.Load(infoYmlTempPath, ChartInfoFormat.Yml));
+                }
+                else if(hasInfoTxt)
+                {
+                    chartInfo = await Task.Run(() => ChartInfoCodec.Load(infoTxtTempPath, ChartInfoFormat.Txt));
+                }
+
                 // if(infoDic.TryGetValue("chart", out string chartPath))
                 if(!string.IsNullOrEmpty(chartInfo.ChartFileName))
                 {
@@ -290,11 +299,13 @@ public partial class ChartService : Node
 
                 if(hasInfoYml)
                 {
-                    await Task.Run(() => chartRepository.WriteInfoYml(chartInfo, infoYmlTempPath));
+                    //await Task.Run(() => chartRepository.WriteInfoYml(chartInfo, infoYmlTempPath));
+                    await Task.Run(() => ChartInfoCodec.Save(chartInfo, infoYmlTempPath, ChartInfoFormat.Yml));
                 }
                 if(hasInfoTxt)
                 {
-                    await Task.Run(() => chartRepository.WriteInfoTxt(chartInfo, infoTxtTempPath));
+                    //await Task.Run(() => chartRepository.WriteInfoTxt(chartInfo, infoTxtTempPath));
+                    await Task.Run(() => ChartInfoCodec.Save(chartInfo, infoTxtTempPath, ChartInfoFormat.Txt));
                 }
                 
             }),
@@ -365,10 +376,25 @@ public partial class ChartService : Node
     /// 设置谱面信息
     /// </summary>
     /// <param name="chartId">谱面id</param>
-    /// <param name="chartInfo">谱面信息</param>
-    public void SetChartInfo(string chartId, ChartInfo chartInfo)
+    /// <param name="info">谱面信息</param>
+    public void SaveChartInfo(string chartId, ChartInfo info, ChartInfoFormat format)
     {
-        chartRepository.SaveChartInfo(chartInfo);
+        // chartRepository.SaveChartInfoTxt(chartInfo);
+        string path = format switch
+        {
+            ChartInfoFormat.Txt => info.InfoTxtPath,
+            ChartInfoFormat.Yml => info.InfoYmlPath,
+            _ => info.InfoTxtPath
+        };
+        ChartInfoCodec.Save(info, path, format);
+
+        FileLogger.Log($"[{Name}] 成功保存谱面信息文件，id:{info.Id}, path:{path}");
+    }
+
+    public void SaveChartInfo(string chartId, ChartInfo info)
+    {
+        SaveChartInfo(chartId, info, ChartInfoFormat.Txt);
+        SaveChartInfo(chartId, info, ChartInfoFormat.Yml);
     }
 
     /// <summary>
@@ -459,7 +485,7 @@ public partial class ChartService : Node
 
         //1. 读取info
         ChartInfo chartInfo = chartRepository.LoadChartInfo(chartId);
-        string infoPath = chartInfo.InfoFilePath;
+        string infoPath = chartInfo.InfoTxtPath;
         filePaths.Add(infoPath);
 
         //2. 找到json谱面文件
@@ -503,10 +529,10 @@ public partial class ChartService : Node
         FileLogger.Log($"[{this.Name}] 谱面保存成功！谱面id:{chartId}");
     }
 
-    public void SaveChartInfo(ChartInfo info)
-    {
-        chartRepository.SaveChartInfo(info);
-    }
+    // public void SaveChartInfo(ChartInfo info)
+    // {
+    //     chartRepository.SaveChartInfoTxt(info);
+    // }
 
 
 }

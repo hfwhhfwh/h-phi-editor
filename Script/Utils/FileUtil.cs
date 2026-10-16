@@ -425,6 +425,53 @@ public static class FileUtil
         FileLogger.Log($"成功写入 {writtenCount} 条属性到文件: {filePath}");
 	}
 
+    public static void WriteInfoFile(string filePath, Dictionary<string, string> properties, ChartInfoFormat format)
+    {
+        // 参数校验
+		ArgumentNullException.ThrowIfNull(properties);
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
+
+		// 确保文件所在的目录存在
+		string directory = filePath.GetBaseDir();
+		if (!string.IsNullOrEmpty(directory) && !DirAccess.DirExistsAbsolute(directory))
+		{
+			DirAccess.MakeDirRecursiveAbsolute(directory);
+		}
+
+		// 打开文件（写入模式），如果文件已存在则覆盖
+		using var file = Godot.FileAccess.Open(filePath, Godot.FileAccess.ModeFlags.Write);
+		if (file == null)
+		{
+			FileLogger.LogErr($"无法打开文件进行写入: {filePath}");
+			return;
+		}
+
+        string[] keysToWrite = format switch
+        {
+            ChartInfoFormat.Yml => [
+                "id", "uploader", "name", "difficulty", "level", "charter", "composer", "illustrator",
+                "chart", "format", "music", "illustration", "unlockVideo", "previewStart", "previewEnd",
+                "aspectRatio", "backgroundDim", "lineLength", "offset", "tip", "tags", "intro",
+                "holdPartialCover", "created", "updated", "chartUpdated"
+            ],
+            ChartInfoFormat.Txt => ["Name", "Path", "Song", "Picture", "Chart", "Level", "Composer", "Charter"],
+            _ => throw new ArgumentOutOfRangeException(nameof(format)),
+        };
+        
+
+        int writtenCount = 0;
+        foreach (string key in keysToWrite)
+        {
+            if (!properties.TryGetValue(key, out string value))
+                continue;
+
+            file.StoreLine($"{key}: {value ?? "null"}");
+            writtenCount++;
+        }
+
+        FileLogger.Log($"成功写入 {writtenCount} 条属性到文件: {filePath}");
+    }
+
     /// <summary>
 	/// 读取info.txt谱面信息文件
 	/// </summary>
