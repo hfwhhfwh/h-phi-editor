@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://cmipv0pn3alao"]
+
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_lafvl"]
+[ext_resource type="Script" uid="uid://d0ah7iqk6in6" path="res://Script/UI/CustomSelectableList.cs" id="2_crmos"]
+
+[node name="CustomSelectableList" type="VBoxContainer" unique_id=846667956]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_lafvl")
+script = ExtResource("2_crmos")
+
+[node name="Item" type="HBoxContainer" parent="." unique_id=1218004583]
+visible = false
+layout_mode = 2
+
+[node name="CheckBox" type="CheckBox" parent="Item" unique_id=1199574961]
+layout_mode = 2
+
+[node name="Button2" type="Button" parent="Item" unique_id=1341040211]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "这是一个按钮"

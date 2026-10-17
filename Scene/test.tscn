@@ -1,8 +1,11 @@
 [gd_scene format=3 uid="uid://rp17w37x3k4t"]
 
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_wsa5o"]
+
 [node name="Node2D" type="Node" unique_id=1126269935]
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1218157957]
+visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -26,3 +29,14 @@ step = 0.1
 allow_greater = true
 allow_lesser = true
 ticks_on_borders = true
+
+[node name="ItemList" type="ItemList" parent="." unique_id=447616446]
+offset_left = 70.0
+offset_top = 44.0
+offset_right = 634.0
+offset_bottom = 453.0
+theme = ExtResource("1_wsa5o")
+item_count = 3
+item_0/text = "这是一个选项"
+item_1/text = "这是一个选项"
+item_2/text = "这是一个选项"
