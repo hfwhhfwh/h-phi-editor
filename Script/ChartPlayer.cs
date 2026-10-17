@@ -253,7 +253,7 @@ public partial class ChartPlayer : BaseChartPlayer
 
         AddChild(audioStreamPlayer);
         //设置音乐偏移
-        chartOffset = (int)chart.Meta.Offset;
+        chartOffset = chart.Meta?.Offset ?? 0;
 
         // ===================其他设置===================
 

@@ -1264,4 +1264,98 @@ public static class FileUtil
         return (image, realFormat);
     }
 
+    public static (Image Image, string RealFormat) LoadImageFromFile(
+        string picPath,
+        bool mipmap = true)
+    {
+        string realFormat = null;
+
+        string picPathAbsolute = ProjectSettings.GlobalizePath(picPath);
+
+        // 检查文件存在
+        if (!Godot.FileAccess.FileExists(picPathAbsolute))
+        {
+            FileLogger.LogErr($"[{Name}] UpdateItemDisplay() 文件不存在:{picPath}");
+            return (null, null);
+        }
+
+        var image = new Image();
+        Error err = Error.Failed;
+
+        // 1. 通用加载（扩展名和格式一致时直接成功）
+        err = image.Load(picPathAbsolute);
+
+        // 2. 失败则回退到 Buffer + 格式检测
+        if (err != Error.Ok)
+        {
+            FileLogger.Log($"[{Name}] LoadFromFile 失败，回退到 Buffer 解码: {picPath}");
+
+            byte[] buffer = System.IO.File.ReadAllBytes(picPathAbsolute); // 纯 IO
+            string format = DetectImageFormat(buffer);
+            
+            FileLogger.Log($"[{Name}] 检测到真实格式: {format}");
+            realFormat = format;
+            
+            // 重新创建实例，避免之前失败的状态残留
+            image = new Image();
+
+            switch (format)
+            {
+                case "jpg":
+                    err = image.LoadJpgFromBuffer(buffer);
+                    break;
+                case "png":
+                    err = image.LoadPngFromBuffer(buffer);
+                    break;
+                case "webp":
+                    err = image.LoadWebpFromBuffer(buffer);
+                    break;
+                case "bmp":
+                    err = image.LoadBmpFromBuffer(buffer);
+                    break;
+                case "ktx":
+                    err = image.LoadKtxFromBuffer(buffer);
+                    break;
+                case "svg":
+                    err = image.LoadSvgFromBuffer(buffer);
+                    break;
+                default:
+                    // 兜底逐个尝试
+                    err = image.LoadJpgFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadPngFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadWebpFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadBmpFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadKtxFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadSvgFromBuffer(buffer);
+                    if (err != Error.Ok) err = image.LoadTgaFromBuffer(buffer);
+                    break;
+            }
+        }
+
+        if (err != Error.Ok)
+        {
+            FileLogger.LogErr($"[{Name}] (图片)所有格式解码均失败:{picPath}");
+            return (null, realFormat);
+        }
+
+        // 检查尺寸
+        if (image.GetWidth() > 16384 || image.GetHeight() > 16384)
+        {
+            FileLogger.LogErr($"[{Name}] 图片尺寸{image.GetWidth()}x{image.GetHeight()}超过 Godot 限制 (16384x16384)");
+            return (null, realFormat);
+        }
+
+        // 生成mipmap
+        if (mipmap)
+        {
+            err = image.GenerateMipmaps();
+            if (err != Error.Ok)
+            {
+                FileLogger.LogWarning($"[{Name}] 生成 Mipmap 失败 ({picPath}): {err}，将使用无 Mipmap 的纹理");
+            }
+        }
+
+        return (image, realFormat);
+    }
+
 }

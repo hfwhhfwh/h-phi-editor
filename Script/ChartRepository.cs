@@ -26,24 +26,40 @@ public partial class ChartRepository : Node
     public ChartInfo LoadChartInfo(string chartId)
     {
         string folder = Path.Combine(SAVES_DIR, chartId);
-        string infoPath = Path.Combine(folder, "info.txt");
-        if (!Godot.FileAccess.FileExists(infoPath)) return null;
+        string infoTxtPath = Path.Combine(folder, "info.txt");
+        string infoYmlPath = Path.Combine(folder, "info.yml");
 
-        var dict = FileUtil.ReadInfoFile(infoPath);
-        return new ChartInfo
+        ChartInfo info;
+        if (Godot.FileAccess.FileExists(infoYmlPath))
         {
-            Id = chartId,
-            Name = dict.GetValueOrDefault("Name"),
-            Composer = dict.GetValueOrDefault("Composer"),
-            Charter = dict.GetValueOrDefault("Charter"),
-            Level = dict.GetValueOrDefault("Level", "0"),
-            Bpm = float.Parse(dict.GetValueOrDefault("Bpm", "0")),
-            Offset = float.Parse(dict.GetValueOrDefault("Offset", "0")),
-            Duration = float.Parse(dict.GetValueOrDefault("Duration", "0")),
-            SongFileName = dict.GetValueOrDefault("Song"),
-            PictureFileName = dict.GetValueOrDefault("Picture"),
-            ChartFileName = dict.GetValueOrDefault("Chart")
-        };
+            info = ChartInfoCodec.Load(infoYmlPath, ChartInfoFormat.Yml);
+        }
+        else if (Godot.FileAccess.FileExists(infoTxtPath))
+        {
+            info = ChartInfoCodec.Load(infoTxtPath, ChartInfoFormat.Txt);
+        }
+        else
+        {
+            return null;
+        }
+
+        // var dict = FileUtil.ReadInfoFile(infoPath);
+        // return new ChartInfo
+        // {
+        //     Id = chartId,
+        //     Name = dict.GetValueOrDefault("Name"),
+        //     Composer = dict.GetValueOrDefault("Composer"),
+        //     Charter = dict.GetValueOrDefault("Charter"),
+        //     Level = dict.GetValueOrDefault("Level", "0"),
+        //     Bpm = float.Parse(dict.GetValueOrDefault("Bpm", "0")),
+        //     Offset = float.Parse(dict.GetValueOrDefault("Offset", "0")),
+        //     Duration = float.Parse(dict.GetValueOrDefault("Duration", "0")),
+        //     SongFileName = dict.GetValueOrDefault("Song"),
+        //     PictureFileName = dict.GetValueOrDefault("Picture"),
+        //     ChartFileName = dict.GetValueOrDefault("Chart")
+        // };
+
+        return info;
     }
 
     // public ChartInfo ReadChartInfoFromTxt(string path)
@@ -246,10 +262,11 @@ public partial class ChartRepository : Node
     public void DeleteChart(string chartId)
     {
         string folder = Path.Combine(SAVES_DIR, chartId);
-        if (DirAccess.DirExistsAbsolute(folder))
+        string folderAbsolute = ProjectSettings.GlobalizePath(folder);
+        if (DirAccess.DirExistsAbsolute(folderAbsolute))
         {
             // 递归删除文件夹
-            FileUtil.DeleteDirectoryRecursive(folder);
+            FileUtil.DeleteDirectoryRecursive(folderAbsolute);
         }
     }
 

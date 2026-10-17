@@ -84,11 +84,11 @@ public partial class CreateChartPanel : PanelContainer
             "*.png,*.jpg,*.jpeg,*.bmp,*.webp;图像文件;image/png,image/jpg,image/jpeg,image/bmp,image/webp"
         };
         fileDialogManager.ShowOpenDialog(
-            (path) =>
+            async (path) =>
             {
                 _picPathEdit.Text = path;
                 //显示曲绘
-                Image textureImage = Image.LoadFromFile(path);
+                (Image textureImage, string _) = await FileUtil.LoadImageFromFileAsync(path);
                 if(textureImage == null)
                 {
                     // 用户取消选择

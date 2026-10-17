@@ -59,7 +59,7 @@ public partial class LoadingManager : Node
 
         int total = steps.Count;
 
-        //try
+        try
         {
             for (int i = 0; i < total; i++)
             {
@@ -78,13 +78,27 @@ public partial class LoadingManager : Node
                 _loadingBar.SetProgress(i + 1, total, desc);
             }
         }
-        // catch(Exception e)
-        // {
-        //     FileLogger.LogErr($"[{Name}] 任务执行失败, 错误: {e.Message}");
-        //     onFailed?.Invoke();
-        //     _loadingBar.Visible = false;
-        //     return;
-        // }
+        catch (Exception e)
+        {
+            FileLogger.LogErr($"[{Name}] 任务执行失败, 错误: {e.Message}");
+
+            // onFailed 自身抛异常时不要覆盖原始异常
+            try
+            {
+                onFailed?.Invoke();
+            }
+            catch (Exception cbEx)
+            {
+                FileLogger.LogErr($"[{Name}] onFailed 回调执行失败: {cbEx.Message}");
+            }
+
+            throw; // 重新抛出，保留原始堆栈
+        }
+        finally
+        {
+            // 无论成功还是失败，都隐藏进度条
+            _loadingBar.Visible = false;
+        }
         
 
         // 等待一段时间，让用户看到加载结束
