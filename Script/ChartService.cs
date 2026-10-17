@@ -332,8 +332,10 @@ public partial class ChartService : Node
                 await ImageBlur.Instance.BlurPicture(
                     picPath: Path.Combine(dir, chartInfo.PictureFileName),
                     radius: 200,
-                    outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_200.png"))// ← 注意加 .png
+                    outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_150.png"))// ← 注意加 .png
                 );
+
+                // 这里需要调用ImageBlur.Instance.RemoveViewports()，如果导入多张铺面，则在所有铺面都导入之后再关闭，因此留给上级处理
             }),
         ];
 
@@ -343,36 +345,36 @@ public partial class ChartService : Node
 
     }
 
-    public async Task GenerateBlurredPic(string chartId)
-    {
-        if(string.IsNullOrEmpty(chartId)) throw new ArgumentNullException(nameof(chartId));
+    // public async Task GenerateBlurredPic(string chartId)
+    // {
+    //     if(string.IsNullOrEmpty(chartId)) throw new ArgumentNullException(nameof(chartId));
 
-        // 找到谱面路径
-        string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
-        string dirAbsolute = ProjectSettings.GlobalizePath(dir);
-        if (!Godot.DirAccess.DirExistsAbsolute(dirAbsolute))
-        {
-            FileLogger.LogErr($"[{Name}] 未找到谱面id:{chartId}");
-            return;
-        }
+    //     // 找到谱面路径
+    //     string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
+    //     string dirAbsolute = ProjectSettings.GlobalizePath(dir);
+    //     if (!Godot.DirAccess.DirExistsAbsolute(dirAbsolute))
+    //     {
+    //         FileLogger.LogErr($"[{Name}] 未找到谱面id:{chartId}");
+    //         return;
+    //     }
 
-        // 读取info
-        string infoPath = Path.Combine(dirAbsolute, "info.txt");
-        if (!Godot.FileAccess.FileExists(infoPath))
-        {
-            FileLogger.LogErr("无法找到info.txt文件");
-            return;
-        }
+    //     // 读取info
+    //     string infoPath = Path.Combine(dirAbsolute, "info.txt");
+    //     if (!Godot.FileAccess.FileExists(infoPath))
+    //     {
+    //         FileLogger.LogErr("无法找到info.txt文件");
+    //         return;
+    //     }
 
-        Dictionary<string, string> infoDic = FileUtil.ReadInfoFile(infoPath);
+    //     Dictionary<string, string> infoDic = FileUtil.ReadInfoFile(infoPath);
 
-        await ImageBlur.Instance.BlurPicture(
-            picPath: Path.Combine(dir, infoDic["Picture"]),
-            radius: 200,
-            outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_200.png"))// ← 注意加 .png
-        );
+    //     await ImageBlur.Instance.BlurPicture(
+    //         picPath: Path.Combine(dir, infoDic["Picture"]),
+    //         radius: 200,
+    //         outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_150.png"))// ← 注意加 .png
+    //     );
         
-    }
+    // }
     
     /// <summary>
     /// 设置谱面信息

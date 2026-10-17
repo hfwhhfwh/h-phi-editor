@@ -33,9 +33,9 @@ ImagePicker="*uid://c7m75i1ksev8a"
 IosPhotoPicker="*uid://cvl10oovvfsnx"
 PopupHelper="*uid://vokpe42lhbej"
 LoadingManager="*uid://b57um3paj7g87"
-ImageBlur="*uid://q6jaa43qjmt8"
 FileLogger="*uid://dsijuqa7kbo5j"
 ShareHelper="*uid://orissxenvxem"
+ImageBlur="*uid://q6jaa43qjmt8"
 
 [display]
 

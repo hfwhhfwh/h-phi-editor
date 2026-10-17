@@ -3,6 +3,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+/// <summary>
+/// 用于生成模糊化图片。
+/// 若要模糊图片，请调用BlurImageAsync方法。
+/// 在所有图片都模糊化完毕后，请调用RemoveViewports方法节约性能
+/// </summary>
 public partial class ImageBlur : Node
 {
     public static ImageBlur Instance;
@@ -14,6 +19,8 @@ public partial class ImageBlur : Node
 
     private ShaderMaterial _matH;
     private ShaderMaterial _matV;
+
+    public bool IsViewportsReady { get; private set; } = false;
 
     public override void _Ready()
     {
@@ -33,7 +40,6 @@ public partial class ImageBlur : Node
         // 设置子节点
         _vpH = new SubViewport();
         _vpH.Name = "SubViewport_H";
-        AddChild(_vpH);
 
         _rectH = new TextureRect();
         _rectH.Name = "TextureRect_H";
@@ -41,7 +47,6 @@ public partial class ImageBlur : Node
 
         _vpV = new SubViewport();
         _vpV.Name = "SubViewport_V";
-        AddChild(_vpV);
 
         _rectV = new TextureRect();
         _rectV.Name = "TextureRect_V";
@@ -74,9 +79,29 @@ public partial class ImageBlur : Node
         _rectV.Material = _matV;
     }
 
+    public void AddViewports()
+    {
+        AddChild(_vpH);
+        AddChild(_vpV);
+
+        IsViewportsReady = true;
+    }
+
+    public void RemoveViewports()
+    {
+        if (_vpH.GetParent() == this)
+            RemoveChild(_vpH);
+        if (_vpV.GetParent() == this)
+            RemoveChild(_vpV);
+        
+        IsViewportsReady = false;
+    }
+
     /// <summary>把图片做高斯模糊，返回模糊后的新 Image</summary>
     public async Task<Image> BlurImageAsync(Image src, float radius)
     {
+        if(!IsViewportsReady) AddViewports();
+
         var size = new Vector2I(src.GetWidth(), src.GetHeight());
         _vpH.Size = size;
         _vpV.Size = size;

@@ -140,8 +140,9 @@ public partial class StartMenu : Node
                         FileLogger.LogErr($"[{Name}] 谱面无法正常导入，路径:{path}, 错误:{e.Message}");
                         continue;
                     }
-                    
                 }
+
+                ImageBlur.Instance.RemoveViewports(); // 节省渲染性能
 
                 RefreshChartList();
                 
