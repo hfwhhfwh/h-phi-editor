@@ -224,6 +224,8 @@ public partial class ChartService : Node
                     chartInfo = await Task.Run(() => ChartInfoCodec.Load(infoTxtTempPath, ChartInfoFormat.Txt));
                 }
 
+                LoadingManager.Instance.SetTitle($"正在导入谱面: {chartInfo.Name}");
+
                 // if(infoDic.TryGetValue("chart", out string chartPath))
                 if(!string.IsNullOrEmpty(chartInfo.ChartFileName))
                 {

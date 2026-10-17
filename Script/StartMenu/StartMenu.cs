@@ -125,14 +125,29 @@ public partial class StartMenu : Node
     {
         string[] filters = {"*.*;所有文件;"};
         fileDialogManager.ShowOpenDialog(
-            async (path) =>
+            async (string[] paths) =>
             {
-                if(string.IsNullOrEmpty(path)) return;
+                foreach(string path in paths)
+                {
+                    if(string.IsNullOrEmpty(path)) continue;
 
-                await _chartService.ImportChartAsync(path);
+                    try
+                    {
+                        await _chartService.ImportChartAsync(path);
+                    }
+                    catch(Exception e)
+                    {
+                        FileLogger.LogErr($"[{Name}] 谱面无法正常导入，路径:{path}, 错误:{e.Message}");
+                        continue;
+                    }
+                    
+                }
+
                 RefreshChartList();
+                
             },
-            filters
+            filters,
+            multi: true
         );
     }
 

@@ -354,8 +354,10 @@ public partial class SettingsPanel : Control
     private void OnImportClicked()
     {
         FileDialogManager.Instance.ShowOpenDialog(
-            (string path) =>
+            (string[] paths) =>
             {
+                string path = paths[0];
+                
                 if(string.IsNullOrEmpty(path)) return;
                 // 导入资源包
                 string id = ResourcePackLoader.CopyToLocal(path);

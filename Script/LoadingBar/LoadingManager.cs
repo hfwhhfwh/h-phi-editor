@@ -106,4 +106,9 @@ public partial class LoadingManager : Node
         _loadingBar.Visible = false;
     }
 
+    public void SetTitle(string title)
+    {
+        _loadingBar.Title = title;
+    }
+
 }

@@ -35,11 +35,12 @@ public partial class CreateChartPanel : PanelContainer
 			"*.mp3,*.wav,*.ogg,*.flac,*.aac,*.m4a,*.wma,*.aiff;音频文件;audio/mpeg,audio/x-wav,audio/ogg,audio/flac,audio/aac,audio/mp4,audio/x-ms-wma,audio/aiff"
 		};
 		fileDialogManager.ShowOpenDialog(
-            (path) =>
+            (paths) =>
             {
-                _musicPathEdit.Text = path;
+                _musicPathEdit.Text = paths[0];
             },
-            filters
+            filters,
+            multi: false
         );
 	}
 	
@@ -84,8 +85,9 @@ public partial class CreateChartPanel : PanelContainer
             "*.png,*.jpg,*.jpeg,*.bmp,*.webp;图像文件;image/png,image/jpg,image/jpeg,image/bmp,image/webp"
         };
         fileDialogManager.ShowOpenDialog(
-            async (path) =>
+            async (string[] paths) =>
             {
+                string path = paths[0];
                 _picPathEdit.Text = path;
                 //显示曲绘
                 (Image textureImage, string _) = await FileUtil.LoadImageFromFileAsync(path);
@@ -100,7 +102,8 @@ public partial class CreateChartPanel : PanelContainer
                 _picTexture = texture;
                 _picTextureRect.Texture = ImageTexture.CreateFromImage(textureImage);
             },
-            filters
+            filters,
+            multi: false
         );
     }
 

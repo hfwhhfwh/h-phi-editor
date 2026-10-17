@@ -68,7 +68,7 @@ public static class Util
 		return (float)audioStream.GetLength();
 	}
 
-	public static string ListToString<T>(List<T> list)
+	public static string ListToString<T>(IEnumerable<T> list)
 	{
 		if (list == null) return null;
         return $"[{string.Join(",", list)}]";

@@ -9,23 +9,15 @@ public partial class FileDialogManager : Node
 
     public override void _Ready()
     {
-        // 防止重复实例化
-        if (Instance != null)
-        {
-            FileLogger.LogErr("FileDialogManager 单例已存在，销毁重复实例");
-            QueueFree();
-            return;
-        }
         Instance = this;
+
+        base._Ready();
     }
 
     public override void _ExitTree()
     {
-        // 清理时释放引用，防止野指针
-        if (Instance == this)
-        {
-            Instance = null;
-        }
+        Instance = null;
+        
         base._ExitTree();
     }
     
@@ -46,16 +38,16 @@ public partial class FileDialogManager : Node
         return false;
     }
 
-    public void ShowOpenDialog(Action<string> onFileSelected, string[] filters = null)
+    public void ShowOpenDialog(Action<string[]> onFileSelected, string[] filters = null, bool multi = false)
     {
         // iOS 不支持原生文件对话框，使用内置的
         if (IsIOS())
         {
-            ShowBuiltInOpenDialog(onFileSelected, filters);
+            ShowBuiltInOpenDialog(onFileSelected, filters, multi);
         }
         else
         {
-            ShowNativeOpenDialog(onFileSelected, filters ?? ["*.*"]);
+            ShowNativeOpenDialog(onFileSelected, filters ?? ["*.*"], multi);
         }
     }
 
@@ -63,22 +55,21 @@ public partial class FileDialogManager : Node
     /// 打开原生文件窗口，选择一个文件
     /// </summary>
     /// <param name="onFileSelected">回调参数，当文件选择完成后调用该回调</param>
-    private void ShowNativeOpenDialog(Action<string> onFileSelected, string[] filters)
+    private void ShowNativeOpenDialog(Action<string[]> onFileSelected, string[] filters, bool multi = false)
     {
         DisplayServer.FileDialogShow(
             "选择一个文件",
             OS.GetSystemDir(OS.SystemDir.Documents),
             "",
             false,
-            DisplayServer.FileDialogMode.OpenFile,
+            multi ? DisplayServer.FileDialogMode.OpenFiles : DisplayServer.FileDialogMode.OpenFile,
             filters:filters,
             Callable.From((bool status, string[] paths, int filterIndex) =>
             {
                 if (status && paths.Length > 0)
                 {
-                    string filePath = paths[0];
-                    FileLogger.Log($"原生对话框选择的文件: {filePath}");
-                    onFileSelected?.Invoke(filePath); // 调用回调
+                    FileLogger.Log($"原生对话框选择的文件: {Util.ListToString(paths)}");
+                    onFileSelected?.Invoke(paths); // 调用回调
                 }
                 else
                 {
@@ -89,18 +80,19 @@ public partial class FileDialogManager : Node
         ));
     }
 
-    private void ShowNativeOpenDialog(Action<string> onFileSelected)
+    private void ShowNativeOpenDialog(Action<string[]> onFileSelected, bool multi = false)
     {
         string[] filters = ["*.*"];
-        ShowNativeOpenDialog(onFileSelected, filters);
+        ShowNativeOpenDialog(onFileSelected, filters, multi);
     }
 
-    private void ShowBuiltInOpenDialog(Action<string> onFileSelected, string[] filters)
+    private void ShowBuiltInOpenDialog(Action<string[]> onFileSelected, string[] filters, bool multi)
     {
         var dialog = new FileDialog();
-        dialog.FileMode = FileDialog.FileModeEnum.OpenFile;
+        dialog.FileMode = multi ? FileDialog.FileModeEnum.OpenFiles : FileDialog.FileModeEnum.OpenFile;
         dialog.Access = FileDialog.AccessEnum.Filesystem;
         dialog.UseNativeDialog = false;
+        
 
         // 关键修复：iOS 上用 OS.GetUserDataDir() 代替 OS.GetSystemDir()
         dialog.CurrentPath = OS.GetUserDataDir() + "/";
@@ -110,7 +102,12 @@ public partial class FileDialogManager : Node
             foreach (var f in filters) dialog.AddFilter(f);
         }
         
-        dialog.FileSelected += path => { onFileSelected?.Invoke(path); dialog.QueueFree(); };
+        dialog.FileSelected += path => { onFileSelected?.Invoke([path]); dialog.QueueFree(); };
+        dialog.FilesSelected += (string[] paths) =>
+        {
+            onFileSelected?.Invoke(paths);
+            dialog.QueueFree();
+        };
         dialog.Canceled += () => { onFileSelected?.Invoke(null); dialog.QueueFree(); };
         
         AddChild(dialog);

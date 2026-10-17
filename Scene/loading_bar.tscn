@@ -46,6 +46,7 @@ layout_mode = 2
 theme = ExtResource("1_e7ab3")
 text = "标题"
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="ProgressBar" type="ProgressBar" parent="BackGround/CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=656974432]
 custom_minimum_size = Vector2(0, 50)
@@ -69,3 +70,4 @@ layout_mode = 2
 size_flags_vertical = 6
 theme = ExtResource("1_e7ab3")
 text = "正在加载: 进度"
+autowrap_mode = 2
