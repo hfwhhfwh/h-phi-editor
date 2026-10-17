@@ -94,7 +94,7 @@ public partial class StartMenu : Node
                 // 2. 修改info文件
                 ChartInfo newInfo = info.Duplicate();
                 newInfo.PictureFileName = dPath.GetFile();
-                _chartService.SaveChartInfo(info.Id, info);
+                _chartService.SaveChartInfo(newInfo.Id, newInfo);
 
                 FileLogger.Log($"[{Name}] 成功修正了曲绘文件格式:{oPath} -> {dPath}");
             }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Godot;
 
 public enum ChartInfoFormat { Txt, Yml }
 
@@ -96,7 +97,10 @@ public static class ChartInfoCodec
         => FromDict(FileUtil.ReadInfoFile(path), f);
 
     public static void Save(ChartInfo info, string path, ChartInfoFormat f)
-        => FileUtil.WriteInfoFile(path, ToDict(info, f), f);
+    {
+        Dictionary<string, string> dict = ToDict(info, f);
+        FileUtil.WriteInfoFile(path, dict, f);
+    }
 
     private static float? ParseF(string v)
         => string.IsNullOrWhiteSpace(v) || v == "null"

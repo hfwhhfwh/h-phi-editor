@@ -295,8 +295,6 @@ public class SetEventPropertyCommand : IEditCommand
         Apply(service, _newValue);
         ResortIfTimeChanged(service);
         if (_type == LineEventEnum.Speed) service.RefreshSpeedDependencies(_lineId);
-
-        FileLogger.Log($"***Execute");
     }
 
     public void Undo(ChartEditService service)
@@ -304,8 +302,6 @@ public class SetEventPropertyCommand : IEditCommand
         _snapshot.ApplyTo(_target);
         ResortIfTimeChanged(service);
         if (_type == LineEventEnum.Speed) service.RefreshSpeedDependencies(_lineId);
-
-        FileLogger.Log($"***Undo");
     }
 
     private void Apply(ChartEditService service, object value)
