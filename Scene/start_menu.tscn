@@ -106,6 +106,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_4otsm")
 script = ExtResource("3_6k74u")
+CheckBoxMinimumWidth = 50.0
 metadata/_custom_type_script = "uid://d0ah7iqk6in6"
 
 [node name="Chart" parent="PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer/ChartList" unique_id=450730230 instance=ExtResource("4_6k74u")]

@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 [GlobalClass]
 public partial class CustomSelectableList : VBoxContainer, ICustomSelectableList
@@ -34,11 +35,14 @@ public partial class CustomSelectableList : VBoxContainer, ICustomSelectableList
         CornerRadiusBottomRight = 3,
     };
 
-    /// <summary>是否自动把加入的 Content 及子节点设为鼠标穿透，使整行点击都生效。</summary>
-    [Export] public bool ContentClickThrough { get; set; } = true;
-
     /// <summary>移除条目时是否顺便释放 Content。默认 true。</summary>
     [Export] public bool FreeRemovedContent { get; set; } = true;
+
+    /// <summary>点击选择按钮右边的内容是否触发选择。默认 false。</summary>
+    [Export] public bool RowContentTriggerToggle { get; set; } = false;
+
+    /// <summary>点击选择按钮右边的内容是否触发选择。默认 false。</summary>
+    [Export] public float CheckBoxMinimumWidth { get; set; } = 0;
 
     // ===== 属性 =====
     public bool MultiSelectMode
@@ -112,7 +116,7 @@ public partial class CustomSelectableList : VBoxContainer, ICustomSelectableList
 
         control.GetParent()?.RemoveChild(control);
 
-        var hbox = new HBoxContainer { MouseFilter = MouseFilterEnum.Stop };
+        var hbox = new HBoxContainer { MouseFilter = MouseFilterEnum.Pass };
         hbox.AddThemeConstantOverride("separation", 4);
 
         var checkBox = new CheckBox
@@ -138,17 +142,19 @@ public partial class CustomSelectableList : VBoxContainer, ICustomSelectableList
 
         hbox.GuiInput += evt =>
         {
+            if(!RowContentTriggerToggle) return;
+            
             if (evt is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
             {
                 if (_multiSelectMode) ToggleEntry(entry);
                 else SelectEntry(entry);
-                hbox.AcceptEvent();
+                // hbox.AcceptEvent();
             }
         };
 
         checkBox.Toggled += pressed => OnCheckBoxToggled(entry, pressed);
 
-        if (ContentClickThrough) MakeContentClickThrough(control);
+        // MakeContentClickThrough(control);
 
         _entries.Add(entry);
         if (id != null) _byId[id] = entry;

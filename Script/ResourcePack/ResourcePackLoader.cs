@@ -36,7 +36,6 @@ public static class ResourcePackLoader
             if (Godot.FileAccess.FileExists(path))
             {
                 pack.textureDic[name] = FileUtil.LoadTextureFromFile(path, out string _);
-                // TODO 这里不好，可以考虑在FileUtil内部直接修改错误格式
             }
                 
         }
@@ -243,7 +242,6 @@ public static class ResourcePackLoader
             if (Godot.FileAccess.FileExists(path))
             {
                 pack.textureDic[name] = FileUtil.LoadTextureFromFile(path, out string _);
-                // TODO 这里不好，可以考虑在FileUtil内部直接修改错误格式
             }
                 
         }

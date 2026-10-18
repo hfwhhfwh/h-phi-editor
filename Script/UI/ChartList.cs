@@ -15,6 +15,8 @@ public partial class ChartList : CustomSelectableList
 
     }
 
+    const string ChartInfoMetaName = "chart_id";
+
 	[Signal] public delegate void ChartSelectedEventHandler(string chartId);
 
     private PackedScene itemScene;
@@ -26,9 +28,6 @@ public partial class ChartList : CustomSelectableList
         itemScene = ResourceLoader.Load<PackedScene>("res://Scene/chart_list_item.tscn");
 
         buttonGroup = new ButtonGroup();
-
-        ContentClickThrough = false;
-
         
     }
 
@@ -49,7 +48,7 @@ public partial class ChartList : CustomSelectableList
         foreach (var data in datas)
         {
             Button itemButton = itemScene.Instantiate() as Button;
-            itemButton.SetMeta("chart_id", data.ChartId);
+            itemButton.SetMeta(ChartInfoMetaName, data.ChartId);
             itemButton.ToggleMode = true;
             itemButton.ButtonGroup = buttonGroup;
             
@@ -81,7 +80,7 @@ public partial class ChartList : CustomSelectableList
     {
         if (pressed)
         {
-            string id = button.GetMeta("chart_id").AsString();
+            string id = button.GetMeta(ChartInfoMetaName).AsString();
             FileLogger.Log($"选中按钮 ID: {id}");
             EmitSignal(SignalName.ChartSelected, id);
         }
