@@ -206,11 +206,27 @@ public partial class StartMenu : Node
 
     public void OnDeleteButtonPressed()
     {
-        if (!string.IsNullOrEmpty(_currentSelectedChartId))
+        if (_chartList.MultiSelectMode)
         {
+            PopupHelper.Instance.ShowConfirm("提示", $"是否要删除{_chartList.SelectedIds.Count()}个谱面",
+            onConfirm: () =>
+            {
+                foreach(string id in _chartList.SelectedIds)
+                {
+                    _chartService.DeleteChart(id);
+                }
+
+                RefreshChartList();
+                _chartList.DeselectAll();
+            });
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(_currentSelectedChartId)) return;
+
             //获取谱面信息ChartInfo
             ChartInfo chartInfo = _chartService.GetChartInfo(_currentSelectedChartId);
-            if(chartInfo == null)
+            if (chartInfo == null)
             {
                 FileLogger.LogErr($"{this.Name} OnDeleteButtonPressed() chartInfo == null");
                 return;
@@ -219,8 +235,9 @@ public partial class StartMenu : Node
             //显示删除面板
             _deletePanel.Visible = true;
             _deletePanel.SetInfo(chartInfo);
-            
         }
+
+
     }
 
     private void OnDeleteConfirmed(string chartId)
@@ -276,5 +293,12 @@ public partial class StartMenu : Node
         var global = GetNode<Global>("/root/Global");
         global.editingChartId = _currentSelectedChartId;
         global.GotoScene("res://Scene/editor_scene.tscn");
+    }
+
+    public void OnSelectButtonPressed()
+    {
+        _chartList.MultiSelectMode = !_chartList.MultiSelectMode;
+
+        FileLogger.Log($"[{Name}] 切换到 {(_chartList.MultiSelectMode ? "多选" : "单选")} 模式");
     }
 }

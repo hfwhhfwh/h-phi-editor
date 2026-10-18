@@ -68,6 +68,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 alignment = 2
 
+[node name="MultiSelect" type="Button" parent="PanelContainer/SafeArea/Main/Head/Options" unique_id=1529399075]
+layout_mode = 2
+theme = ExtResource("2_4otsm")
+theme_override_font_sizes/font_size = 30
+text = "选择"
+
 [node name="Settings" type="Button" parent="PanelContainer/SafeArea/Main/Head/Options" unique_id=972680540]
 layout_mode = 2
 theme = ExtResource("2_4otsm")
@@ -95,10 +101,12 @@ theme_override_constants/separation = 10
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ChartList" type="VBoxContainer" parent="PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer" unique_id=1242640935]
+[node name="ChartList" type="VBoxContainer" parent="PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer" unique_id=1336092292]
 layout_mode = 2
 size_flags_horizontal = 3
+theme = ExtResource("2_4otsm")
 script = ExtResource("3_6k74u")
+metadata/_custom_type_script = "uid://d0ah7iqk6in6"
 
 [node name="Chart" parent="PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer/ChartList" unique_id=450730230 instance=ExtResource("4_6k74u")]
 layout_mode = 2
@@ -778,6 +786,7 @@ text = "取消
 visible = false
 layout_mode = 2
 
+[connection signal="pressed" from="PanelContainer/SafeArea/Main/Head/Options/MultiSelect" to="." method="OnSelectButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/Main/Head/Options/Settings" to="." method="OnSettingsPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/Main/Head/Options/ImportButton" to="." method="OnImportButtonPressed"]
 [connection signal="button_up" from="PanelContainer/SafeArea/Main/Head/Options/NewButton" to="." method="OnCreateButtonPressed"]

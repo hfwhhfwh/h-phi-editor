@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-public partial class ChartList : VBoxContainer
+public partial class ChartList : CustomSelectableList
 {
     public struct Data
     {
@@ -27,6 +27,8 @@ public partial class ChartList : VBoxContainer
 
         buttonGroup = new ButtonGroup();
 
+        ContentClickThrough = false;
+
         
     }
 
@@ -37,6 +39,7 @@ public partial class ChartList : VBoxContainer
     public void SetCharts(List<Data> datas)
     {
         // 清空现有项
+        RemoveAll();
         foreach (var child in GetChildren())
         {
             child.QueueFree();
@@ -52,7 +55,7 @@ public partial class ChartList : VBoxContainer
             
             // 设置按钮的显示（名称、作曲家、曲绘等）
             UpdateItemDisplay(itemButton, data);
-            AddChild(itemButton);
+            AddItem(itemButton, data.ChartId);
             itemButton.Toggled += (pressed) => OnButtonToggled(pressed, itemButton);
             
         }

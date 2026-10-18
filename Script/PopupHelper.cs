@@ -51,7 +51,7 @@ public partial class PopupHelper : Node
     }
 
     // 显示带"是/否"的确认弹窗
-    public void ShowConfirm(string title, string message, Action onConfirm, Action onCancel)
+    public void ShowConfirm(string title, string message, Action onConfirm, Action onCancel = null)
     {
         var dialog = new ConfirmationDialog();
         AddChild(dialog);
