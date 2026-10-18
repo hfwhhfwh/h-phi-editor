@@ -114,6 +114,61 @@ public partial class FileDialogManager : Node
         dialog.PopupCentered(new Vector2I(900, 700));
     }
 
+    public void ShowSelectDirectoryDialog(Action<string> onDirectorySelected, string title = "选择目录")
+    {
+        if (IsIOS())
+        {
+            ShowBuiltInSelectDirectoryDialog(onDirectorySelected, title);
+            return;
+        }
+
+        DisplayServer.FileDialogShow(
+            title: title,
+            OS.GetSystemDir(OS.SystemDir.Documents),
+            fileName: "",
+            showHidden: false,
+            DisplayServer.FileDialogMode.OpenDir,
+            filters: [],
+            Callable.From((bool status, string[] paths, int filterIndex) =>
+            {
+                if (status && paths.Length > 0)
+                {
+                    onDirectorySelected?.Invoke(paths[0]);
+                }
+                else
+                {
+                    onDirectorySelected?.Invoke(null);
+                }
+            })
+        );
+    }
+
+    private void ShowBuiltInSelectDirectoryDialog(Action<string> onDirectorySelected, string title = "选择目录")
+    {
+        var dialog = new FileDialog
+        {
+            FileMode = FileDialog.FileModeEnum.OpenDir,
+            Access = FileDialog.AccessEnum.Filesystem,
+            UseNativeDialog = false,
+            Title = title,
+            CurrentPath = OS.GetUserDataDir() + "/"
+        };
+
+        dialog.DirSelected += path =>
+        {
+            onDirectorySelected?.Invoke(path);
+            dialog.QueueFree();
+        };
+        dialog.Canceled += () =>
+        {
+            onDirectorySelected?.Invoke(null);
+            dialog.QueueFree();
+        };
+
+        AddChild(dialog);
+        dialog.PopupCentered(new Vector2I(900, 700));
+    }
+
 
     public void ShowSaveDialog(Action<string> onFileSelected, 
         Action onCalceled = null, 

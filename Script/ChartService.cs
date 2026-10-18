@@ -3,6 +3,7 @@ using QuickType;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 public partial class ChartService : Node
@@ -515,6 +516,95 @@ public partial class ChartService : Node
             defaultName: chartInfo.Name + ".zip",
             filters: filters
         );
+    }
+
+    public (int SuccessCount, int FailureCount) ExportCharts(IEnumerable<string> chartIds, string targetDirectory)
+    {
+        int successCount = 0;
+        int failureCount = 0;
+
+        try
+        {
+            Directory.CreateDirectory(targetDirectory);
+        }
+        catch (Exception e)
+        {
+            FileLogger.LogErr($"[{Name}] 无法访问导出目录 {targetDirectory}: {e.Message}");
+            return (0, chartIds.Count());
+        }
+
+        foreach (string chartId in chartIds)
+        {
+            string outputPath = null;
+            try
+            {
+                ChartInfo chartInfo = chartRepository.LoadChartInfo(chartId);
+                if (chartInfo == null)
+                {
+                    failureCount++;
+                    continue;
+                }
+
+                List<string> filePaths =
+                [
+                    chartInfo.InfoTxtPath,
+                    chartInfo.ChartPath,
+                    chartInfo.SongPath,
+                    chartInfo.PicturePath
+                ];
+
+                if (filePaths.Any(path => !Godot.FileAccess.FileExists(path)))
+                {
+                    FileLogger.LogErr($"[{Name}] 谱面资源不完整，跳过导出: {chartId}");
+                    failureCount++;
+                    continue;
+                }
+
+                string baseName = SanitizeExportFileName(chartInfo.Name);
+                outputPath = Path.Combine(targetDirectory, baseName + ".zip");
+                if (File.Exists(outputPath))
+                {
+                    string uniqueName = $"{baseName}_{chartInfo.Id}";
+                    outputPath = Path.Combine(targetDirectory, uniqueName + ".zip");
+                    for (int suffix = 2; File.Exists(outputPath); suffix++)
+                    {
+                        outputPath = Path.Combine(targetDirectory, $"{uniqueName}_{suffix}.zip");
+                    }
+                }
+
+                if (FileUtil.CreateZip(filePaths, outputPath))
+                {
+                    successCount++;
+                }
+                else
+                {
+                    failureCount++;
+                    if (File.Exists(outputPath)) File.Delete(outputPath);
+                }
+            }
+            catch (Exception e)
+            {
+                FileLogger.LogErr($"[{Name}] 导出谱面失败 {chartId}: {e.Message}");
+                failureCount++;
+                if (outputPath != null && File.Exists(outputPath)) File.Delete(outputPath);
+            }
+        }
+
+        return (successCount, failureCount);
+    }
+
+    private static string SanitizeExportFileName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "chart";
+
+        const string invalidCharacters = "<>:\"/\\|?*";
+        char[] invalidPathCharacters = Path.GetInvalidFileNameChars();
+        string sanitizedName = new string(name.Trim().Select(character =>
+            char.IsControl(character) || invalidCharacters.Contains(character) || invalidPathCharacters.Contains(character)
+                ? '_'
+                : character).ToArray()).Trim().TrimEnd('.');
+
+        return string.IsNullOrWhiteSpace(sanitizedName) ? "chart" : sanitizedName;
     }
 
     /// <summary>

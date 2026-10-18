@@ -249,6 +249,27 @@ public partial class StartMenu : Node
 
     public void OnExportPressed()
     {
+        if (_chartList.MultiSelectMode)
+        {
+            List<string> selectedChartIds = _chartList.SelectedIds.ToList();
+            if (selectedChartIds.Count == 0)
+            {
+                PopupHelper.Instance.ShowAlert("提示", "请先选择要导出的谱面");
+                return;
+            }
+
+            fileDialogManager.ShowSelectDirectoryDialog(directoryPath =>
+            {
+                if (string.IsNullOrWhiteSpace(directoryPath)) return;
+
+                var result = _chartService.ExportCharts(selectedChartIds, directoryPath);
+                PopupHelper.Instance.ShowAlert(
+                    result.FailureCount == 0 ? "导出完成" : "导出部分完成",
+                    $"成功：{result.SuccessCount} 张\n失败：{result.FailureCount} 张");
+            });
+            return;
+        }
+
         if (!string.IsNullOrEmpty(_currentSelectedChartId))
         {
             //获取谱面信息ChartInfo

@@ -693,6 +693,7 @@ public static class FileUtil
     {
         // 使用 using 确保 ZipPacker 正确释放资源
         using var packer = new ZipPacker();
+        bool allFilesAdded = true;
 
         // 1. 打开或创建 ZIP 文件
         // APPEND_CREATE 表示创建一个新的压缩包
@@ -710,6 +711,7 @@ public static class FileUtil
             if (!Godot.FileAccess.FileExists(filePath))
             {
                 FileLogger.LogErr($"错误：文件未找到，已跳过 '{filePath}'");
+                allFilesAdded = false;
                 continue;
             }
 
@@ -722,6 +724,7 @@ public static class FileUtil
             catch (Exception e)
             {
                 FileLogger.LogErr($"读取文件 '{filePath}' 时出错: {e.Message}");
+                allFilesAdded = false;
                 continue;
             }
 
@@ -735,6 +738,7 @@ public static class FileUtil
             if (err != Error.Ok)
             {
                 FileLogger.LogErr($"无法在压缩包中开始写入文件 '{targetPath}'，错误代码: {err}");
+                allFilesAdded = false;
                 continue;
             }
 
@@ -743,6 +747,7 @@ public static class FileUtil
             if (err != Error.Ok)
             {
                 FileLogger.LogErr($"写入文件数据 '{targetPath}' 时出错，错误代码: {err}");
+                allFilesAdded = false;
             }
 
             // 2.5. 关闭当前文件（必须配对调用）
@@ -750,6 +755,7 @@ public static class FileUtil
             if (err != Error.Ok)
             {
                 FileLogger.LogErr($"关闭文件 '{targetPath}' 时出错，错误代码: {err}");
+                allFilesAdded = false;
             }
         }
 
@@ -761,8 +767,11 @@ public static class FileUtil
         	return false;
         }
 		
-		FileLogger.Log($"成功创建 ZIP 文件: '{zipPath}'");
-        return true;
+        if (allFilesAdded)
+        {
+            FileLogger.Log($"成功创建 ZIP 文件: '{zipPath}'");
+        }
+        return allFilesAdded;
 
         
     }
