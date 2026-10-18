@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://cj8f0vqeye2nj"]
+
+[ext_resource type="Script" uid="uid://c73rb6aed1teo" path="res://Script/TestSceneScripts/TestSceneCustomSelectableList.cs" id="1_fg00s"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="2_8ajs1"]
+[ext_resource type="Script" uid="uid://d0ah7iqk6in6" path="res://Script/UI/CustomSelectableList.cs" id="2_fgujv"]
+
+[node name="TestSceneCustomSelectableList" type="Node" unique_id=2143739621 node_paths=PackedStringArray("_list")]
+script = ExtResource("1_fg00s")
+_list = NodePath("CustomSelectableList")
+
+[node name="CustomSelectableList" type="VBoxContainer" parent="." unique_id=1792567713]
+offset_left = 42.0
+offset_top = 37.0
+offset_right = 844.0
+offset_bottom = 447.0
+theme = ExtResource("2_8ajs1")
+script = ExtResource("2_fgujv")
+metadata/_custom_type_script = "uid://d0ah7iqk6in6"
