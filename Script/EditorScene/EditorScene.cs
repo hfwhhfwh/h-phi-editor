@@ -461,10 +461,12 @@ public partial class EditorScene : Node
     
     private void SaveChart()
     {
-        _chartService.SaveChart(editingChartId, editingChart);
+        bool saved = _chartService.SaveChart(editingChartId, editingChart);
         // 谱面和编辑器视图设置一起保存，避免退出后丢失网格状态。
         _settingsController.SaveEditorSettings();
-        // TODO 保存成功后弹出Toast提示
+        ToastManager.Instance?.ShowToast(
+            saved ? "谱面保存成功" : "谱面保存失败",
+            saved ? ToastColorPreset.OK : ToastColorPreset.Error);
     }
 
     private void Quit()

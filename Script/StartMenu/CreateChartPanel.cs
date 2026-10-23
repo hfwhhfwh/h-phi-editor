@@ -87,20 +87,32 @@ public partial class CreateChartPanel : PanelContainer
         fileDialogManager.ShowOpenDialog(
             async (string[] paths) =>
             {
-                string path = paths[0];
-                _picPathEdit.Text = path;
-                //显示曲绘
-                (Image textureImage, string _) = await FileUtil.LoadImageFromFileAsync(path);
-                if(textureImage == null)
+                if (paths == null || paths.Length == 0 || string.IsNullOrWhiteSpace(paths[0]))
                 {
-                    // 用户取消选择
-                    // FileLogger.LogErr($"[ExportPanel] SetInfo() textureImage == null picturePath:{path}");
                     return;
                 }
-                ImageTexture texture = ImageTexture.CreateFromImage(textureImage);
 
-                _picTexture = texture;
-                _picTextureRect.Texture = ImageTexture.CreateFromImage(textureImage);
+                string path = paths[0];
+                try
+                {
+                    (Image textureImage, string _) = await FileUtil.LoadImageFromFileAsync(path);
+                    if(textureImage == null)
+                    {
+                        ToastManager.Instance?.ShowToast("图片读取失败，请检查文件格式", ToastColorPreset.Error);
+                        return;
+                    }
+
+                    _picPathEdit.Text = path;
+                    ImageTexture texture = ImageTexture.CreateFromImage(textureImage);
+
+                    _picTexture = texture;
+                    _picTextureRect.Texture = texture;
+                }
+                catch (Exception e)
+                {
+                    FileLogger.LogErr($"[{Name}] 图片读取失败: {path}, 错误: {e.Message}");
+                    ToastManager.Instance?.ShowToast("图片读取失败，请检查文件格式", ToastColorPreset.Error);
+                }
             },
             filters,
             multi: false

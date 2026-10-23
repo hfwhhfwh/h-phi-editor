@@ -6,6 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
+public enum ChartImportResult
+{
+    Succeeded,
+    Failed,
+}
+
 public partial class ChartService : Node
 {
     private ChartRepository chartRepository;
@@ -156,7 +162,26 @@ public partial class ChartService : Node
     /// 导入谱面
     /// </summary>
     /// <param name="path">谱面文件（zip、pez等）的路径</param>
-    public async Task ImportChartAsync(string path)
+    public async Task<ChartImportResult> ImportChartAsync(string path)
+    {
+        try
+        {
+            await ImportChartCoreAsync(path);
+            return ChartImportResult.Succeeded;
+        }
+        catch (ChartImportAlertException)
+        {
+
+            return ChartImportResult.Failed;
+        }
+        catch (Exception e)
+        {
+            FileLogger.LogErr($"[{Name}] 谱面导入失败，路径:{path}, 错误:{e.Message}");
+            return ChartImportResult.Failed;
+        }
+    }
+
+    private async Task ImportChartCoreAsync(string path)
     {
         //1. 创建临时导入目录
         string id = Util.GenerateRandomNumId(14);
@@ -210,7 +235,7 @@ public partial class ChartService : Node
                 {
                     FileLogger.LogErr($"[{Name}] 无法找到info.txt或info.yml文件, 临时目录: {tempDir}");
                     PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：未找到 info.txt 或 info.yml, 临时目录: {tempDir}");
-                    return;
+                    throw new ChartImportAlertException();
                 }
 
                 
@@ -236,7 +261,7 @@ public partial class ChartService : Node
                 {
                     FileLogger.LogErr($"[{Name}] info.yml中未找到 chart 字段, 临时目录: {tempDir}");
                     PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：info.yml中未找到 chart 字段, 临时目录: {tempDir}");
-                    return;
+                    throw new ChartImportAlertException();
                 }
                 
                 if(!string.IsNullOrEmpty(chartInfo.PictureFileName))
@@ -247,7 +272,7 @@ public partial class ChartService : Node
                 {
                     FileLogger.LogErr($"[{Name}] info.yml中未找到 illustration 字段, 临时目录: {tempDir}");
                     PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：info.yml中未找到 illustration 字段, 临时目录: {tempDir}");
-                    return;
+                    throw new ChartImportAlertException();
                 }
 
                 if(!string.IsNullOrEmpty(chartInfo.SongFileName))
@@ -258,7 +283,7 @@ public partial class ChartService : Node
                 {
                     FileLogger.LogErr($"[{Name}] info.yml中未找到 music 字段, 临时目录: {tempDir}");
                     PopupHelper.Instance.ShowAlert("错误", $"谱面导入失败：info.yml中未找到 music 字段, 临时目录: {tempDir}");
-                    return;
+                    throw new ChartImportAlertException();
                 }
                 
                 // else if(hasInfoTxt)
@@ -346,36 +371,9 @@ public partial class ChartService : Node
 
     }
 
-    // public async Task GenerateBlurredPic(string chartId)
-    // {
-    //     if(string.IsNullOrEmpty(chartId)) throw new ArgumentNullException(nameof(chartId));
+    private sealed class ChartImportAlertException : Exception;
 
-    //     // 找到谱面路径
-    //     string dir = Path.Combine(chartRepository.GetSavesDir(), chartId);
-    //     string dirAbsolute = ProjectSettings.GlobalizePath(dir);
-    //     if (!Godot.DirAccess.DirExistsAbsolute(dirAbsolute))
-    //     {
-    //         FileLogger.LogErr($"[{Name}] 未找到谱面id:{chartId}");
-    //         return;
-    //     }
-
-    //     // 读取info
-    //     string infoPath = Path.Combine(dirAbsolute, "info.txt");
-    //     if (!Godot.FileAccess.FileExists(infoPath))
-    //     {
-    //         FileLogger.LogErr("无法找到info.txt文件");
-    //         return;
-    //     }
-
-    //     Dictionary<string, string> infoDic = FileUtil.ReadInfoFile(infoPath);
-
-    //     await ImageBlur.Instance.BlurPicture(
-    //         picPath: Path.Combine(dir, infoDic["Picture"]),
-    //         radius: 200,
-    //         outputPath: ProjectSettings.GlobalizePath(Path.Combine(dir, "img_blur_150.png"))// ← 注意加 .png
-    //     );
-        
-    // }
+    
     
     /// <summary>
     /// 设置谱面信息
@@ -484,7 +482,7 @@ public partial class ChartService : Node
     /// 导出谱面
     /// </summary>
     /// <param name="chartId">谱面id</param>
-    public void ExportChart(string chartId)
+    public void ExportChart(string chartId, Action<bool> onCompleted = null)
     {
         List<string> filePaths = new List<string>();//用于存储将要打包的文件的路径
 
@@ -510,8 +508,25 @@ public partial class ChartService : Node
         fileDialogManager.ShowSaveDialog(
             onFileSelected: (zipPath) =>
             {
-                FileUtil.CreateZip(filePaths, zipPath);
-                FileLogger.Log($"[{this.Name}] 成功创建zip文件:{zipPath}");
+                try
+                {
+                    bool succeeded = FileUtil.CreateZip(filePaths, zipPath);
+                    if (succeeded)
+                    {
+                        FileLogger.Log($"[{this.Name}] 成功创建zip文件:{zipPath}");
+                    }
+                    else
+                    {
+                        FileLogger.LogErr($"[{this.Name}] 创建zip文件失败:{zipPath}");
+                    }
+
+                    onCompleted?.Invoke(succeeded);
+                }
+                catch (Exception e)
+                {
+                    FileLogger.LogErr($"[{this.Name}] 创建zip文件失败:{zipPath}, 错误:{e.Message}");
+                    onCompleted?.Invoke(false);
+                }
             },
             defaultName: chartInfo.Name + ".zip",
             filters: filters
@@ -612,15 +627,24 @@ public partial class ChartService : Node
     /// </summary>
     /// <param name="chartId">谱面id</param>
     /// <param name="chart">谱面数据</param>
-    public void SaveChart(string chartId, Chart chart)
+    public bool SaveChart(string chartId, Chart chart)
     {
         ChartInfo chartInfo = GetChartInfo(chartId);
+        if (chartInfo == null)
+        {
+            FileLogger.LogErr($"[{Name}] 无法保存谱面，未找到谱面信息: {chartId}");
+            return false;
+        }
 
         string chartPath = chartInfo.ChartPath;
 
-        ChartLoader.SaveChart(chart, chartPath);
+        if (!ChartLoader.SaveChart(chart, chartPath))
+        {
+            return false;
+        }
 
         FileLogger.Log($"[{this.Name}] 谱面保存成功！谱面id:{chartId}");
+        return true;
     }
 
     // public void SaveChartInfo(ChartInfo info)

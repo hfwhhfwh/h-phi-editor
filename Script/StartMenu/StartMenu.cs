@@ -127,24 +127,65 @@ public partial class StartMenu : Node
         fileDialogManager.ShowOpenDialog(
             async (string[] paths) =>
             {
+                if (paths == null || paths.Length == 0)
+                {
+                    return;
+                }
+
+                int successCount = 0;
+                int unreportedFailureCount = 0;
                 foreach(string path in paths)
                 {
                     if(string.IsNullOrEmpty(path)) continue;
 
                     try
                     {
-                        await _chartService.ImportChartAsync(path);
+                        ChartImportResult result = await _chartService.ImportChartAsync(path);
+                        if (result == ChartImportResult.Succeeded)
+                        {
+                            successCount++;
+                        }
+                        else if (result == ChartImportResult.Failed)
+                        {
+                            unreportedFailureCount++;
+                        }
                     }
                     catch(Exception e)
                     {
                         FileLogger.LogErr($"[{Name}] 谱面无法正常导入，路径:{path}, 错误:{e.Message}");
-                        continue;
+                        unreportedFailureCount++;
                     }
                 }
 
                 ImageBlur.Instance.RemoveViewports(); // 节省渲染性能
 
                 RefreshChartList();
+
+                if(paths.Length == 1)
+                {
+                    string message = successCount > 0
+                        ? "导入成功"
+                        : "导入失败";
+                    ToastManager.Instance?.ShowToast(
+                        message,
+                        successCount > 0 ? ToastColorPreset.OK : ToastColorPreset.Error);
+                }
+                else
+                {
+                    if (unreportedFailureCount > 0)
+                    {
+                        string message = successCount > 0
+                            ? $"导入完成：成功 {successCount} 个，另有 {unreportedFailureCount} 个导入失败"
+                            : $"{unreportedFailureCount} 个谱面导入失败";
+                        ToastManager.Instance?.ShowToast(
+                            message,
+                            successCount > 0 ? ToastColorPreset.Warning : ToastColorPreset.Error);
+                    }
+                    else if (successCount > 0)
+                    {
+                        ToastManager.Instance?.ShowToast($"成功导入 {successCount} 个谱面");
+                    }
+                }
                 
             },
             filters,
@@ -290,9 +331,12 @@ public partial class StartMenu : Node
     {
         FileLogger.Log($"[{this.Name}] OnExportConfirmed(), chartID:{chartId}");
 
-        _chartService.ExportChart(chartId);
-
-        // TODO 导出谱面后弹出Toast弹窗
+        _chartService.ExportChart(chartId, succeeded =>
+        {
+            ToastManager.Instance?.ShowToast(
+                succeeded ? "谱面导出成功" : "谱面导出失败",
+                succeeded ? ToastColorPreset.OK : ToastColorPreset.Error);
+        });
 
         _exportPanel.Visible = false;
     }

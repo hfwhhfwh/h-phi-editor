@@ -85,33 +85,47 @@ public partial class ChartLoader : Node
     /// </summary>
     /// <param name="data">要保存的 Chart 对象</param>
     /// <param name="path">保存路径（如 user://Chart2.json）</param>
-    public static void SaveChart(Chart data, string path)
+    public static bool SaveChart(Chart data, string path)
     {
         if (data == null)
         {
             FileLogger.LogErr("保存失败：Chart 数据为 null");
-            return;
+            return false;
         }
 
         if (string.IsNullOrEmpty(path))
         {
             FileLogger.LogErr("保存路径不能为空");
-            return;
+            return false;
         }
 
-        // 使用生成的 ToJson 方法序列化（保持一致性）
-        string jsonData = data.ToJson();
-
-        var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
-        if (file == null)
+        try
         {
-            FileLogger.LogErr($"无法创建/写入文件: {path}");
-            return;
-        }
+            // 使用生成的 ToJson 方法序列化（保持一致性）
+            string jsonData = data.ToJson();
 
-        file.StoreString(jsonData);
-        file.Dispose();
-        FileLogger.Log($"Chart 已保存到: {path}");
+            using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
+            if (file == null)
+            {
+                FileLogger.LogErr($"无法创建/写入文件: {path}");
+                return false;
+            }
+
+            file.StoreString(jsonData);
+            if (file.GetError() != Error.Ok)
+            {
+                FileLogger.LogErr($"写入文件失败: {path}, 错误: {file.GetError()}");
+                return false;
+            }
+
+            FileLogger.Log($"Chart 已保存到: {path}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            FileLogger.LogErr($"保存文件失败: {path}, 错误: {ex.Message}");
+            return false;
+        }
     }
     
 }

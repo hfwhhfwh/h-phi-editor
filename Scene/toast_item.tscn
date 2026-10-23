@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://d33y0c323wy8u"]
+
+[ext_resource type="Script" uid="uid://coi2tqdqc1gxf" path="res://Script/ToastMessage/toast_item.gd" id="1_uyttc"]
+[ext_resource type="Script" uid="uid://br27xqb1qs7yk" path="res://Script/UI/auto_wrap_label.gd" id="3_854yr"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6nawm"]
+bg_color = Color(0.43137255, 1, 0.61960787, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uyttc"]
+bg_color = Color(0.27058825, 0.9019608, 0.41568628, 1)
+
+[node name="ToastItem" type="PanelContainer" unique_id=485387182]
+offset_right = 91.0
+offset_bottom = 55.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+script = ExtResource("1_uyttc")
+metadata/_custom_type_script = "uid://coi2tqdqc1gxf"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1810627098]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 0
+
+[node name="PanelContainer8dnfj" type="PanelContainer" parent="HBoxContainer" unique_id=738512698]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_6nawm")
+
+[node name="Icon8sn3k" type="TextureRect" parent="HBoxContainer/PanelContainer8dnfj" unique_id=1938121533]
+unique_name_in_owner = true
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PanelContainer2ml0s" type="PanelContainer" parent="HBoxContainer" unique_id=137018446]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_styles/panel = SubResource("StyleBoxFlat_uyttc")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/PanelContainer2ml0s" unique_id=962218136]
+layout_mode = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_right = 15
+
+[node name="TextLabel3yb7r" type="Label" parent="HBoxContainer/PanelContainer2ml0s/MarginContainer" unique_id=847216029]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("3_854yr")
+max_width = 500.0

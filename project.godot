@@ -36,6 +36,7 @@ LoadingManager="*uid://b57um3paj7g87"
 FileLogger="*uid://dsijuqa7kbo5j"
 ShareHelper="*uid://orissxenvxem"
 ImageBlur="*uid://q6jaa43qjmt8"
+ToastManager="*uid://b5pfn8nefsvfu"
 
 [display]
 
