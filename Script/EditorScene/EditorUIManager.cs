@@ -220,15 +220,17 @@ public partial class EditorUIManager : Node
 
     private void OnOthersButtonPressed()
     {
-        List<PopupMenuItem> items =
-        [
-            new PopupMenuItem { Text = "试玩", Callback = _onTestPlay },
-        ];
+        // List<PopupMenuItem> items =
+        // [
+        //     new PopupMenuItem { Text = "试玩", Callback = _onTestPlay },
+        // ];
 
-        PopupMenuHelper.Instance.ShowPopupMenu(
-            this,
-            GetViewport().GetMousePosition() + new Vector2(30, 30),
-            items);
+        // PopupMenuHelper.Instance.ShowPopupMenu(
+        //     this,
+        //     GetViewport().GetMousePosition() + new Vector2(30, 30),
+        //     items);
+
+        _view.MenuLayer.Open();
     }
 
     // ==================== 工具栏按钮 ====================

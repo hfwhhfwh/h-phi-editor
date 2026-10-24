@@ -54,6 +54,7 @@ public partial class EditorScene : Node
     [Export] private Button _pasteConfirmBtn;
     [Export] private Button _pasteCancelBtn;
     [Export] private Button _deleteBtn;
+    [Export] private MenuLayer _menuLayer;
 
 
 
@@ -399,6 +400,7 @@ public partial class EditorScene : Node
             EditorSettingsPanel = _editorSettingsPanel,
 
             NoteChooser = noteChooser,
+            MenuLayer = _menuLayer
         };
     }
 

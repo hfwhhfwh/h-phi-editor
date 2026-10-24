@@ -46,4 +46,6 @@ public sealed class EditorViewRefs
     public EditorSettingsPanel EditorSettingsPanel;
 
     public NoteChooser NoteChooser;
+
+    public MenuLayer MenuLayer;
 }
