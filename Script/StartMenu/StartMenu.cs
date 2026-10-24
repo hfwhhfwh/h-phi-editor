@@ -14,6 +14,7 @@ public partial class StartMenu : Node
     [Export] private InfoPanel _infoPanel;
     [Export] private ExportPanel _exportPanel;
     [Export] private SettingsPanel _settingsPanel;
+    [Export] private Button _multiSelectBtn;
 
     private FileDialogManager fileDialogManager;
 
@@ -41,6 +42,9 @@ public partial class StartMenu : Node
 
         _exportPanel.Confirmed += OnExportConfirmed;
         _exportPanel.Cancelled += () => _exportPanel.Visible = false;
+
+        _multiSelectBtn.ToggleMode = true;
+        _multiSelectBtn.Toggled += OnSelectButtonToggled;
 
         // 初始化列表
         RefreshChartList();
@@ -249,9 +253,12 @@ public partial class StartMenu : Node
     {
         if (_chartList.MultiSelectMode)
         {
+            if(_chartList.SelectedIds.Count() == 0) return;
+
             PopupHelper.Instance.ShowConfirm("提示", $"是否要删除{_chartList.SelectedIds.Count()}个谱面",
             onConfirm: () =>
             {
+                int count = _chartList.SelectedIds.Count();
                 foreach(string id in _chartList.SelectedIds)
                 {
                     _chartService.DeleteChart(id);
@@ -259,6 +266,8 @@ public partial class StartMenu : Node
 
                 RefreshChartList();
                 _chartList.DeselectAll();
+
+                ToastManager.Instance.ShowToast($"成功删除{count}张谱面", ToastColorPreset.OK);
             });
         }
         else
@@ -286,6 +295,8 @@ public partial class StartMenu : Node
         _chartService.DeleteChart(chartId);
         RefreshChartList();
         _deletePanel.Visible = false;
+
+        ToastManager.Instance.ShowToast($"成功删除谱面", ToastColorPreset.OK);
     }
 
     public void OnExportPressed()
@@ -295,18 +306,28 @@ public partial class StartMenu : Node
             List<string> selectedChartIds = _chartList.SelectedIds.ToList();
             if (selectedChartIds.Count == 0)
             {
-                PopupHelper.Instance.ShowAlert("提示", "请先选择要导出的谱面");
+                // PopupHelper.Instance.ShowAlert("提示", "请先选择要导出的谱面");
+                ToastManager.Instance.ShowToast("请选择要导出的谱面", ToastColorPreset.Warning);
                 return;
             }
 
-            fileDialogManager.ShowSelectDirectoryDialog(directoryPath =>
+            fileDialogManager.ShowSelectDirectoryDialog((string dirPath) =>
             {
-                if (string.IsNullOrWhiteSpace(directoryPath)) return;
+                if (string.IsNullOrWhiteSpace(dirPath)) return;
 
-                var result = _chartService.ExportCharts(selectedChartIds, directoryPath);
-                PopupHelper.Instance.ShowAlert(
-                    result.FailureCount == 0 ? "导出完成" : "导出部分完成",
-                    $"成功：{result.SuccessCount} 张\n失败：{result.FailureCount} 张");
+                var result = _chartService.ExportCharts(selectedChartIds, dirPath);
+
+                string title;
+                ToastColorPreset toastColorPreset;
+                
+                title = result.FailureCount == 0 ? "导出全部完成" : $"导出成功{result.SuccessCount}张，失败{result.FailureCount}张";
+                toastColorPreset = result.FailureCount == 0 ? ToastColorPreset.OK : ToastColorPreset.Warning;
+
+                ToastManager.Instance.ShowToast(title, toastColorPreset);
+
+                // PopupHelper.Instance.ShowAlert(
+                //     result.FailureCount == 0 ? "导出完成" : "导出部分完成",
+                //     $"成功：{result.SuccessCount} 张\n失败：{result.FailureCount} 张");
             });
             return;
         }
@@ -360,10 +381,10 @@ public partial class StartMenu : Node
         global.GotoScene("res://Scene/editor_scene.tscn");
     }
 
-    public void OnSelectButtonPressed()
+    public void OnSelectButtonToggled(bool toggledOn)
     {
-        _chartList.MultiSelectMode = !_chartList.MultiSelectMode;
+        _chartList.MultiSelectMode = toggledOn;
 
-        FileLogger.Log($"[{Name}] 切换到 {(_chartList.MultiSelectMode ? "多选" : "单选")} 模式");
+        FileLogger.Log($"[{Name}] 切换到 {(toggledOn ? "多选" : "单选")} 模式");
     }
 }

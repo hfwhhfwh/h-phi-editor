@@ -15,7 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://ejl1hu2xxquy" path="res://icon.svg" id="11_7eatm"]
 [ext_resource type="PackedScene" uid="uid://cuskdub26yo1x" path="res://Scene/settings_panel.tscn" id="14_tvlai"]
 
-[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "_settingsPanel", "deviceLabel", "versionLabel")]
+[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "_settingsPanel", "_multiSelectBtn", "deviceLabel", "versionLabel")]
 script = ExtResource("1_4qtu7")
 _chartList = NodePath("PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer/ChartList")
 _createPanel = NodePath("PanelContainer/SafeArea/CreateChartPanel")
@@ -23,6 +23,7 @@ _deletePanel = NodePath("PanelContainer/SafeArea/DeletePanel")
 _infoPanel = NodePath("PanelContainer/SafeArea/InfoPanel")
 _exportPanel = NodePath("PanelContainer/SafeArea/ExportPanel")
 _settingsPanel = NodePath("PanelContainer/SafeArea/SettingsPanel")
+_multiSelectBtn = NodePath("PanelContainer/SafeArea/Main/Head/Options/MultiSelect")
 deviceLabel = NodePath("PanelContainer/SafeArea/Main/Head/DeviceLabel")
 versionLabel = NodePath("PanelContainer/SafeArea/Main/Bottom/VersionLabel")
 
@@ -72,6 +73,7 @@ alignment = 2
 layout_mode = 2
 theme = ExtResource("2_4otsm")
 theme_override_font_sizes/font_size = 30
+toggle_mode = true
 text = "选择"
 
 [node name="Settings" type="Button" parent="PanelContainer/SafeArea/Main/Head/Options" unique_id=972680540]

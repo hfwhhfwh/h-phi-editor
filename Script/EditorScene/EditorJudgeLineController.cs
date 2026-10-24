@@ -136,7 +136,8 @@ public partial class EditorJudgeLineController : Node
         if (chart.JudgeLineList.Count <= 1)
         {
             FileLogger.Log($"[{Name}] 最少保留一条判定线，删除失败");
-            PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
+            // PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
+            ToastManager.Instance.ShowToast("最少保留一条判定线，删除失败", ToastColorPreset.Warning);
             return;
         }
 
