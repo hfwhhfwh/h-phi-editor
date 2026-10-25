@@ -38,7 +38,7 @@ public partial class EditorScene : Node
     [Export] private LineEventInfoPanel eventInfoPanel;
     [Export] private BpmInfoPanel bpmInfoPanel;
     [Export] private NoteChooser noteChooser;
-    [Export] private MenuButton fileMenuButtion;
+    // [Export] private MenuButton fileMenuButtion;
     [Export] private MenuButton editMenuButtion;
     [Export] private MenuButton viewMenuButton;
     [Export] private MenuButton helpMenuButtion;
@@ -55,6 +55,8 @@ public partial class EditorScene : Node
     [Export] private Button _pasteCancelBtn;
     [Export] private Button _deleteBtn;
     [Export] private MenuLayer _menuLayer;
+    [Export] private Button _saveBtn, _saveAndQuitBtn, _onlyQuitBtn;
+    [Export] private Button _testPlayBtn;
 
 
 
@@ -369,38 +371,42 @@ public partial class EditorScene : Node
         {
             Theme = theme,
 
-            FileMenu = fileMenuButtion,
-            EditMenu = editMenuButtion,
-            ViewMenu = viewMenuButton,
-            HelpMenu = helpMenuButtion,
-            OthersButton = _othersButton,
+            // FileMenu = fileMenuButtion,
+            EditMenu = editMenuButtion ?? throw new Exception("EditMenuButton is null"),
+            ViewMenu = viewMenuButton ?? throw new Exception("ViewMenuButton is null"),
+            HelpMenu = helpMenuButtion ?? throw new Exception("HelpMenuButton is null"),
+            OthersButton = _othersButton ?? throw new Exception("OthersButton is null"),
 
-            UndoButton = _undoBtn,
-            RedoButton = _redoBtn,
-            CopyButton = _copyBtn,
-            PasteButton = _pasteBtn,
-            MultiSelectButton = _multiSelectBtn,
-            BoxSelectButton = _boxSelectBtn,
-            PasteConfirmButton = _pasteConfirmBtn,
-            PasteCancelButton = _pasteCancelBtn,
+            UndoButton = _undoBtn ?? throw new Exception("UndoButton is null"),
+            RedoButton = _redoBtn ?? throw new Exception("RedoButton is null"),
+            CopyButton = _copyBtn ?? throw new Exception("CopyButton is null"),
+            PasteButton = _pasteBtn ?? throw new Exception("PasteButton is null"),
+            MultiSelectButton = _multiSelectBtn ?? throw new Exception("MultiSelectButton is null"),
+            BoxSelectButton = _boxSelectBtn ?? throw new Exception("BoxSelectButton is null"),
+            PasteConfirmButton = _pasteConfirmBtn ?? throw new Exception("PasteConfirmButton is null"),
+            PasteCancelButton = _pasteCancelBtn ?? throw new Exception("PasteCancelButton is null"),
 
             EditingLineLabel = editingLineLabel,
             EditModeLabel = editModeLabel,
             FpsLabel = fpsLabel,
 
-            NoteEditPanel = noteEditPanel,
-            EventEditPanel = eventEditPanel,
-            BpmEditPanel = bpmEditPanel,
+            NoteEditPanel = noteEditPanel ?? throw new Exception("NoteEditPanel is null"),
+            EventEditPanel = eventEditPanel ?? throw new Exception("EventEditPanel is null"),
+            BpmEditPanel = bpmEditPanel ?? throw new Exception("BpmEditPanel is null"),
 
-            NoteInfoPanel = noteInfoPanel,
-            EventInfoPanel = eventInfoPanel,
-            BpmInfoPanel = bpmInfoPanel,
+            NoteInfoPanel = noteInfoPanel ?? throw new Exception("NoteInfoPanel is null"),
+            EventInfoPanel = eventInfoPanel ?? throw new Exception("EventInfoPanel is null"),
+            BpmInfoPanel = bpmInfoPanel ?? throw new Exception("BpmInfoPanel is null"),
 
-            SettingsPanel = _settingsPanel,
-            EditorSettingsPanel = _editorSettingsPanel,
+            SettingsPanel = _settingsPanel ?? throw new Exception("SettingsPanel is null"),
+            EditorSettingsPanel = _editorSettingsPanel ?? throw new Exception("EditorSettingsPanel is null"),
 
-            NoteChooser = noteChooser,
-            MenuLayer = _menuLayer
+            NoteChooser = noteChooser ?? throw new Exception("NoteChooser is null"),
+            MenuLayer = _menuLayer ?? throw new Exception("MenuLayer is null"),
+            SaveBtn = _saveBtn ?? throw new Exception("SaveBtn is null"),
+            SaveAndQuitBtn = _saveAndQuitBtn ?? throw new Exception("SaveAndQuitBtn is null"),
+            OnlyQuitBtn = _onlyQuitBtn ?? throw new Exception("OnlyQuitBtn is null"),
+            TestPlayBtn = _testPlayBtn ?? throw new Exception("TestPlayBtn is null"),
         };
     }
 

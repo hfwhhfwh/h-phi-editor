@@ -170,15 +170,15 @@ public partial class EditorUIManager : Node
     {
         PopupMenuHelper.SetTheme(_view.Theme);
 
-        // “文件”
-        PopupMenuHelper.Instance.SetMenuButton(_view.FileMenu, new List<PopupMenuItem>
-        {
-            new PopupMenuItem { Text = "保存", Callback = _onSave },
-            //new PopupMenuItem { Text = "另存为", Callback = null},
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "保存并退出", Callback = _onSaveAndQuit },
-            new PopupMenuItem { Text = "仅退出", Callback = _onQuitRequested },
-        });
+        // // “文件”
+        // PopupMenuHelper.Instance.SetMenuButton(_view.FileMenu, new List<PopupMenuItem>
+        // {
+        //     new PopupMenuItem { Text = "保存", Callback = _onSave },
+        //     //new PopupMenuItem { Text = "另存为", Callback = null},
+        //     new PopupMenuItem { IsSeparator = true },
+        //     new PopupMenuItem { Text = "保存并退出", Callback = _onSaveAndQuit },
+        //     new PopupMenuItem { Text = "仅退出", Callback = _onQuitRequested },
+        // });
 
         // “编辑”
         PopupMenuHelper.Instance.SetMenuButton(_view.EditMenu, new List<PopupMenuItem>
@@ -237,6 +237,16 @@ public partial class EditorUIManager : Node
 
     private void BindToolbarButtons()
     {
+        // 保存 / 保存并退出 / 退出
+        if (_view.SaveBtn != null)
+            _view.SaveBtn.Pressed += () => _onSave?.Invoke();
+        if (_view.SaveAndQuitBtn != null)
+            _view.SaveAndQuitBtn.Pressed += () => _onSaveAndQuit?.Invoke();
+        if (_view.OnlyQuitBtn != null)
+            _view.OnlyQuitBtn.Pressed += () => _onQuitRequested?.Invoke();
+        if (_view.TestPlayBtn != null)
+            _view.TestPlayBtn.Pressed += () => _onTestPlay?.Invoke();
+
         // 撤销 / 重做
         _view.UndoButton.Pressed += OnUndoPressed;
         _view.RedoButton.Pressed += OnRedoPressed;

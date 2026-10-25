@@ -54,6 +54,7 @@ public partial class ToastManager : Node
         BuildPresetIcons(); // 预生成内置图标
 
         var canvasLayer = new CanvasLayer();
+        canvasLayer.Layer = 10;
         AddChild(canvasLayer);
 
         _toastLayer = new Control

@@ -12,7 +12,7 @@ public sealed class EditorViewRefs
     public Theme Theme;
 
     // ---- 顶部菜单栏 ----
-    public MenuButton FileMenu;
+    // public MenuButton FileMenu;
     public MenuButton EditMenu;
     public MenuButton ViewMenu;
     public MenuButton HelpMenu;
@@ -47,5 +47,8 @@ public sealed class EditorViewRefs
 
     public NoteChooser NoteChooser;
 
+    // 侧边菜单
     public MenuLayer MenuLayer;
+    public Button SaveBtn, SaveAndQuitBtn, OnlyQuitBtn;
+    public Button TestPlayBtn;
 }

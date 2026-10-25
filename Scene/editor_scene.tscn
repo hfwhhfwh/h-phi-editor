@@ -52,7 +52,7 @@
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://Textures/暂停_256px.png" id="43_x7a0t"]
 [ext_resource type="Script" uid="uid://c3f83enw21wkf" path="res://Script/MenuLayer.cs" id="51_m6rsv"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "_bgImageRect", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "fileMenuButtion", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_boxSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "_deleteBtn", "_menuLayer", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "_bgImageRect", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_boxSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "_deleteBtn", "_menuLayer", "_saveBtn", "_saveAndQuitBtn", "_onlyQuitBtn", "_testPlayBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -71,7 +71,6 @@ noteInfoPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/NoteInfoPan
 eventInfoPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/EventInfoPanel")
 bpmInfoPanel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/BpmInfoPanel")
 noteChooser = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/NoteChooser")
-fileMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/FileButton")
 editMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/EditButton")
 viewMenuButton = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/ViewButton")
 helpMenuButtion = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/HelpButton")
@@ -88,6 +87,10 @@ _pasteConfirmBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContain
 _pasteCancelBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar/Control/PasteCancel")
 _deleteBtn = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Delete")
 _menuLayer = NodePath("MenuLayer")
+_saveBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/SaveButton")
+_saveAndQuitBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/SaveAndQuit")
+_onlyQuitBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/OnlyQuit")
+_testPlayBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/Play")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
 fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/FPSLabel")
 editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
@@ -128,6 +131,7 @@ theme_override_font_sizes/font_size = 30
 text = "···"
 
 [node name="FileButton" type="MenuButton" parent="EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/MenuBar" unique_id=116158093]
+visible = false
 layout_mode = 2
 theme = ExtResource("4_v3wio")
 theme_override_font_sizes/font_size = 30
@@ -582,7 +586,6 @@ enabled = false
 zoom = Vector2(0.5, 0.5)
 
 [node name="MenuLayer" type="CanvasLayer" parent="." unique_id=1549427280 node_paths=PackedStringArray("_bgColorRect", "_panel", "_closeBtn")]
-visible = false
 script = ExtResource("51_m6rsv")
 _bgColorRect = NodePath("ColorRect")
 _panel = NodePath("Panel")
@@ -642,6 +645,10 @@ text = "仅退出"
 
 [node name="HSeparator2" type="HSeparator" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=553474186]
 layout_mode = 2
+
+[node name="Play" type="Button" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=197226555]
+layout_mode = 2
+text = "试玩"
 
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play" to="." method="OnPlayButtonClicked"]
 [connection signal="button_up" from="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/TabContainer/Normal/VBoxContainer/Play2" to="." method="PlayInEditPanel"]
