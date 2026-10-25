@@ -57,6 +57,8 @@ public partial class EditorScene : Node
     [Export] private MenuLayer _menuLayer;
     [Export] private Button _saveBtn, _saveAndQuitBtn, _onlyQuitBtn;
     [Export] private Button _testPlayBtn;
+    [Export] private Button _globalSettingsBtn;
+    [Export] private Button _editorSettingsBtn;
 
 
 
@@ -407,6 +409,8 @@ public partial class EditorScene : Node
             SaveAndQuitBtn = _saveAndQuitBtn ?? throw new Exception("SaveAndQuitBtn is null"),
             OnlyQuitBtn = _onlyQuitBtn ?? throw new Exception("OnlyQuitBtn is null"),
             TestPlayBtn = _testPlayBtn ?? throw new Exception("TestPlayBtn is null"),
+            GlobalSettingsBtn = _globalSettingsBtn ?? throw new Exception("GlobalSettingsBtn is null"),
+            EditorSettingsBtn = _editorSettingsBtn ?? throw new Exception("EditorSettingsBtn is null"),
         };
     }
 

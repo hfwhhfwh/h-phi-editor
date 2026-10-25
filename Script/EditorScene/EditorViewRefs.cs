@@ -51,4 +51,6 @@ public sealed class EditorViewRefs
     public MenuLayer MenuLayer;
     public Button SaveBtn, SaveAndQuitBtn, OnlyQuitBtn;
     public Button TestPlayBtn;
+    public Button GlobalSettingsBtn;
+    public Button EditorSettingsBtn;
 }

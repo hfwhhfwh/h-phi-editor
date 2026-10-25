@@ -18,6 +18,23 @@ public partial class MenuLayer : CanvasLayer
 		};
 
 		_bgColorRect.MouseFilter = Control.MouseFilterEnum.Stop;
+		_bgColorRect.GuiInput += (InputEvent @event) =>
+		{
+			if (@event is InputEventMouseButton mb
+				&& mb.Pressed
+				&& mb.ButtonIndex == MouseButton.Left)
+			{
+				Close();
+				_bgColorRect.AcceptEvent(); // 标记事件已处理
+			}
+			else if(@event is InputEventScreenTouch st && st.Pressed)
+			{
+				Close();
+				_bgColorRect.AcceptEvent(); // 标记事件已处理
+			}
+		};
+
+		_panel.MouseFilter = Control.MouseFilterEnum.Stop;
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

@@ -52,7 +52,7 @@
 [ext_resource type="Texture2D" uid="uid://d0jp8xmb4vru6" path="res://Textures/暂停_256px.png" id="43_x7a0t"]
 [ext_resource type="Script" uid="uid://c3f83enw21wkf" path="res://Script/MenuLayer.cs" id="51_m6rsv"]
 
-[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "_bgImageRect", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_boxSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "_deleteBtn", "_menuLayer", "_saveBtn", "_saveAndQuitBtn", "_onlyQuitBtn", "_testPlayBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
+[node name="EditorScene" type="Node" unique_id=506389422 node_paths=PackedStringArray("slideJoystick", "zoomJoystick", "noteEditPanel", "eventEditPanel", "bpmEditPanel", "chartPlayer", "chartRenderer", "chartPlayParent", "_bgImageRect", "editPanel", "rightPanel", "chooseLinePanel", "noteInfoPanel", "eventInfoPanel", "bpmInfoPanel", "noteChooser", "editMenuButtion", "viewMenuButton", "helpMenuButtion", "_othersButton", "_settingsPanel", "_editorSettingsPanel", "_undoBtn", "_redoBtn", "_copyBtn", "_pasteBtn", "_multiSelectBtn", "_boxSelectBtn", "_pasteConfirmBtn", "_pasteCancelBtn", "_deleteBtn", "_menuLayer", "_saveBtn", "_saveAndQuitBtn", "_onlyQuitBtn", "_testPlayBtn", "_globalSettingsBtn", "_editorSettingsBtn", "editingLineLabel", "fpsLabel", "editModeLabel")]
 script = ExtResource("1_hg1x2")
 slideJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/SlideJoystick")
 zoomJoystick = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/VBoxContainerLeft/ZoomJoystick")
@@ -91,6 +91,8 @@ _saveBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/SaveButton")
 _saveAndQuitBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/SaveAndQuit")
 _onlyQuitBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/OnlyQuit")
 _testPlayBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/Play")
+_globalSettingsBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/GlobalSettings")
+_editorSettingsBtn = NodePath("MenuLayer/Panel/SafeArea/VBoxContainer/EditorSettings")
 editingLineLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditingLineLabel")
 fpsLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/RightPanel/FPSLabel")
 editModeLabel = NodePath("EditorPanel/SafeArea/VBoxContainer/Head/HBoxContainer/Labels/EditModeLabel")
@@ -586,6 +588,7 @@ enabled = false
 zoom = Vector2(0.5, 0.5)
 
 [node name="MenuLayer" type="CanvasLayer" parent="." unique_id=1549427280 node_paths=PackedStringArray("_bgColorRect", "_panel", "_closeBtn")]
+visible = false
 script = ExtResource("51_m6rsv")
 _bgColorRect = NodePath("ColorRect")
 _panel = NodePath("Panel")
@@ -625,7 +628,7 @@ layout_mode = 2
 
 [node name="CloseButton" type="Button" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=694959867]
 layout_mode = 2
-text = "返回"
+text = "关闭菜单"
 
 [node name="HSeparator" type="HSeparator" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=841851289]
 layout_mode = 2
@@ -644,6 +647,17 @@ layout_mode = 2
 text = "仅退出"
 
 [node name="HSeparator2" type="HSeparator" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=553474186]
+layout_mode = 2
+
+[node name="GlobalSettings" type="Button" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=21925783]
+layout_mode = 2
+text = "全局设置"
+
+[node name="EditorSettings" type="Button" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=1105628142]
+layout_mode = 2
+text = "编辑器设置"
+
+[node name="HSeparator3" type="HSeparator" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=2146919356]
 layout_mode = 2
 
 [node name="Play" type="Button" parent="MenuLayer/Panel/SafeArea/VBoxContainer" unique_id=197226555]

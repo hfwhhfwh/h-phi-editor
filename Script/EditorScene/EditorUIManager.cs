@@ -186,9 +186,6 @@ public partial class EditorUIManager : Node
             new PopupMenuItem { Text = "复制", Callback = null },
             new PopupMenuItem { Text = "粘贴", Callback = null },
             new PopupMenuItem { Text = "剪切", Callback = null },
-            new PopupMenuItem { IsSeparator = true },
-            new PopupMenuItem { Text = "全局设置", Callback = _view.SettingsPanel.Show },
-            new PopupMenuItem { Text = "编辑器设置", Callback = _view.EditorSettingsPanel.Show },
         });
 
         // “视图”
@@ -237,6 +234,17 @@ public partial class EditorUIManager : Node
 
     private void BindToolbarButtons()
     {
+        _view.GlobalSettingsBtn.Pressed += () =>
+        {
+            _view.MenuLayer.Close();
+            _view.SettingsPanel.Show();
+        };
+        _view.EditorSettingsBtn.Pressed += () =>
+        {
+            _view.MenuLayer.Close();
+            _view.EditorSettingsPanel.Show();
+        };
+
         // 保存 / 保存并退出 / 退出
         if (_view.SaveBtn != null)
             _view.SaveBtn.Pressed += () => _onSave?.Invoke();
