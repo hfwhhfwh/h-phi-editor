@@ -2,6 +2,7 @@ using Godot;
 using QuickType;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// 判定线与事件层控制器。
@@ -37,6 +38,7 @@ public partial class EditorJudgeLineController : Node
             _chooseLinePanel.LineSelected += OnLineSelected;
             _chooseLinePanel.AddLineRequested += OnAddLineRequested;
             _chooseLinePanel.DeleteLineRequested += OnDeleteLineRequested;
+            _chooseLinePanel.DeleteSelectedLinesRequested += OnDeleteSelectedLinesRequested;
             _chooseLinePanel.RefreshRequested += RefreshChooseLinePanel;
             _chooseLinePanel.LayerSelected += OnLayerSelected;
         }
@@ -51,6 +53,7 @@ public partial class EditorJudgeLineController : Node
             _chooseLinePanel.LineSelected -= OnLineSelected;
             _chooseLinePanel.AddLineRequested -= OnAddLineRequested;
             _chooseLinePanel.DeleteLineRequested -= OnDeleteLineRequested;
+            _chooseLinePanel.DeleteSelectedLinesRequested -= OnDeleteSelectedLinesRequested;
             _chooseLinePanel.RefreshRequested -= RefreshChooseLinePanel;
             _chooseLinePanel.LayerSelected -= OnLayerSelected;
         }
@@ -130,18 +133,47 @@ public partial class EditorJudgeLineController : Node
 
     private void OnDeleteLineRequested(int id)
     {
-        Chart chart = _context?.EditingChart;
-        if (chart?.JudgeLineList == null) return;
+        DeleteLines([id]);
+    }
 
-        if (chart.JudgeLineList.Count <= 1)
+    private void OnDeleteSelectedLinesRequested(List<int> lineIds)
+    {
+        if (lineIds == null || lineIds.Count == 0) return;
+
+        List<int> selectedIds = lineIds.Distinct().ToList();
+        PopupHelper.Instance.ShowConfirm(
+            "提示",
+            $"是否要删除选中的{selectedIds.Count}条判定线？",
+            () => DeleteLines(selectedIds));
+    }
+
+    private bool DeleteLines(IEnumerable<int> requestedLineIds)
+    {
+        Chart chart = _context?.EditingChart;
+        List<JudgeLine> judgeLines = chart?.JudgeLineList;
+        if (judgeLines == null || judgeLines.Count == 0) return false;
+
+        List<int> lineIds = requestedLineIds
+            .Where(id => id >= 0 && id < judgeLines.Count)
+            .Distinct()
+            .OrderBy(id => id)
+            .ToList();
+        if (lineIds.Count == 0) return false;
+
+        if (lineIds.Count >= judgeLines.Count)
         {
             FileLogger.Log($"[{Name}] 最少保留一条判定线，删除失败");
-            // PopupHelper.Instance.ShowAlert("警告", "最少保留一条判定线，删除失败");
             ToastManager.Instance.ShowToast("最少保留一条判定线，删除失败", ToastColorPreset.Warning);
-            return;
+            return false;
         }
 
-        _editService.DeleteLine(chart.JudgeLineList, id);
+        int currentLineId = Math.Clamp(_context.EditingLineId, 0, judgeLines.Count - 1);
+        int precedingDeletedCount = lineIds.Count(id => id < currentLineId);
+        int nextLineId = currentLineId - precedingDeletedCount;
+
+        _editService.DeleteLines(judgeLines, lineIds);
+        _context.EditingLineId = Math.Clamp(nextLineId, 0, judgeLines.Count - 1);
+        return true;
     }
 
     private void OnLayerSelected(int index)

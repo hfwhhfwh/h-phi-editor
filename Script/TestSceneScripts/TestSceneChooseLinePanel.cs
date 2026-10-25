@@ -28,51 +28,51 @@ public partial class TestSceneChooseLinePanel : Node
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 0, NoteCount = 123, NextEventTime = 0f
+                Id = 3, NoteCount = 123, NextEventTime = 0f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 1, NoteCount = 456, NextEventTime = 4f
+                Id = 4, NoteCount = 456, NextEventTime = 4f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 2, NoteCount = 789, NextEventTime = 123.4f
+                Id = 5, NoteCount = 789, NextEventTime = 123.4f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 0, NoteCount = 123, NextEventTime = 0f
+                Id = 6, NoteCount = 123, NextEventTime = 0f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 1, NoteCount = 456, NextEventTime = 4f
+                Id = 7, NoteCount = 456, NextEventTime = 4f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 2, NoteCount = 789, NextEventTime = 123.4f
+                Id = 8, NoteCount = 789, NextEventTime = 123.4f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 0, NoteCount = 123, NextEventTime = 0f
+                Id = 9, NoteCount = 123, NextEventTime = 0f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 1, NoteCount = 456, NextEventTime = 4f
+                Id = 10, NoteCount = 456, NextEventTime = 4f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 2, NoteCount = 789, NextEventTime = 123.4f
+                Id = 11, NoteCount = 789, NextEventTime = 123.4f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 0, NoteCount = 123, NextEventTime = 0f
+                Id = 12, NoteCount = 123, NextEventTime = 0f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 1, NoteCount = 456, NextEventTime = 4f
+                Id = 13, NoteCount = 456, NextEventTime = 4f
             },
             new ChooseLinePanel.LineInfo
             {
-                Id = 2, NoteCount = 789, NextEventTime = 123.4f
+                Id = 14, NoteCount = 789, NextEventTime = 123.4f
             },
         ];
 
@@ -87,6 +87,11 @@ public partial class TestSceneChooseLinePanel : Node
         chooseLinePanel.DeleteLineRequested += (id) =>
         {
             FileLogger.Log($"[{this.Name}] 请求删除Line:{id}");
+        };
+
+        chooseLinePanel.DeleteSelectedLinesRequested += (lineIds) =>
+        {
+            FileLogger.Log($"[{this.Name}] 请求批量删除Line:{string.Join(",", lineIds)}");
         };
 
         chooseLinePanel.AddLineRequested += () =>

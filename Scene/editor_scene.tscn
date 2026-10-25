@@ -387,6 +387,7 @@ _texture = ExtResource("23_fayi4")
 visible = false
 z_index = 10
 layout_mode = 2
+theme = ExtResource("4_v3wio")
 
 [node name="ToolsPanel" type="PanelContainer" parent="EditorPanel/SafeArea/VBoxContainer/Control/HBoxContainer/MainPanel" unique_id=1074437693]
 visible = false

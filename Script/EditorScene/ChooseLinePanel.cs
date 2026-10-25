@@ -13,12 +13,13 @@ public partial class ChooseLinePanel : Panel
 	}
 
 	[Export] private Theme _theme;
-	[Export] private VBoxContainer vBoxContainer;
+	[Export] private CustomSelectableList vBoxContainer;
 	[Export] private ScrollContainer scrollContainer;
 	private bool isDragging = false;
 	[Export] private Button addButton;
 	[Export] private Button closeButton;
-	[Export] private Button selectButton; // TODO 选择并批量操作判定线
+	[Export] private Button selectButton;
+	[Export] private Button deleteSelectedButton;
 	[Export] private Button[] layerButtons;
 	private ButtonGroup layerButtonGroup;
 
@@ -32,6 +33,7 @@ public partial class ChooseLinePanel : Panel
 	[Signal] public delegate void DeleteLineRequestedEventHandler(int id);
 	[Signal] public delegate void AddLineRequestedEventHandler();
 	[Signal] public delegate void LayerSelectedEventHandler(int index);
+	public event Action<List<int>> DeleteSelectedLinesRequested;
 
 
     public override void _Ready()
@@ -42,6 +44,25 @@ public partial class ChooseLinePanel : Panel
 		scrollContainer.ScrollEnded += () => isDragging = false;
 
 		addButton.ButtonUp += () => EmitSignal(SignalName.AddLineRequested);
+		selectButton.Toggled += toggledOn =>
+		{
+			vBoxContainer.MultiSelectMode = toggledOn;
+			deleteSelectedButton.Visible = toggledOn;
+		};
+		deleteSelectedButton.Visible = false;
+		deleteSelectedButton.ButtonUp += () =>
+		{
+			if (!vBoxContainer.MultiSelectMode) return;
+
+			List<int> selectedIds = new();
+			foreach (string id in vBoxContainer.SelectedIds)
+			{
+				if (int.TryParse(id, out int lineId)) selectedIds.Add(lineId);
+			}
+
+			if (selectedIds.Count > 0)
+				DeleteSelectedLinesRequested?.Invoke(selectedIds);
+		};
 		closeButton.ButtonUp += () => 
 		{
 			Visible = false;
@@ -91,15 +112,16 @@ public partial class ChooseLinePanel : Panel
 		RequestRefresh();
 	}
 
-
-
 	public void ShowInfos(List<LineInfo> infos)
 	{
+		vBoxContainer.RemoveAll();
 		foreach(Node child in vBoxContainer.GetChildren())
 		{
-			//if(child.GetParent() == this && child != null)
-			vBoxContainer.RemoveChild(child);
-			child.QueueFree();
+			if(child.GetParent() == vBoxContainer)
+			{
+				vBoxContainer.RemoveChild(child);
+				child.QueueFree();
+			}
 		}
 		
 		foreach(LineInfo info in infos)
@@ -113,7 +135,6 @@ public partial class ChooseLinePanel : Panel
 		// 行容器（水平）
 		HBoxContainer row = new HBoxContainer();
 		row.SizeFlagsHorizontal = SizeFlags.Fill; // 占满 VBoxContainer 宽度
-		vBoxContainer.AddChild(row);
 
 
 		// 创建主按钮
@@ -144,6 +165,8 @@ public partial class ChooseLinePanel : Panel
 
 			row.AddChild(otherButton);
 		}
+
+		vBoxContainer.AddItem(row, info.Id.ToString());
 		
 	}
 
