@@ -12,6 +12,7 @@ public partial class PlayTestParent : Control
 
     private Vector2 _prevMousePos;
     private Dictionary<int, Vector2> _prevTouchPos = new();
+    private readonly HashSet<int> _pendingTouchUpdateTrace = new();
 
 	public event Action<Vector2> Clicked;
 	public event Action<Vector2> Touched;
@@ -44,6 +45,10 @@ public partial class PlayTestParent : Control
         {
             int idx = kvp.Key;
             Vector2 currentPos = kvp.Value;
+            if (_pendingTouchUpdateTrace.Remove(idx))
+            {
+                GD.Print($"INPUT_TOUCH_UPDATE us={Time.GetTicksUsec()} index={idx} pos={currentPos}");
+            }
             Touched?.Invoke(currentPos);
 
             if (_prevTouchPos.TryGetValue(idx, out Vector2 prevPos))
@@ -78,6 +83,7 @@ public partial class PlayTestParent : Control
         {
             if(mouseBtn.Pressed)
             {
+                GD.Print($"INPUT_RECEIVED type=MouseClick us={Time.GetTicksUsec()} pos={mouseBtn.Position}");
                 Clicked?.Invoke(mouseBtn.Position);
                 _mousePressed = true;
                 _pressedMousePos = mouseBtn.Position;
@@ -108,15 +114,18 @@ public partial class PlayTestParent : Control
         {
             if(screenTouch.Pressed)
             {
+                GD.Print($"INPUT_RECEIVED type=ScreenTouch us={Time.GetTicksUsec()} index={screenTouch.Index} pos={screenTouch.Position}");
                 Clicked?.Invoke(screenTouch.Position);
 
                 _pressedTouch[screenTouch.Index] = screenTouch.Position;
                 _prevTouchPos[screenTouch.Index] = screenTouch.Position; // 记录初始位置
+                _pendingTouchUpdateTrace.Add(screenTouch.Index);
             }
             else
             {
                 _pressedTouch.Remove(screenTouch.Index);
                 _prevTouchPos.Remove(screenTouch.Index);
+                _pendingTouchUpdateTrace.Remove(screenTouch.Index);
             }
         }
         else if(@event is InputEventScreenDrag screenDrag)

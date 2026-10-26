@@ -124,6 +124,7 @@ public partial class GameChartPlayer : BaseChartPlayer
     public void TriggerHit(JudgeResult result)
     {
         Note note = result.Note;
+        ulong feedbackStartUsec = Godot.Time.GetTicksUsec();
 
         Color modulate;
         if(result.Grade == JudgeGrade.Perfect) modulate = _perfectColor;
@@ -131,7 +132,10 @@ public partial class GameChartPlayer : BaseChartPlayer
         else modulate = _colorWhite;
 
         CreateHitEffect(result.HitPosition, modulate);
+        ulong effectCallEndUsec = Godot.Time.GetTicksUsec();
         PlayHitSound((NoteType)note.Type);
+        ulong soundPlayCallEndUsec = Godot.Time.GetTicksUsec();
+        GD.Print($"HIT_FEEDBACK noteType={note.Type} grade={result.Grade} startUs={feedbackStartUsec} effectCallEndUs={effectCallEndUsec} soundPlayCallEndUs={soundPlayCallEndUsec}");
 
         // Tap 打击之后隐藏音符
         if(note.Type == 1 && result.TimeDeltaMs < 0)
@@ -161,8 +165,12 @@ public partial class GameChartPlayer : BaseChartPlayer
 
         // 立即生成一次特效和音效
         Color modulate = isGood ? _goodColor : _perfectColor;
+        ulong feedbackStartUsec = Godot.Time.GetTicksUsec();
         CreateHitEffect(position, modulate);
+        ulong effectCallEndUsec = Godot.Time.GetTicksUsec();
         PlayHitSound(NoteType.Tap);
+        ulong soundPlayCallEndUsec = Godot.Time.GetTicksUsec();
+        GD.Print($"HOLD_HIT_FEEDBACK startUs={feedbackStartUsec} effectCallEndUs={effectCallEndUsec} soundPlayCallEndUs={soundPlayCallEndUsec}");
     }
 
     public void StopHoldHitEffect(Note hold)
@@ -248,7 +256,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         //2. 设置背景图片
         if (bgImage == null)
         {
-            FileLogger.LogErr($"[{this.Name}] 背景图片导入失败: bgImage == null");
+            GD.Print($"[{this.Name}] 背景图片导入失败: bgImage == null");
             return;
         }
         BgImage = bgImage;
@@ -268,7 +276,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         //3. 设置音乐
         if (audio == null)
         {
-            FileLogger.LogErr($"[{this.Name}] 音乐导入失败: audio == null");
+            GD.Print($"[{this.Name}] 音乐导入失败: audio == null");
             return;
         }
         MusicAudio = audio;
@@ -277,7 +285,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         audioStreamPlayer.Stream = MusicAudio;
         if (audioStreamPlayer.Stream == null)
         {
-            FileLogger.LogErr($"[{this.Name}] 音乐文件加载失败");
+            GD.Print($"[{this.Name}] 音乐文件加载失败");
             return;
         }
 
@@ -863,7 +871,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         // 防御：如果存在循环引用（理论上不应有），回退到原始顺序
         if (_topologicalOrder.Count != n)
         {
-            FileLogger.LogErr($"[{Name}] 判定线存在循环引用，拓扑排序失败，回退到原始顺序");
+            GD.Print($"[{Name}] 判定线存在循环引用，拓扑排序失败，回退到原始顺序");
             _topologicalOrder.Clear();
             for (int i = 0; i < n; i++) _topologicalOrder.Add(i);
         }

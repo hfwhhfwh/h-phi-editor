@@ -17,6 +17,10 @@ run/main_scene="uid://bfqi2qheha4ul"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="uid://dr5b2hjh04vy8"
 
+[audio]
+
+driver/buffer_size=512
+
 [autoload]
 
 ChartLoader="*uid://hs6uvyfkqhd0"

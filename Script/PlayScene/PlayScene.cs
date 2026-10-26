@@ -28,6 +28,8 @@ public partial class PlayScene : Node
     private bool _isPlaying = false;
     private double _gameTime;
 
+    private static ulong GetTimestampUsec() => Time.GetTicksUsec();
+
     public override async void _Ready()
     {
         base._Ready();
@@ -39,19 +41,19 @@ public partial class PlayScene : Node
         _chartService = GetNode<ChartService>("/root/ChartService");
         if (_chartService == null)
         {
-            FileLogger.LogErr($"[{Name}] ChartService is null");
+            GD.Print($"[{Name}] ChartService is null");
             return;
         }
 
         if (chartPlayer == null)
         {
-            FileLogger.LogErr($"[{Name}] chartPlayer is null");
+            GD.Print($"[{Name}] chartPlayer is null");
             return;
         }
 
         if (chartRenderer == null)
         {
-            FileLogger.LogErr($"[{Name}] chartRenderer is null");
+            GD.Print($"[{Name}] chartRenderer is null");
             return;
         }
 
@@ -137,7 +139,7 @@ public partial class PlayScene : Node
         var chartInfo = _chartService.GetChartInfo(chartId);
         if (chartInfo == null)
         {
-            FileLogger.LogErr($"[{Name}] 未找到谱面 {chartId}");
+            GD.Print($"[{Name}] 未找到谱面 {chartId}");
             return;
         }
 
@@ -156,7 +158,7 @@ public partial class PlayScene : Node
         (Image bgImageBlurred, _) = await FileUtil.LoadImageFromFileAsync(blurredPathAbs);
         if (bgImageBlurred == null)
         {
-            FileLogger.LogErr($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
+            GD.Print($"[{this.Name}] 模糊化背景图片导入失败: {blurredPath}");
         }
 
         _judge = new ChartJudge();
@@ -216,6 +218,9 @@ public partial class PlayScene : Node
     {
         base._Process(delta);
 
+        if (delta > 0.05)
+            GD.Print($"FRAME_HITCH us={GetTimestampUsec()} deltaMs={delta * 1000:F1}");
+
         if (_chart == null || chartPlayer == null || _judge == null)
             return;
 
@@ -250,7 +255,7 @@ public partial class PlayScene : Node
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
 
-        // FileLogger.Log($"Click {_gameTime:F2}, {pos}");
+        GD.Print($"INPUT_CALLBACK type=Click us={GetTimestampUsec()} chartTime={_gameTime:F3} pos={pos}");
         _judge.OnTapInput(pos, _gameTime);
     }
 
@@ -267,6 +272,7 @@ public partial class PlayScene : Node
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
 
+        GD.Print($"INPUT_CALLBACK type=Flick us={GetTimestampUsec()} chartTime={_gameTime:F3} pos={pos}");
         _judge.OnFlickInput(pos, _gameTime);
     }
 
@@ -275,21 +281,21 @@ public partial class PlayScene : Node
         var info = _chartService.GetChartInfo(chartId);
         if (info == null)
         {
-            FileLogger.LogErr($"[{Name}] 未找到谱面 {chartId}");
+            GD.Print($"[{Name}] 未找到谱面 {chartId}");
             return;
         }
 
         _chart = ChartLoader.LoadChart(info.ChartPath);
         if (_chart == null)
         {
-            FileLogger.LogErr($"[{Name}] 谱面加载失败: {info.ChartPath}");
+            GD.Print($"[{Name}] 谱面加载失败: {info.ChartPath}");
             return;
         }
     }
 
     private void OnJudgeResult(JudgeResult result)
     {
-        //FileLogger.Log($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        GD.Print($"JUDGE_RESULT us={GetTimestampUsec()} noteType={result.Note?.Type} grade={result.Grade} deltaMs={result.TimeDeltaMs:F1} chartTime={_gameTime:F3}");
 
         if (statusLabel != null)
         {
@@ -305,18 +311,15 @@ public partial class PlayScene : Node
         }
         else if (result.Grade == JudgeGrade.Bad)
         {
+            GD.Print($"BAD_EFFECT us={GetTimestampUsec()} noteType={result.Note?.Type}");
             chartPlayer.CreateBadEffect(result, 
                 new Vector2(chartRenderer.NoteScale, chartRenderer.NoteScale));
-        }
-        else
-        {
-            // FileLogger.Log($"Miss at {result.TimeDeltaMs}ms");
         }
     }
 
     private void OnHoldEndJudgeResult(JudgeResult result)
     {
-        //FileLogger.Log($"{result.Grade} {result.TimeDeltaMs:F0}ms");
+        GD.Print($"HOLD_END_RESULT us={GetTimestampUsec()} grade={result.Grade} deltaMs={result.TimeDeltaMs:F1} chartTime={_gameTime:F3}");
         
         if (statusLabel != null)
         {
@@ -335,6 +338,8 @@ public partial class PlayScene : Node
         else chartPlayer.Pause();
 
         Input.EmulateMouseFromTouch = !value;
+        
+        GD.Print($"AUDIO_LATENCY output={AudioServer.GetOutputLatency():F4}s, toNextMix={AudioServer.GetTimeToNextMix():F4}s");
     }
 
     private void Pause()

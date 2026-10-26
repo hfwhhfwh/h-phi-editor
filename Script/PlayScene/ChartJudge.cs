@@ -593,7 +593,7 @@ public partial class ChartJudge : Node
         }
         else
         {
-            FileLogger.LogErr($"[{Name}] 未知的Note类型:{note.Type}");
+            GD.Print($"[{Name}] 未知的Note类型:{note.Type}");
             grade = JudgeGrade.Perfect;
         }
 
