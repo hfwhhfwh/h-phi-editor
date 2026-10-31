@@ -47,7 +47,7 @@ public partial class PlayTestParent : Control
             Vector2 currentPos = kvp.Value;
             if (_pendingTouchUpdateTrace.Remove(idx))
             {
-                GD.Print($"INPUT_TOUCH_UPDATE us={Time.GetTicksUsec()} index={idx} pos={currentPos}");
+                // GD.Print($"INPUT_TOUCH_UPDATE us={Time.GetTicksUsec()} index={idx} pos={currentPos}");
             }
             Touched?.Invoke(currentPos);
 
@@ -83,7 +83,7 @@ public partial class PlayTestParent : Control
         {
             if(mouseBtn.Pressed)
             {
-                GD.Print($"INPUT_RECEIVED type=MouseClick us={Time.GetTicksUsec()} pos={mouseBtn.Position}");
+                // GD.Print($"INPUT_RECEIVED type=MouseClick us={Time.GetTicksUsec()} pos={mouseBtn.Position}");
                 Clicked?.Invoke(mouseBtn.Position);
                 _mousePressed = true;
                 _pressedMousePos = mouseBtn.Position;
@@ -114,7 +114,7 @@ public partial class PlayTestParent : Control
         {
             if(screenTouch.Pressed)
             {
-                GD.Print($"INPUT_RECEIVED type=ScreenTouch us={Time.GetTicksUsec()} index={screenTouch.Index} pos={screenTouch.Position}");
+                // GD.Print($"INPUT_RECEIVED type=ScreenTouch us={Time.GetTicksUsec()} index={screenTouch.Index} pos={screenTouch.Position}");
                 Clicked?.Invoke(screenTouch.Position);
 
                 _pressedTouch[screenTouch.Index] = screenTouch.Position;

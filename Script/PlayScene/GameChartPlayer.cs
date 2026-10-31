@@ -135,7 +135,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         ulong effectCallEndUsec = Godot.Time.GetTicksUsec();
         PlayHitSound((NoteType)note.Type);
         ulong soundPlayCallEndUsec = Godot.Time.GetTicksUsec();
-        GD.Print($"HIT_FEEDBACK noteType={note.Type} grade={result.Grade} startUs={feedbackStartUsec} effectCallEndUs={effectCallEndUsec} soundPlayCallEndUs={soundPlayCallEndUsec}");
+        // GD.Print($"HIT_FEEDBACK noteType={note.Type} grade={result.Grade} startUs={feedbackStartUsec} effectCallEndUs={effectCallEndUsec} soundPlayCallEndUs={soundPlayCallEndUsec}");
 
         // Tap 打击之后隐藏音符
         if(note.Type == 1 && result.TimeDeltaMs < 0)
@@ -170,7 +170,7 @@ public partial class GameChartPlayer : BaseChartPlayer
         ulong effectCallEndUsec = Godot.Time.GetTicksUsec();
         PlayHitSound(NoteType.Tap);
         ulong soundPlayCallEndUsec = Godot.Time.GetTicksUsec();
-        GD.Print($"HOLD_HIT_FEEDBACK startUs={feedbackStartUsec} effectCallEndUs={effectCallEndUsec} soundPlayCallEndUs={soundPlayCallEndUsec}");
+        // GD.Print($"HOLD_HIT_FEEDBACK startUs={feedbackStartUsec} effectCallEndUs={effectCallEndUsec} soundPlayCallEndUs={soundPlayCallEndUsec}");
     }
 
     public void StopHoldHitEffect(Note hold)

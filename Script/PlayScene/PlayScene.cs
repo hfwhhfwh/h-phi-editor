@@ -163,9 +163,31 @@ public partial class PlayScene : Node
 
         _judge = new ChartJudge();
 
-        chartPlayer.UseDefaultResource();
-        chartRenderer.UseDefaultResource();
+        // 设置资源包
+        if (GameSettings.Instance == null) return;
 
+        bool useDefault = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource));
+        if (useDefault)
+        {
+            chartPlayer.UseDefaultResource();
+            chartRenderer.UseDefaultResource();
+        }
+        else
+        {
+            string id = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
+            ResourcePack _resourcePack = ResourcePackLoader.LoadFromLocal(id);
+            if (_resourcePack == null)
+            {
+                FileLogger.LogErr($"[{Name}] 加载资源包失败, id:{id}");
+            }
+
+            chartPlayer.Pack = _resourcePack;
+            chartRenderer.Pack = _resourcePack;
+        }
+
+        FileLogger.Log($"[{Name}] 成功重新加载资源包!");
+
+        // 设置打击特效对象池
         HitEffectPool hitEffectPool = new HitEffectPool();
         hitEffectPool.Name = "HitEffectPool";
         // 这一行需要保证已经设置过资源包
@@ -180,6 +202,7 @@ public partial class PlayScene : Node
         
         chartRenderer.Initialize(parent);
 
+        // 设置背景图片
         _bgImageRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);
         _bgImageRect.SelfModulate = new Color(0.3f, 0.3f ,0.3f ,1);
         _bgImageRect.MouseFilter = Control.MouseFilterEnum.Ignore;
@@ -187,6 +210,7 @@ public partial class PlayScene : Node
         _bgImageWiderRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);
         _bgImageWiderRect.SelfModulate = new Color(0.8f, 0.8f ,0.8f ,1);
         _bgImageWiderRect.MouseFilter = Control.MouseFilterEnum.Ignore;
+        
         
         AddChild(_judge);
         _judge.Initialize(chartPlayer, parent, _chart);
@@ -218,8 +242,8 @@ public partial class PlayScene : Node
     {
         base._Process(delta);
 
-        if (delta > 0.05)
-            GD.Print($"FRAME_HITCH us={GetTimestampUsec()} deltaMs={delta * 1000:F1}");
+        // if (delta > 0.05)
+        //     GD.Print($"FRAME_HITCH us={GetTimestampUsec()} deltaMs={delta * 1000:F1}");
 
         if (_chart == null || chartPlayer == null || _judge == null)
             return;
@@ -255,7 +279,7 @@ public partial class PlayScene : Node
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
 
-        GD.Print($"INPUT_CALLBACK type=Click us={GetTimestampUsec()} chartTime={_gameTime:F3} pos={pos}");
+        // GD.Print($"INPUT_CALLBACK type=Click us={GetTimestampUsec()} chartTime={_gameTime:F3} pos={pos}");
         _judge.OnTapInput(pos, _gameTime);
     }
 
@@ -272,7 +296,7 @@ public partial class PlayScene : Node
         if (_chart == null || chartPlayer == null || _judge == null) return;
         if (!chartPlayer.IsPlaying) return;
 
-        GD.Print($"INPUT_CALLBACK type=Flick us={GetTimestampUsec()} chartTime={_gameTime:F3} pos={pos}");
+        // GD.Print($"INPUT_CALLBACK type=Flick us={GetTimestampUsec()} chartTime={_gameTime:F3} pos={pos}");
         _judge.OnFlickInput(pos, _gameTime);
     }
 
@@ -295,7 +319,7 @@ public partial class PlayScene : Node
 
     private void OnJudgeResult(JudgeResult result)
     {
-        GD.Print($"JUDGE_RESULT us={GetTimestampUsec()} noteType={result.Note?.Type} grade={result.Grade} deltaMs={result.TimeDeltaMs:F1} chartTime={_gameTime:F3}");
+        // GD.Print($"JUDGE_RESULT us={GetTimestampUsec()} noteType={result.Note?.Type} grade={result.Grade} deltaMs={result.TimeDeltaMs:F1} chartTime={_gameTime:F3}");
 
         if (statusLabel != null)
         {
@@ -311,7 +335,7 @@ public partial class PlayScene : Node
         }
         else if (result.Grade == JudgeGrade.Bad)
         {
-            GD.Print($"BAD_EFFECT us={GetTimestampUsec()} noteType={result.Note?.Type}");
+            // GD.Print($"BAD_EFFECT us={GetTimestampUsec()} noteType={result.Note?.Type}");
             chartPlayer.CreateBadEffect(result, 
                 new Vector2(chartRenderer.NoteScale, chartRenderer.NoteScale));
         }
@@ -319,7 +343,7 @@ public partial class PlayScene : Node
 
     private void OnHoldEndJudgeResult(JudgeResult result)
     {
-        GD.Print($"HOLD_END_RESULT us={GetTimestampUsec()} grade={result.Grade} deltaMs={result.TimeDeltaMs:F1} chartTime={_gameTime:F3}");
+        // GD.Print($"HOLD_END_RESULT us={GetTimestampUsec()} grade={result.Grade} deltaMs={result.TimeDeltaMs:F1} chartTime={_gameTime:F3}");
         
         if (statusLabel != null)
         {
