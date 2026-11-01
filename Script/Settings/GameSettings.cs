@@ -44,6 +44,11 @@ public partial class GameSettings : Node
         return Current.Get(key).As<T>();
     }
 
+    public Variant GetVariant(string key)
+    {
+        return Current.Get(key);
+    }
+
     public void Set<[MustBeVariant] T>(string key, T value)
     {
         Variant newVariant = Variant.From(value);

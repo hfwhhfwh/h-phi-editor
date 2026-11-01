@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,18 +13,15 @@ public partial class SettingsPanel : Control
 {
     // 用于取消正在进行的扫描任务（可选）
     private CancellationTokenSource _cts;
-
+    private readonly Dictionary<string, Button> _resetButtons = new();
+    private const string SettingKeyMeta = "setting_key";
 
     // ---------- 控件引用 ----------
     [Export] private OptionButton _vSyncOptionBtn;
-    [Export] private Button _resetVSyncBtn;
     [Export] private SpinBox _maxFpsEdit;
-    [Export] private Button _resetMaxFpsBtn;
 
     [Export] private OptionButton _packOptionBtn;
-    [Export] private Button _resetPackBtn;
     [Export] private CheckButton _useDefaultResourceBtn;
-    [Export] private Button _resetUseDefaultResourceBtn;
     [Export] private Button _importPackBtn;
     [Export] private Button _exportPackBtn;
     [Export] private Button _deletePackBtn;
@@ -36,8 +34,10 @@ public partial class SettingsPanel : Control
 
     [Export] private ResourcePackOverview _packOverview;
 
+    // ---------------- 播放设置 ----------------
     [Export] private CheckButton _mhHighlightBtn;
-    [Export] private Button _resetMhHighlightBtn;
+    [Export] private SpinBox _noteScaleEditorEdit;
+    [Export] private SpinBox _noteScalePlayEdit;
 
     // ---------------- 编辑器设置 ----------------
     [Export] private ColorPickerButton _verLineColorPicker;
@@ -50,38 +50,142 @@ public partial class SettingsPanel : Control
     [Export] private SpinBox _horLineWidthEdit;
     [Export] private SpinBox _groundLineWidthEdit;
 
-    [Export] private Button _resetVerLineColorBtn;
-    [Export] private Button _resetVerLineWidthBtn;
-    [Export] private Button _resetHorSubLineColorBtn;
-    [Export] private Button _resetHorSubLineWidthBtn;
-    [Export] private Button _resetHorLineColorBtn;
-    [Export] private Button _resetHorLineWidthBtn;
-    [Export] private Button _resetGroundLineColorBtn;
-    [Export] private Button _resetGroundLineWidthBtn;
-
     // ---------------- 运行日志 ----------------
     [Export] private Button _shareLogBtn;
     [Export] private Button _exportLogBtn;
 
+
+    // =============== 绑定注册框架 ===============
+    // string → 如何把 Variant 刷到 UI 上
+    private readonly Dictionary<string, Action> _uiPreparers = new();
+    private readonly Dictionary<string, Action<Variant>> _uiUpdaters = new();
+    private readonly List<Action> _unbindActions = new();
+
+    // 在 Set 之后需要额外处理的动作
+    private static readonly HashSet<string> _engineAppliedKeys = new()
+    {
+        nameof(SettingsData.VSync),
+        nameof(SettingsData.MaxFps),
+    };
+
+    /// <summary>把一个控件注册为某个设置项的 UI 表示</summary>
+    private void RegisterSetting(string key, Action<Variant> applyToUI, Action unbind, Action prepare = null)
+    {
+        if (prepare != null) _uiPreparers[key] = prepare;
+        _uiUpdaters[key] = applyToUI;
+        _unbindActions.Add(unbind);
+
+        prepare?.Invoke(); // 先填选项
+        applyToUI(GameSettings.Instance.GetVariant(key)); // 再刷值
+    }
+
+    private void BindSpinBoxInt(SpinBox box, string key)
+    {
+        Action<Variant> apply = v => box.SetValueNoSignal(v.AsInt32());
+
+        SpinBox.ValueChangedEventHandler handler = v =>
+            GameSettings.Instance.Set(key, Mathf.RoundToInt((float)v));
+        box.ValueChanged += handler;
+
+        RegisterSetting(key, apply, () => box.ValueChanged -= handler);
+    }
+
+    private void BindSpinBoxFloat(SpinBox box, string key, float min = 0.1f)
+    {
+        Action<Variant> apply = v => box.SetValueNoSignal(v.AsDouble());
+
+        SpinBox.ValueChangedEventHandler handler = v =>
+            GameSettings.Instance.Set(key, Mathf.Max(min, (float)v));
+        box.ValueChanged += handler;
+
+        RegisterSetting(key, apply, () => box.ValueChanged -= handler);
+    }
+
+    private void BindCheckButton(CheckButton btn, string key)
+    {
+        Action<Variant> apply = v => btn.SetPressedNoSignal(v.AsBool());
+
+        BaseButton.ToggledEventHandler handler = v =>
+            GameSettings.Instance.Set(key, v);
+        btn.Toggled += handler;
+
+        RegisterSetting(key, apply, () => btn.Toggled -= handler);
+    }
+
+    private void BindColorPicker(ColorPickerButton picker, string key)
+    {
+        Action<Variant> apply = v => picker.Color = v.AsColor();
+
+        ColorPickerButton.ColorChangedEventHandler handler = c =>
+            GameSettings.Instance.Set(key, c);
+        picker.ColorChanged += handler;
+
+        RegisterSetting(key, apply, () => picker.ColorChanged -= handler);
+    }
+
+    private void BindOptionButtonById(OptionButton btn, string key, Action prepare,
+                                  Func<int, int> idToValue = null)
+    {
+        idToValue ??= x => x;
+        Action<Variant> apply = v =>
+        {
+            int target = idToValue(v.AsInt32());
+            for (int i = 0; i < btn.ItemCount; i++)
+                if (btn.GetItemId(i) == target) { btn.Select(i); return; }
+        };
+
+        OptionButton.ItemSelectedEventHandler handler = idx =>
+            GameSettings.Instance.Set(key, btn.GetItemId((int)idx));
+        btn.ItemSelected += handler;
+
+        RegisterSetting(key, apply, () => btn.ItemSelected -= handler, prepare);
+    }
+
+    private void BindPackOptionButton(OptionButton btn, string key, Action prepare)
+    {
+        Action<Variant> apply = v =>
+        {
+            string id = v.AsString();
+            for (int i = 0; i < btn.ItemCount; i++)
+                if (btn.GetItemMetadata(i).As<string>() == id) { btn.Select(i); return; }
+        };
+
+        OptionButton.ItemSelectedEventHandler handler = idx =>
+            GameSettings.Instance.Set(key, btn.GetItemMetadata((int)idx).As<string>());
+        btn.ItemSelected += handler;
+
+        RegisterSetting(key, apply, () => btn.ItemSelected -= handler, prepare);
+    }
+
+
     public override void _Ready()
     {
 
+        GD.Print(GameSettings.Instance != null);
+        GD.Print(GameSettings.Instance.GetVariant(nameof(SettingsData.VerColor)));
+        GD.Print(GameSettings.Instance.GetVariant(nameof(SettingsData.VerWidth)));
+
         if (GameSettings.Instance == null)
         {
-            GD.PushError("[SettingsPanel] GameSettings.Instance 为 null");
+            FileLogger.LogErr("[SettingsPanel] GameSettings.Instance 为 null");
             return;
         }
 
-        // InitOptions();      // 填充下拉框
-        // RefreshUI();        // 从 Settings 读取初始值
-
-        // UI → Settings
-        BindEvents();
+        SetupBindings();
+        CreateResetButtons();
         
         // Settings → UI
         GameSettings.Instance.SettingChanged += OnSettingChanged;
         GameSettings.Instance.SettingsApplied += OnSettingsApplied;
+        
         _ = RefreshUI();
+
+        _applyBtn.Pressed += () => GameSettings.Instance.Save();
+        _confirmBtn.Pressed += () =>
+        {
+            GameSettings.Instance.Save();
+            Visible = false;
+        };
 
         _importPackBtn.Pressed += OnImportClicked;
         _deletePackBtn.Pressed += OnDeletePackClicked;
@@ -113,129 +217,217 @@ public partial class SettingsPanel : Control
 
     public override void _ExitTree()
     {
+        // if (GameSettings.Instance != null)
+        // {
+        //     GameSettings.Instance.SettingChanged -= OnSettingChanged;
+        //     GameSettings.Instance.SettingsApplied -= OnSettingsApplied;
+        // }
+
+        // if (_verLineColorPicker != null) _verLineColorPicker.ColorChanged -= OnVerLineColorChanged;
+        // if (_horSubLineColorPicker != null) _horSubLineColorPicker.ColorChanged -= OnHorSubLineColorChanged;
+        // if (_horLineColorPicker != null) _horLineColorPicker.ColorChanged -= OnHorLineColorChanged;
+        // if (_groundLineColorPicker != null) _groundLineColorPicker.ColorChanged -= OnGroundLineColorChanged;
+        // if (_verLineWidthEdit != null) _verLineWidthEdit.ValueChanged -= OnVerLineWidthChanged;
+        // if (_horSubLineWidthEdit != null) _horSubLineWidthEdit.ValueChanged -= OnHorSubLineWidthChanged;
+        // if (_horLineWidthEdit != null) _horLineWidthEdit.ValueChanged -= OnHorLineWidthChanged;
+        // if (_groundLineWidthEdit != null) _groundLineWidthEdit.ValueChanged -= OnGroundLineWidthChanged;
+
         if (GameSettings.Instance != null)
         {
             GameSettings.Instance.SettingChanged -= OnSettingChanged;
             GameSettings.Instance.SettingsApplied -= OnSettingsApplied;
         }
+        foreach (var unbind in _unbindActions) unbind();
+        _unbindActions.Clear();
+        _uiUpdaters.Clear();
+    }
 
-        if (_verLineColorPicker != null) _verLineColorPicker.ColorChanged -= OnVerLineColorChanged;
-        if (_horSubLineColorPicker != null) _horSubLineColorPicker.ColorChanged -= OnHorSubLineColorChanged;
-        if (_horLineColorPicker != null) _horLineColorPicker.ColorChanged -= OnHorLineColorChanged;
-        if (_groundLineColorPicker != null) _groundLineColorPicker.ColorChanged -= OnGroundLineColorChanged;
-        if (_verLineWidthEdit != null) _verLineWidthEdit.ValueChanged -= OnVerLineWidthChanged;
-        if (_horSubLineWidthEdit != null) _horSubLineWidthEdit.ValueChanged -= OnHorSubLineWidthChanged;
-        if (_horLineWidthEdit != null) _horLineWidthEdit.ValueChanged -= OnHorLineWidthChanged;
-        if (_groundLineWidthEdit != null) _groundLineWidthEdit.ValueChanged -= OnGroundLineWidthChanged;
+    private void SetupBindings()
+    {
+        // ---- 显示 ----
+        BindOptionButtonById(_vSyncOptionBtn, nameof(SettingsData.VSync), FillVSyncOptions);
+        BindSpinBoxInt    (_maxFpsEdit,      nameof(SettingsData.MaxFps));
+
+        // ---- 资源包 ----
+        BindPackOptionButton(_packOptionBtn, nameof(SettingsData.ResourcePackId), FillPackOptions);
+        BindCheckButton     (_useDefaultResourceBtn, nameof(SettingsData.UseDefaultResource));
+
+        // ---- 播放 ----
+        BindCheckButton(_mhHighlightBtn, nameof(SettingsData.UseMultiholdHighlight));
+
+        // ---- 编辑器 ----
+        BindColorPicker  (_verLineColorPicker,   nameof(SettingsData.VerColor));
+        BindColorPicker  (_horSubLineColorPicker,nameof(SettingsData.HorSubColor));
+        BindColorPicker  (_horLineColorPicker,   nameof(SettingsData.HorColor));
+        BindColorPicker  (_groundLineColorPicker,nameof(SettingsData.GroundLineColor));
+
+        BindSpinBoxFloat(_verLineWidthEdit,    nameof(SettingsData.VerWidth));
+        BindSpinBoxFloat(_horSubLineWidthEdit, nameof(SettingsData.HorSubWidth));
+        BindSpinBoxFloat(_horLineWidthEdit,    nameof(SettingsData.HorWidth));
+        BindSpinBoxFloat(_groundLineWidthEdit, nameof(SettingsData.GroundLineWidth));
+    }
+
+    private void CreateResetButtons()
+    {
+        HashSet<string> resettableKeys = typeof(SettingsData)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Where(property => Attribute.IsDefined(property, typeof(ResettableSettingAttribute)))
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        List<Control> settingControls = new();
+        CollectSettingControls(this, settingControls);
+
+        Texture2D resetIcon = GD.Load<Texture2D>("res://Textures/刷新.png");
+        foreach (Control control in settingControls)
+        {
+            string key = control.GetMeta(SettingKeyMeta).AsString();
+            if (!resettableKeys.Contains(key))
+            {
+                continue;
+            }
+
+            if (_resetButtons.ContainsKey(key))
+            {
+                FileLogger.LogWarning($"[{Name}] 设置 {key} 对应了多个重置控件");
+                continue;
+            }
+
+            if (control.GetParent() is not Godot.Container row)
+            {
+                FileLogger.LogWarning($"[{Name}] 设置 {key} 的输入控件不在 Container 中");
+                continue;
+            }
+
+            Button button = new()
+            {
+                Name = $"Reset{key}",
+                CustomMinimumSize = new Vector2(60, 0),
+                Icon = resetIcon,
+                IconAlignment = HorizontalAlignment.Center,
+                ExpandIcon = true,
+                TooltipText = "恢复默认值"
+            };
+            button.Pressed += () => GameSettings.Instance.ResetProperty(key);
+
+            row.AddChild(button);
+            row.MoveChild(button, control.GetIndex() + 1);
+            _resetButtons.Add(key, button);
+        }
+
+        foreach (string key in resettableKeys)
+        {
+            if (!_resetButtons.ContainsKey(key))
+            {
+                FileLogger.LogWarning($"[{Name}] 可重置设置 {key} 没有对应的 UI 控件");
+            }
+        }
+    }
+
+    private static void CollectSettingControls(Node parent, List<Control> controls)
+    {
+        foreach (Node child in parent.GetChildren())
+        {
+            if (child is Control control && control.HasMeta(SettingKeyMeta))
+            {
+                controls.Add(control);
+            }
+
+            CollectSettingControls(child, controls);
+        }
     }
 
     // ---------- 绑定：UI 修改 → Settings ----------
-    private void BindEvents()
-    {
-        _vSyncOptionBtn.ItemSelected += (long idx) =>
-        {
-            int id = _vSyncOptionBtn.GetItemId((int)idx);
-            GameSettings.Instance.Set(nameof(SettingsData.VSync), (DisplayServer.VSyncMode)id);
-        };
+    // private void BindEvents()
+    // {
+    //     _vSyncOptionBtn.ItemSelected += (long idx) =>
+    //     {
+    //         int id = _vSyncOptionBtn.GetItemId((int)idx);
+    //         GameSettings.Instance.Set(nameof(SettingsData.VSync), (DisplayServer.VSyncMode)id);
+    //     };
 
-        _packOptionBtn.ItemSelected += (long index) =>
-        {
-            string id = _packOptionBtn.GetItemMetadata((int)index).As<string>();
-            GameSettings.Instance.Set(nameof(SettingsData.ResourcePackId), id);
-        };
+    //     _packOptionBtn.ItemSelected += (long index) =>
+    //     {
+    //         string id = _packOptionBtn.GetItemMetadata((int)index).As<string>();
+    //         GameSettings.Instance.Set(nameof(SettingsData.ResourcePackId), id);
+    //     };
 
-        _useDefaultResourceBtn.Toggled += (bool value) =>
-        {
-            GameSettings.Instance.Set(nameof(SettingsData.UseDefaultResource), value);
-        };
+    //     _useDefaultResourceBtn.Toggled += (bool value) =>
+    //     {
+    //         GameSettings.Instance.Set(nameof(SettingsData.UseDefaultResource), value);
+    //     };
 
-        _maxFpsEdit.ValueChanged += (double value) =>
-        {
-            int intValue = Mathf.RoundToInt(value);
-            GameSettings.Instance.Set(nameof(SettingsData.MaxFps), intValue);
-        };
+    //     _maxFpsEdit.ValueChanged += (double value) =>
+    //     {
+    //         int intValue = Mathf.RoundToInt(value);
+    //         GameSettings.Instance.Set(nameof(SettingsData.MaxFps), intValue);
+    //     };
 
-        _mhHighlightBtn.Toggled += (bool value) =>
-        {
-            GameSettings.Instance.Set(nameof(SettingsData.UseMultiholdHighlight), value);
-        };
+    //     _mhHighlightBtn.Toggled += (bool value) =>
+    //     {
+    //         GameSettings.Instance.Set(nameof(SettingsData.UseMultiholdHighlight), value);
+    //     };
 
-        _resetVSyncBtn.Pressed += () => ResetProperty(nameof(SettingsData.VSync));
-        _resetMaxFpsBtn.Pressed += () => ResetProperty(nameof(SettingsData.MaxFps));
-        _resetPackBtn.Pressed += () => ResetProperty(nameof(SettingsData.ResourcePackId));
-        _resetUseDefaultResourceBtn.Pressed += () => ResetProperty(nameof(SettingsData.UseDefaultResource));
-        _resetMhHighlightBtn.Pressed += () => ResetProperty(nameof(SettingsData.UseMultiholdHighlight));
-        _resetVerLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.VerColor));
-        _resetVerLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.VerWidth));
-        _resetHorSubLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorSubColor));
-        _resetHorSubLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorSubWidth));
-        _resetHorLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorColor));
-        _resetHorLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.HorWidth));
-        _resetGroundLineColorBtn.Pressed += () => ResetProperty(nameof(SettingsData.GroundLineColor));
-        _resetGroundLineWidthBtn.Pressed += () => ResetProperty(nameof(SettingsData.GroundLineWidth));
+    //     _verLineColorPicker.ColorChanged += OnVerLineColorChanged;
+    //     _horSubLineColorPicker.ColorChanged += OnHorSubLineColorChanged;
+    //     _horLineColorPicker.ColorChanged += OnHorLineColorChanged;
+    //     _groundLineColorPicker.ColorChanged += OnGroundLineColorChanged;
+    //     _verLineWidthEdit.ValueChanged += OnVerLineWidthChanged;
+    //     _horSubLineWidthEdit.ValueChanged += OnHorSubLineWidthChanged;
+    //     _horLineWidthEdit.ValueChanged += OnHorLineWidthChanged;
+    //     _groundLineWidthEdit.ValueChanged += OnGroundLineWidthChanged;
 
-        _verLineColorPicker.ColorChanged += OnVerLineColorChanged;
-        _horSubLineColorPicker.ColorChanged += OnHorSubLineColorChanged;
-        _horLineColorPicker.ColorChanged += OnHorLineColorChanged;
-        _groundLineColorPicker.ColorChanged += OnGroundLineColorChanged;
-        _verLineWidthEdit.ValueChanged += OnVerLineWidthChanged;
-        _horSubLineWidthEdit.ValueChanged += OnHorSubLineWidthChanged;
-        _horLineWidthEdit.ValueChanged += OnHorLineWidthChanged;
-        _groundLineWidthEdit.ValueChanged += OnGroundLineWidthChanged;
+    //     if (_shareLogBtn != null)
+    //     {
+    //         _shareLogBtn.Pressed += OnShareLogClicked;
+    //     }
+    //     else
+    //     {
+    //         FileLogger.LogWarning("[SettingsPanel] _shareLogBtn 未绑定，无法分享日志");
+    //     }
 
-        if (_shareLogBtn != null)
-        {
-            _shareLogBtn.Pressed += OnShareLogClicked;
-        }
-        else
-        {
-            FileLogger.LogWarning("[SettingsPanel] _shareLogBtn 未绑定，无法分享日志");
-        }
+    //     if( _exportLogBtn != null)
+    //     {
+    //         _exportLogBtn.Pressed += OnExportLogClicked;
+    //     }
+    //     else
+    //     {
+    //         FileLogger.LogWarning("[SettingsPanel] _exportLogBtn 未绑定，无法导出日志");
+    //     }
 
-        if( _exportLogBtn != null)
-        {
-            _exportLogBtn.Pressed += OnExportLogClicked;
-        }
-        else
-        {
-            FileLogger.LogWarning("[SettingsPanel] _exportLogBtn 未绑定，无法导出日志");
-        }
-
-        _applyBtn.Pressed += () => GameSettings.Instance.Save();
-        _confirmBtn.Pressed += () =>
-        {
-            GameSettings.Instance.Save();
-            Visible = false;
-        };
+    //     _applyBtn.Pressed += () => GameSettings.Instance.Save();
+    //     _confirmBtn.Pressed += () =>
+    //     {
+    //         GameSettings.Instance.Save();
+    //         Visible = false;
+    //     };
 
         
-    }
+    // }
 
-    private static void ResetProperty(string key) => GameSettings.Instance.ResetProperty(key);
+    // private void OnVerLineColorChanged(Color value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.VerColor), value);
 
-    private void OnVerLineColorChanged(Color value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.VerColor), value);
+    // private void OnHorSubLineColorChanged(Color value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.HorSubColor), value);
 
-    private void OnHorSubLineColorChanged(Color value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.HorSubColor), value);
+    // private void OnHorLineColorChanged(Color value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.HorColor), value);
 
-    private void OnHorLineColorChanged(Color value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.HorColor), value);
+    // private void OnGroundLineColorChanged(Color value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.GroundLineColor), value);
 
-    private void OnGroundLineColorChanged(Color value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.GroundLineColor), value);
+    // private void OnVerLineWidthChanged(double value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.VerWidth), Mathf.Max(0.1f, (float)value));
 
-    private void OnVerLineWidthChanged(double value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.VerWidth), Mathf.Max(0.1f, (float)value));
+    // private void OnHorSubLineWidthChanged(double value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.HorSubWidth), Mathf.Max(0.1f, (float)value));
 
-    private void OnHorSubLineWidthChanged(double value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.HorSubWidth), Mathf.Max(0.1f, (float)value));
+    // private void OnHorLineWidthChanged(double value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.HorWidth), Mathf.Max(0.1f, (float)value));
 
-    private void OnHorLineWidthChanged(double value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.HorWidth), Mathf.Max(0.1f, (float)value));
-
-    private void OnGroundLineWidthChanged(double value) =>
-        GameSettings.Instance.Set(nameof(SettingsData.GroundLineWidth), Mathf.Max(0.1f, (float)value));
+    // private void OnGroundLineWidthChanged(double value) =>
+    //     GameSettings.Instance.Set(nameof(SettingsData.GroundLineWidth), Mathf.Max(0.1f, (float)value));
 
     // // ---------- 绑定：Settings 变化 → UI ----------
     // private void BindSignals()
@@ -248,85 +440,76 @@ public partial class SettingsPanel : Control
     {
         UpdateResetButton(key);
 
-        switch (key)
-        {
-            case nameof(SettingsData.VSync):
-                SelectById(_vSyncOptionBtn, value.AsInt32());
-                GameSettings.Instance.ApplyToEngine();
-                break;
+        if (_uiUpdaters.TryGetValue(key, out var apply))
+            apply(value);
 
-            case nameof(SettingsData.ResourcePackId):
-                RefreshPackSettings();
-                break;
+        // 副作用集中处理
+        if (_engineAppliedKeys.Contains(key))
+            GameSettings.Instance.ApplyToEngine();
+        else if (key == nameof(SettingsData.ResourcePackId))
+            RefreshPackSettings();
+
+        // switch (key)
+        // {
+        //     case nameof(SettingsData.VSync):
+        //         SelectById(_vSyncOptionBtn, value.AsInt32());
+        //         GameSettings.Instance.ApplyToEngine();
+        //         break;
+
+        //     case nameof(SettingsData.ResourcePackId):
+        //         RefreshPackSettings();
+        //         break;
             
-            case nameof(SettingsData.MaxFps):
-                _maxFpsEdit.Value = GameSettings.Instance.Get<int>(nameof(SettingsData.MaxFps));
-                GameSettings.Instance.ApplyToEngine();
-                break;
+        //     case nameof(SettingsData.MaxFps):
+        //         _maxFpsEdit.Value = GameSettings.Instance.Get<int>(nameof(SettingsData.MaxFps));
+        //         GameSettings.Instance.ApplyToEngine();
+        //         break;
             
-            case nameof(SettingsData.UseDefaultResource):
-                _useDefaultResourceBtn.SetPressedNoSignal(GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
-                break;
+        //     case nameof(SettingsData.UseDefaultResource):
+        //         _useDefaultResourceBtn.SetPressedNoSignal(GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
+        //         break;
             
-            case nameof(SettingsData.UseMultiholdHighlight):
-                _mhHighlightBtn.ButtonPressed = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseMultiholdHighlight));
-                break;
+        //     case nameof(SettingsData.UseMultiholdHighlight):
+        //         _mhHighlightBtn.ButtonPressed = GameSettings.Instance.Get<bool>(nameof(SettingsData.UseMultiholdHighlight));
+        //         break;
 
-            case nameof(SettingsData.VerColor):
-                _verLineColorPicker.Color = value.AsColor();
-                break;
+        //     case nameof(SettingsData.VerColor):
+        //         _verLineColorPicker.Color = value.AsColor();
+        //         break;
 
-            case nameof(SettingsData.HorSubColor):
-                _horSubLineColorPicker.Color = value.AsColor();
-                break;
+        //     case nameof(SettingsData.HorSubColor):
+        //         _horSubLineColorPicker.Color = value.AsColor();
+        //         break;
 
-            case nameof(SettingsData.HorColor):
-                _horLineColorPicker.Color = value.AsColor();
-                break;
+        //     case nameof(SettingsData.HorColor):
+        //         _horLineColorPicker.Color = value.AsColor();
+        //         break;
 
-            case nameof(SettingsData.GroundLineColor):
-                _groundLineColorPicker.Color = value.AsColor();
-                break;
+        //     case nameof(SettingsData.GroundLineColor):
+        //         _groundLineColorPicker.Color = value.AsColor();
+        //         break;
 
-            case nameof(SettingsData.VerWidth):
-                _verLineWidthEdit.SetValueNoSignal(value.AsDouble());
-                break;
+        //     case nameof(SettingsData.VerWidth):
+        //         _verLineWidthEdit.SetValueNoSignal(value.AsDouble());
+        //         break;
 
-            case nameof(SettingsData.HorSubWidth):
-                _horSubLineWidthEdit.SetValueNoSignal(value.AsDouble());
-                break;
+        //     case nameof(SettingsData.HorSubWidth):
+        //         _horSubLineWidthEdit.SetValueNoSignal(value.AsDouble());
+        //         break;
 
-            case nameof(SettingsData.HorWidth):
-                _horLineWidthEdit.SetValueNoSignal(value.AsDouble());
-                break;
+        //     case nameof(SettingsData.HorWidth):
+        //         _horLineWidthEdit.SetValueNoSignal(value.AsDouble());
+        //         break;
 
-            case nameof(SettingsData.GroundLineWidth):
-                _groundLineWidthEdit.SetValueNoSignal(value.AsDouble());
-                break;
-        }
+        //     case nameof(SettingsData.GroundLineWidth):
+        //         _groundLineWidthEdit.SetValueNoSignal(value.AsDouble());
+        //         break;
+        // }
     }
 
     private void UpdateResetButton(string key)
     {
-        Button button = key switch
-        {
-            nameof(SettingsData.VSync) => _resetVSyncBtn,
-            nameof(SettingsData.MaxFps) => _resetMaxFpsBtn,
-            nameof(SettingsData.ResourcePackId) => _resetPackBtn,
-            nameof(SettingsData.UseDefaultResource) => _resetUseDefaultResourceBtn,
-            nameof(SettingsData.UseMultiholdHighlight) => _resetMhHighlightBtn,
-            nameof(SettingsData.VerColor) => _resetVerLineColorBtn,
-            nameof(SettingsData.VerWidth) => _resetVerLineWidthBtn,
-            nameof(SettingsData.HorSubColor) => _resetHorSubLineColorBtn,
-            nameof(SettingsData.HorSubWidth) => _resetHorSubLineWidthBtn,
-            nameof(SettingsData.HorColor) => _resetHorLineColorBtn,
-            nameof(SettingsData.HorWidth) => _resetHorLineWidthBtn,
-            nameof(SettingsData.GroundLineColor) => _resetGroundLineColorBtn,
-            nameof(SettingsData.GroundLineWidth) => _resetGroundLineWidthBtn,
-            _ => null
-        };
-
-        if (button != null)
+        if (_resetButtons.TryGetValue(key, out Button button))
         {
             button.Visible = !GameSettings.Instance.IsPropertyDefault(key);
         }
@@ -334,19 +517,10 @@ public partial class SettingsPanel : Control
 
     private void UpdateAllResetButtons()
     {
-        UpdateResetButton(nameof(SettingsData.VSync));
-        UpdateResetButton(nameof(SettingsData.MaxFps));
-        UpdateResetButton(nameof(SettingsData.ResourcePackId));
-        UpdateResetButton(nameof(SettingsData.UseDefaultResource));
-        UpdateResetButton(nameof(SettingsData.UseMultiholdHighlight));
-        UpdateResetButton(nameof(SettingsData.VerColor));
-        UpdateResetButton(nameof(SettingsData.VerWidth));
-        UpdateResetButton(nameof(SettingsData.HorSubColor));
-        UpdateResetButton(nameof(SettingsData.HorSubWidth));
-        UpdateResetButton(nameof(SettingsData.HorColor));
-        UpdateResetButton(nameof(SettingsData.HorWidth));
-        UpdateResetButton(nameof(SettingsData.GroundLineColor));
-        UpdateResetButton(nameof(SettingsData.GroundLineWidth));
+        foreach (string key in _resetButtons.Keys)
+        {
+            UpdateResetButton(key);
+        }
     }
 
     private void OnSettingsApplied() => _ = RefreshUI();
@@ -505,46 +679,61 @@ public partial class SettingsPanel : Control
     {
         try
         {
-            SettingsData settings = GameSettings.Instance.Current;
+            // 先重建所有 OptionButton 的选项
+            foreach (var prepare in _uiPreparers.Values)
+                prepare();
 
-            // VSync
-            _vSyncOptionBtn.Clear();
-            foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
-            {
-                _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
-            }
-            SelectById(_vSyncOptionBtn, (int)settings.VSync);
+            // 再刷新所有绑定值
+            foreach (var (key, apply) in _uiUpdaters)
+                apply(GameSettings.Instance.GetVariant(key));
 
-            // 资源包相关
-            RefreshPackSettings();
-
-            // 最大帧率
-            _maxFpsEdit.Value = settings.MaxFps;
-
-            // 播放设置
-            _mhHighlightBtn.ButtonPressed = settings.UseMultiholdHighlight;
-
-            // 网格设置
-            _verLineColorPicker.Color = settings.VerColor;
-            _horSubLineColorPicker.Color = settings.HorSubColor;
-            _horLineColorPicker.Color = settings.HorColor;
-            _groundLineColorPicker.Color = settings.GroundLineColor;
-
-            _verLineWidthEdit.SetValueNoSignal(settings.VerWidth);
-            _horSubLineWidthEdit.SetValueNoSignal(settings.HorSubWidth);
-            _horLineWidthEdit.SetValueNoSignal(settings.HorWidth);
-            _groundLineWidthEdit.SetValueNoSignal(settings.GroundLineWidth);
-
+            // 剩下的：非绑定型 UI（重置按钮状态、缓存大小扫描）
             UpdateAllResetButtons();
-
-            // 存储空间
-            // 取消之前的扫描任务（如果有）
             _cts?.Cancel();
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
-
-            // 启动异步扫描
             _ = ScanCacheSizeAsync(_cts.Token);
+
+            // SettingsData settings = GameSettings.Instance.Current;
+
+            // // VSync
+            // _vSyncOptionBtn.Clear();
+            // foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
+            // {
+            //     _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
+            // }
+            // SelectById(_vSyncOptionBtn, (int)settings.VSync);
+
+            // // 资源包相关
+            // RefreshPackSettings();
+
+            // // 最大帧率
+            // _maxFpsEdit.Value = settings.MaxFps;
+
+            // // 播放设置
+            // _mhHighlightBtn.ButtonPressed = settings.UseMultiholdHighlight;
+
+            // // 网格设置
+            // _verLineColorPicker.Color = settings.VerColor;
+            // _horSubLineColorPicker.Color = settings.HorSubColor;
+            // _horLineColorPicker.Color = settings.HorColor;
+            // _groundLineColorPicker.Color = settings.GroundLineColor;
+
+            // _verLineWidthEdit.SetValueNoSignal(settings.VerWidth);
+            // _horSubLineWidthEdit.SetValueNoSignal(settings.HorSubWidth);
+            // _horLineWidthEdit.SetValueNoSignal(settings.HorWidth);
+            // _groundLineWidthEdit.SetValueNoSignal(settings.GroundLineWidth);
+
+            // UpdateAllResetButtons();
+
+            // // 存储空间
+            // // 取消之前的扫描任务（如果有）
+            // _cts?.Cancel();
+            // _cts?.Dispose();
+            // _cts = new CancellationTokenSource();
+
+            // // 启动异步扫描
+            // _ = ScanCacheSizeAsync(_cts.Token);
 
             // _resourcePackEdit.Text = settings.ResourcePackId ?? "";
             // _fullscreenCheck.ButtonPressed = cur.Fullscreen;
@@ -565,24 +754,25 @@ public partial class SettingsPanel : Control
     private void RefreshPackSettings()
     {
         // 资源包选项
-        _packOptionBtn.Clear();
-        List<ValueTuple<string, string>> packList = ResourcePackLoader.GetPackList();
-        if (packList != null)
-        {
-            for (int i = 0; i < packList.Count; i++)
-            {
-                (string id, string name) = packList[i];
-                _packOptionBtn.AddItem(name);
+        // _packOptionBtn.Clear();
+        // List<ValueTuple<string, string>> packList = ResourcePackLoader.GetPackList();
+        // if (packList != null)
+        // {
+        //     for (int i = 0; i < packList.Count; i++)
+        //     {
+        //         (string id, string name) = packList[i];
+        //         _packOptionBtn.AddItem(name);
 
-                _packOptionBtn.SetItemMetadata(i, id);
+        //         _packOptionBtn.SetItemMetadata(i, id);
 
-                // 当前选中
-                if (id == GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId)))
-                {
-                    _packOptionBtn.Select(i);
-                }
-            }
-        }
+        //         // 当前选中
+        //         if (id == GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId)))
+        //         {
+        //             _packOptionBtn.Select(i);
+        //         }
+        //     }
+        // }
+        FillPackOptions();
 
         // 资源包预览
         string packId = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
@@ -596,11 +786,39 @@ public partial class SettingsPanel : Control
         }
 
         // 是否使用默认资源包
-        _useDefaultResourceBtn.SetPressedNoSignal(
-            GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
+        // _useDefaultResourceBtn.SetPressedNoSignal(
+        //     GameSettings.Instance.Get<bool>(nameof(SettingsData.UseDefaultResource)));
 
         // FileLogger.Log($"[{Name}] 成功刷新资源包设置界面");
 
+    }
+
+    private void FillVSyncOptions()
+    {
+        int currentId = (int)GameSettings.Instance.Get<DisplayServer.VSyncMode>(nameof(SettingsData.VSync));
+        _vSyncOptionBtn.Clear();
+        foreach (DisplayServer.VSyncMode mode in Enum.GetValues<DisplayServer.VSyncMode>())
+            _vSyncOptionBtn.AddItem(FormatVSyncName(mode), (int)mode);
+        // 注意：Clear 会丢选择，交给 apply 恢复，这里不需要 Select
+    }
+
+    private void FillPackOptions()
+    {
+        _packOptionBtn.Clear();
+        foreach (var (id, name) in ResourcePackLoader.GetPackList() ?? new())
+        {
+            int i = _packOptionBtn.ItemCount;
+            _packOptionBtn.AddItem(name);
+            _packOptionBtn.SetItemMetadata(i, id);
+        }
+
+        // 顺手刷新预览（原来在 RefreshPackSettings 里那段）
+        string packId = GameSettings.Instance.Get<string>(nameof(SettingsData.ResourcePackId));
+        if (!string.IsNullOrEmpty(packId))
+        {
+            ResourcePack pack = ResourcePackLoader.LoadFromLocal(packId);
+            if (pack != null) _packOverview.Overview(pack);
+        }
     }
 
     // ---------- 辅助方法 ----------
