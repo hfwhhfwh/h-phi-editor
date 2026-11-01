@@ -3,11 +3,11 @@ using System;
 
 public partial class InfoPanel : PanelContainer
 {
-	FileDialogManager fileDialogManager;
+	private FileDialogManager fileDialogManager;
 
-	ChartInfo editingInfo;
-    string newSongPath;
-    string newPicPath;
+	private ChartInfo editingInfo;
+    private string newSongPath;
+    private string newPicPath;
 
 	[Signal] public delegate void ConfirmedEventHandler(ChartInfo chartInfo, string songPath, string picPath);
 	[Signal] public delegate void CancelledEventHandler();

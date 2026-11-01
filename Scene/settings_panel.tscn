@@ -318,6 +318,7 @@ text = "音符大小(编辑器)"
 [node name="NoteScaleEditor" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer" unique_id=1779636917]
 layout_mode = 2
 size_flags_horizontal = 3
+metadata/setting_key = "NoteScaleEditor"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer" unique_id=1229834724]
 layout_mode = 2
@@ -329,6 +330,7 @@ text = "音符大小(试玩)"
 [node name="NoteScalePlay" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer2" unique_id=835194406]
 layout_mode = 2
 size_flags_horizontal = 3
+metadata/setting_key = "NoteScalePlay"
 
 [node name="Editor" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1495793183]
 visible = false

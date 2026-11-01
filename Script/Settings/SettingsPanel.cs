@@ -148,7 +148,7 @@ public partial class SettingsPanel : Control
     {
         Action<Variant> apply = v =>
         {
-            GD.Print($"***v:{v}(type={v.VariantType})");
+            // GD.Print($"***v:{v}(type={v.VariantType})");
             string id = v.AsString();
             for (int i = 0; i < btn.ItemCount; i++)
                 if (btn.GetItemMetadata(i).AsString() == id) { btn.Select(i); return; }
@@ -164,11 +164,6 @@ public partial class SettingsPanel : Control
 
     public override void _Ready()
     {
-
-        GD.Print(GameSettings.Instance != null);
-        GD.Print(GameSettings.Instance.GetVariant(nameof(SettingsData.VerColor)));
-        GD.Print(GameSettings.Instance.GetVariant(nameof(SettingsData.VerWidth)));
-
         if (GameSettings.Instance == null)
         {
             FileLogger.LogErr("[SettingsPanel] GameSettings.Instance 为 null");
