@@ -17,6 +17,8 @@ public partial class HitEffectPool : Node
     /// <value></value>
     public float HxScale { get; protected set; }
 
+    public float HxScaleFactor { get; set; } = 1.0f;
+
     public bool IsInitialized { get; private set; } = false;
 
     public override void _Ready()
@@ -50,7 +52,7 @@ public partial class HitEffectPool : Node
             return;
         }
 
-        HxScale = _parent.Size.X * 0.25f / textureWidth;
+        HxScale = _parent.Size.X * 0.25f / textureWidth * HxScaleFactor;
 
         if (float.IsNaN(HxScale) || float.IsInfinity(HxScale) || HxScale <= 0f)
         {

@@ -247,6 +247,9 @@ public partial class EditorScene : Node
 
                 chartPlayer.Initialize(chartPlayParent, _context.EditingChart, bgImageBlurred, audioStream, hitEffectPool);
                 chartRenderer.Initialize(chartPlayParent);
+                // chartRenderer.CustomNoteScaleFactor = GameSettings.Instance.Get<float>(nameof(SettingsData.NoteScaleEditor));
+                _playbackController.SetNoteScaleFactor(
+                    GameSettings.Instance.Get<float>(nameof(SettingsData.NoteScaleEditor)));
 
                 // 订阅谱面结构变化（判定线/音符增删），让播放器重建拓扑与渲染缓冲
                 chartPlayer.SetEventBus(_chartEditService.Events);

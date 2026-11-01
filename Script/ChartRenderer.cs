@@ -56,6 +56,19 @@ public partial class ChartRenderer : BaseChartRenderer
     private MultiMeshInstance2D lineMultiMeshInstance;
     private int lineVisibleCount = 0;
 
+    // 自定义note缩放因数
+    private float _customNoteScaleFactor = 1.0f;
+    public override float CustomNoteScaleFactor 
+    { 
+        get => _customNoteScaleFactor;
+        set
+        {
+            _customNoteScaleFactor = value;
+            UpdateNoteScale();
+        }
+    }
+
+
     #if TOOLS
     // ---- 性能优化 ----
     private int _noteCount = 0;
@@ -136,7 +149,7 @@ public partial class ChartRenderer : BaseChartRenderer
             return;
         }
 
-        NoteScale = Parent.Size.X * 0.16f / textureWidth;
+        NoteScale = Parent.Size.X * 0.15f / textureWidth * CustomNoteScaleFactor;
         // NoteScale = Parent.Size.X * 0.7f / textureWidth;
 
         if (float.IsNaN(NoteScale) || float.IsInfinity(NoteScale) || NoteScale <= 0f)

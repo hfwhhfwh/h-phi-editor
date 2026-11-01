@@ -201,6 +201,7 @@ public partial class PlayScene : Node
             hitEffectPool);
         
         chartRenderer.Initialize(parent);
+        chartRenderer.CustomNoteScaleFactor = GameSettings.Instance.Get<float>(nameof(SettingsData.NoteScalePlay));
 
         // 设置背景图片
         _bgImageRect.Texture = ImageTexture.CreateFromImage(bgImageBlurred);

@@ -169,6 +169,14 @@ public partial class SettingsController : Node
             || key == nameof(SettingsData.GroundLineWidth))
         {
             ApplyGridAppearanceSettings();
+            return;
+        }
+
+        if(key == nameof(SettingsData.NoteScaleEditor))
+        {
+            _playbackController.SetNoteScaleFactor(
+                    GameSettings.Instance.Get<float>(nameof(SettingsData.NoteScaleEditor)));
+            return;
         }
     }
 

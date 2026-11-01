@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://1m7bh2m50aw5" path="res://Script/UI/CustomTabContainer.cs" id="3_j4nhx"]
 [ext_resource type="PackedScene" uid="uid://cmwclrqi85lpl" path="res://Scene/resource_pack_overview.tscn" id="5_yruwn"]
 
-[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_userDataDirLabel", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit", "_shareLogBtn", "_exportLogBtn")]
+[node name="SettingsPanel" type="PanelContainer" unique_id=134848781 node_paths=PackedStringArray("_vSyncOptionBtn", "_maxFpsEdit", "_packOptionBtn", "_useDefaultResourceBtn", "_importPackBtn", "_exportPackBtn", "_deletePackBtn", "_applyBtn", "_confirmBtn", "_clearCasheBtn", "_userDataDirLabel", "_casheSizeLabel", "_packOverview", "_mhHighlightBtn", "_noteScaleEditorEdit", "_noteScalePlayEdit", "_verLineColorPicker", "_horSubLineColorPicker", "_horLineColorPicker", "_groundLineColorPicker", "_verLineWidthEdit", "_horSubLineWidthEdit", "_horLineWidthEdit", "_groundLineWidthEdit", "_shareLogBtn", "_exportLogBtn")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -28,6 +28,8 @@ _userDataDirLabel = NodePath("MarginContainer/VBoxContainer/MarginContainer/Spli
 _casheSizeLabel = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Storage/VBoxContainer/HBoxContainer/Label2")
 _packOverview = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Pack/VBoxContainer/ResourcePackOverview")
 _mhHighlightBtn = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/MhHighlight/CheckButton")
+_noteScaleEditorEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer/NoteScaleEditor")
+_noteScalePlayEdit = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer2/NoteScalePlay")
 _verLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/VerLine/Color/ColorPickerButton")
 _horSubLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorSubLine/Color/ColorPickerButton")
 _horLineColorPicker = NodePath("MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Editor/VBoxContainer/HorLine/Color/ColorPickerButton")
@@ -291,7 +293,6 @@ layout_mode = 2
 text = "清空缓存"
 
 [node name="Play" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=10732044]
-visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play" unique_id=1553095705]
@@ -306,6 +307,28 @@ size_flags_horizontal = 3
 theme = ExtResource("1_ykn2r")
 text = "多押提示"
 metadata/setting_key = "UseMultiholdHighlight"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer" unique_id=846935558]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer" unique_id=1978348014]
+layout_mode = 2
+text = "音符大小(编辑器)"
+
+[node name="NoteScaleEditor" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer" unique_id=1779636917]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer" unique_id=1229834724]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer2" unique_id=1721631752]
+layout_mode = 2
+text = "音符大小(试玩)"
+
+[node name="NoteScalePlay" type="SpinBox" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Play/VBoxContainer/HBoxContainer2" unique_id=835194406]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="Editor" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=1495793183]
 visible = false
@@ -455,6 +478,7 @@ allow_greater = true
 metadata/setting_key = "GroundLineWidth"
 
 [node name="Log" type="MarginContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer" unique_id=210000011]
+visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer/SplitContainer/Properties/MarginContainer/Log" unique_id=210000012]

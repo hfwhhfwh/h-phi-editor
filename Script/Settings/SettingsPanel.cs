@@ -90,8 +90,11 @@ public partial class SettingsPanel : Control
         RegisterSetting(key, apply, () => box.ValueChanged -= handler);
     }
 
-    private void BindSpinBoxFloat(SpinBox box, string key, float min = 0.1f)
+    private void BindSpinBoxFloat(SpinBox box, string key, float min = 0.1f, float step = 0.1f)
     {
+        box.Step = step;
+        box.MinValue = min;
+
         Action<Variant> apply = v => box.SetValueNoSignal(v.AsDouble());
 
         SpinBox.ValueChangedEventHandler handler = v =>
@@ -202,6 +205,9 @@ public partial class SettingsPanel : Control
         };
         _userDataDirLabel.Text = "用户数据目录: " + ProjectSettings.GlobalizePath("user://");
 
+        _exportLogBtn.Pressed += OnExportLogClicked;
+        _shareLogBtn.Pressed += OnShareLogClicked;
+
         VisibilityChanged += () =>
         {
             if (Visible)
@@ -240,6 +246,8 @@ public partial class SettingsPanel : Control
 
         // ---- 播放 ----
         BindCheckButton(_mhHighlightBtn, nameof(SettingsData.UseMultiholdHighlight));
+        BindSpinBoxFloat(_noteScaleEditorEdit, nameof(SettingsData.NoteScaleEditor));
+        BindSpinBoxFloat(_noteScalePlayEdit, nameof(SettingsData.NoteScalePlay));
 
         // ---- 编辑器 ----
         BindColorPicker  (_verLineColorPicker,   nameof(SettingsData.VerColor));

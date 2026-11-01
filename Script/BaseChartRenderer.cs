@@ -48,6 +48,9 @@ public abstract partial class BaseChartRenderer : Node
     /// <summary>note的宽度大小缩放</summary>
     public float NoteScale { get; protected set; }
 
+    /// <summary>自定义的note的宽度大小缩放因子，乘在最后</summary>
+    public virtual float CustomNoteScaleFactor { get; set; } = 1.0f;
+
     public abstract void UseDefaultResource();
 
     public abstract void Initialize(Control parent);

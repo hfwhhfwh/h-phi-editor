@@ -137,6 +137,15 @@ public partial class EditorPlaybackController : Node
         #endif
     }
 
+    /// <summary>
+    /// 更新音符缩放，由 SettingsController 在设置变化时调用。
+    /// </summary>
+    public void SetNoteScaleFactor(float factor)
+    {
+        if (_chartRenderer != null)
+            _chartRenderer.CustomNoteScaleFactor = factor;
+    }
+
     // ==================== 资源包 ====================
 
     /// <summary>显示/隐藏谱面播放器（含渲染器）</summary>
