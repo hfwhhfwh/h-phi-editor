@@ -240,7 +240,7 @@ public partial class LineEventInfoPanel : Panel
         Label lbl = new Label { Text = label, CustomMinimumSize = new Vector2(80, 0) };
         row.AddChild(lbl);
 
-        Control ctrl = editor.Control;
+        Control ctrl = editor.View;
         ctrl.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         row.AddChild(ctrl);
 
@@ -277,9 +277,9 @@ public partial class LineEventInfoPanel : Panel
 
         foreach (IPropertyEditor e in _editors)
         {
-            Node parent = e.Control.GetParent();
-            parent?.RemoveChild(e.Control);
-            e.Control.QueueFree();
+            Node parent = e.View.GetParent();
+            parent?.RemoveChild(e.View);
+            e.View.QueueFree();
         }
         _editors.Clear();
 

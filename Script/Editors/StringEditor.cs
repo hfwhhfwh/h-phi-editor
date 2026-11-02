@@ -5,14 +5,17 @@ using HPhiEditorGame.Editor;
 public partial class StringEditor : PropertyEditorBase<string>
 {
     private string _value;
-    public override string Value {
+    private LineEdit _edit;
+
+    public override string Value
+    {
         get => _value;
-        set {
+        set
+        {
             _value = value;
+            if (_edit != null) _edit.Text = value ?? "";
         }
     }
-
-    private LineEdit _edit;
 
     protected override void BuildUI()
     {
@@ -21,9 +24,7 @@ public partial class StringEditor : PropertyEditorBase<string>
             CustomMinimumSize = new Vector2(50, 0),
             SizeFlagsHorizontal = SizeFlags.ExpandFill
         };
-        edit.SetAnchorsPreset(LayoutPreset.FullRect); // 填满
         AddChild(edit);
-
         edit.TextSubmitted += (string text) =>
         {
             _value = text;
@@ -31,5 +32,4 @@ public partial class StringEditor : PropertyEditorBase<string>
         };
         _edit = edit;
     }
-
 }

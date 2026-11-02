@@ -5,13 +5,10 @@ using System;
 namespace HPhiEditorGame.Editor
 {
     /// <summary>强类型属性编辑器接口</summary>
-    public interface IPropertyEditor
+    public interface IPropertyEditor : IEditorField
     {
         string Label { get; }
-        Control Control { get; }
-        event Action<string, Variant> ValueChanged;
-        void SetValue(object value);
-        void Setup(string label); 
+        void Setup(string label, Func<object> readValue);
     }
 
     public interface IPropertyEditor<T> : IPropertyEditor
@@ -24,31 +21,37 @@ namespace HPhiEditorGame.Editor
     public abstract partial class PropertyEditorBase<T> : MarginContainer, IPropertyEditor<T>
     {
         private string _label;
+        private Func<object> _readValue;
+
         public string Label => _label;
-        public Control Control => this;
+        public Control View => this;
 
         public abstract T Value { get; set; }
         public event Action<T> TypedValueChanged;
-        public event Action<string, Variant> ValueChanged;
+        public event Action<EditorChange> ValueChanged;
 
+        /// <summary>只应由用户交互回调调用；刷新路径绝不调用它。</summary>
         protected void NotifyChanged(T newValue)
         {
             TypedValueChanged?.Invoke(newValue);
-            ValueChanged?.Invoke(_label, Variant.From(newValue));
+            ValueChanged?.Invoke(new EditorChange(Array.Empty<string>(), newValue));
         }
 
-        public void SetValue(object value) => Value = (T)value;
-
-        public void Setup(string label)
+        public void Setup(string label, Func<object> readValue)
         {
             _label = label;
+            _readValue = readValue;
             BuildUI();
         }
+
+        public object ReadValue() => _readValue?.Invoke();
+
+        public void SetValueSilently(object value) => Value = (T)value;
 
         protected abstract void BuildUI();
     }
 
-    /// <summary>缓动数据（从原 InfoEditPanel 移出）</summary>
+    /// <summary>缓动数据</summary>
     public class EasingData
     {
         public EasingIO EasingIO { get; set; }

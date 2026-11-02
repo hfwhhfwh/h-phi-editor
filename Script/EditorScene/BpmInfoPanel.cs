@@ -113,7 +113,7 @@ public partial class BpmInfoPanel : PanelContainer
 		Label fieldLabel = new Label { Text = label, CustomMinimumSize = new Vector2(100, 0) };
 		row.AddChild(fieldLabel);
 
-		Control control = editor.Control;
+		Control control = editor.View;
 		control.SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		row.AddChild(control);
 		_container.AddChild(row);
@@ -128,9 +128,9 @@ public partial class BpmInfoPanel : PanelContainer
 
 		foreach (IPropertyEditor editor in _editors)
 		{
-			Node parent = editor.Control.GetParent();
-			parent?.RemoveChild(editor.Control);
-			editor.Control.QueueFree();
+			Node parent = editor.View.GetParent();
+			parent?.RemoveChild(editor.View);
+			editor.View.QueueFree();
 		}
 		_editors.Clear();
 
