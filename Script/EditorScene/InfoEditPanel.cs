@@ -18,6 +18,10 @@ public partial class InfoEditPanel : Control
 	[Export] private Label _nameLabel;
 	[Export] private Button _confirmButton;
 
+	public VBoxContainer FieldContainer => _vBoxContainer;
+	public Label TitleLabel => _nameLabel;
+	public Button ConfirmButton => _confirmButton;
+
 	/// <summary>每个字段的「静默写回控件」委托，供 RefreshValues 使用</summary>
 	private readonly Dictionary<string, Action<object>> _setters = new();
 

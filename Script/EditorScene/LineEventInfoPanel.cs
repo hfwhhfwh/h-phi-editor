@@ -15,12 +15,13 @@ public partial class LineEventInfoPanel : Panel
     private LineEventEnum _eventType;
     private int _eventIndex;
     private LineEvent _lineEvent;
-    private readonly List<IPropertyEditor> _editors = new();
-    private readonly List<Label> _labels = new();
     private EasingData _lastEasing;
 
-    /// <summary>把数据最新值静默写回各控件，用于撤销/重做后的刷新</summary>
-    private readonly List<Action> _refreshers = new();
+    /// <summary>根字段容器：只负责 View 布局、事件转发、ApplyToUI。</summary>
+    private CompositeField _root;
+
+    /// <summary>label → 该字段的变更处理器，由根事件按 Path[0] 分发。</summary>
+    private readonly Dictionary<string, Action<EditorChange>> _fieldHandlers = new();
 
     /// <summary>场景级状态中心，用于按对象引用重新定位事件</summary>
     private EditorContext _context;
@@ -32,7 +33,7 @@ public partial class LineEventInfoPanel : Panel
     private bool _refreshing;
 
     [Signal] public delegate void OnConfirmedEventHandler();
-
+    
     /// <summary>
     /// 注入依赖。面板不再把属性修改抛给上级转发，直接执行命令；
     /// 同时订阅历史变化，撤销/重做后把数据回填到界面。
@@ -41,23 +42,14 @@ public partial class LineEventInfoPanel : Panel
     {
         _context = context;
         _editService = editService;
-
-        if (_editService != null)
-        {
-            _editService.HistoryChanged += OnHistoryChanged;
-        }
+        if (_editService != null) _editService.HistoryChanged += OnHistoryChanged;
     }
 
     public override void _ExitTree()
     {
-        if (_editService != null)
-        {
-            _editService.HistoryChanged -= OnHistoryChanged;
-        }
-
+        if (_editService != null) _editService.HistoryChanged -= OnHistoryChanged;
         base._ExitTree();
     }
-
     /// <summary>
     /// 把属性修改提交给 ChartEditService
     /// </summary>
@@ -117,10 +109,9 @@ public partial class LineEventInfoPanel : Panel
     /// </summary>
     private void RefreshEditors()
     {
-        foreach (Action refresh in _refreshers) refresh();
+        _root?.ApplyToUI();
 
-        // 缓动控件内部持有数据副本，回填后要同步比较基准，
-        // 否则用户下一次编辑会被误判为「多个字段都变了」
+        // 缓动控件内部持有数据副本，回填后要同步比较基准
         _lastEasing = BuildEasingData().Duplicate();
     }
 
@@ -149,64 +140,52 @@ public partial class LineEventInfoPanel : Panel
         _eventType = type;
         _eventIndex = index;
 
-        // 选择滑动条的最大、最小值
         float minValue = 0, maxValue = 0;
         float step = 0.1f;
-        switch(type)
+        switch (type)
         {
-            case LineEventEnum.MoveX:
-                minValue = -675f;
-                maxValue = 675f;
-                break;
-            case LineEventEnum.MoveY:
-                minValue = -450f;
-                maxValue = 450f;
-                break;
-            case LineEventEnum.Rotate:
-                minValue = 0f;
-                maxValue = 360f;
-                break;
-            case LineEventEnum.Alpha:
-                minValue = 0f;
-                maxValue = 255f;
-                break;
-            case LineEventEnum.Speed:
-                minValue = 0f;
-                maxValue = 20f;
-                break;
+            case LineEventEnum.MoveX: minValue = -675f; maxValue = 675f; break;
+            case LineEventEnum.MoveY: minValue = -450f; maxValue = 450f; break;
+            case LineEventEnum.Rotate: minValue = 0f; maxValue = 360f; break;
+            case LineEventEnum.Alpha: minValue = 0f; maxValue = 255f; break;
+            case LineEventEnum.Speed: minValue = 0f; maxValue = 20f; break;
         }
 
         ClearEditors();
         _titleLabel.Text = $"正在编辑: 事件{type}_{index}";
 
-        // ---------- 声明字段 ----------
-        // 每个字段都传入「从数据读当前值」的委托，撤销/重做后据此静默回填控件
+        _root = new CompositeField();
+        _root.View.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        _root.ValueChanged += OnRootValueChanged;
+        _container.AddChild(_root.View);
+
         AddField("StartTime", () => new Beat(_lineEvent.StartTime),
-            null, // 面板内部不直接改数据，交给 ChartEditService 执行命令
-            LineEventPropertyType.StartTime);
+            null, LineEventPropertyType.StartTime);
 
         AddField("EndTime", () => new Beat(_lineEvent.EndTime),
-            null, 
-            LineEventPropertyType.EndTime);
+            null, LineEventPropertyType.EndTime);
 
         AddField("Start", () => _lineEvent.Start,
-            null, 
-            LineEventPropertyType.Start,
-            floatOptions: new FloatEditorOptions{MinValue = minValue, MaxValue = maxValue, Step = step}
-        );
+            null, LineEventPropertyType.Start,
+            floatOptions: new FloatEditorOptions { MinValue = minValue, MaxValue = maxValue, Step = step });
 
         AddField("End", () => _lineEvent.End,
-            null, 
-            LineEventPropertyType.End,
-            floatOptions: new FloatEditorOptions{MinValue = minValue, MaxValue = maxValue, Step = step}
-        );
+            null, LineEventPropertyType.End,
+            floatOptions: new FloatEditorOptions { MinValue = minValue, MaxValue = maxValue, Step = step });
 
-        // 缓动：先拆包，编辑完再比较差异并分发事件
         _lastEasing = BuildEasingData().Duplicate();
 
         AddField("Easing", BuildEasingData,
             v => HandleEasingChanged((EasingData)v),
-            null); // 缓动内部自行分发子事件
+            null);
+    }
+
+    /// <summary>根字段事件分发：Path[0] 是字段 label。</summary>
+    private void OnRootValueChanged(EditorChange change)
+    {
+        if (change.Path == null || change.Path.Count == 0) return;
+        if (_fieldHandlers.TryGetValue(change.Path[0], out var handler))
+            handler(change);
     }
 
     /// <summary>
@@ -218,35 +197,20 @@ public partial class LineEventInfoPanel : Panel
     /// <param name="propType">对应的枚举，用于向外通知"哪个属性变了"；null 表示内部自行处理（如 Easing）</param>
     /// <param name="floatOptions">Float 字段的滑块范围配置</param>
     /// <typeparam name="T"></typeparam>
-    private void AddField<T>(string label, Func<T> readValue, Action<object> setter, LineEventPropertyType? propType, FloatEditorOptions floatOptions = null)
+    private void AddField<T>(string label, Func<T> readValue, Action<object> setter,
+        LineEventPropertyType? propType, FloatEditorOptions floatOptions = null)
     {
         IPropertyEditor<T> editor = PropertyEditorFactory.Create<T>(floatOptions);
-        editor.Setup(label);
-        editor.Value = readValue();
+        editor.Setup(label, () => readValue());
+        editor.SetValueSilently(readValue());
+        _root.AddField(editor);
 
-        editor.TypedValueChanged += (value) =>
+        _fieldHandlers[label] = (EditorChange change) =>
         {
-            setter?.Invoke(value);
+            setter?.Invoke(change.Value);
             if (propType.HasValue)
-                NotifyPropertyChanged(propType.Value, value);
+                NotifyPropertyChanged(propType.Value, change.Value);
         };
-
-        // 撤销/重做后静默回填：IPropertyEditor.Value 的 setter 不会触发 TypedValueChanged
-        _refreshers.Add(() => editor.Value = readValue());
-
-        // UI 行布局
-        HBoxContainer row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-        Label lbl = new Label { Text = label, CustomMinimumSize = new Vector2(80, 0) };
-        row.AddChild(lbl);
-
-        Control ctrl = editor.View;
-        ctrl.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        row.AddChild(ctrl);
-
-        _container.AddChild(row);
-        _editors.Add(editor);
-        _labels.Add(lbl);
     }
 
     private void HandleEasingChanged(EasingData neo)
@@ -273,28 +237,13 @@ public partial class LineEventInfoPanel : Panel
 
     private void ClearEditors()
     {
-        _refreshers.Clear();
-
-        foreach (IPropertyEditor e in _editors)
-        {
-            Node parent = e.View.GetParent();
-            parent?.RemoveChild(e.View);
-            e.View.QueueFree();
-        }
-        _editors.Clear();
-
-        foreach (Label label in _labels)
-        {
-            Node parent = label.GetParent();
-            parent?.RemoveChild(label);
-            label.QueueFree();
-        }
-        _labels.Clear();
+        _fieldHandlers.Clear();
+        _lastEasing = null;
+        _root = null;
 
         foreach (Node node in _container.GetChildren())
         {
-            Node parent = node.GetParent();
-            parent?.RemoveChild(node);
+            _container.RemoveChild(node);
             node.QueueFree();
         }
     }
