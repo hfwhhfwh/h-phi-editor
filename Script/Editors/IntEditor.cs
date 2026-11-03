@@ -5,9 +5,9 @@ public partial class IntEditor : PropertyEditorBase<int>
 {
     private int _value;
     private SpinBox _spin;
-    private readonly FloatEditorOptions _options;
+    private readonly NumericFieldOptions _options;
 
-    public IntEditor(FloatEditorOptions options = null) { _options = options; }
+    public IntEditor(NumericFieldOptions options = null) { _options = options; }
 
     public override int Value
     {

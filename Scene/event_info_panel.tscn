@@ -2,8 +2,9 @@
 
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_wt3vp"]
 [ext_resource type="Script" uid="uid://ci2ua0jh7hpa5" path="res://Script/EditorScene/LineEventInfoPanel.cs" id="2_4bniu"]
+[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="3_e7nb6"]
 
-[node name="EventInfoPanel" type="Panel" unique_id=1587088222 node_paths=PackedStringArray("_container", "_titleLabel", "_confirmButton")]
+[node name="EventInfoPanel" type="Panel" unique_id=1587088222 node_paths=PackedStringArray("_infoEditPanel")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -11,11 +12,10 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_wt3vp")
 script = ExtResource("2_4bniu")
-_container = NodePath("MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer")
-_titleLabel = NodePath("MarginContainer/VBoxContainer/Label")
-_confirmButton = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Button")
+_infoEditPanel = NodePath("InfoEditPanel")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1630262005]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -68,3 +68,6 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 text = "确定"
+
+[node name="InfoEditPanel" parent="." unique_id=296322886 instance=ExtResource("3_e7nb6")]
+layout_mode = 1

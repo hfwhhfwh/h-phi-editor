@@ -2,23 +2,23 @@ using Godot;
 using HPhiEditorGame.Editor;
 using System;
 
-public sealed class FloatEditorOptions
-{
-    public double MinValue { get; set; } = -1;
-    public double MaxValue { get; set; } = 1;
-    public double Step { get; set; } = 0.01;
-}
+// public sealed class FloatEditorOptions
+// {
+//     public double MinValue { get; set; } = -1;
+//     public double MaxValue { get; set; } = 1;
+//     public double Step { get; set; } = 0.01;
+// }
 
 public partial class FloatEditor : PropertyEditorBase<float>
 {
-    private readonly FloatEditorOptions _options;
+    private readonly NumericFieldOptions _options;
     private HSlider _slider;
     private SpinBox _spinBox;
     private float _value;
 
-    public FloatEditor(FloatEditorOptions options = null)
+    public FloatEditor(NumericFieldOptions options = null)
     {
-        _options = options ?? new FloatEditorOptions();
+        _options = options ?? new NumericFieldOptions();
 
         if (_options.MinValue >= _options.MaxValue)
             throw new ArgumentException("FloatEditor 的最小值必须小于最大值");

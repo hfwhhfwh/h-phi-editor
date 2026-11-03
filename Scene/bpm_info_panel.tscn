@@ -2,6 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="1_f7mey"]
 [ext_resource type="Script" uid="uid://bapmcd7bif2rh" path="res://Script/EditorScene/BpmInfoPanel.cs" id="2_iuus2"]
+[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="3_uvjkm"]
 
 [node name="BpmInfoPanel" type="PanelContainer" unique_id=818055099 node_paths=PackedStringArray("_container", "_titleLabel", "_confirmButton")]
 anchors_preset = 15
@@ -63,3 +64,6 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 text = "确定"
+
+[node name="InfoEditPanel" parent="." unique_id=296322886 instance=ExtResource("3_uvjkm")]
+layout_mode = 2

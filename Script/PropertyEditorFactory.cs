@@ -1,40 +1,32 @@
 using System;
-using System.Collections.Generic;
 using Godot;
 using HPhiEditorGame.Editor;
 using QuickType;
 
 public static class PropertyEditorFactory
 {
-    private static readonly Dictionary<Type, Func<IPropertyEditor>> _creators = new()
-    {
-        [typeof(string)]     = () => new StringEditor(),
-        [typeof(int)]        = () => new IntEditor(),
-        [typeof(long)]       = () => null,   // 需要时再补 LongEditor
-        [typeof(float)]      = () => new FloatEditor(),
-        [typeof(double)]     = () => null,   // 需要时再补 DoubleEditor
-        [typeof(bool)]       = () => new BoolEditor(),
-        [typeof(Beat)]       = () => new BeatEditor(),
-        [typeof(EasingData)] = () => new EasingEditor(),
-        [typeof(NoteType)]   = () => new NoteTypeEditor(),
-    };
+    public static IPropertyEditor Create(Type type) => Create(type, null);
 
-    public static IPropertyEditor Create(Type type)
+    public static IPropertyEditor Create(Type type, FieldOptions options)
     {
-        if (_creators.TryGetValue(type, out var creator))
-        {
-            var editor = creator();
-            if (editor == null) throw new NotSupportedException($"未实现的属性类型: {type}");
-            return editor;
-        }
+        NumericFieldOptions num = options as NumericFieldOptions;
+
+        if (type == typeof(string))   return new StringEditor();
+        if (type == typeof(int))      return new IntEditor(num);
+        if (type == typeof(long))     return new LongEditor(num);
+        if (type == typeof(short))    return new LongEditor(num);
+        if (type == typeof(byte))     return new LongEditor(num);
+        if (type == typeof(float))    return new FloatEditor(num);
+        if (type == typeof(double))   return new DoubleEditor(num);
+        if (type == typeof(decimal))  return new DoubleEditor(num);
+        if (type == typeof(bool))     return new BoolEditor();
+        if (type == typeof(Beat))     return new BeatEditor();
+        if (type == typeof(EasingData)) return new EasingEditor();
+        if (type == typeof(NoteType)) return new NoteTypeEditor();
+
         throw new NotSupportedException($"不支持的属性类型: {type}");
     }
 
-    public static IPropertyEditor<T> Create<T>(FloatEditorOptions floatOptions = null)
-    {
-        if (typeof(T) == typeof(float))
-            return (IPropertyEditor<T>)(IPropertyEditor)new FloatEditor(floatOptions);
-
-        return (IPropertyEditor<T>)Create(typeof(T));
-    }
+    public static IPropertyEditor<T> Create<T>(FieldOptions options = null)
+        => (IPropertyEditor<T>)Create(typeof(T), options);
 }

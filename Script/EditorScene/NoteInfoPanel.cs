@@ -6,17 +6,11 @@ using HPhiEditorGame.Editor;
 
 public partial class NoteInfoPanel : Panel
 {
-    [Export] private InfoEditPanel infoEditPanel;
+    [Export] private InfoEditPanel _infoEditPanel;
 
     private int editingLineId;
     private int editingNoteIndex;
     private Note _note;
-
-    /// <summary>根字段容器：只负责 View 布局、事件转发、ApplyToUI。</summary>
-    private CompositeField _root;
-
-    /// <summary>label → 该字段的变更处理器，由根事件按 Path[0] 分发。</summary>
-    private readonly Dictionary<string, Action<EditorChange>> _fieldHandlers = new();
 
     private EditorContext _context;
     private ChartEditService _editService;
@@ -34,8 +28,7 @@ public partial class NoteInfoPanel : Panel
     public override void _Ready()
     {
         base._Ready();
-
-        infoEditPanel.OnConfirmed += () => EmitSignal(SignalName.OnConfirmed);
+        _infoEditPanel.OnConfirmed += () => EmitSignal(SignalName.OnConfirmed);
     }
 
     public override void _ExitTree()
@@ -50,19 +43,34 @@ public partial class NoteInfoPanel : Panel
         editingLineId = lineId;
         editingNoteIndex = noteIndex;
 
-        ClearEditors();
-        infoEditPanel.TitleLabel.Text = $"正在编辑: 音符{noteIndex}";
+        _infoEditPanel.BeginEdit($"音符{noteIndex}");
 
-        _root = new CompositeField();
-        _root.View.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        _root.ValueChanged += OnRootValueChanged;
-        infoEditPanel.FieldContainer.AddChild(_root.View);
+        _infoEditPanel.AddField("StartTime",
+            () => new Beat(_note.StartTime),
+            v => NotifyPropertyChanged(NotePropertyEnum.StartTime, v));
 
-        AddField("StartTime", () => new Beat(_note.StartTime), NotePropertyEnum.StartTime);
-        AddField("EndTime",   () => new Beat(_note.EndTime),   NotePropertyEnum.EndTime);
-        AddField("Type",      () => ConvertNoteType(_note.Type), NotePropertyEnum.Type);
-        AddField("PositionX", () => _note.PositionX, NotePropertyEnum.PosX, v => Convert.ToSingle(v));
-        AddField("Alpha",     () => _note.Alpha,     NotePropertyEnum.Alpha, v => Convert.ToInt32(v));
+        _infoEditPanel.AddField("EndTime",
+            () => new Beat(_note.EndTime),
+            v => NotifyPropertyChanged(NotePropertyEnum.EndTime, v));
+
+        _infoEditPanel.AddField("Type",
+            () => ConvertNoteType(_note.Type),
+            v => NotifyPropertyChanged(NotePropertyEnum.Type, v));
+
+        _infoEditPanel.AddField("PositionX",
+            () => _note.PositionX,
+            v => NotifyPropertyChanged(NotePropertyEnum.PosX, Convert.ToSingle(v)),
+            new NumericFieldOptions { MinValue = -675, MaxValue = 675, Step = 0.1 });
+
+        _infoEditPanel.AddField("Alpha",
+            () => _note.Alpha,
+            v => NotifyPropertyChanged(NotePropertyEnum.Alpha, Convert.ToInt32(v)),
+            new NumericFieldOptions { MinValue = 0, MaxValue = 255, Step = 1 });
+    }
+
+    private void NotifyPropertyChanged(NotePropertyEnum prop, object value)
+    {
+        _editService?.SetNoteProperty(editingLineId, editingNoteIndex, prop, value);
     }
 
     private static NoteType ConvertNoteType(int type) => type switch
@@ -74,52 +82,19 @@ public partial class NoteInfoPanel : Panel
         _ => NoteType.Tap
     };
 
-    /// <summary>根字段事件分发：Path[0] 是字段 label。</summary>
-    private void OnRootValueChanged(EditorChange change)
-    {
-        if (change.Path == null || change.Path.Count == 0) return;
-        if (_fieldHandlers.TryGetValue(change.Path[0], out var handler))
-            handler(change);
-    }
-
-    private void AddField<T>(string label, Func<T> readValue, NotePropertyEnum propType,
-        Func<object, object> convert = null)
-    {
-        IPropertyEditor<T> editor = PropertyEditorFactory.Create<T>();
-        editor.Setup(label, () => readValue());
-        editor.SetValueSilently(readValue());
-        _root.AddField(editor);
-
-        _fieldHandlers[label] = change =>
-        {
-            object value = convert != null ? convert(change.Value) : change.Value;
-            _editService?.SetNoteProperty(editingLineId, editingNoteIndex, propType, value);
-        };
-    }
-
     private void OnHistoryChanged()
     {
         if (_refreshing || !Visible || _note == null) return;
 
         int index = IndexOfEditedNote();
-        if (index < 0)
-        {
-            Visible = false;
-            return;
-        }
+        if (index < 0) { Visible = false; return; }
 
         editingNoteIndex = index;
-        infoEditPanel.TitleLabel.Text = $"正在编辑: 音符{index}";
+        _infoEditPanel.UpdateTitle($"音符{index}");
 
         _refreshing = true;
-        try
-        {
-            _root?.ApplyToUI();
-        }
-        finally
-        {
-            _refreshing = false;
-        }
+        try { _infoEditPanel.ApplyToUI(); }
+        finally { _refreshing = false; }
     }
 
     private int IndexOfEditedNote()
@@ -127,20 +102,7 @@ public partial class NoteInfoPanel : Panel
         Chart chart = _context?.EditingChart;
         if (chart?.JudgeLineList == null) return -1;
         if (editingLineId < 0 || editingLineId >= chart.JudgeLineList.Count) return -1;
-
         List<Note> notes = chart.JudgeLineList[editingLineId].Notes;
         return notes?.IndexOf(_note) ?? -1;
-    }
-
-    private void ClearEditors()
-    {
-        _fieldHandlers.Clear();
-        _root = null;
-
-        foreach (Node child in infoEditPanel.FieldContainer.GetChildren())
-        {
-            infoEditPanel.FieldContainer.RemoveChild(child);
-            child.QueueFree();
-        }
     }
 }

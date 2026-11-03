@@ -55,7 +55,7 @@ public partial class BpmInfoPanel : PanelContainer
         _container.AddChild(_root.View);
 
         AddField("Bpm", () => _bpmEvent.Bpm,
-            new FloatEditorOptions { MinValue = 0.01f, MaxValue = 1000f, Step = 0.1f });
+            new NumericFieldOptions { MinValue = 0.01f, MaxValue = 1000f, Step = 0.1f });
         AddField("StartTime", () => new Beat(_bpmEvent.StartTime));
     }
 
@@ -67,7 +67,7 @@ public partial class BpmInfoPanel : PanelContainer
             handler(change);
     }
 
-    private void AddField<T>(string label, Func<T> readValue, FloatEditorOptions floatOptions = null)
+    private void AddField<T>(string label, Func<T> readValue, NumericFieldOptions floatOptions = null)
     {
         IPropertyEditor<T> editor = PropertyEditorFactory.Create<T>(floatOptions);
         editor.Setup(label, () => readValue());

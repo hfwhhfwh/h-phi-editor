@@ -46,7 +46,30 @@ namespace HPhiEditorGame.Editor
 
         public object ReadValue() => _readValue?.Invoke();
 
-        public void SetValueSilently(object value) => Value = (T)value;
+        public void SetValueSilently(object value)
+        {
+            if (value is T t)
+            {
+                Value = t;
+                return;
+            }
+
+            if (value == null)
+            {
+                // 引用类型（如 string）允许回填 null；值类型保持原值
+                if (typeof(T).IsClass) Value = default;
+                return;
+            }
+
+            try
+            {
+                Value = (T)Convert.ChangeType(value, typeof(T));
+            }
+            catch
+            {
+                // 类型不兼容，静默忽略，不让刷新路径抛异常
+            }
+        }
 
         protected abstract void BuildUI();
     }

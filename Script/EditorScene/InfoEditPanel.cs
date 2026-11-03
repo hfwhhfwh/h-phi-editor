@@ -1,416 +1,93 @@
 using Godot;
-using QuickType;
+using HPhiEditorGame.Editor;
 using System;
 using System.Collections.Generic;
 
 public partial class InfoEditPanel : Control
 {
-	public class Data
-	{
-		public string Name{ get; set; }
+    [Export] private Theme _theme;
+    [Export] private VBoxContainer _vBoxContainer;
+    [Export] private Label _nameLabel;
+    [Export] private Button _confirmButton;
 
-		public Dictionary<string, object> Properties { get; set; } = new();
-	}
+    public Label TitleLabel => _nameLabel;
+    public Button ConfirmButton => _confirmButton;
 
-	private Data _data;
-	[Export] private Theme _theme;
-	[Export] private VBoxContainer _vBoxContainer;
-	[Export] private Label _nameLabel;
-	[Export] private Button _confirmButton;
+    [Signal] public delegate void OnConfirmedEventHandler();
 
-	public VBoxContainer FieldContainer => _vBoxContainer;
-	public Label TitleLabel => _nameLabel;
-	public Button ConfirmButton => _confirmButton;
-
-	/// <summary>每个字段的「静默写回控件」委托，供 RefreshValues 使用</summary>
-	private readonly Dictionary<string, Action<object>> _setters = new();
-
-	public Action<string, object> PropertyChanged;
-
-	[Signal] public delegate void OnConfirmedEventHandler();
+    private CompositeField _root;
 
     public override void _Ready()
     {
         base._Ready();
-		
-		// _vBoxContainer = GetNode<VBoxContainer>(
-		// 	"MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer");
-		// _nameLabel = GetNode<Label>("MarginContainer/VBoxContainer/Label");
-
-		_confirmButton.ButtonUp += () =>
-		{
-			EmitSignal(SignalName.OnConfirmed);
-		};
-		
+        _confirmButton.ButtonUp += () => EmitSignal(SignalName.OnConfirmed);
     }
 
-	public void ShowInfos(Data data)
-	{
-		if (data == null) return;
-
-		_data = data;
-
-		_nameLabel.Text = $"正在编辑:{_data.Name}";
-
-		// 清空原有控件（注意释放资源）
-		foreach (Node child in _vBoxContainer.GetChildren())
-		{
-			_vBoxContainer.RemoveChild(child);
-			child.QueueFree();
-		}
-
-		_setters.Clear();
-
-		foreach (var kvp in _data.Properties)
-		{
-			string key = kvp.Key;
-			object value = kvp.Value;
-
-			// 每行一个 HBoxContainer：标签 + 编辑器
-			HBoxContainer row = new HBoxContainer();
-			row.SizeFlagsHorizontal = SizeFlags.Fill;
-
-			Label label = new Label();
-			label.Text = key;
-			row.AddChild(label);
-
-			Control editor = CreateEditorForValue(key, value);
-			editor.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-			row.AddChild(editor);
-
-			_vBoxContainer.AddChild(row);
-		}
-
-	}
-
-	/// <summary>
-	/// 不重建控件，只把数据最新值静默写回已有控件。
-	/// 用于撤销/重做后刷新界面 —— 重建控件会打断用户正在进行的拖动。
-	/// </summary>
-	public void RefreshValues(Data data)
-	{
-		if (data == null || _setters.Count == 0) return;
-
-		_data = data;
-
-		_nameLabel.Text = $"正在编辑:{_data.Name}";
-
-		foreach (var kvp in _data.Properties)
-		{
-			if (_setters.TryGetValue(kvp.Key, out Action<object> set))
-			{
-				set(kvp.Value);
-			}
-		}
-	}
-
-	private Control CreateEditorForValue(string key, object value)
-	{
-		if (value == null)
-		{
-			// 空值默认显示为字符串输入
-			return CreateStringEditor(key, "");
-		}
-
-		Type type = value.GetType();
-
-		if (type == typeof(string))
-		{
-			return CreateStringEditor(key, (string)value);
-		}
-		else if (type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte))
-		{
-			return CreateIntEditor(key, Convert.ToInt64(value));
-		}
-		else if (type == typeof(float) || type == typeof(double) || type == typeof(decimal))
-		{
-			return CreateDoubleEditor(key, Convert.ToDouble(value));
-		}
-		else if (type == typeof(bool))
-		{
-			return CreateBoolEditor(key, (bool)value);
-		}
-		else if (type.IsEnum)
-		{
-			return CreateEnumEditor(key, value);
-		}
-		else if(type == typeof(Beat))
-		{
-			return CreateBeatEditor(key, (Beat)value);
-		}
-		// else if (type == typeof(EasingData))
-		// {
-		// 	// return CreateEasingEditor(key, (EasingData)value);
-		// }
-		else
-		{
-			// 未知类型回退为字符串输入（调用 ToString）
-			return CreateStringEditor(key, value.ToString());
-		}
-	}
-
-	private Control CreateStringEditor(string key, string initialValue)
-	{
-		LineEdit lineEdit = new LineEdit();
-		lineEdit.Text = initialValue;
-		lineEdit.TextSubmitted += (newText) =>
-		{
-			_data.Properties[key] = newText;
-			OnValueChanged(key, newText);
-		};
-		_setters[key] = v => lineEdit.Text = v?.ToString() ?? "";
-		return lineEdit;
-	}
-
-	private Control CreateIntEditor(string key, long initialValue)
+    /// <summary>打开面板：设置标题并清空所有字段。</summary>
+    public void BeginEdit(string content)
     {
-        SpinBox spinBox = new SpinBox();
-        //spinBox.MinValue = min;
-        //spinBox.MaxValue = max;
-        //spinBox.Step = step;
-        spinBox.AllowGreater = true;
-        spinBox.AllowLesser = true;
-        spinBox.Value = initialValue;
+        _nameLabel.Text = $"正在编辑:{content}";
+        ClearFields();
+    }
 
-        // if (!allowDecimal)
-        // {
-        //     spinBox.Step = 1;
-        // }
+    /// <summary>更新标题（不清空字段）。撤销重做后重排索引时使用。</summary>
+    public void UpdateTitle(string content)
+    {
+        _nameLabel.Text = $"正在编辑:{content}";
+    }
 
-        spinBox.ValueChanged += (newValue) =>
+    /// <summary>
+    /// 添加一个字段。<paramref name="options"/> 由业务层决定，把范围/步长传给编辑器；
+    /// <paramref name="onChanged"/> 是字段变更回调（不做转发分发，直接绑定）。
+    /// </summary>
+    public void AddField<T>(
+        string label,
+        Func<T> readValue,
+        Action<object> onChanged = null,
+        FieldOptions options = null)
+    {
+        EnsureRoot();
+
+        IPropertyEditor<T> editor = PropertyEditorFactory.Create<T>(options);
+        editor.Setup(label, () => readValue());
+        editor.SetValueSilently(readValue());
+
+        if (onChanged != null)
+            editor.ValueChanged += change => onChanged(change.Value);
+
+        _root.AddField(editor);
+    }
+
+    /// <summary>批量添加：每个构建器依次向面板添加字段。</summary>
+    public void AddFields(params Action<InfoEditPanel>[] builders)
+    {
+        if (builders == null) return;
+        foreach (var build in builders) build?.Invoke(this);
+    }
+
+    /// <summary>清空所有字段。</summary>
+    public void ClearFields()
+    {
+        _root = null;
+
+        foreach (Node child in _vBoxContainer.GetChildren())
         {
-            long newInt;
-			try
-			{
-				newInt = Convert.ToInt64(newValue);
-				
-			}
-			catch(Exception e)
-			{
-				FileLogger.LogErr($"[{this.Name}] 输入整数非法:{e.Message}");
-				//lineEdit.Text = $"{Convert.ToDouble(_data.Properties[key])}";
-				return;
-			}
-        	_data.Properties[key] = newInt;
-			OnValueChanged(key, newInt);
-        };
-        _setters[key] = v => spinBox.SetValueNoSignal(Convert.ToDouble(Convert.ToInt64(v)));
-        return spinBox;
-    }
-
-	private Control CreateDoubleEditor(string key, double initialValue)
-	{
-		LineEdit lineEdit = new LineEdit();
-		lineEdit.Text = $"{initialValue}";
-		lineEdit.TextSubmitted += (newValue) =>
-		{
-			double newDouble;
-			try
-			{
-				newDouble = Convert.ToDouble(newValue);
-				
-			}
-			catch(Exception e)
-			{
-				FileLogger.LogErr($"[{this.Name}] 输入浮点数非法:{e.Message}");
-				lineEdit.Text = $"{Convert.ToDouble(_data.Properties[key])}";
-				return;
-			}
-			
-			_data.Properties[key] = newDouble;
-			lineEdit.Text = $"{newDouble}";
-			OnValueChanged(key, newDouble);
-		};
-		_setters[key] = v => lineEdit.Text = $"{v}";
-		return lineEdit;
-	}
-
-	// private Control CreateNumberEditor(string key, double initialValue, double min, double max, double step, bool allowDecimal)
-    // {
-    //     SpinBox spinBox = new SpinBox();
-    //     spinBox.MinValue = min;
-    //     spinBox.MaxValue = max;
-    //     spinBox.Step = step;
-    //     spinBox.AllowGreater = false;
-    //     spinBox.AllowLesser = false;
-    //     spinBox.Value = initialValue;
-
-    //     if (!allowDecimal)
-    //     {
-    //         spinBox.Step = 1;
-    //     }
-
-    //     spinBox.ValueChanged += (newValue) =>
-    //     {
-    //         if (allowDecimal)
-    //             _data.Properties[key] = (double)newValue;
-    //         else
-    //             _data.Properties[key] = (int)newValue;
-    //     };
-    //     return spinBox;
-    // }
-
-    private Control CreateBoolEditor(string key, bool initialValue)
-    {
-        CheckBox checkBox = new CheckBox();
-        checkBox.ButtonPressed = initialValue;
-        checkBox.Toggled += (bool pressed) =>
-		{
-			_data.Properties[key] = pressed;
-			OnValueChanged(key, pressed);
-		};
-        _setters[key] = v => checkBox.SetPressedNoSignal(v is bool b && b);
-        return checkBox;
-    }
-
-    private Control CreateEnumEditor(string key, object enumValue)
-    {
-        OptionButton optionButton = new OptionButton();
-        Type enumType = enumValue.GetType();
-        string[] names = Enum.GetNames(enumType);
-        Array values = Enum.GetValues(enumType);
-
-        int currentIndex = 0;
-        for (int i = 0; i < names.Length; i++)
-        {
-            optionButton.AddItem(names[i]);
-            if (Equals(enumValue, values.GetValue(i)))
-                currentIndex = i;
+            _vBoxContainer.RemoveChild(child);
+            child.QueueFree();
         }
-        optionButton.Selected = currentIndex;
-
-        optionButton.ItemSelected += (index) =>
-        {
-			//FileLogger.Log($"ItemSelected:{index}");
-            object newEnum = values.GetValue((int)index);
-            _data.Properties[key] = newEnum;
-			OnValueChanged(key, newEnum);
-        };
-        _setters[key] = v =>
-        {
-            int idx = Array.IndexOf(values, v);
-            if (idx >= 0) optionButton.Select(idx);
-        };
-        return optionButton;
     }
 
-	private Control CreateBeatEditor(string key, Beat initialValue)
-	{
-		HBoxContainer hBoxContainer = new();
+    /// <summary>静默刷新：所有字段回填为绑定数据的当前值，不触发变更回调。</summary>
+    public void ApplyToUI()
+    {
+        _root?.ApplyToUI();
+    }
 
-		LineEdit[] lineEdits = new LineEdit[3];
-
-		for(int i = 0; i < 3; i++)
-		{
-			int index = i; // 捕获当前索引
-
-			LineEdit lineEdit = new LineEdit();
-			hBoxContainer.AddChild(lineEdit);
-
-			lineEdit.Text = $"{initialValue.Values[i]}";
-
-			lineEdit.TextSubmitted += (string newValue) =>
-			{
-				//尝试转换为数字
-				long newInt;
-				try
-				{
-					newInt = Convert.ToInt64(newValue);
-					
-				}
-				catch(Exception e)
-				{
-					FileLogger.LogErr($"[{this.Name}] 输入整数非法:{e.Message}");
-					// 恢复为当前值（从 _data 中取对应索引）
-					Beat currentBeat = (Beat)_data.Properties[key];
-					lineEdit.Text = currentBeat.Values[index].ToString();
-					return;
-				}
-				// 更新 _data 中的 Beat 对象
-				Beat beat = (Beat)_data.Properties[key];
-				beat.Values[index] = (int)newInt;
-				OnValueChanged(key, beat);
-			};
-
-			lineEdits[i] = lineEdit;
-		}
-
-		_setters[key] = v =>
-		{
-			if (v is not Beat beat) return;
-			for (int i = 0; i < 3; i++)
-			{
-				lineEdits[i].Text = beat.Values[i].ToString();
-			}
-		};
-
-		return hBoxContainer;
-	}
-
-	// private Control CreateEasingEditor(string key, EasingData easingData)
-	// {
-	// 	EasingEditor editor = new();
-	// 	// 初始化显示
-	// 	editor.Init(
-	// 		easingData.EasingFunc, 
-	// 		easingData.EasingIO, 
-	// 		easingData.EasingLeft, 
-	// 		easingData.EasingRight
-	// 	);
-
-	// 	// 订阅所有子属性变更事件，更新数据并触发父级变化
-	// 	editor.EasingFuncChanged += (newFunc) =>
-	// 	{
-	// 		var data = (EasingData)_data.Properties[key];
-	// 		data.EasingFunc = newFunc;
-	// 		OnValueChanged(key, data);
-	// 	};
-	// 	editor.EasingIOChanged += (newIO) =>
-	// 	{
-	// 		var data = (EasingData)_data.Properties[key];
-	// 		data.EasingIO = newIO;
-	// 		OnValueChanged(key, data);
-	// 	};
-	// 	editor.EasingLeftChanged += (newLeft) =>
-	// 	{
-	// 		var data = (EasingData)_data.Properties[key];
-	// 		data.EasingLeft = newLeft;
-	// 		OnValueChanged(key, data);
-	// 	};
-	// 	editor.EasingRightChanged += (newRight) =>
-	// 	{
-	// 		var data = (EasingData)_data.Properties[key];
-	// 		data.EasingRight = newRight;
-	// 		OnValueChanged(key, data);
-	// 	};
-
-	// 	return editor;
-	// }
-
-	public void OnValueChanged(string key, object value)
-	{
-		PropertyChanged?.Invoke(key, value);
-	}
-
-}
-
-public class EasingData
-{
-	public EasingIO EasingIO { get; set; }
-
-	public EasingFunc EasingFunc { get; set; }
-
-	public float EasingLeft { get; set; }
-	public float EasingRight { get; set; }
-
-	public EasingData Duplicate()
-	{
-		return new EasingData
-		{
-			EasingIO = EasingIO,
-			EasingFunc = EasingFunc,
-			EasingLeft = EasingLeft,
-			EasingRight = EasingRight
-		};
-	}
+    private void EnsureRoot()
+    {
+        if (_root != null) return;
+        _root = new CompositeField();
+        _root.View.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _vBoxContainer.AddChild(_root.View);
+    }
 }
