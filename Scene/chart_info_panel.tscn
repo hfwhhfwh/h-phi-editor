@@ -1,0 +1,197 @@
+[gd_scene format=3 uid="uid://dsx666cmkyny5"]
+
+[ext_resource type="StyleBox" uid="uid://dx6dd4bb0sw41" path="res://Themes/Panel.tres" id="1_bbbey"]
+[ext_resource type="Script" uid="uid://dxftvur81kobc" path="res://Script/StartMenu/ChartInfoPanel.cs" id="2_kyl5n"]
+[ext_resource type="StyleBox" uid="uid://d015pgdij5eql" path="res://Themes/ButtonNormal.tres" id="3_yehl2"]
+[ext_resource type="StyleBox" uid="uid://c3x4gv1lx5uwq" path="res://Themes/ButtonPressed.tres" id="4_y6ey0"]
+[ext_resource type="StyleBox" uid="uid://cmp43k2ib4eob" path="res://Themes/ButtonHover.tres" id="5_j2myt"]
+[ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="6_yehl2"]
+
+[node name="ChartInfoPanel" type="PanelContainer" unique_id=1178886916 node_paths=PackedStringArray("_infoEditPanel")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = ExtResource("1_bbbey")
+script = ExtResource("2_kyl5n")
+_infoEditPanel = NodePath("InfoEditPanel")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1255476986]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer" unique_id=1816187229]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer2" unique_id=424455284]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1989672723]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "编辑谱面信息"
+horizontal_alignment = 1
+
+[node name="Name" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1450828944]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/VBoxContainer/Name" unique_id=1535110287]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "名称"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer2/VBoxContainer/Name" unique_id=1553976575]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/read_only = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+placeholder_text = "请输入文本"
+
+[node name="Music" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1456923009]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=888428527]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "音乐"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=1069051118]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/read_only = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+placeholder_text = "请输入文件路径"
+
+[node name="Botton" type="Button" parent="MarginContainer/VBoxContainer2/VBoxContainer/Music" unique_id=1778610094]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/pressed = ExtResource("3_yehl2")
+theme_override_styles/hover = ExtResource("3_yehl2")
+theme_override_styles/disabled = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+text = "选择
+"
+
+[node name="Pic" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1467601760]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=190675372]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "曲绘"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=689435856]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/read_only = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+placeholder_text = "请输入文件路径"
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer2/VBoxContainer/Pic" unique_id=1948672642]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/pressed = ExtResource("3_yehl2")
+theme_override_styles/hover = ExtResource("3_yehl2")
+theme_override_styles/disabled = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+text = "选择
+"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=764897930]
+layout_mode = 2
+
+[node name="Composer" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer" unique_id=1551151269]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer" unique_id=174273736]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "作曲家"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer/Composer" unique_id=1814095812]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/read_only = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1407816843]
+layout_mode = 2
+
+[node name="Charter" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2" unique_id=1419936179]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter" unique_id=1836923018]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "谱师"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer2/VBoxContainer/HBoxContainer2/Charter" unique_id=1447031652]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/read_only = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+placeholder_text = "请输入文本"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer2" unique_id=1687079670]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer2/HBoxContainer" unique_id=52051250]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/pressed = ExtResource("4_y6ey0")
+theme_override_styles/hover = ExtResource("5_j2myt")
+theme_override_styles/disabled = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+text = "确认"
+
+[node name="Button2" type="Button" parent="MarginContainer/VBoxContainer2/HBoxContainer" unique_id=657172863]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = ExtResource("3_yehl2")
+theme_override_styles/pressed = ExtResource("4_y6ey0")
+theme_override_styles/hover = ExtResource("5_j2myt")
+theme_override_styles/disabled = ExtResource("3_yehl2")
+theme_override_styles/focus = ExtResource("3_yehl2")
+text = "取消
+"
+
+[node name="InfoEditPanel" parent="." unique_id=296322886 instance=ExtResource("6_yehl2")]
+layout_mode = 2
+
+[connection signal="button_up" from="MarginContainer/VBoxContainer2/VBoxContainer/Music/Botton" to="." method="OnSelectMusic"]
+[connection signal="button_up" from="MarginContainer/VBoxContainer2/VBoxContainer/Pic/Button" to="." method="OnSelectPicture"]
+[connection signal="button_up" from="MarginContainer/VBoxContainer2/HBoxContainer/Button" to="." method="OnConfirm"]
+[connection signal="button_up" from="MarginContainer/VBoxContainer2/HBoxContainer/Button2" to="." method="OnCancel"]

@@ -11,7 +11,7 @@ public partial class StartMenu : Node
     [Export] private ChartList _chartList;
     [Export] private CreateChartPanel _createPanel;
     [Export] private DeletePanel _deletePanel;
-    [Export] private InfoPanel _infoPanel;
+    [Export] private ChartInfoPanel _infoPanel;
     [Export] private ExportPanel _exportPanel;
     [Export] private SettingsPanel _settingsPanel;
     [Export] private Button _multiSelectBtn;

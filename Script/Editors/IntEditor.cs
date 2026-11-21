@@ -1,10 +1,12 @@
+using System;
 using Godot;
 using HPhiEditorGame.Editor;
 
 public partial class IntEditor : PropertyEditorBase<int>
 {
     private int _value;
-    private SpinBox _spin;
+    private SpinBox _spinBox;
+    private HSlider _slider;
     private readonly NumericFieldOptions _options;
 
     public IntEditor(NumericFieldOptions options = null) { _options = options; }
@@ -15,13 +17,21 @@ public partial class IntEditor : PropertyEditorBase<int>
         set
         {
             _value = value;
-            if (_spin != null) _spin.SetValueNoSignal(value);
+            if (_spinBox != null) _spinBox.SetValueNoSignal(value);
+            if (_slider != null) _slider.SetValueNoSignal(Math.Clamp(value, _options.MinValue, _options.MaxValue));
         }
     }
 
     protected override void BuildUI()
     {
-        _spin = new SpinBox
+        VBoxContainer vbox = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill
+        };
+        vbox.AddThemeConstantOverride("Separation", 10);
+        AddChild(vbox);
+
+        _spinBox = new SpinBox
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             AllowGreater = true,
@@ -30,14 +40,34 @@ public partial class IntEditor : PropertyEditorBase<int>
         };
         if (_options != null)
         {
-            _spin.MinValue = _options.MinValue;
-            _spin.MaxValue = _options.MaxValue;
+            _spinBox.MinValue = _options.MinValue;
+            _spinBox.MaxValue = _options.MaxValue;
         }
-        AddChild(_spin);
-        _spin.ValueChanged += v =>
+        vbox.AddChild(_spinBox);
+
+        _slider = new HSlider
         {
-            _value = (int)v;
-            NotifyChanged(_value);
+            MinValue = _options.MinValue,
+            MaxValue = _options.MaxValue,
+            Step = _options.Step,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill
         };
+        vbox.AddChild(_slider);
+
+
+        _slider.ValueChanged += value => UpdateFromUser(value, false);
+        _spinBox.ValueChanged += value => UpdateFromUser(value, true);
+    }
+
+    private void UpdateFromUser(double value, bool fromSpinBox)
+    {
+        _value = (int)value;
+
+        if (fromSpinBox)
+            _slider.SetValueNoSignal(Math.Clamp(value, _options.MinValue, _options.MaxValue));
+        else
+            _spinBox.SetValueNoSignal(value);
+
+        NotifyChanged(_value);
     }
 }

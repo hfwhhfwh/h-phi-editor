@@ -1,11 +1,13 @@
 using Godot;
+using Godot.Collections;
 using System;
+using System.Reflection;
 
-public partial class InfoPanel : PanelContainer
+public partial class ChartInfoPanel : PanelContainer
 {
 	private FileDialogManager fileDialogManager;
 
-	private ChartInfo editingInfo;
+	private ChartInfo _info;
     private string newSongPath;
     private string newPicPath;
 
@@ -13,28 +15,37 @@ public partial class InfoPanel : PanelContainer
 	[Signal] public delegate void CancelledEventHandler();
 
 	// 输入字段
-    [Export] private LineEdit _nameEdit, _musicPathEdit, _picPathEdit, _composerEdit, _charterEdit;
+    // [Export] private LineEdit _nameEdit, _musicPathEdit, _picPathEdit, _composerEdit, _charterEdit;
+
+    [Export] private InfoEditPanel _infoEditPanel;
 
 	public override void _Ready()
     {
         // 获取节点引用
         fileDialogManager = GetNode<FileDialogManager>("/root/FileDialogManager");
+
+        if(_infoEditPanel == null)
+        {
+            GD.PrintErr($"[{Name}] _infoEditPanel未赋值");
+        }
     }
 
 	public void SetInfo(ChartInfo chartInfo)
 	{
-		editingInfo = chartInfo;
+		_info = chartInfo;
 
-		_nameEdit.Text = chartInfo.Name;
-        //不显示旧文件实际存储位置，如果用户选择了新的文件，则会显示出新的路径
-		_musicPathEdit.Text = "";
-		_picPathEdit.Text = "";
-		_composerEdit.Text = chartInfo.Composer;
-		_charterEdit.Text = chartInfo.Charter;
+        
 
-        //null表示没有修改
-        newPicPath = null;
-        newSongPath = null;
+		// _nameEdit.Text = chartInfo.Name;
+        // //不显示旧文件实际存储位置，如果用户选择了新的文件，则会显示出新的路径
+		// _musicPathEdit.Text = "";
+		// _picPathEdit.Text = "";
+		// _composerEdit.Text = chartInfo.Composer;
+		// _charterEdit.Text = chartInfo.Charter;
+
+        // //null表示没有修改
+        // newPicPath = null;
+        // newSongPath = null;
 
 	}
 
@@ -52,7 +63,7 @@ public partial class InfoPanel : PanelContainer
 
                 if(string.IsNullOrEmpty(path)) return;
                 
-                _musicPathEdit.Text = path;
+                // _musicPathEdit.Text = path;
                 newSongPath = path;
                 
             },
@@ -73,7 +84,7 @@ public partial class InfoPanel : PanelContainer
                 string path = paths[0];
                 if(string.IsNullOrEmpty(path)) return;
                 
-                _picPathEdit.Text = path;
+                // _picPathEdit.Text = path;
                 newPicPath = path;
                 
             },
@@ -83,19 +94,19 @@ public partial class InfoPanel : PanelContainer
 
 	public void OnConfirm()
     {
-        ChartInfo newInfo = editingInfo.Duplicate();
-        newInfo.Name = _nameEdit.Text;
-        newInfo.Composer = _composerEdit.Text;
-        newInfo.Charter = _charterEdit.Text;
-        newInfo.Duration = newSongPath == null ? editingInfo.Duration : Util.GetMusicDuration(newSongPath);
+        ChartInfo newInfo = _info.Duplicate();
+        // newInfo.Name = _nameEdit.Text;
+        // newInfo.Composer = _composerEdit.Text;
+        // newInfo.Charter = _charterEdit.Text;
+        newInfo.Duration = newSongPath == null ? _info.Duration : Util.GetMusicDuration(newSongPath);
 
         if (!string.IsNullOrEmpty(newSongPath))
         {
-            newInfo.SongFileName = $"{editingInfo.Id}.{newSongPath.GetExtension()}";
+            newInfo.SongFileName = $"{_info.Id}.{newSongPath.GetExtension()}";
         }
         if (!string.IsNullOrEmpty(newPicPath))
         {
-            newInfo.PictureFileName = $"{editingInfo.Id}.{newPicPath.GetExtension()}";
+            newInfo.PictureFileName = $"{_info.Id}.{newPicPath.GetExtension()}";
         }
         
         // var data = new ChartInfo

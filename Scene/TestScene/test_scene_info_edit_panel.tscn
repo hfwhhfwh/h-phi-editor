@@ -2,9 +2,19 @@
 
 [ext_resource type="Script" uid="uid://v8fkic6pc2yt" path="res://Script/TestSceneScripts/TestSceneInfoEditPanel.cs" id="1_svivb"]
 [ext_resource type="PackedScene" uid="uid://benf33fckpxs7" path="res://Scene/info_edit_panel.tscn" id="1_ynkhb"]
+[ext_resource type="Theme" uid="uid://b7j0twhkd1g6h" path="res://Themes/theme_gray.tres" id="2_k5ciy"]
 
 [node name="TestSceneInfoEditPanel" type="Node" unique_id=773458774 node_paths=PackedStringArray("infoEditPanel")]
 script = ExtResource("1_svivb")
-infoEditPanel = NodePath("InfoEditPanel")
+infoEditPanel = NodePath("Panel/InfoEditPanel")
 
-[node name="InfoEditPanel" parent="." unique_id=1498111790 instance=ExtResource("1_ynkhb")]
+[node name="Panel" type="Panel" parent="." unique_id=1367032078]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_k5ciy")
+
+[node name="InfoEditPanel" parent="Panel" unique_id=1498111790 instance=ExtResource("1_ynkhb")]
+layout_mode = 1

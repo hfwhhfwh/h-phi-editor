@@ -11,7 +11,9 @@ using System.IO;
 public partial class ChartInfo : GodotObject
 {
     public string Id { get; set; }          // 唯一标识（文件夹名）
+    [ChartInfoField(Label = "曲名")]
     public string Name { get; set; }
+    [ChartInfoField(Label = "作曲家")]
     public string Composer { get; set; }
     public string Charter { get; set; }
     public string Level { get; set; }        // 预留
@@ -75,4 +77,15 @@ public partial class ChartInfo : GodotObject
             Intro = this.Intro
         };
     }
+}
+
+
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class ChartInfoFieldAttribute : Attribute
+{
+    public string Label { get; set; }
+    public double Min { get; set; } = double.NaN;
+    public double Max { get; set; } = double.NaN;
+    public double Step { get; set; } = double.NaN;
+    public bool ReadOnly { get; set; }
 }
