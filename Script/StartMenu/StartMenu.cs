@@ -11,7 +11,7 @@ public partial class StartMenu : Node
     [Export] private ChartList _chartList;
     [Export] private CreateChartPanel _createPanel;
     [Export] private DeletePanel _deletePanel;
-    [Export] private ChartInfoPanel _infoPanel;
+    // [Export] private ChartInfoPanel _infoPanel;
     [Export] private ExportPanel _exportPanel;
     [Export] private SettingsPanel _settingsPanel;
     [Export] private Button _multiSelectBtn;
@@ -37,8 +37,7 @@ public partial class StartMenu : Node
         _deletePanel.DeleteConfirmed += OnDeleteConfirmed;
         _deletePanel.Cancelled += () => _deletePanel.Visible = false;
 
-        _infoPanel.Confirmed += OnInfoEdited;
-        _infoPanel.Cancelled += () => _infoPanel.Visible = false;
+        // Panel.Cancelled += () => _infoPanel.Visible = false;
 
         _exportPanel.Confirmed += OnExportConfirmed;
         _exportPanel.Cancelled += () => _exportPanel.Visible = false;
@@ -223,8 +222,8 @@ public partial class StartMenu : Node
                 return;
             }
             //显示基本信息面板
-            _infoPanel.Visible = true;
-            _infoPanel.SetInfo(chartInfo);
+            // _infoPanel.Visible = true;
+            // _infoPanel.SetInfo(chartInfo);
 
         }
     }
@@ -246,7 +245,7 @@ public partial class StartMenu : Node
         
 
         RefreshChartList();
-        _infoPanel.Visible = false;
+        // _infoPanel.Visible = false;
     }
 
     public void OnDeleteButtonPressed()

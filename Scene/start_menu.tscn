@@ -15,12 +15,11 @@
 [ext_resource type="PackedScene" uid="uid://dsx666cmkyny5" path="res://Scene/chart_info_panel.tscn" id="12_tvlai"]
 [ext_resource type="PackedScene" uid="uid://cuskdub26yo1x" path="res://Scene/settings_panel.tscn" id="14_tvlai"]
 
-[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_infoPanel", "_exportPanel", "_settingsPanel", "_multiSelectBtn", "deviceLabel", "versionLabel")]
+[node name="StartMenu" type="Node" unique_id=134390635 node_paths=PackedStringArray("_chartList", "_createPanel", "_deletePanel", "_exportPanel", "_settingsPanel", "_multiSelectBtn", "deviceLabel", "versionLabel")]
 script = ExtResource("1_4qtu7")
 _chartList = NodePath("PanelContainer/SafeArea/Main/HBoxContainer/ScrollContainer/ChartList")
 _createPanel = NodePath("PanelContainer/SafeArea/CreateChartPanel")
 _deletePanel = NodePath("PanelContainer/SafeArea/DeletePanel")
-_infoPanel = NodePath("")
 _exportPanel = NodePath("PanelContainer/SafeArea/ExportPanel")
 _settingsPanel = NodePath("PanelContainer/SafeArea/SettingsPanel")
 _multiSelectBtn = NodePath("PanelContainer/SafeArea/Main/Head/Options/MultiSelect")
@@ -438,6 +437,7 @@ text = "取消
 "
 
 [node name="ChartInfoPanel" parent="PanelContainer/SafeArea" unique_id=1178886916 instance=ExtResource("12_tvlai")]
+visible = false
 layout_mode = 2
 
 [node name="ExportPanel" type="PanelContainer" parent="PanelContainer/SafeArea" unique_id=1800046543 node_paths=PackedStringArray("_nameEdit", "_composerEdit", "_charterEdit", "_picTextureRect")]
